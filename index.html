@@ -177,6 +177,9 @@ button:focus-visible{outline:3px solid var(--tag);outline-offset:2px}
 .btn.sup{flex:none;background:#efe7d0}
 .duty{font-size:11px;color:#2a5a75}
 .did{margin:0;padding-left:18px;font-size:12px;display:flex;flex-direction:column;gap:1px}
+.pname{display:block;width:100%;margin-top:4px;padding:8px 10px;border-radius:6px;border:2px solid #cfc7b4;background:#fff;color:var(--ink);font:inherit;font-size:14px;-webkit-user-select:text;user-select:text}
+.rank{margin:0;padding-left:24px;font-size:12px;display:flex;flex-direction:column;gap:2px}
+.rank li.me{background:var(--tag);border-radius:4px}
 .alerts{display:flex;flex-direction:column;gap:6px}
 .alerts:empty{display:none}
 .alert{background:var(--tag);border-radius:6px;padding:6px 8px;display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;font-size:12px;color:var(--ink);box-shadow:0 3px 0 rgba(0,0,0,.3)}
@@ -276,6 +279,7 @@ button:focus-visible{outline:3px solid var(--tag);outline-offset:2px}
 <div id="toast" role="status"></div><div id="overlay"></div>
 <div id="mg" role="dialog" aria-modal="true"></div>
 
+<script src="firebase-config.js"></script>
 <script src="productos.js"></script>
 <script>
 (function(){
@@ -605,7 +609,9 @@ function checkRep(){
     const days=meta.day;
     showOverlay(`<div class="card"><h2>${meta.money<-30000?'Quiebra':'Te han despedido'}</h2>
       <p>${meta.money<-30000?'La tienda se quedó sin dinero.':'La reputación llegó a cero.'} Sobreviviste ${days} ${days===1?'turno':'turnos'}.</p>
+      ${online()?'<div class="zone-title">🏆 RANKING</div><div id="rank"></div>':''}
       <button class="btn go big" data-act="restart">Volver a empezar</button></div>`);
+    submitScore(true).then(fillRanking);
   }
 }
 let lastEnd=null;
@@ -630,6 +636,7 @@ function ensureMeta(){
     if(!e.pers)e.pers=pick(Object.keys(TRAITS));
   });
   meta.regs=meta.regs||{};
+  meta.runId=meta.runId||Math.random().toString(36).slice(2,10)+Date.now().toString(36);
   meta.back=meta.back||{};meta.orders=meta.orders||[];
 }
 function receiveDeliveries(){
@@ -706,6 +713,7 @@ function endDay(){
   lastEnd={payroll,res};
   if(meta.rep<=0||meta.money<-30000){run.over=false;checkRep();return;}
   saveGame(true);
+  submitScore(false);
   showShop();
 }
 function showShop(){
@@ -785,12 +793,60 @@ function showStart(confirmWipe){
       <li>Stock: cada producto vendido sale de la estantería. Pide a los distribuidores entre turnos y mantén personal en Almacén para colocarlo. Con la caja en −300 €, quiebra.</li>
       <li>La paciencia se agota. La reputación a cero y estás despedido.</li>
     </ul>
+    ${online()?`<div class="zone-title">🏆 RANKING</div><div id="rank"></div>
+      <label class="supd">Tu nombre en el ranking (no pongas datos personales)<input id="pname" class="pname" maxlength="20" value="${esc(playerName())}" placeholder="Tu nombre o mote"></label>`:''}
     ${!cont?'<button class="btn go big" data-act="start">Abrir caja</button>'
       :confirmWipe?`<div class="supd">Se borra la partida guardada (turno ${meta.day}, ${fmt(meta.money)}). No se puede deshacer.</div>
         <button class="btn no big" data-act="restart">Sí, borrar y empezar de cero</button>
         <button class="btn" data-act="start">No, seguir con mi partida</button>`
       :`<button class="btn go big" data-act="start">Continuar · turno ${meta.day} · ${fmt(meta.money)}</button>
         <button class="btn" data-act="wipe">Empezar de cero</button>`}</div>`);
+  fillRanking();
+}
+
+/* ---------- ranking online (Firebase Realtime Database, opcional) ----------
+   Solo se activa si firebase-config.js define window.FIREBASE_CONFIG. Sin él (o dentro de un artifact
+   de Claude, que no deja cargar scripts de gstatic) el juego funciona igual, sin ranking.
+   Cada partida (meta.runId) es una entrada en /ranking, escrita con login anónimo. */
+const FB_V='10.12.2',NAME_KEY='vitchmarket.nombre';
+let fb=null;
+const online=()=>!!(window.FIREBASE_CONFIG&&window.FIREBASE_CONFIG.databaseURL)&&!(window.claude&&window.claude.hot);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function playerName(){try{return (localStorage.getItem(NAME_KEY)||'').trim();}catch(e){return '';}}
+function setPlayerName(n){try{localStorage.setItem(NAME_KEY,String(n).trim().slice(0,20));}catch(e){}}
+async function fbInit(){
+  if(fb!==null)return fb;
+  if(!online()){fb=false;return fb;}
+  try{
+    const B='https://www.gstatic.com/firebasejs/'+FB_V+'/';
+    const [A,D,U]=await Promise.all([import(B+'firebase-app.js'),import(B+'firebase-database.js'),import(B+'firebase-auth.js')]);
+    const app=A.initializeApp(window.FIREBASE_CONFIG),cred=await U.signInAnonymously(U.getAuth(app));
+    fb=Object.assign({db:D.getDatabase(app),uid:cred.user.uid},D);
+  }catch(e){console.warn('Ranking no disponible:',e);fb=false;}
+  return fb;
+}
+async function submitScore(final){
+  const name=playerName(),days=final?meta.day-1:meta.day;
+  if(!online()||!name||days<1)return;
+  const f=await fbInit();if(!f)return;
+  try{
+    await f.set(f.ref(f.db,'ranking/'+meta.runId),{uid:f.uid,name,days,money:Math.round(meta.money),rep:Math.round(meta.rep*10)/10,
+      staff:meta.emp.length,score:days*10000+clamp(Math.round(meta.money/100),0,9999),final:!!final,ts:f.serverTimestamp()});
+  }catch(e){console.warn('No se pudo subir la puntuación:',e);}
+}
+async function fillRanking(){
+  if(!$('#rank'))return;
+  if(!online()){$('#rank').innerHTML='';return;}
+  $('#rank').innerHTML='<div class="supd">Cargando ranking…</div>';
+  const f=await fbInit(),box=()=>$('#rank');
+  if(!f){if(box())box().innerHTML='<div class="supd">El ranking no está disponible ahora mismo.</div>';return;}
+  try{
+    const s=await f.get(f.query(f.ref(f.db,'ranking'),f.orderByChild('score'),f.limitToLast(10)));
+    const rows=[];s.forEach(c=>{rows.push(Object.assign({id:c.key},c.val()));});rows.reverse();
+    if(!box())return;
+    box().innerHTML=rows.length?'<ol class="rank">'+rows.map(r=>`<li class="${r.id===meta.runId?'me':''}"><b>${esc(r.name)}</b> · ${r.days} ${r.days===1?'turno':'turnos'} · ${fmt(r.money)}${r.final?' 🪦':''}</li>`).join('')+'</ol>'
+      :'<div class="supd">Aún no hay nadie. Estrénalo tú.</div>';
+  }catch(e){console.warn('No se pudo cargar el ranking:',e);if(box())box().innerHTML='<div class="supd">No se pudo cargar el ranking.</div>';}
 }
 function showOverlay(html){const o=$('#overlay');const st=o.scrollTop,ol=o.querySelector('.ordlist'),ost=ol?ol.scrollTop:0;o.innerHTML=html;o.classList.add('show');o.scrollTop=st;const nl=o.querySelector('.ordlist');if(nl)nl.scrollTop=ost;}
 function hideOverlay(){$('#overlay').classList.remove('show');}
@@ -1615,6 +1671,7 @@ document.addEventListener('click',e=>{
   const b=e.target.closest('[data-act]');if(!b||b.disabled)return;
   const a=b.dataset.act;
   if(run&&run.away&&['scan','idyes','idno','bag','pay','card','den','clear','deliver','route'].includes(a)){toast('Estás en el pasillo. Termina y vuelve a la caja.','bad');return;}
+  if((a==='start'||a==='restart')&&$('#pname'))setPlayerName($('#pname').value);
   if(a==='start'){beep(1200,.05);startDay();}
   else if(a==='restart'){meta=defMeta(meta.best);meet=null;startDay();}
   else if(a==='next'){meta.day++;startDay();}

@@ -1,0 +1,24 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "ranking": {
+      ".read": true,
+      ".indexOn": ["score"],
+      "$run": {
+        ".write": "auth != null && (!data.exists() || data.child('uid').val() === auth.uid)",
+        ".validate": "newData.hasChildren(['uid', 'name', 'days', 'money', 'rep', 'staff', 'score', 'final', 'ts'])",
+        "uid": { ".validate": "newData.val() === auth.uid" },
+        "name": { ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 20" },
+        "days": { ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 1000 && (!data.exists() || newData.val() >= data.val())" },
+        "money": { ".validate": "newData.isNumber()" },
+        "rep": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 5" },
+        "staff": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 15" },
+        "score": { ".validate": "newData.isNumber()" },
+        "final": { ".validate": "newData.isBoolean()" },
+        "ts": { ".validate": "newData.val() === now" },
+        "$other": { ".validate": false }
+      }
+    }
+  }
+}
