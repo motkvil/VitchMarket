@@ -86,7 +86,7 @@ function hostBot(d){
   const ov=d.querySelector('#overlay.show');
   if(ov){
     const ro=ov.querySelector('[data-act=ropen]');if(ro){cl(ro);return;}
-    if(Math.random()<.6){const x=any(ov,'[data-act=emp],[data-act=req],[data-act=hirec]:not([disabled])');if(x){cl(x);return;}}
+    if(Math.random()<.6){const x=any(ov,'[data-act=emp],[data-act=fire],[data-act=req],[data-act=hirec]:not([disabled])');if(x){cl(x);return;}}
     const b=ov.querySelector('[data-act=next],[data-act=restart],[data-act=meeting],[data-act=endmeet]');
     if(b){if(b.dataset.act==='next'||b.dataset.act==='endmeet')st.hostDays++;cl(b);}return;
   }

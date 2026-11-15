@@ -14,7 +14,7 @@ setInterval(()=>{
   const ov=d.querySelector('#overlay.show');
   if(ov){
     const b=ov.querySelector('[data-act=start],[data-act=next],[data-act=restart],[data-act=meeting],[data-act=endmeet]');
-    if(Math.random()<.8){const x=any(ov,'[data-act=emp],[data-act=req],[data-act=hirec]:not([disabled])');if(x){stats.meet++;cl(x);return;}}
+    if(Math.random()<.8){const x=any(ov,'[data-act=emp],[data-act=fire],[data-act=req],[data-act=hirec]:not([disabled])');if(x){stats.meet++;if(x.dataset.act==='fire')stats.fired=(stats.fired||0)+1;const g=ov.querySelector('.supd b');if(g&&/Carta/.test(g.textContent))stats.carta=1;cl(x);return;}}
     const op=ov.querySelector('[data-act=ordp]');
     if(op&&Math.random()<.5){stats.ordp=(stats.ordp||0)+1;cl(op);return;}
     const og=ov.querySelector('[data-act=ordgo]:not([disabled])');

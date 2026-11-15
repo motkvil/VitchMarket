@@ -367,6 +367,9 @@ const TALK={
 };
 const WAGE=1500,HIRE=4000;
 const blankSt=()=>({ok:0,fail:0,late:0,abs:0,tasks:0,tfail:0,quej:0,fel:0,shifts:0,caught:0,cv:0,cvErr:0});
+/* Al cerrar una reunión, las estadísticas pasan al historial (e.tot), que sirve de prueba al despedir. */
+const sumSt=(a,b)=>{const o=blankSt();Object.keys(o).forEach(k=>{o[k]=((a||{})[k]||0)+((b||{})[k]||0);});return o;};
+function closeSt(e){e.tot=sumSt(e.tot,e.st);e.st=blankSt();}
 /* Rasgos ocultos 0–1: rap (rapidez), trato, punt (puntualidad), act (actitud). Moral 0–100. */
 function newEmp(role,m,opt,taken){
   const used=new Set(m.emp.map(e=>e.name).concat(taken||[]));
@@ -951,7 +954,7 @@ function loadRoomMeta(raw){
   m.up=Object.assign({scanner:0,fan:0,coffee:0},raw.up);
   m.orders=toArr(raw.orders).map(o=>Object.assign(o,{items:toObj(o.items)}));
   m.emp.forEach(e=>{e.langs=toArr(e.langs);if(e.langs.length===0)e.langs=['es'];e.log=toArr(e.log);});
-  if(m.closed){if(m.day%3===1)m.emp.forEach(e=>{e.st=blankSt();});m.day++;m.closed=false;}
+  if(m.closed){if(m.day%3===1)m.emp.forEach(closeSt);m.day++;m.closed=false;}
   return m;
 }
 function enterRoom(code,host){
@@ -1688,18 +1691,48 @@ function empAct(id,k){
     if(!e.real&&e.moral<20&&Math.random()<0.3){meta.emp=meta.emp.filter(x=>x!==e);meet.gone.push(e.face+' '+e.name+' se lo tomó fatal y se fue dando un portazo.');sBad();renderHud();showMeeting();return;}
   }
   else if(k==='raise'){e.wage+=300;e.moral=clamp(e.moral+20,0,100);msg='💶 +3 €/día. Ahora te quiere un poquito más.';}
-  else if(k==='fire'){
-    const bad=score(e)<0.45;let cost=e.trial?0:2000+e.days*200;
-    let txt=e.trial?'En periodo de prueba: no cuesta nada.':'Indemnización: '+fmt(cost)+'.';
-    if(!e.trial&&e.warn===0&&Math.random()<0.5){const den=ri(3000,8000);cost+=den;meta.rep=clamp(meta.rep-0.3,0,5);txt+=' Te denuncia por despedir sin ningún aviso previo: −'+fmt(den)+'.';}
-    meta.money-=cost;meta.emp=meta.emp.filter(x=>x!==e);
-    meta.emp.forEach(x=>{x.moral=clamp(x.moral+(bad?3:-8),0,100);});
-    if(e.real&&isHost()){note(e.real,'Estás despedido/a. Si quieres volver, pide otro puesto… y reza.',true);fb.update(rRef('members/'+e.real),{role:null}).catch(()=>{});}
-    meet.gone.push('Fuera '+e.face+' '+e.name+'. '+txt+(bad?' El resto respira aliviado.':' El resto se ha quedado tenso.'));
-    sBad();renderHud();showMeeting();return;
-  }
+  else if(k==='fire'){meet.firing=id;showMeeting();return;}
   if(e.real)note(e.real,{praise:'👏 El jefe te ha felicitado en la reunión.',warn:'⚠️ El jefe te ha dado un toque en la reunión.',raise:'💶 ¡Aumento! +3 €/día.'}[k],k==='warn');
   meet.acted[id]=msg;sOk();renderHud();showMeeting();
+}
+/* ---------- despidos: motivo, pruebas, finiquito e indemnización ----------
+   Finiquito: vacaciones no disfrutadas (sueldo × turnos / 30). Indemnización: procedente 1 €/turno (mín. 5 €);
+   improcedente 20 € + 3 €/turno. Si el motivo no se sostiene con lo registrado (st + historial), 70% de denuncia;
+   si se sostiene pero nunca le diste un toque, 15%. Perder la denuncia = pagar la improcedente + 30–80 € y −0,3 rep. */
+const hist=e=>sumSt(e.tot,e.st);
+const FIRE={
+ trial:{t:'🧪 No supera el periodo de prueba',ok:e=>e.trial>0,ev:e=>'en prueba, le quedan '+e.trial+' turnos'},
+ abs:{t:'📅 Faltas sin avisar',ok:(e,h)=>h.abs>=1,ev:(e,h)=>h.abs+(h.abs===1?' falta registrada':' faltas registradas')},
+ late:{t:'⏰ Retrasos repetidos',ok:(e,h)=>h.late>=2,ev:(e,h)=>h.late+(h.late===1?' retraso registrado':' retrasos registrados')},
+ caught:{t:'📱 Pillado/a sin trabajar',ok:(e,h)=>h.caught>=1,ev:(e,h)=>h.caught+(h.caught===1?' vez pillado/a':' veces pillado/a')},
+ quej:{t:'😡 Quejas de clientes por su trato',ok:(e,h)=>h.quej>=1,ev:(e,h)=>h.quej+(h.quej===1?' queja registrada':' quejas registradas')},
+ perf:{t:'📉 Bajo rendimiento',ok:(e,h)=>h.fail+h.tfail+h.cvErr>=2&&score(e)<0.5,ev:(e,h)=>(h.fail+h.tfail+h.cvErr)+' fallos registrados · valoración: '+verdict(e).replace(/^\S+ /,'')},
+ none:{t:'🤷 Sin motivo: despido improcedente reconocido',ok:()=>false,ev:()=>''}
+};
+const finiquito=e=>Math.round(e.wage*e.days/30);
+const indProc=e=>Math.max(500,100*e.days),indImp=e=>2000+300*e.days;
+function fireEmp(id,r){
+  const e=empById(id),F=FIRE[r];if(!meet||!e||!F||meet.acted[id])return;
+  if(r==='trial'&&!(e.trial>0))return;
+  const h=hist(e),fin=finiquito(e),bad=score(e)<0.45;
+  const just=r==='trial'||(r!=='none'&&F.ok(e,h));
+  let ind=r==='trial'?0:r==='none'?indImp(e):indProc(e),cost=fin+ind,extra=0;
+  const L=['<b>Carta de despido de '+e.face+' '+e.name+'.</b> Motivo: '+F.t.replace(/^\S+ /,'')+(F.ev(e,h)?' ('+F.ev(e,h)+')':'')+'.',
+    'Finiquito por vacaciones no disfrutadas ('+e.days+(e.days===1?' turno':' turnos')+'): '+fmt(fin)+'.',
+    (r==='trial'?'Sin indemnización: estaba en periodo de prueba.':r==='none'?'Indemnización por despido improcedente: '+fmt(ind)+'.':just?'Indemnización por despido procedente: '+fmt(ind)+'.':'Le pagas la indemnización de un despido procedente ('+fmt(ind)+'), aunque no tienes pruebas.')];
+  const risk=r==='trial'||r==='none'?0:just?(e.warn>0?0:0.15):0.7;
+  if(Math.random()<risk){
+    extra=Math.max(0,indImp(e)-ind)+ri(3000,8000);cost+=extra;meta.rep=clamp(meta.rep-0.3,0,5);
+    L.push(just?'⚖️ Te denuncia: nunca le diste un toque antes de despedirle. El juez lo declara improcedente: −'+fmt(extra)+' y −0,3 de reputación.'
+      :'⚖️ Te denuncia: el motivo no se sostiene con lo que hay registrado. Despido improcedente: −'+fmt(extra)+' y −0,3 de reputación.');
+  }else if(!just&&r!=='none')L.push('😅 El motivo no se sostenía, pero no te ha denunciado. Esta vez.');
+  L.push('Total pagado: <b>'+fmt(cost)+'</b>.');
+  meta.money-=cost;meta.emp=meta.emp.filter(x=>x!==e);meet.firing=null;
+  meta.emp.forEach(x=>{x.moral=clamp(x.moral+(bad?3:-8),0,100);});
+  L.push(bad?'El resto respira aliviado.':'El resto se ha quedado tenso.');
+  if(e.real&&isHost()){note(e.real,'Estás despedido/a. Motivo: '+F.t.replace(/^\S+ /,'')+'. Liquidación: '+fmt(fin+ind)+(extra?' (más lo que le ha sacado tu denuncia al jefe: '+fmt(extra)+')':'')+'.',true);fb.update(rRef('members/'+e.real),{role:null}).catch(()=>{});}
+  meet.gone.push(L.join('<br>'));
+  sBad();renderHud();showMeeting();
 }
 function applyReq(i,o){
   const r=meet&&meet.reqs[i];if(!r||r.done!=null)return;
@@ -1722,7 +1755,7 @@ function hireCand(i){
   sOk();renderHud();showMeeting();
 }
 function endMeeting(){
-  meta.emp.forEach(e=>{e.st=blankSt();});meet=null;
+  meta.emp.forEach(closeSt);meet=null;
   if(meta.rep<=0||meta.money<-30000){run.over=false;checkRep();return;}
   meta.day++;startDay();
 }
@@ -1730,7 +1763,11 @@ function showMeeting(){
   const emps=meta.emp.map(e=>{
     const s=e.st,a=meet.acted[e.id];
     const tag=[flag(e)+' '+ROLES[e.role].n,e.days+(e.days===1?' turno':' turnos'),fmt(e.wage)+'/día'].concat(e.trial?['en prueba ('+e.trial+')']:[]).concat(e.warn?['⚠️×'+e.warn]:[]).join(' · ');
-    const btns=a?`<div class="supd">${a}</div>`:`<div class="row ea">
+    const h=hist(e),fin=finiquito(e);
+    const btns=a?`<div class="supd">${a}</div>`:meet.firing===e.id?`<div class="supd"><b>¿Por qué le despides?</b> Si el motivo no se puede demostrar con lo registrado, te puede denunciar. Finiquito: ${fmt(fin)} · indemnización: ${e.trial?'nada si es por no superar la prueba':fmt(indProc(e))+' si es procedente, '+fmt(indImp(e))+' si es improcedente'}.${e.warn?'':' Ojo: nunca le has dado un toque.'}</div>
+      <div class="opts">${Object.keys(FIRE).filter(k=>k!=='trial'||e.trial>0).map(k=>{const ok=k==='trial'||FIRE[k].ok(e,h),ev=FIRE[k].ev(e,h);
+        return `<button class="btn ${k==='none'?'':ok?'':'off'}" data-act="fire" data-e="${e.id}" data-r="${k}">${FIRE[k].t}${ev?` <small>${ok?'✅':'❌'} ${ev}</small>`:''}</button>`;}).join('')}
+      <button class="btn" data-act="firex">Mejor no le despido</button></div>`:`<div class="row ea">
       <button class="btn" data-act="emp" data-e="${e.id}" data-k="praise">👏 Felicitar</button>
       <button class="btn" data-act="emp" data-e="${e.id}" data-k="warn">⚠️ Toque</button>
       <button class="btn" data-act="emp" data-e="${e.id}" data-k="raise">💶 +3 €</button>
@@ -1761,7 +1798,7 @@ function showMeeting(){
   }).join('');
   const duties=Object.keys(ROLES).map(k=>`<div class="up"><div class="t"><b>${ROLES[k].n} · ${staffOf(k).length}/${ROLES[k].max}</b>${ROLES[k].duties.join(' · ')}</div></div>`).join('');
   showOverlay(`<div class="card"><h2>Reunión de personal</h2>
-    <div class="supd">Datos desde la última reunión. Una decisión por persona. Despedir sin avisos previos puede acabar en denuncia. Bote: <b>${fmt(meta.money)}</b></div>
+    <div class="supd">Datos desde la última reunión. Una decisión por persona. Para despedir hay que dar un motivo que se pueda demostrar con lo registrado; si no, denuncia. Bote: <b>${fmt(meta.money)}</b></div>
     ${meet.gone.map(g=>`<div class="supd">${g}</div>`).join('')}
     ${meet.rumors.length?'<div class="zone-title">RUMORES</div><div class="shop">'+meet.rumors.map(r=>'<div class="emp">'+r+'</div>').join('')+'</div>':''}
     <div class="zone-title">PLANTILLA</div><div class="shop">${emps}</div>
@@ -2206,6 +2243,8 @@ document.addEventListener('click',e=>{
   else if(a==='meeting')startMeeting();
   else if(a==='endmeet')endMeeting();
   else if(a==='emp')empAct(+b.dataset.e,b.dataset.k);
+  else if(a==='fire')fireEmp(+b.dataset.e,b.dataset.r);
+  else if(a==='firex'){if(meet){meet.firing=null;showMeeting();}}
   else if(a==='req')applyReq(+b.dataset.r,+b.dataset.o);
   else if(a==='hirec')hireCand(+b.dataset.c);
   else if(a==='assign')assignTask(+b.dataset.t,b.dataset.e);
@@ -2247,7 +2286,7 @@ function boot(d){
     const m=loadGame();
     if(m){
       /* Guardada tras el cierre: se continúa en el turno siguiente (la reunión pendiente se da por hecha). */
-      if(m.closed){if(m.day%3===1)m.emp.forEach(e=>{e.st=blankSt();});m.day++;m.closed=false;}
+      if(m.closed){if(m.day%3===1)m.emp.forEach(closeSt);m.day++;m.closed=false;}
       meta=Object.assign(defMeta(),m);hasSave=true;
     }
   }
