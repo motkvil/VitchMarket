@@ -186,6 +186,11 @@ button:focus-visible{outline:3px solid var(--tag);outline-offset:2px}
 .mhud{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12px;background:var(--ink);color:#fff;border-radius:6px;padding:6px 10px}
 .mhud b{color:var(--tag)}
 .btn.mini{padding:2px 8px;font-size:11px}
+.camwin{position:fixed;right:8px;bottom:8px;width:min(calc(100vw - 16px),460px);background:#050807;border:2px solid #2b3a33;border-radius:8px;z-index:15;display:none;box-shadow:0 8px 24px rgba(0,0,0,.5);padding:4px}
+.camwin.show{display:block}
+.camhead{display:flex;justify-content:space-between;align-items:center;gap:8px;color:#9fd8b4;font-size:10px;padding:2px 2px 4px}
+.camcv{display:block;width:100%;border-radius:4px;cursor:pointer;touch-action:manipulation}
+.camslot{background:#050807;border-radius:6px;padding:3px}
 .alerts{display:flex;flex-direction:column;gap:6px}
 .alerts:empty{display:none}
 .alert{background:var(--tag);border-radius:6px;padding:6px 8px;display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;font-size:12px;color:var(--ink);box-shadow:0 3px 0 rgba(0,0,0,.3)}
@@ -258,6 +263,7 @@ button:focus-visible{outline:3px solid var(--tag);outline-offset:2px}
     <div class="stat"><span>Reclamac.</span><b id="hTk">0</b></div>
     <div class="stat"><span>Agotados</span><b id="hOut">0</b></div>
     <button class="mute" id="muteBtn" data-act="mute" aria-label="Sonido">🔊</button>
+    <button class="mute camb" data-act="cams" aria-label="Cámaras de seguridad" title="Cámaras de seguridad">📹</button>
     <div class="daybar"><i id="hBar"></i></div>
   </header>
 
@@ -282,6 +288,7 @@ button:focus-visible{outline:3px solid var(--tag);outline-offset:2px}
     </div>
   </main>
 </div>
+<div id="camwin" class="camwin" aria-label="Cámaras de seguridad"><div class="camhead"><span>📹 Cámaras · toca una para ampliarla, y a una persona para ver qué hace</span><button class="btn mini" data-act="cams" aria-label="Cerrar cámaras">✕</button></div><div id="camslot"></div></div>
 <div id="toast" role="status"></div><div id="overlay"></div>
 <div id="mg" role="dialog" aria-modal="true"></div>
 
@@ -1112,7 +1119,7 @@ function pubState(force){
   }):[];
   const phase=!run?'lobby':run.over?(run.dead?'dead':meet?'meeting':'shop'):run.closing?'closing':'open';
   fb.set(rRef('state'),plain({day:meta.day,t:run?Math.round(run.t):0,dur:run?run.dur:(room.info.dur||100),money:Math.round(meta.money),rep:Math.round(meta.rep*10)/10,
-    q:run?run.queue.length:0,phase,away:!!(run&&run.away),tasks,ts:fb.serverTimestamp()})).catch(()=>{});
+    q:run?run.queue.length:0,phase,away:!!(run&&run.away),tasks,cam:camModel(),ts:fb.serverTimestamp()})).catch(()=>{});
   if(force||now-room.lastHb>10000){room.lastHb=now;fb.update(rRef('info'),{hb:fb.serverTimestamp(),day:meta.day,status:run&&!run.over?'open':run?'closed':'lobby'}).catch(()=>{});}
 }
 
@@ -1134,6 +1141,7 @@ function renderMember(){
     if(stale)h+='<div class="supd">⏸️ La tienda está en pausa: el jefe no tiene el juego abierto.</div>';
     else if(PHASE[st.phase])h+='<div class="supd">'+PHASE[st.phase]+'</div>';
     else{
+      h+='<div class="zone-title">📹 CÁMARAS · TOCA UNA PARA AMPLIARLA</div><div id="mcamslot" class="camslot"></div>';
       if(mine)h+=`<div class="task"><div>${mine.ic} ${esc(mine.s)}</div><div class="supd">Es tuyo. Te quedan ${mine.left} s.</div></div>`;
       const open=tasks.filter(t=>!t.who&&(t.k!=='tk'||t.dept===role)).sort((a,b)=>toArr(b.roles).includes(role)-toArr(a.roles).includes(role));
       h+='<div class="zone-title">AVISOS SIN DUEÑO</div>'+(open.map(t=>{const m=toArr(t.roles).includes(role);
@@ -1961,6 +1969,177 @@ function renderRegister(){
 }
 function renderAll(){renderHud();renderQueue();renderBelt();renderRegister();renderTasks();}
 
+/* ---------- cámaras de seguridad: la tienda vista desde arriba (canvas 2D, sin librerías) ----------
+   camModel() resume quién está dónde (sirve igual en solitario, para el jefe y, publicado en state.cam,
+   para los empleados reales). drawCams() lo pinta cada frame en 4 cámaras; las personas caminan hacia
+   su sitio (sprites con posición propia) y los clientes de la cola entran desde los pasillos. */
+const CAMS=[['CAM 1 · SALA',0,0,262,170],['CAM 2 · CAJAS',0,166,262,94],['CAM 3 · ALMACÉN',262,0,138,156],['CAM 4 · OFICINAS',262,152,138,108]];
+const CAM_KEY='vitchmarket.camaras';
+const SPOT={till:[192,228],door:[250,252],dock:[368,28],brk:[384,132],
+  post:{atc:[[50,228],[118,228],[84,242]],alm:[[298,72],[336,72],[298,112],[336,112]],back:[[296,210],[296,240],[318,210],[318,240]],rrpp:[[352,210],[352,240],[376,210],[376,240]]}};
+const laneX=n=>10+(clamp(n||1,1,9)-1)*27+18;
+const aislePt=()=>[laneX(ri(1,9)),rnd(30,140)];
+const cam={on:false,zoom:-1,spr:{},shop:[],cv:null,ctx:null,noctx:false,last:0,hits:[]};
+try{const v=localStorage.getItem(CAM_KEY);cam.on=v==null?window.innerWidth>=900:v==='1';}catch(e){}
+function toggleCams(){cam.on=!cam.on;const w=$('#camwin');if(w)w.classList.toggle('show',cam.on);try{localStorage.setItem(CAM_KEY,cam.on?'1':'0');}catch(e){}}
+const taskSpot=t=>t.k==='truck'?{k:'dock'}:t.k==='tk'?{k:'post',r:t.dept||'back',i:0}:{k:'aisle',n:t.n||1};
+function camModel(){
+  if(!run||run.over)return null;
+  const idx={},staff=[];
+  meta.emp.forEach(e=>{
+    const i=idx[e.role]=(idx[e.role]||0)+1,d=run.duty&&run.duty[e.id];
+    if(!d||d.st==='abs'||d.st==='off'||d.st==='gone'||run.t<d.at)return;
+    let w={k:'post',r:e.role,i:i-1},b='',x='en su puesto';
+    if(run.away&&run.away.cover===e.id){w={k:'till'};b='🧾';x='te está cubriendo la caja';}
+    else if(d.busy){const t=run.tasks.find(y=>y.id===d.task);if(t){w=taskSpot(t);b=t.ic;x='con un aviso: '+t.s;}}
+    else if(d.slack){const p=d.slack.split(' ');b=p[0];x=p.slice(1).join(' ');if(b==='☕')w={k:'brk'};else if(b==='🚬')w={k:'door'};}
+    staff.push({id:e.id,f:e.face,n:e.name,u:e.real||'',r:e.role,w,b,x});
+  });
+  let me={w:{k:'till'},b:'',x:'en la caja 3'};
+  if(run.away){
+    if(mg&&mg.t)me={w:taskSpot(mg.t),b:mg.t.ic,x:'fuera de caja: '+mg.t.s};
+    else me={w:{k:'roam'},b:'👀',x:'supervisando la tienda'};
+  }
+  me.n=isHost()?(playerName()||'Jefe'):'Tú';
+  return {d:meta.day,t:Math.round(run.t),dur:run.dur,open:!run.closing,me,staff,
+    q:run.queue.map(c=>({id:c.id,f:c.face,a:c.p<c.max*0.3?1:0})),
+    tasks:run.tasks.filter(t=>!t.who).map(t=>({id:t.id,k:t.k,ic:t.ic,n:t.n||0}))};
+}
+function camPos(w,j){
+  if(w.k==='till')return SPOT.till;
+  if(w.k==='door')return SPOT.door;
+  if(w.k==='dock')return SPOT.dock;
+  if(w.k==='brk')return SPOT.brk;
+  if(w.k==='roam'){const s=performance.now()/1000;return [130+100*Math.sin(s/3),90+50*Math.sin(s/2.1)];}
+  if(w.k==='aisle')return [laneX(w.n),60+(j*23)%60];
+  const a=SPOT.post[w.r]||SPOT.post.back;return a[(w.i||0)%a.length];
+}
+function camTargets(m){
+  const T={},myUid=room&&room.uid;
+  if(!m)return T;
+  toArr(m.staff).forEach((s,j)=>{
+    const p=camPos(s.w||{},j),you=isMember()&&s.u===myUid;
+    T['s'+s.id]={x:p[0],y:p[1],f:s.f,lab:you?'Tú':s.n+(s.u?' 🎮':''),b:s.b||'',hl:you,info:(you?'Tú':s.n)+' · '+(ROLES[s.r]?ROLES[s.r].n:'')+' · '+(s.x||'')};
+  });
+  const me=m.me||{w:{k:'till'}},p=camPos(me.w||{},0);
+  T.me={x:p[0],y:p[1],f:'🧑‍💼',lab:isMember()?'👑 '+(me.n||'Jefe'):'Tú',b:me.b||'',hl:!isMember(),info:(isMember()?'👑 '+(me.n||'El jefe'):'Tú')+' · '+(me.x||'')};
+  toArr(m.q).forEach((c,i)=>{T['c'+c.id]={x:i===0?200:200-22*i,y:i===0?196:188,f:c.f,lab:'',b:c.a?'😠':'',hl:false,cust:1,info:i===0?'Cliente en caja':'Cliente en la cola ('+(i+1)+'º)'};});
+  return T;
+}
+function camStep(m,dt){
+  const T=camTargets(m),S=cam.spr,sp=70*dt;
+  Object.keys(T).forEach(id=>{
+    let s=S[id];
+    if(!s){const st=id[0]==='c'?aislePt():SPOT.door;s=S[id]={x:st[0],y:st[1]};}
+    Object.assign(s,T[id],{tx:T[id].x,ty:T[id].y,x:s.x,y:s.y,gone:0});
+  });
+  Object.keys(S).forEach(id=>{const s=S[id];if(!T[id]&&!s.gone){s.gone=1;s.tx=SPOT.door[0];s.ty=SPOT.door[1]+12;s.hl=false;}});
+  Object.keys(S).forEach(id=>{
+    const s=S[id],dx=s.tx-s.x,dy=s.ty-s.y,dd=Math.hypot(dx,dy);
+    s.mv=dd>1;
+    if(dd<=sp){s.x=s.tx;s.y=s.ty;if(s.gone)delete S[id];}else{s.x+=dx/dd*sp;s.y+=dy/dd*sp;}
+  });
+  /* Gente comprando por los pasillos (decorado: más cuanto más avanzan los días). */
+  const want=m&&m.open?clamp(2+(m.d||1),3,8):0;
+  while(cam.shop.length<want){const p=SPOT.door;cam.shop.push({x:p[0],y:p[1],tx:p[0],ty:p[1],f:pick(FACES),w:0});}
+  cam.shop.forEach((s,i)=>{
+    if(i>=want&&!s.gone){s.gone=1;s.tx=SPOT.door[0];s.ty=SPOT.door[1]+12;}
+    const dx=s.tx-s.x,dy=s.ty-s.y,dd=Math.hypot(dx,dy),v=sp*0.7;
+    s.mv=dd>1;
+    if(dd<=v){s.x=s.tx;s.y=s.ty;if(s.gone)s.dead=1;else if((s.w-=dt)<=0){const p=aislePt();s.tx=p[0];s.ty=p[1];s.w=rnd(1,4);}}
+    else{s.x+=dx/dd*v;s.y+=dy/dd*v;}
+  });
+  cam.shop=cam.shop.filter(s=>!s.dead);
+}
+function camWorld(c,m,now){
+  c.fillStyle='#2c3833';c.fillRect(0,0,262,166);
+  c.fillStyle='#252f2b';c.fillRect(0,166,262,94);
+  c.fillStyle='#232b28';c.fillRect(262,0,138,156);
+  c.fillStyle='#29312d';c.fillRect(262,152,138,108);
+  c.strokeStyle='#59665f';c.lineWidth=2;
+  c.strokeRect(1,1,398,258);c.beginPath();c.moveTo(262,0);c.lineTo(262,120);c.moveTo(262,140);c.lineTo(262,260);c.moveTo(262,154);c.lineTo(400,154);c.stroke();
+  c.textAlign='center';c.textBaseline='middle';c.font='bold 7px monospace';
+  for(let i=1;i<=9;i++){
+    const x=10+(i-1)*27;
+    c.fillStyle='#6e5f45';c.fillRect(x,22,9,120);
+    for(let k=0;k<10;k++){c.fillStyle=['#a8c79a','#c9a87a','#9ab7c9','#c99a9a'][(i+k)%4];c.fillRect(x+2,26+k*12,5,6);}
+    c.fillStyle='#cfd8d0';c.fillText(String(i),x+4.5,13);
+  }
+  [[36,'1'],[104,'2'],[176,'3']].forEach(([x,l])=>{c.fillStyle=l==='3'?'#a33a35':'#4b5550';c.fillRect(x,206,34,12);c.fillStyle='#e9eee9';c.fillText('CAJA '+l,x+17,212);});
+  c.fillStyle='#3f4a45';c.fillRect(236,254,26,6);c.fillStyle='#cfd8d0';c.font='6px monospace';c.fillText('ENTRADA',249,246);
+  c.fillStyle='#5b4c35';[[284,40],[322,40],[284,90],[322,90],[284,128]].forEach(([x,y])=>{c.fillRect(x,y,26,14);});
+  c.fillStyle='#cfd8d0';c.fillText('MUELLE',372,10);c.fillText('☕',384,120);
+  c.fillStyle='#544a3a';c.fillRect(284,196,40,8);c.fillRect(340,196,46,8);
+  c.fillStyle='#cfd8d0';c.fillText('BACKOFFICE',304,186);c.fillText('RR.PP.',363,186);
+  if(!m)return;
+  const blink=Math.floor(now/400)%2===0;
+  c.font='12px sans-serif';
+  toArr(m.tasks).forEach((t,j)=>{
+    const p=t.k==='truck'?[370,40]:[laneX(t.n),100+(j%3)*12];
+    if(t.k==='truck'){c.font='22px sans-serif';c.fillText('🚚',p[0],p[1]);c.font='12px sans-serif';}
+    else if(t.k==='spill'){c.fillStyle='rgba(120,190,255,.45)';c.beginPath();c.ellipse(p[0],p[1]+4,9,4,0,0,7);c.fill();c.fillText('💧',p[0],p[1]);}
+    else c.fillText(t.k==='tour'?'🧳':t.k==='help'?'🙋':'📦',p[0],p[1]);
+    if(blink){c.strokeStyle='#ffd23f';c.lineWidth=1;c.beginPath();c.arc(p[0],p[1],9,0,7);c.stroke();}
+  });
+  const all=Object.values(cam.spr).concat(cam.shop).sort((a,b)=>a.y-b.y);
+  all.forEach(s=>{
+    const bob=s.mv?Math.sin(now/90+s.x)*1.2:0;
+    if(s.hl){c.strokeStyle='#ffd23f';c.lineWidth=1.5;c.beginPath();c.arc(s.x,s.y+bob,8,0,7);c.stroke();}
+    c.font='13px sans-serif';c.fillText(s.f||'🧑',s.x,s.y+bob);
+    if(s.b){c.font='8px sans-serif';c.fillText(s.b,s.x+8,s.y-8+bob);}
+    if(s.lab&&cam.zoom>=0){c.font='bold 5px sans-serif';c.lineWidth=2;c.strokeStyle='#000';c.strokeText(s.lab,s.x,s.y+11);c.fillStyle='#fff';c.fillText(s.lab,s.x,s.y+11);}
+  });
+}
+function drawCams(){
+  const slot=isMember()?document.getElementById('mcamslot'):(cam.on?document.getElementById('camslot'):null);
+  if(!slot||!slot.offsetParent||cam.noctx)return;
+  if(!cam.cv){
+    cam.cv=document.createElement('canvas');cam.cv.className='camcv';
+    cam.ctx=cam.cv.getContext&&cam.cv.getContext('2d');if(!cam.ctx){cam.noctx=true;return;}
+    cam.cv.addEventListener('click',camClick);
+  }
+  if(cam.cv.parentNode!==slot)slot.appendChild(cam.cv);
+  let m=null;
+  if(isMember()){const st=room.state;if(st&&st.ts&&srvNow()-st.ts<6000)m=st.cam||null;}else m=camModel();
+  const dpr=window.devicePixelRatio||1,W=slot.clientWidth||300,H=Math.round(W*(cam.zoom<0?0.62:0.68));
+  if(cam.cv.width!==Math.round(W*dpr)||cam.cv.height!==Math.round(H*dpr)){cam.cv.width=Math.round(W*dpr);cam.cv.height=Math.round(H*dpr);cam.cv.style.height=H+'px';}
+  const now=performance.now(),dt=Math.min(0.1,(now-cam.last)/1000||0);cam.last=now;
+  camStep(m,dt);
+  const c=cam.ctx;c.setTransform(dpr,0,0,dpr,0,0);c.fillStyle='#050807';c.fillRect(0,0,W,H);
+  const cells=cam.zoom<0?[0,1,2,3]:[cam.zoom];cam.hits=[];
+  cells.forEach((ci,k)=>{
+    const [lab,cx,cy,cw,ch]=CAMS[ci],g=cam.zoom<0;
+    const gx=g?(k%2)*W/2:0,gy=g?Math.floor(k/2)*H/2:0,gw=g?W/2:W,gh=g?H/2:H;
+    const sc=Math.min((gw-6)/cw,(gh-6)/ch),ox=gx+(gw-cw*sc)/2,oy=gy+(gh-ch*sc)/2;
+    c.save();c.beginPath();c.rect(gx+2,gy+2,gw-4,gh-4);c.clip();
+    c.fillStyle='#0e1512';c.fillRect(gx,gy,gw,gh);
+    c.translate(ox,oy);c.scale(sc,sc);c.translate(-cx,-cy);
+    c.beginPath();c.rect(cx,cy,cw,ch);c.clip();
+    camWorld(c,m,now);
+    c.restore();
+    c.save();c.beginPath();c.rect(gx+2,gy+2,gw-4,gh-4);c.clip();
+    c.fillStyle='rgba(80,255,160,.05)';c.fillRect(gx,gy,gw,gh);
+    c.fillStyle='rgba(0,0,0,.18)';for(let y=gy+((now/60)%3);y<gy+gh;y+=3)c.fillRect(gx,y,gw,1);
+    c.font='bold 10px monospace';c.textAlign='left';c.textBaseline='top';c.fillStyle='rgba(0,0,0,.5)';c.fillRect(gx+4,gy+4,c.measureText(lab).width+6,13);
+    c.fillStyle='#d8ffe6';c.fillText(lab,gx+7,gy+6);
+    if(Math.floor(now/600)%2===0){c.fillStyle='#ff4040';c.textAlign='right';c.fillText('● REC',gx+gw-7,gy+6);}
+    c.textAlign='right';c.textBaseline='bottom';c.fillStyle='#d8ffe6';c.fillText(m?'T'+m.d+' '+clockOf(m.t,m.dur):'--:--',gx+gw-7,gy+gh-5);
+    if(!m){c.textAlign='center';c.textBaseline='middle';c.fillStyle='rgba(216,255,230,.7)';c.fillText('SIN SEÑAL',gx+gw/2,gy+gh/2);}
+    c.restore();
+    c.strokeStyle='#1f2b26';c.lineWidth=2;c.strokeRect(gx+1,gy+1,gw-2,gh-2);
+    cam.hits.push({ci,gx,gy,gw,gh,ox,oy,sc,cx,cy});
+  });
+}
+function camClick(ev){
+  const r=cam.cv.getBoundingClientRect(),x=ev.clientX-r.left,y=ev.clientY-r.top;
+  const h=cam.hits.find(z=>x>=z.gx&&x<=z.gx+z.gw&&y>=z.gy&&y<=z.gy+z.gh);if(!h)return;
+  if(cam.zoom<0){cam.zoom=h.ci;return;}
+  const wx=(x-h.ox)/h.sc+h.cx,wy=(y-h.oy)/h.sc+h.cy;
+  let best=null,bd=12;
+  Object.values(cam.spr).forEach(s=>{const d=Math.hypot(s.x-wx,s.y-wy);if(d<bd&&s.info){bd=d;best=s;}});
+  if(best)toast(best.info);else cam.zoom=-1;
+}
+
 /* ---------- bucle ---------- */
 function tick(ts){
   const dt=Math.min(0.1,(ts-last)/1000||0);last=ts;
@@ -2000,6 +2179,7 @@ function tick(ts){
   }
   renderHud();
   if(isHost())pubState(false);
+  drawCams();
   requestAnimationFrame(tick);
 }
 
@@ -2043,6 +2223,7 @@ document.addEventListener('click',e=>{
   else if(a==='den')addTray(+b.dataset.v);
   else if(a==='clear')clearTray();
   else if(a==='deliver')deliver();
+  else if(a==='cams')toggleCams();
   else if(a==='mute'){muted=!muted;b.textContent=muted?'🔇':'🔊';}
   else if(a==='wipe')showStart(true);
   else if(a==='rmenu')showRoomMenu();
@@ -2071,6 +2252,7 @@ function boot(d){
     }
   }
   ensureMeta();renderAll();showStart();requestAnimationFrame(tick);
+  if(cam.on)$('#camwin').classList.add('show');
   if(online()&&new URLSearchParams(location.search).get('sala'))showRoomMenu();
 }
 if(window.claude&&window.claude.hot&&window.claude.hot.ready)window.claude.hot.ready(boot);
