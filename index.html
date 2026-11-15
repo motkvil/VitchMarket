@@ -838,7 +838,7 @@ const TRAITS={
  timido:{n:'Timidez',ic:'🙈',d:'Puntualísimo, pero le cuesta tratar con clientes.'},
  lider:{n:'Liderazgo',ic:'⭐',d:'Los de su mismo puesto rinden más cuando está.'},
  pasota:{n:'Pasota',ic:'😴',d:'Menos actitud. No se agobia por nada.'},
- servicial:{n:'Servicial',ic:'🤝',d:'Hace tareas de otros puestos sin rendir peor.'}
+ servicial:{n:'Servicial',ic:'🤝',d:'Cubre la caja aunque no sea su puesto sin rendir peor.'}
 };
 const TALK={
  bromista:['¿Sabéis por qué el tomate se puso rojo? ¡Porque vio la ensalada!','Hoy estoy que me salgo, ¿eh?'],
@@ -1399,7 +1399,7 @@ async function fillRanking(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.15-8';
+const APPV='2026.11.15-9';
 try{const vt=document.createElement('div');vt.id='vtag';vt.textContent='v'+APPV;document.body.appendChild(vt);}catch(e){}
 const SHOP='VITCH',DURS=[[100,'100 s (clásico)'],[600,'10 min'],[1800,'30 min'],[3600,'1 hora'],[10800,'3 horas'],[43200,'12 horas']];
 const REAL_LIM=60,TAKEOVER=120000;
@@ -1769,6 +1769,7 @@ function onAct(a){
   const t=run.tasks.find(x=>x.id===a.t);
   if(a.k==='take'){
     if(!t||t.who||!isFree(e)){note(e.real,'Llegas tarde: eso ya lo tiene otra persona.',true);return;}
+    if(!toArr(t.roles).includes(e.role)){note(e.real,'Eso no es de tu departamento.',true);return;}
     giveReal(t,e,false);
   }else if(a.k==='done'){
     if(!t||t.who!==e.id)return;
@@ -1912,9 +1913,9 @@ function renderMember(){
       else if(PHASE[st.phase])body+='<div class="supd">'+PHASE[st.phase]+'</div>'+reportHtml(st.rpt,role);
       else{
         if(mine)body+=`<div class="task"><div>${mine.ic} ${esc(mine.s)}</div><div class="supd">Es tuyo. Te quedan ${mine.left} s.</div></div>`;
-        const open=tasks.filter(t=>!t.who&&(t.k!=='tk'||t.dept===role)).sort((a,b)=>toArr(b.roles).includes(role)-toArr(a.roles).includes(role)).slice(0,4);
+        const open=tasks.filter(t=>!t.who&&toArr(t.roles).includes(role)&&(t.k!=='tk'||t.dept===role)).slice(0,4);
         body+='<div class="zone-title">AVISOS SIN DUEÑO</div>'+(open.map(t=>{const m=toArr(t.roles).includes(role);
-          return `<div class="alert"><span class="at">${t.ic} ${esc(t.s)}</span><span class="who"><button class="btn ${m?'':'off'}" data-act="rtake" data-t="${t.id}" ${mine?'disabled':''} title="${m?'Es de tu puesto':'No es de tu puesto, pero puedes'}">Me encargo</button> <small>${t.left} s</small></span></div>`;}).join('')
+          return `<div class="alert"><span class="at">${t.ic} ${esc(t.s)}</span><span class="who"><button class="btn ${m?'':'off'}" data-act="rtake" data-t="${t.id}" ${mine?'disabled':''} title="Es de tu puesto">Me encargo</button> <small>${t.left} s</small></span></div>`;}).join('')
           ||'<div class="supd">Nada pendiente. Disimula, que te ve el jefe.</div>');
         const busy=tasks.filter(t=>t.who&&t.who!==room.uid).slice(0,4);
         if(busy.length)body+='<div class="zone-title">EN CURSO</div><div class="crew">'+busy.map(t=>`<div>${t.ic} ${esc(t.s)} · ${whoName(t.who)}</div>`).join('')+'</div>';
@@ -2020,6 +2021,7 @@ function assignTask(tid,who){
     return;
   }
   const e=empById(+who);if(!e||!inStore(e))return;
+  if(!t.roles.includes(e.role)){toast(e.name+' es de '+ROLES[e.role].n+': eso no es de su departamento.','bad');return;}
   if(!isFree(e))pullOff(e);
   if(e.real){giveReal(t,e,true);sOk();renderAll();pubState(true);return;}
   t.match=t.roles.includes(e.role);
@@ -2044,13 +2046,13 @@ function assignAll(){
   if(!run||run.over)return;
   let n=0;
   run.tasks.filter(t=>!t.who&&t.k!=='tk').forEach(t=>{
-    const free=meta.emp.filter(isFree);if(!free.length)return;
-    const sc=e=>(t.roles.includes(e.role)||e.pers==='servicial'?2:0)+(t.lang&&e.langs.includes(t.lang)?2:0)-(e.real?1.5:0)+e.rap*0.5-(run.duty[e.id].slack?0.3:0);
+    const free=meta.emp.filter(e=>isFree(e)&&t.roles.includes(e.role));if(!free.length)return;
+    const sc=e=>(t.roles.includes(e.role)?2:0)+(t.lang&&e.langs.includes(t.lang)?2:0)-(e.real?1.5:0)+e.rap*0.5-(run.duty[e.id].slack?0.3:0);
     const e=free.sort((a,b)=>sc(b)-sc(a))[0];
     assignTask(t.id,String(e.id));n++;
   });
   const left=run.tasks.filter(t=>!t.who&&t.k!=='tk').length;
-  toast(n?'⚡ '+n+(n===1?' aviso asignado':' avisos asignados')+(left?'. Quedan '+left+' sin nadie libre.':'.'):'No hay nadie libre para los avisos pendientes.',n?'good':'bad');
+  toast(n?'⚡ '+n+(n===1?' aviso asignado':' avisos asignados')+(left?'. Quedan '+left+' sin nadie libre de su departamento.':'.'):'No hay nadie libre del departamento que toca.',n?'good':'bad');
 }
 function moveStock(id,max){const mv=Math.min(max,meta.back[id]||0);if(mv>0){meta.back[id]-=mv;meta.stock[id]=(meta.stock[id]||0)+mv;}return mv;}
 function finishTask(t){
@@ -2142,7 +2144,7 @@ function renderTasks(){
   const el=$('#tasks'),al=$('#alerts');if(!el||!al)return;
   if(!run){el.innerHTML='';al.innerHTML='';return;}
   if(run.remote){
-    const st=room.state||{},me=(room.members||{})[room.uid]||{},open=toArr(st.tasks).filter(t=>!t.who&&(t.k!=='tk'||t.dept===me.role)).length;
+    const st=room.state||{},me=(room.members||{})[room.uid]||{},open=toArr(st.tasks).filter(t=>!t.who&&toArr(t.roles).includes(me.role)&&(t.k!=='tk'||t.dept===me.role)).length;
     al.innerHTML='';
     el.innerHTML=`<div class="zone-title">🧾 TU CAJA ${run.till}</div><div class="supd">${run.queue.length} ${run.queue.length===1?'cliente':'clientes'} en tu cola. Los clientes te los manda la tienda: cóbrales bien y rápido.</div>
       <div class="zone-title">AVISOS DE SALA</div><div class="supd">${open?open+' sin dueño. Si vas a uno, tu caja se queda parada y tu cola se impacienta.':'No hay avisos sin dueño.'}</div>
@@ -2153,8 +2155,8 @@ function renderTasks(){
   }
   {const aa=$('#aallBtn');if(aa)aa.hidden=false;}
   /* Desplegable con TODO el personal en tienda, ocupado o no: el jefe manda por necesidad del servicio. */
-  const forceSel=t=>{const ps=meta.emp.filter(inStore);if(!ps.length)return '';
-    return `<select class="force" data-t="${t.id}" aria-label="Mandar a cualquiera"><option value="">📢 Mandar a…</option>${ps.map(e=>{const d=run.duty[e.id];
+  const forceSel=t=>{const ps=meta.emp.filter(e=>inStore(e)&&t.roles.includes(e.role));if(!ps.length)return '';
+    return `<select class="force" data-t="${t.id}" aria-label="Mandar a alguien de su departamento"><option value="">📢 Mandar a…</option>${ps.map(e=>{const d=run.duty[e.id];
       const st=run.away&&run.away.cover===e.id?'en la Caja 3':d.busy?'ocupado/a':d.slack?'escaqueándose':'libre';
       return `<option value="${e.id}">${e.name}${e.real?' 🎮':''} · ${ROLES[e.role].s} · ${st}</option>`;}).join('')}</select>`;};
   const keepAl=al.contains(document.activeElement)&&document.activeElement.tagName==='SELECT';
@@ -2162,7 +2164,7 @@ function renderTasks(){
   /* Avisos sin asignar: arriba, en la cabecera fija, para que se vean siempre. */
   if(!keepAl)al.innerHTML=(isHost()?appsAlerts():'')+run.tasks.filter(t=>!t.who&&t.k!=='tk').map(t=>{
     const sc=e=>(t.roles.includes(e.role)||e.pers==='servicial'?1:0)+(t.lang&&e.langs.includes(t.lang)?2:0);
-    const opts=free.slice().sort((a,b)=>sc(b)-sc(a)).slice(0,3).map(e=>{
+    const opts=free.filter(e=>t.roles.includes(e.role)).sort((a,b)=>sc(b)-sc(a)).slice(0,3).map(e=>{
       const m=t.roles.includes(e.role),sp=t.lang&&e.langs.includes(t.lang);
       return `<button class="btn ${m?'':'off'}" data-act="assign" data-t="${t.id}" data-e="${e.id}" title="${m?'Es de su puesto':'No es su puesto: tardará más y puede salir mal'}${sp?'. Habla su idioma':''}">${e.face} ${e.name}${e.real?' 🎮':''}${sp?' 🗣️':''} <small>${ROLES[e.role].s}</small></button>`;
     }).join('');
@@ -3743,7 +3745,7 @@ const GUIDE={
  j_caja:{t:'🧾 Caja · jefe',steps:[
   ['🎯','Aquí cobras tú en la <b>Caja 3</b>. Si cambias de pestaña, un cajero de la casa se pone en tu caja y tú diriges.'],
   ['🛒','Toca cada producto para escanearlo, revisa el DNI del alcohol, la bolsa, y cobra con tarjeta o con el cambio exacto.'],
-  ['🔔','A la derecha (en el móvil, en la 🔔) salen los <b>avisos</b>: asigna a alguien, mándale con «📢 Mandar a…» aunque esté ocupado, ve tú con «Voy yo» o usa <b>⚡ Asignar todo</b>.'],
+  ['🔔','A la derecha (en el móvil, en la 🔔) salen los <b>avisos</b>: asigna a alguien de ese departamento (nadie hace trabajo de otro), mándale con «📢 Mandar a…» aunque esté ocupado, ve tú con «Voy yo» o usa <b>⚡ Asignar todo</b>.'],
   ['🧾','Si hay cajeros reales, abren la <b>Caja 1 y la Caja 2</b> y la tienda les reparte la cola.']]},
  j_alm:{t:'📦 Almacén · jefe',steps:[
   ['📋','Aquí ves las <b>existencias</b> de todo: en rojo lo agotado. «Mandar reponer» crea un aviso para que alguien lo ponga en la estantería.'],
