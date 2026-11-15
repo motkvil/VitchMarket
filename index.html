@@ -667,7 +667,7 @@ button.pdarow:hover{background:rgba(19,54,31,.15)}
 .pa.no{opacity:.4}.pa.no:after{content:'✖';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:var(--sign);font-size:24px;font-weight:700}
 .plan-front{display:flex;align-items:center;gap:6px;font-size:11px;border-top:3px dashed #9aa3a9;padding-top:8px}
 .chk{background:#4b5550;color:#fff;border-radius:4px;padding:3px 6px}.you{flex:1;text-align:center;font-weight:700}.pdoor{font-size:20px}
-.mgc>.btn.mini{flex:0 0 auto;align-self:center;padding:5px 12px}
+.mgc>.btn.mini{flex:0 0 auto;align-self:center;padding:5px 12px;white-space:nowrap;width:auto;min-width:max-content}
 .qas .qa{padding:5px 8px}
 @media (max-height:900px){.mgc>h3+.supd{display:none}.mgc .cvq .btn{padding:6px 8px;font-size:12px}}.cvc{padding:6px 8px;gap:2px}.cvc .es{font-size:10px}
 @media (max-height:760px){
@@ -2610,7 +2610,7 @@ function rrppBody(){
   }
   const p=mg.p,lang=mg.t.lang,tried=mg.triedA||[];
   const q=lang?(ASK[lang]||ASK.en).replace('%e%',p.e):`¿Dónde tenéis <b>${p.n}</b>?`;
-  let h=steps(['Pasillo','Estantería'],mg.step)+`<div class="ccust"><span>${lang?'🧳':'🙋'}</span><div class="bubble">${q}</div></div>`;
+  let h=steps(['Pasillo','Estantería'],mg.step)+`<div class="ccust"><span>${lang?'🧳':'🙋'}</span><div class="bubble"><span>${q}</span></div></div>`;
   if(mg.step===0){
     h+=`<div class="brief">🗺️ Llévale por el plano al pasillo bueno. Los carteles colgantes solo tienen dibujo.${mg.tries?' <b>«Aquí no está…»</b>':''}</div>
       <div class="plan"><div class="plan-aisles">${AISLES.map((a,i)=>`<button class="pa ${tried.includes(a[0])?'no':''}" data-act="mgmap" data-a="${a[0]}"><span class="sign">${AISLE_IC[i]}</span><i class="sh l"></i><i class="sh r"></i><b>${a[0]}</b></button>`).join('')}</div>
