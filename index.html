@@ -213,6 +213,7 @@ button:focus-visible{outline:3px solid var(--tag);outline-offset:2px}
 @media (prefers-reduced-motion:reduce){.live i{animation:none}.job{transition:none}}
 .sel{-webkit-user-select:all;user-select:all;word-break:break-all}
 .rerr{background:#fde2e1;color:#8a1c1f;border-radius:6px;padding:6px 10px;font-size:13px}
+.rok{background:#dff3e6;color:#1d5c37;border-radius:6px;padding:6px 10px;font-size:13px}
 .mhud{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12px;background:var(--ink);color:#fff;border-radius:6px;padding:6px 10px}
 .mhud b{color:var(--tag)}
 .btn.mini{padding:2px 8px;font-size:11px}
@@ -952,13 +953,15 @@ async function enterShared(){
     return enterRoom(SHOP,true);
   }
   /* Si el registro falla (reglas, permisos…), no es falta de conexión: se entra igual y se avisa. */
+  let regErr=null;
   if(playerName()){
     try{
       const ex=(await f.get(f.ref(f.db,base+'/members/'+f.uid))).val();
       await f.update(f.ref(f.db,base+'/members/'+f.uid),{name:playerName(),on:true,role:ex&&ROLES[ex.role]?ex.role:null});
-    }catch(e){console.warn('No se pudo registrar en la tienda:',e);setTimeout(()=>toast('⚠️ La tienda no ha aceptado tu registro ('+(e&&e.code||'error')+'). Avisa a quien lleva el juego.','bad'),600);}
+    }catch(e){console.warn('No se pudo registrar en la tienda:',e);regErr=e;}
   }
   enterRoom(SHOP,false);
+  if(regErr){room.msg={t:'⚠️ La tienda no ha aceptado tu registro ('+errMsg(regErr)+'). Si pone PERMISSION_DENIED, las reglas de Firebase no están bien publicadas.',bad:true};room.lastHtml='';renderMember();}
 }
 /* Firebase convierte los objetos con claves numéricas en arrays y se come los vacíos: se deshace aquí. */
 function loadRoomMeta(raw){
@@ -1075,32 +1078,40 @@ async function resign(){
 }
 async function register(){
   if(!nameOk()||!room)return;
-  try{await fb.update(rRef('members/'+room.uid),{name:playerName()});presence();}catch(e){console.warn(e);toast('No se pudo registrar el nombre.','bad');}
+  try{await fb.update(rRef('members/'+room.uid),{name:playerName()});presence();room.msg=null;}catch(e){console.warn(e);room.msg={t:'⚠️ No se pudo registrar tu nombre ('+errMsg(e)+'). Si pone PERMISSION_DENIED, las reglas de Firebase no están bien publicadas.',bad:true};toast(room.msg.t,'bad');}
   room.lastHtml='';renderMember();
 }
+function hubMsg(t,bad){if(!room)return;room.msg={t,bad:!!bad};toast(t,bad?'bad':'good');room.lastHtml='';renderMember();}
 async function applyJob(r){
   if(!isMember())return;
   if(!playerName()||!(room.members[room.uid]||{}).name){await register();if(!playerName())return;}
   if(r==='jefe'){
     const inf=room.info||{};
     if(!inf.host){
+      hubMsg('👑 Abriendo la tienda…');
       try{
         meta=defMeta(meta.best);
         await fb.update(fb.ref(fb.db),{['rooms/'+SHOP+'/info']:{host:room.uid,name:playerName(),dur:600,status:'lobby',day:1,created:fb.serverTimestamp(),hb:fb.serverTimestamp()},
           ['rooms/'+SHOP+'/members/'+room.uid]:{name:playerName(),role:'jefe',on:true}});
-        mg=null;closeMG();becomeHost();toast('👑 Has abierto VitchMarket. Ahora mandas tú.','good');
-      }catch(e){console.warn(e);toast('No se pudo: alguien se te ha adelantado.','bad');}
+      }catch(e){console.warn(e);hubMsg('⚠️ No se pudo abrir la tienda ('+errMsg(e)+').',true);return;}
+      room.msg=null;mg=null;closeMG();becomeHost();toast('👑 Has abierto VitchMarket. Ahora mandas tú.','good');
       return;
     }
     return takeOver();
   }
   if(!ROLES[r])return;
-  fb.update(rRef('members/'+room.uid),{apply:r}).catch(e=>{console.warn(e);toast('No se pudo enviar la solicitud.','bad');});
-  toast('📝 Solicitud enviada. Ahora toca esperar a que el jefe la vea.','good');
+  hubMsg('📝 Enviando tu solicitud para '+ROLES[r].n+'…');
+  try{await fb.update(rRef('members/'+room.uid),{apply:r});}
+  catch(e){console.warn(e);hubMsg('⚠️ No se pudo enviar la solicitud ('+errMsg(e)+').',true);return;}
+  const inf=room.info||{},bossOn=!!inf.host&&srvNow()-(inf.hb||0)<TAKEOVER;
+  hubMsg(bossOn?'📝 Solicitud para '+ROLES[r].n+' enviada. Le ha llegado al jefe: espera a que te conteste.'
+    :'📝 Solicitud para '+ROLES[r].n+' enviada, pero ahora mismo no hay jefe: nadie te puede contratar hasta que alguien coja la ficha 👑 Jefe. Puedes ser tú.',!bossOn);
 }
 async function takeOver(){
   if(!isMember())return;
-  try{await fb.set(rRef('info/host'),room.uid);}catch(e){toast('No se puede: el jefe sigue activo.','bad');return;}
+  hubMsg('👑 Intentando quedarte con el puesto de jefe…');
+  try{await fb.set(rRef('info/host'),room.uid);}catch(e){console.warn(e);hubMsg('⚠️ No se puede: el jefe sigue activo o algo ha fallado ('+errMsg(e)+').',true);return;}
+  room.msg=null;
   try{
     await fb.update(rRef('info'),{hb:fb.serverTimestamp(),name:playerName()||'Jefe'});
     await fb.update(rRef('members/'+room.uid),{role:'jefe',apply:null});
@@ -1247,7 +1258,7 @@ function renderMember(){
     :stale?`<span class="live off"><i></i>EN PAUSA</span> 👑 ${bossName} no tiene el juego abierto.`
     :`<span class="live"><i></i>EN DIRECTO</span> 👑 Jefe: <b>${bossName}</b> · turnos de ${durTxt(inf.dur)}`;
   const hud=st&&!stale?`<div class="mhud"><span>Turno <b>${st.day}</b></span><span>🕘 <b>${clockOf(st.t,st.dur)}</b></span><span>Bote <b>${fmt(st.money)}</b></span><span>★ <b>${(+st.rep).toFixed(1)}</b></span><span>Cola <b>${st.q}</b></span></div>`:'';
-  let h=`<div class="card hub"><h1>VITCHMARKET</h1><div class="supd">${status}</div>${hud}`;
+  let h=`<div class="card hub"><h1>VITCHMARKET</h1><div class="supd">${status}</div>${hud}${room.msg?`<div class="${room.msg.bad?'rerr':'rok'}">${esc(room.msg.t)}</div>`:''}`;
   if(!me.name||!playerName()){
     h+=`<div class="zone-title">FICHA DE EMPLEO</div><div class="supd">Pon tu nombre de usuario. Luego eliges a qué cargo aplicar.</div>${nameInput('Tu nombre (no pongas datos personales)')}<button class="btn go big" data-act="rreg">Entrar en VitchMarket</button>`;
   }else if(!role){
@@ -2344,7 +2355,7 @@ function tick(ts){
 
 /* ---------- eventos ---------- */
 document.addEventListener('change',e=>{if(e.target&&e.target.id==='rdur'&&isHost())fb.update(rRef('info'),{dur:+e.target.value}).catch(()=>{});});
-document.addEventListener('click',e=>{
+function onClick(e){
   const b=e.target.closest('[data-act]');if(!b||b.disabled)return;
   const a=b.dataset.act;
   if(run&&run.away&&['scan','idyes','idno','bag','pay','card','den','clear','deliver','route'].includes(a)){toast('Estás en el pasillo. Termina y vuelve a la caja.','bad');return;}
@@ -2392,14 +2403,17 @@ document.addEventListener('click',e=>{
   else if(a==='ropen')openStore();
   else if(a==='rreg')register();
   else if(a==='rapply')applyJob(b.dataset.r);
-  else if(a==='rcancel'&&isMember())fb.update(rRef('members/'+room.uid),{apply:null}).catch(()=>{});
+  else if(a==='rcancel'&&isMember()){room.msg=null;fb.update(rRef('members/'+room.uid),{apply:null}).catch(err=>hubMsg('⚠️ '+errMsg(err),true));}
   else if(a==='rquit'||a==='rresign')resign();
   else if(a==='rhire')hireReal(b.dataset.u);
   else if(a==='rreject')rejectReal(b.dataset.u);
   else if(a==='rtake')roomAct({k:'take',t:+b.dataset.t});
   else if(a==='rboss')takeOver();
   if(run&&run.over&&!run.dead&&meta.closed)saveGame(true);
-});
+}
+const errMsg=err=>(err&&(err.code||err.message))||String(err);
+document.addEventListener('click',e=>{try{onClick(e);}catch(err){console.error(err);toast('⚠️ Error: '+errMsg(err),'bad');}});
+window.addEventListener('unhandledrejection',ev=>{console.error(ev.reason);toast('⚠️ Error: '+errMsg(ev.reason),'bad');});
 
 
 if(window.claude&&window.claude.hot&&window.claude.hot.snapshot)window.claude.hot.snapshot(()=>({meta}));
