@@ -128,6 +128,15 @@ button:focus-visible{outline:3px solid var(--tag);outline-offset:2px}
 .card .sum b{text-align:right}
 .card .sum .tot{border-top:2px dashed var(--ink);padding-top:6px;margin-top:4px;font-weight:500}
 .shop{display:flex;flex-direction:column;gap:6px}
+.fin .sum .hd{font-size:10px;letter-spacing:2px;color:var(--mute);margin-top:4px}
+.fin .sum .neg{color:var(--sign)}.fin .sum .pos{color:var(--ok)}
+.trend{display:flex;align-items:flex-end;gap:6px;height:64px;padding:4px 0}
+.trend .tb{flex:1;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:2px}
+.trend .tb i{width:100%;max-width:38px;background:var(--ok);border-radius:4px 4px 0 0}.trend .tb.neg i{background:var(--sign)}
+.trend small{font-size:10px;color:var(--mute)}
+.advice{display:flex;flex-direction:column;gap:6px}
+.adv{display:flex;flex-direction:column;gap:2px;background:#fff;border:2px solid #e3dccb;border-left:6px solid var(--mute);border-radius:8px;padding:6px 10px;font-size:12px;line-height:1.35}
+.adv b{font-size:13px}.adv.hot{border-left-color:var(--sign);background:#fff6f4}
 .up{display:flex;align-items:center;gap:10px;background:#fff;border-radius:6px;padding:8px 10px}
 .up .t{flex:1;font-size:12px}.up .t b{display:block;font-size:13px}
 .up .btn{flex:0 0 auto;padding:6px 10px}
@@ -1088,6 +1097,7 @@ function startDay(){
     tasks:[],nextTask:6,away:null,tdone:0,tlost:0,duty:{},ev:[]};
   if(isHost())run.dur=room.info.dur||100;
   ensureMeta();
+  run.buy=meta.buyNext||0;meta.buyNext=0;run.m0=meta.money+run.buy;
   saveGame(false);
   const notes=prepShift();
   const rr=receiveDeliveries();
@@ -1181,7 +1191,7 @@ function receiveDeliveries(){
 /* Pedido automático de Almacén a Hacendado Directo: lo que (estantería + almacén + en camino) tiene 3 uds o menos,
    hasta 8 productos en lotes de 6 y gastando como mucho el 35% del bote. Si le sale mal (perf), se le olvida la mitad. */
 const incoming=()=>{const inc={};meta.orders.forEach(o=>Object.entries(o.items).forEach(([id,q])=>{inc[id]=(inc[id]||0)+q;}));return inc;};
-const lowList=()=>{const inc=incoming();return CAT.filter(x=>(meta.stock[x.id]||0)+(meta.back[x.id]||0)+(inc[x.id]||0)<=3);};
+const lowList=()=>{const inc=incoming();return CAT.filter(x=>(meta.stock[x.id]||0)+(meta.back[x.id]||0)+(inc[x.id]||0)<=2);};
 /* La rutina de Almacén, a la vista (cada cosa es un aviso con barra y sale en las cámaras):
    🚚 si hay mercancía en el muelle, descargarla y colocarla; 📦 reponer lo que se vende si queda en el almacén;
    📋 inventario de un pasillo cada ~30 s; 🧾 pedido a Hacendado cuando algo se acaba. Los dos últimos son solo de NPC. */
@@ -1211,18 +1221,22 @@ function autoOrder(e,ok){
   if(meta.money<=0)return;
   const low=lowList().sort((a,b)=>(meta.stock[a.id]||0)-(meta.stock[b.id]||0)).slice(0,8);
   if(!low.length)return;
-  const budget=Math.floor(meta.money*0.35),items={};let cost=0,n=0;
+  /* Tope: el 35% del bote por pedido y, en todo el turno, la mitad de lo que había al abrir (mín. 30 €). */
+  const cap=Math.max(3000,Math.round((run.m0||meta.money)*0.5))-(run.autoBuy||0);
+  const budget=Math.min(Math.floor(meta.money*0.35),cap),items={};let cost=0,n=0;
   (ok?low:low.slice(0,Math.ceil(low.length/2))).forEach(x=>{const c=6*unitCost(x,'hac');if(cost+c<=budget){items[x.id]=6;cost+=c;n++;}});
   if(!n)return;
-  meta.money-=cost;meta.orders.push({day:meta.day+1,sup:'hac',items});
+  meta.money-=cost;noteBuy(cost);run.autoBuy=(run.autoBuy||0)+cost;meta.orders.push({day:meta.day+1,sup:'hac',items});
   logE(e,'Pidió a Hacendado Directo '+n+' productos que se acababan ('+fmt(cost)+')');
   toast('📦 '+e.name+' pide a Hacendado Directo '+n+(n===1?' producto':' productos')+' que se acaban ('+fmt(cost)+'). Llega el turno '+(meta.day+1)+'.'+(ok?'':' Se le ha olvidado apuntar algunos.'),ok?'good':'bad');
   renderHud();
 }
+/* Compras a distribuidores: cuentan en el turno en curso; las del cierre, en el turno siguiente. */
+function noteBuy(c){if(run&&!run.over&&!run.remote)run.buy=(run.buy||0)+c;else meta.buyNext=(meta.buyNext||0)+c;}
 function placeOrder(){
   const cost=cartCost(),sup=SUPS.find(z=>z.k===ordSup);
   if(cost<=0||meta.money<cost)return;
-  meta.money-=cost;
+  meta.money-=cost;noteBuy(cost);
   meta.orders.push({day:meta.day+sup.lead,sup:ordSup,items:Object.assign({},cart)});
   cart={};sOk();renderHud();refreshView();
   toast('Pedido enviado. Llega en el turno '+(meta.day+sup.lead),'good');
@@ -1269,9 +1283,20 @@ function endDay(){
     e.moral=clamp(e.moral+(meta.rep>=4?2:meta.rep<2?-3:0),0,100);
   });
   meta.money-=payroll;
+  /* Cuentas del turno: lo que no está apuntado aparte (reembolsos en directo, compensaciones, abonos,
+     despidos, contratos…) sale como «otros». IVA del 10% incluido en precios (repercutido − soportado)
+     e impuesto de sociedades del 25% sobre el beneficio. Se pagan al cerrar. */
+  const S=run.sales||0,T=run.tips||0,F=run.fines||0,B=run.buy||0,K=res.back.cost+res.rrpp.cost+res.alm.cost;
+  const delta=meta.money-(run.m0==null?meta.money:run.m0),oth=delta-(S+T-F-B-payroll-K);
+  /* Lo comprado es stock (inversión), no gasto: el gasto es el coste de lo vendido (≈62% del precio, lo de Hacendado). */
+  const cogs=Math.round(S*0.62),iva=Math.max(0,Math.round(S-S/1.1)-Math.round(B-B/1.1));
+  const bai=S+T-cogs-payroll-K-F+oth-iva,is=bai>0?Math.round(bai*0.25):0;
+  meta.money-=iva+is;
+  const fin={S,T,F,B,P:payroll,K,oth,cogs,iva,bai,is,net:bai-is,cash:delta-iva-is,m0:run.m0};
+  meta.hist=(meta.hist||[]).concat([{d:meta.day,s:S,n:fin.net}]).slice(-6);
   meta.best=Math.max(meta.best,meta.day);
   cart={};
-  lastEnd={payroll,res};scrTab.shop='sum';pg=0;
+  lastEnd={payroll,res,fin};scrTab.shop='sum';pg=0;tipsPer=0;
   if(isHost())room.rpt=deptReport();
   if(meta.rep<=0||meta.money<-30000){run.over=false;checkRep();return;}
   saveGame(true);
@@ -1280,6 +1305,7 @@ function endDay(){
   pubState(true);
 }
 /* ---------- pantallas de juego (cierre y reunión): pestañas y páginas, sin desplazar ---------- */
+let tipsPer=0;
 const scrTab={shop:'sum',meet:'emp',start:'how',lobby:'shop',hub:'jobs',work:'job'};let pg=0,ordPer=0;
 const cols=()=>innerWidth>=1150?3:innerWidth>=760?2:1;
 const rowsFit=(rowH,reserve)=>Math.max(3,Math.floor((innerHeight-reserve)/rowH));
@@ -1321,12 +1347,66 @@ function orderHtml(per){
     <div class="row">${P.nav}<button class="btn go" data-act="ordgo" ${cost>0&&meta.money>=cost?'':'disabled'}>Pedir · ${fmt(cost)}</button></div>
     <div class="supd">Pedidos en camino: ${meta.orders.length}. Se muestran los 14 productos con menos existencias.</div>`;
 }
+/* Cuenta de resultados del turno para el jefe. */
+function finHtml(f){
+  if(!f)return '<div class="supd">Sin datos de este turno.</div>';
+  const row=(n,v,cls)=>`<span class="${cls||''}">${n}</span><b class="${cls||''}">${v<0?'−'+fmt(-v):fmt(v)}</b>`;
+  const mg=f.S?Math.round(f.net/f.S*100):0,h=meta.hist||[],mx=Math.max(1,...h.map(x=>Math.abs(x.n)));
+  return `<div class="fin"><div class="sum">
+      <span class="hd">INGRESOS</span><b></b>
+      ${row('Ventas (IVA incluido)',f.S)}${row('Propinas',f.T)}${f.oth>0?row('Otros ingresos (abonos, arqueos)',f.oth):''}
+      <span class="hd">GASTOS</span><b></b>
+      ${row('Coste de la mercancía vendida (≈62%)',-(f.cogs||0))}${row('Nómina del personal',-f.P)}${row('Reclamaciones al cierre',-f.K)}${row('Multas y pérdidas en caja',-f.F)}${f.oth<0?row('Reembolsos, compensaciones y otros',f.oth):''}
+      ${row('Resultado antes de impuestos',f.bai+f.iva,'tot')}
+      ${row('IVA a Hacienda (10% ventas − 10% compras)',-f.iva)}${row('Impuesto de sociedades (25%)',-f.is)}
+      ${row('Beneficio neto del turno',f.net,'tot '+(f.net<0?'neg':'pos'))}
+      <span class="hd">CAJA (EL BOTE)</span><b></b>
+      ${row('Compras de mercancía (inversión en stock)',-f.B)}${row('Variación del bote',f.cash,f.cash<0?'neg':'pos')}
+    </div>
+    <div class="supd">${f.S?`Margen neto <b>${mg}%</b> · la nómina se come el <b>${Math.round(f.P/f.S*100)}%</b> de las ventas · a Hacienda <b>${fmt(f.iva+f.is)}</b>.`:'Hoy no se ha vendido nada.'}</div>
+    ${h.length>1?`<div class="zone-title">ÚLTIMOS TURNOS (BENEFICIO NETO)</div><div class="trend">${h.map(x=>`<div class="tb ${x.n<0?'neg':''}" title="Turno ${x.d}: ${fmt(x.n)}"><i style="height:${Math.max(4,Math.round(Math.abs(x.n)/mx*100))}%"></i><small>T${x.d}</small></div>`).join('')}</div>`:''}</div>`;
+}
+/* Consejos para el jefe: a quién contratar o echar, qué mejoras compensan, qué falta y cómo va el dinero. */
+function adviceList(le){
+  const A=[],f=le&&le.fin,r=le&&le.res,hot=(ic,t,d)=>A.push(`<div class="adv hot"><b>${ic} ${t}</b><span>${d}</span></div>`),tip=(ic,t,d)=>A.push(`<div class="adv"><b>${ic} ${t}</b><span>${d}</span></div>`);
+  const cnt=k=>staffOf(k).length,room0=k=>ROLES[k].max-cnt(k);
+  let nm=meta.day+1;while(nm%3!==1)nm++;const meetTxt=meta.day%3===1?'en la reunión de ahora':'en la reunión del turno '+nm;
+  if(f&&f.net<0)hot('📉','Pierdes dinero','Este turno has perdido '+fmt(-f.net)+'.'+(f.S&&f.P/f.S>0.5?' La nómina se come el '+Math.round(f.P/f.S*100)+'% de lo que vendes: sobra gente o falta venta.':''));
+  else if(f&&f.net>0)tip('📈','Ganas dinero','Beneficio neto '+fmt(f.net)+' (margen '+(f.S?Math.round(f.net/f.S*100):0)+'%).');
+  if(f&&f.B>f.S&&f.B>3000)tip('📦','Mucho dinero en stock','Has comprado '+fmt(f.B)+' en mercancía y vendido '+fmt(f.S)+'. No es pérdida (está en el almacén), pero ese dinero no lo tienes en el bote.');
+  if(meta.money<5000)hot('🏦','Bote muy justo','Con '+fmt(meta.money)+' cualquier susto te deja en números rojos. A −300 € cierras.');
+  /* Contratar */
+  if(r){[['back','Backoffice'],['rrpp','RR.PP.'],['alm','Almacén']].forEach(([k,n])=>{if(r[k].late>0)(room0(k)>0?hot:tip)('➕','Contrata en '+n,r[k].late+(r[k].late===1?' reclamación se quedó':' reclamaciones se quedaron')+' sin atender por falta de gente'+(room0(k)>0?' (quedan '+room0(k)+' plazas).':', pero ya está lleno: mejora a los que hay.'));});}
+  if(run.angry>=3&&room0('atc')>0)hot('➕','Contrata en Caja',run.angry+' clientes se fueron hartos de esperar. Cada cajero libre baja la impaciencia un 8%.');
+  const out=CAT.filter(x=>(meta.stock[x.id]||0)<=0);
+  if(out.length>=4&&cnt('alm')<2&&room0('alm')>0)hot('➕','Contrata en Almacén',out.length+' productos agotados y solo '+cnt('alm')+' en Almacén: no dan abasto.');
+  if(run.tlost>=3)tip('⏱️','Avisos sin atender',run.tlost+' avisos caducaron. Más gente o «⚡ Asignar todo» más a menudo.');
+  if(!cnt('rrhh')&&meta.emp.length>=5)tip('🗂️','Contrata a alguien de RR.HH.','Con '+meta.emp.length+' personas, RR.HH. sube el ánimo de todos y te hace las entrevistas.');
+  /* Echar o cuidar */
+  meta.emp.forEach(e=>{if(e.real)return;const v=score(e),h=hist(e);
+    if(e.trial>0&&v<0.45)hot('🚪','Echa a '+e.name+' ('+ROLES[e.role].s+')','Está en prueba y '+verdict(e).toLowerCase().replace(/^\S+ /,'')+'. Ahora sale gratis: sin indemnización. Hazlo '+meetTxt+'.');
+    else if(v<0.35&&e.days>=3)hot('🚪','Plantéate echar a '+e.name+' ('+ROLES[e.role].s+')',(h.caught?'Pillado/a sin trabajar '+h.caught+' veces. ':'')+(h.abs?'Faltó '+h.abs+' veces. ':'')+(h.quej?h.quej+' quejas de clientes. ':'')+(e.warn?'Ya tiene '+e.warn+' toques.':'Dale antes un toque, o un juez te puede dar la razón a él/ella.'));
+    else if(v>=0.7&&e.moral<40)tip('💎','Cuida a '+e.name,'Es de lo mejor que tienes y está quemado/a. Felicítale o súbele el sueldo '+meetTxt+', que se te va.');
+    else if(e.moral<20)hot('😡',e.name+' está a punto de irse','Ánimo por los suelos. Si no haces nada, dimite.');
+  });
+  /* Stock */
+  if(out.length)tip('📦','Agotados: '+out.length,out.slice(0,6).map(x=>x.e+' '+x.n).join(', ')+(out.length>6?'…':'')+'. Pide en «📦 Pedido» si Almacén no llega.');
+  /* Mejoras */
+  UPS.filter(u=>!meta.up[u.k]).forEach(u=>{
+    const why=u.k==='fan'&&run.angry>=2?run.angry+' clientes se fueron enfadados: con el ventilador se impacientan un 20% más despacio.'
+      :u.k==='coffee'&&run.tips>=300?'Hoy has sacado '+fmt(run.tips)+' en propinas: con el termo serían '+fmt(Math.round(run.tips*1.5))+'.'
+      :u.k==='scanner'&&run.errors+run.angry>=3?'Los códigos dañados te hacen perder tiempo: el láser los lee con 2 toques.':'';
+    if(why)(meta.money>=u.c*2?hot:tip)('⭐','Compra: '+u.n+' ('+fmt(u.c)+')',why+(meta.money<u.c?' Aún no te llega el bote.':''));
+  });
+  if(meta.rep<2.5)hot('⭐','Reputación baja (★ '+meta.rep.toFixed(1)+')','Menos errores en caja y responde las malas reseñas en RR.PP. A cero, te despiden.');
+  return A;
+}
 function showShop(noFit){
   scrRender=()=>showShop();
   const e=lastEnd,r=e.res;
   const DST={ok:'Trabajó',late:'Llegó tarde',abs:'Faltó sin avisar',off:'Libró',gone:'Desconectado/a'};
   const dep=meta.emp.map(e=>{const d=run.duty[e.id];
-    return `<div class="up"><div class="t"><b>${e.face} ${e.real?'🎮':flag(e)} ${e.name} · ${ROLES[e.role].n}</b>${d?DST[d.st]||'—':'—'}${e.trial?' · en prueba':''}</div><span class="mood" title="Ánimo">${mood(e)}</span></div>`;
+    return `<div class="up"><div class="t"><b>${e.face} ${e.real?'🎮':flag(e)} ${e.name} · ${ROLES[e.role].n}</b>${d?DST[d.st]||'—':'—'}${e.trial?' · en prueba':''} · ${fmt(e.wage)}/turno · ${verdict(e)}</div><span class="mood" title="Ánimo">${mood(e)}</span></div>`;
   });
   const meetDay=meta.day%3===1;
   let nm=meta.day+1;while(nm%3!==1)nm++;
@@ -1349,14 +1429,17 @@ function showShop(noFit){
       <span>Reputación</span><b>★ ${meta.rep.toFixed(1)}</b>
     </div>
     <div class="supd">${meetDay?'Hoy toca <b>reunión de personal</b>: valorar, contratar y despedir.':'Próxima reunión de personal al cerrar el turno '+nm+'.'}</div>`;
+  else if(k==='fin')body=finHtml(e.fin);
+  else if(k==='tips'){const A=adviceList(e);if(!tipsPer)tipsPer=rowsFit(80,230);const P=paged(A,tipsPer,'<div class="supd">Todo en orden. Sigue así, que no dura.</div>');body=`<div class="advice">${P.html}</div>`;nav=P.nav;}
   else if(k==='staff'){const P=paged(dep,rowsFit(54,250),'<div class="supd">No tienes a nadie contratado.</div>');body=`<div class="shop">${P.html}</div>`;nav=P.nav;}
   else if(k==='order'){if(!ordPer)ordPer=rowsFit(50,330);body=orderHtml(ordPer);}
   else if(k==='ups')body=`<div class="shop">${upsHtml()}</div>`;
   else body=appsHtml();
-  const tabs=[['sum','📊 Resumen'],['staff','👥 Plantilla',meta.emp.length],['order','📦 Pedido',Object.keys(cart).length],['ups','⭐ Mejoras']].concat(ap?[['apps','📝 Solicitudes',ap]]:[]);
+  const tabs=[['sum','📊 Resumen'],['fin','💰 Cuentas'],['tips','🧭 Consejos',adviceList(e).filter(x=>x.includes('adv hot')).length],['staff','👥 Plantilla',meta.emp.length],['order','📦 Pedido',Object.keys(cart).length],['ups','⭐ Mejoras']].concat(ap?[['apps','📝 Solicitudes',ap]]:[]);
   showOverlay(screenHtml('shop','Cierre · turno '+meta.day,tabs,body,nav,
     `<span class="supd">Bote <b>${fmt(meta.money)}</b> · ★ ${meta.rep.toFixed(1)}</span>`+(meetDay?'<button class="btn go big" data-act="meeting">Reunión de personal ▸</button>':`<button class="btn go big" data-act="next">Turno ${meta.day+1} ▸</button>`)));
   /* El pedido mide la pantalla real: quita productos de la página hasta que no sobre nada. */
+  if(k==='tips'&&!noFit){for(let n=0;n<10;n++){const sb=$('#overlay .scr-body');if(!sb||sb.scrollHeight<=sb.clientHeight+1||tipsPer<=1)break;tipsPer--;showShop(true);}}
   if(k==='order'&&!noFit){for(let n=0;n<14;n++){const sb=$('#overlay .scr-body');if(!sb||sb.scrollHeight<=sb.clientHeight+1||ordPer<=3)break;ordPer--;showShop(true);}}
 }
 /* ---------- guardado de partida (localStorage) ----------
@@ -1442,7 +1525,7 @@ async function fillRanking(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.15-16';
+const APPV='2026.11.15-17';
 /* Compara versiones por números («-9» < «-11»), no como texto. */
 const verCmp=(a,b)=>{const x=String(a).split(/[.-]/).map(Number),y=String(b).split(/[.-]/).map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
 try{const vt=document.createElement('div');vt.id='vtag';vt.textContent='v'+APPV;document.body.appendChild(vt);}catch(e){}
@@ -3756,7 +3839,7 @@ function renderDept(force){
 }
 /* Pedidos y mejoras se manejan igual desde el cierre que desde las pestañas. */
 function refreshView(){if($('#overlay').classList.contains('show')&&$('#overlay [data-act=next],#overlay [data-act=meeting]'))showShop();else renderDept(true);}
-addEventListener('resize',()=>{ordPer=0;if($('#overlay').classList.contains('show'))rerenderScreen();});
+addEventListener('resize',()=>{ordPer=0;tipsPer=0;if($('#overlay').classList.contains('show'))rerenderScreen();});
 /* El jefe resuelve una reclamación de la bandeja con el mismo minijuego que los empleados reales. */
 function deskTicket(id){
   const tk=run&&!run.over&&run.tickets.find(x=>x.id===id);if(!tk||mg)return;
