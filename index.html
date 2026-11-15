@@ -140,6 +140,75 @@ button:focus-visible{outline:3px solid var(--tag);outline-offset:2px}
 .kk{display:none;font-style:normal;font-family:var(--led);font-size:11px;background:rgba(0,0,0,.12);border-radius:4px;padding:0 4px;margin-right:4px}
 .kbd{display:none;font-size:10px;color:var(--mute);text-align:center;padding:4px 0 0;line-height:1.5}.kbd b{font-family:var(--led);font-weight:400;background:#fff;border:1px solid #cfc8b6;border-radius:4px;padding:0 4px;color:var(--ink)}
 @media (hover:hover) and (pointer:fine){.kbd{display:block}.kk{display:inline}}
+.card.screen.ws-screen{max-width:1680px}
+.scr-body>.ws{flex:1;min-height:0}
+.th-atc{--thc:#2a9d5c}
+.ws{display:flex;flex-direction:column;gap:10px;min-height:0}
+.ws-head{display:grid;grid-template-columns:auto 1fr auto;gap:10px 16px;align-items:center;background:linear-gradient(135deg,var(--thc),color-mix(in srgb,var(--thc) 70%,#000));color:#fff;border-radius:14px;padding:10px 14px;box-shadow:0 4px 0 rgba(0,0,0,.25)}
+.ws-id{display:flex;gap:10px;align-items:center}
+.ws-ic{font-size:32px;background:rgba(255,255,255,.2);border-radius:12px;width:52px;height:52px;display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+.ws-id b{font-family:var(--display);font-size:22px;letter-spacing:1px;display:block;line-height:1.1}.ws-id small{opacity:.92;font-size:12px}
+.ws-shift{display:flex;flex-direction:column;gap:4px;min-width:0}.ws-st{font-size:11px}.ws-st b{color:#fff}
+.ws-clock{display:flex;align-items:center;gap:8px;font-size:12px}.ws-clock b{font-family:var(--led);font-size:18px;font-weight:400}
+.ws-bar{flex:1;height:8px;background:rgba(0,0,0,.25);border-radius:99px;overflow:hidden;display:block;min-width:40px}.ws-bar i{display:block;height:100%;background:var(--tag);border-radius:99px}
+.ws-kpis{display:flex;gap:6px;align-items:center}.ws-kpis span{background:rgba(0,0,0,.22);border-radius:10px;padding:4px 10px;display:flex;flex-direction:column;align-items:center}
+.ws-kpis small{font-size:9px;letter-spacing:1px;opacity:.85}.ws-kpis b{font-family:var(--led);font-size:18px;font-weight:400;color:var(--tag);white-space:nowrap}
+.ws-kpis .btn{width:auto;padding:8px 10px}
+.ws-grid{flex:1;min-height:0;display:grid;grid-template-columns:1.05fr 1.35fr .95fr;gap:12px}
+.ws-col{min-height:0;overflow:auto;scrollbar-width:thin;background:#fffaf0;border:2px solid #e3dccb;border-top:5px solid var(--thc);border-radius:14px;padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+.ws-col h4{font-family:var(--display);font-size:13px;letter-spacing:1px;margin:2px 0;color:var(--ink)}
+.ws-col h5{font-size:10px;letter-spacing:1.5px;color:var(--mute);margin:6px 0 0;display:flex;flex-wrap:wrap;align-items:center;gap:4px}.ws-col h5 small{letter-spacing:0;font-weight:400}
+.wcard{background:#fff;border:2px solid #e3dccb;border-radius:10px;padding:8px 10px;font-size:12px;line-height:1.4}
+.wcard.mine{border-color:var(--ok);background:#effaf3;animation:fxok .4s}.wcard.mine b{display:block;font-size:14px}.wcard.mine small{color:#1d6e40}
+.wcard.alertc{display:flex;gap:10px;align-items:center;border-left:6px solid var(--thc)}
+.wcard.alertc>div{flex:1;display:flex;flex-direction:column;gap:3px;min-width:0}.wcard.alertc b{font-size:13px}.wcard.alertc small{color:#5b5646;font-size:11px}
+.wcard.alertc .btn{width:auto;display:flex;flex-direction:column;align-items:center;white-space:nowrap;padding:8px 12px}.wcard.alertc .btn small{font-size:10px;color:inherit;opacity:.85}
+.wcard .ws-bar{background:#eee}.wcard .ws-bar i{background:var(--thc)}
+.wcard.warn{background:#fff8e1;border-color:#f1d27a}
+.wcard.boss{background:#fff3c4;border-color:#f1d27a}.wcard.boss.bad{background:#ffe9e7;border-color:#f3b3ad}
+.wempty{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;color:var(--mute);font-size:12px;padding:18px 10px}.wempty span{font-size:40px}
+.wempty.small{padding:6px;flex-direction:row;justify-content:center}
+.wbig{display:flex;flex-direction:column;align-items:center;gap:2px;background:var(--ok);color:#fff;border-radius:14px;padding:14px;box-shadow:0 4px 0 #1d6e40;width:100%}.wbig span{font-size:36px}.wbig b{font-size:18px}.wbig small{font-size:11px;opacity:.9}
+.wrow{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;font-size:12px;padding:5px 0;border-bottom:1px dashed #e3dccb}.wrow small{color:var(--mute)}
+.wbtns{margin-left:auto;display:flex;gap:4px}.wbtns .btn{width:auto}
+.wtiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:6px}.wtiles.two{grid-template-columns:1fr 1fr}
+.wtile{background:#fff;border:2px solid #e3dccb;border-radius:10px;padding:6px 8px;display:flex;flex-direction:column;min-width:0}
+.wtile small{font-size:9px;letter-spacing:1px;color:var(--mute);text-transform:uppercase}.wtile b{font-family:var(--led);font-size:20px;font-weight:400;white-space:nowrap}
+.wtile.good b{color:var(--ok)}.wtile.bad{border-color:#f3b3ad;background:#fff5f4}.wtile.bad b{color:var(--sign)}
+.wtools{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px}
+.wtool{display:grid;grid-template-columns:auto 1fr;column-gap:10px;align-items:center;text-align:left;background:var(--thc);color:#fff;border-radius:12px;padding:10px 12px;box-shadow:0 4px 0 rgba(0,0,0,.25);width:100%}
+.wtool span{grid-row:1/3;font-size:28px}.wtool b{font-size:14px}.wtool small{font-size:10px;opacity:.9}
+.wtool:disabled{filter:grayscale(.85);opacity:.45;box-shadow:none;cursor:default}
+.wtool:not(:disabled):hover{filter:brightness(1.08)}.wtool:not(:disabled):active{transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,.25)}
+.wstock{display:grid;grid-template-columns:30px 1fr auto;gap:8px;align-items:center;padding:4px 0;border-bottom:1px dashed #e3dccb}
+.wstock .we{font-size:22px}.wstock b{font-size:12px}.wstock small{font-size:10px;color:var(--mute)}.wstock .btn{width:auto}
+.sbar{display:flex;height:8px;background:#eee;border-radius:99px;overflow:hidden;margin:2px 0}.sbar i{display:block;height:100%}
+.sbar .s,.lg.s{background:var(--ok)}.sbar .b,.lg.b{background:#b98549}.sbar .c,.lg.c{background:#4a90d9}
+.lg{display:inline-block;width:8px;height:8px;border-radius:2px;margin:0 2px 0 6px}
+.wrep{display:flex;flex-direction:column;align-items:center;background:#fff;border:2px solid #e3dccb;border-radius:12px;padding:8px}
+.wrep .stars{font-size:30px;color:#f5b301;letter-spacing:2px;line-height:1}.wrep .stars i{font-style:normal;color:#ddd}.wrep b{font-family:var(--led);font-size:26px;font-weight:400}.wrep small{color:var(--mute);font-size:11px}
+.wrev{display:grid;grid-template-columns:30px 1fr auto;gap:8px;align-items:center;background:#fff;border:2px solid #e3dccb;border-radius:12px;padding:6px 8px}
+.wrev>span{font-size:22px}.wrev b{color:#f5b301;font-size:12px}.wrev small{display:block;font-size:11px}.wrev.bad{border-color:#f3b3ad}.wrev em{font-size:10px;color:var(--ok);font-style:normal}.wrev .btn{width:auto}
+.wplazas{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:4px 12px;font-size:12px;background:#fff;border:2px solid #e3dccb;border-radius:10px;padding:6px 10px}.wplazas>div{display:flex;justify-content:space-between;align-items:center}
+.wcrew{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px}
+.wmate{display:grid;grid-template-columns:30px 1fr;column-gap:6px;background:#fff;border:2px solid #e3dccb;border-radius:10px;padding:5px 7px;min-width:0}
+.wmate span{grid-row:1/4;font-size:22px;align-self:center}.wmate b{font-size:12px}.wmate small{font-size:10px;color:var(--mute)}
+.ws-quit{margin-top:auto;display:flex;justify-content:flex-end;padding-top:6px}.ws-quit .btn{width:auto}
+.ws-sw{display:none}
+@media (max-width:1000px){
+  .ws-sw{display:flex;gap:6px}.ws-sw button{flex:1;padding:8px 4px;border-radius:10px;background:#fff;border:2px solid #e3dccb;font-weight:700;font-size:12px}
+  .ws-sw button.on{background:var(--thc);color:#fff;border-color:var(--thc)}
+  .ws-grid{grid-template-columns:1fr}.ws-col{display:none}.col-tasks .c-tasks,.col-desk .c-desk,.col-side .c-side{display:flex}
+  .ws-head{grid-template-columns:1fr auto}.ws-shift{grid-column:1/-1;order:3}
+}
+@media (max-width:520px){.ws-head{padding:8px 10px;gap:6px}.ws-ic{width:40px;height:40px;font-size:24px}.ws-id b{font-size:16px}.ws-kpis span{padding:2px 6px}.ws-kpis b{font-size:14px}.ws-kpis small{font-size:8px}.wtile b{font-size:16px}}
+.wcard.alertc .btn{flex:0 0 auto;max-width:140px}
+.ws .btn.mini{padding:6px 10px;font-size:11px;line-height:1.2;height:auto;min-height:30px;white-space:nowrap;flex:0 0 auto}
+.wrev b{font-size:14px}
+.wtips{display:flex;flex-direction:column;gap:6px}.wtips>div{display:grid;grid-template-columns:26px 1fr;gap:6px;align-items:start;background:#fff;border:1px dashed #d9d0bd;border-radius:10px;padding:6px 8px}
+.wtips span{font-size:18px}.wtips p{margin:0;font-size:11px;line-height:1.4;color:#3d3a32}
+@media (max-width:1000px){.ws-screen .scr-head{display:none}}
+@media (max-width:520px){.ws-head{grid-template-columns:1fr}.ws-kpis{order:2}.ws-kpis span{flex:1}.ws-shift{order:3}.ws-id small{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:70vw}.ws-sw button{font-size:11px}}
 .row.cashbtns{display:grid;grid-template-columns:auto auto auto 1fr;gap:6px}.row.cashbtns .btn{white-space:nowrap;padding:9px 10px;width:auto;min-width:0}
 .fin .sum .hd{font-size:10px;letter-spacing:2px;color:var(--mute);margin-top:4px}
 .fin .sum .neg{color:var(--sign)}.fin .sum .pos{color:var(--ok)}
@@ -1551,7 +1620,7 @@ async function fillRanking(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.15-20';
+const APPV='2026.11.15-21';
 /* Compara versiones por números («-9» < «-11»), no como texto. */
 const verCmp=(a,b)=>{const x=String(a).split(/[.-]/).map(Number),y=String(b).split(/[.-]/).map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
 try{const vt=document.createElement('div');vt.id='vtag';vt.textContent='v'+APPV;document.body.appendChild(vt);}catch(e){}
@@ -1902,6 +1971,32 @@ function releaseReal(e){
   const d=run.duty&&run.duty[e.id];if(d){d.busy=0;d.task=null;}
 }
 function dropReal(e){releaseReal(e);meta.emp=meta.emp.filter(x=>x!==e);if(run&&run.duty)delete run.duty[e.id];}
+/* Herramientas del puesto de trabajo del empleado real: se piden con un act «take» de t negativo
+   (−1 inventario, −2 pedido, −3 arqueo, −4 entrevista, −(1000+pid) reponer, −(5000+id) responder una reseña).
+   El jefe crea el aviso y se lo da a quien lo ha pedido. */
+function toolTask(e,code){
+  if(!run||run.over||!isFree(e)){note(e.real,'Termina lo que tienes entre manos primero.',true);return;}
+  const r=e.role,open=k=>run.tasks.find(t=>t.k===k&&!t.who);
+  let t=null;
+  if(code<=-5000&&r==='rrpp'){
+    const id=-code-5000,rv=run.reviews&&run.reviews.find(x=>x.id===id);
+    if(!rv||rv.ans){note(e.real,'Esa reseña ya está contestada.',true);return;}
+    rv.ans=1;const good=Math.random()<perf(e,true);meta.rep=clamp(meta.rep+(good?0.05:-0.03),0,5);if(good)e.st.tasks++;else e.st.tfail++;
+    logE(e,'Contestó una reseña de '+rv.st+' estrellas');note(e.real,good?'💬 Respuesta publicada: el cliente se ha quedado más tranquilo (+reputación).':'💬 Tu respuesta ha sentado regular: más tacto la próxima vez.',!good);return;
+  }
+  if(code<=-1000&&r==='alm'){
+    const pid=-code-1000,p=CAT.find(x=>x.id===pid);if(!p)return;
+    if(!(meta.back[pid]>0)){note(e.real,'De '+p.n+' no queda nada en el almacén: hay que pedirlo.',true);return;}
+    t=run.tasks.find(x=>(x.k==='repo'||x.k==='call')&&x.pid===pid&&!x.who);
+    if(!t){const n=aisleOf(pid);t=almTask('repo','📦',10,TSHORT.repo.replace('%p%',p.n).replace('%n%',n),'Reponer «'+p.n+'» en el pasillo '+n+'.',{pid,n,roles:['alm','atc']});}
+  }
+  else if(code===-1&&r==='alm'){t=open('inv');if(!t){const n=ri(1,9);t=almTask('inv','📋',9,'Inventario del pasillo '+n,'Contar lo que queda en el pasillo '+n+' y apuntar lo que falta.',{n});}}
+  else if(code===-2&&r==='alm'){t=open('order')||almTask('order','🧾',8,'Pedido a Hacendado de lo que se acaba','Hacer el pedido de lo que se acaba al distribuidor.');}
+  else if(code===-3&&r==='back'){t=open('cash');if(!t){const n=ri(1,3);t=almTask('cash','🧮',12,TSHORT.cash.replace('%n%',n),'Arqueo de la caja '+n+': contar el cajón y ver si cuadra.',{n,roles:['back']});}}
+  else if(code===-4&&r==='rrhh'){t=open('cv')||almTask('cv','🧑‍💼',14,TSHORT.cv,'Un candidato espera en la puerta para la entrevista.',{roles:['rrhh'],cand:makeCand()});}
+  if(!t){note(e.real,'Eso no es de tu puesto.',true);return;}
+  giveReal(t,e,false);
+}
 function giveReal(t,e,byBoss){
   t.who=e.id;t.real=1;t.match=true;t.span=REAL_LIM;t.until=run.t+REAL_LIM;
   const d=run.duty[e.id];d.busy=1;d.task=t.id;d.slack=null;
@@ -1920,6 +2015,7 @@ function onAct(a){
     return;
   }
   if(!run||run.over)return;
+  if(a.k==='take'&&+a.t<0){toolTask(e,+a.t);renderAll();pubState(true);return;}
   const t=run.tasks.find(x=>x.id===a.t);
   if(a.k==='take'){
     if(!t||t.who||!isFree(e)){note(e.real,'Llegas tarde: eso ya lo tiene otra persona.',true);return;}
@@ -1996,7 +2092,21 @@ function depData(){
     pend:Object.values(meta.back).reduce((t,v)=>t+(v||0),0),out:CAT.filter(x=>(meta.stock[x.id]||0)<=0).length,
     tk:{back:live?run.tickets.filter(t=>t.dept==='back').length:0,rrpp:live?run.tickets.filter(t=>t.dept==='rrpp').length:0,alm:live?run.tickets.filter(t=>t.dept==='alm').length:0},
     rev:live&&run.reviews?run.reviews.slice(0,5).map(r=>[r.st,r.t]):[],sales:live?run.sales:0,
-    apps:appsList().map(([u,m])=>[u,cleanName(m.name),m.apply,m.on?1:0]),staff:meta.emp.length};
+    apps:appsList().map(([u,m])=>[u,cleanName(m.name),m.apply,m.on?1:0]),staff:meta.emp.length,
+    /* Para el puesto de trabajo del empleado real */
+    ...wsData(live)};
+}
+function wsData(live){
+  const inc=incoming(),cm=live?camModel():null,doing={};
+  if(cm)toArr(cm.staff).forEach(x=>{doing[x.id]=x.x;});
+  return {
+    stock:CAT.slice().sort((x,y)=>((meta.stock[x.id]||0)+(meta.back[x.id]||0))-((meta.stock[y.id]||0)+(meta.back[y.id]||0))).slice(0,10).map(x=>[x.id,meta.stock[x.id]||0,meta.back[x.id]||0,inc[x.id]||0]),
+    ords:meta.orders.length,tips:live?run.tips:0,fines:live?run.fines:0,served:live?run.served:0,angry:live?run.angry:0,
+    pay:meta.emp.reduce((a,e)=>a+Math.round(e.wage*Math.max(1,((run&&run.dur)||100)/100)),0),
+    revs:live&&run.reviews?run.reviews.slice(0,6).map(r=>[r.id,r.st,r.t,r.ans?1:0,r.f]):[],
+    crew:meta.emp.map(e=>[e.face,cleanName(e.name),e.role,mood(e),verdict(e),e.real||'',live?(doing[e.id]||(working(e)?'aún no ha llegado':'no viene hoy')):'']),
+    you:Object.fromEntries(meta.emp.filter(e=>e.real).map(e=>[e.real,[e.st.tasks,e.st.tfail,e.st.ok,e.st.fail,e.st.cv,e.trial||0,e.wage]]))
+  };
 }
 function memberDept(st,role){
   const d=st&&st.dep;if(!d)return '';
@@ -2007,6 +2117,76 @@ function memberDept(st,role){
   else if(role==='rrhh'){const ap=toArr(d.apps);h+=`<div class="supd">Plantilla: ${d.staff} personas. Tú tramitas las solicitudes de empleo.</div>`+(ap.length?'<div class="shop">'+ap.map(x=>`<div class="up"><div class="t"><b>${x[3]?'🟢':'⚪'} ${esc(x[1])}</b>Solicita ${JOB_IC[x[2]]||''} ${ROLES[x[2]]?ROLES[x[2]].n:''}</div><button class="btn go" data-act="rhh" data-k="hire" data-u="${esc(x[0])}">Contratar</button><button class="btn no" data-act="rhh" data-k="reject" data-u="${esc(x[0])}">No</button></div>`).join('')+'</div>':'<div class="supd">No hay solicitudes pendientes.</div>');}
   else h+=`<div class="supd">Cola en la Caja 3: ${st.q}. Ayuda con los avisos de sala cuando estés libre.</div>`;
   return h;
+}
+/* --- lado del empleado real ---
+   Puesto de trabajo: una sola pantalla con tres columnas (en el móvil, una cada vez con el selector de arriba):
+   🔔 avisos de su departamento · 🛠️ su mesa con herramientas de su cargo · ⭐ su jornada, el equipo y el jefe. */
+const WS_DESK={atc:'🧾 TU CAJA',alm:'📟 STOCK Y MUELLE',back:'🗄️ CUENTAS Y CAJA FUERTE',rrpp:'📱 REPUTACIÓN Y RESEÑAS',rrhh:'🗂️ PLANTILLA Y CONTRATOS'};
+function workScreen(o){
+  const {st,role,me,tasks,mine,stale,status,verMsg,whoName}=o,d=(st&&st.dep)||{},open=!stale&&st&&st.phase==='open';
+  const R=ROLES[role],you=((d.you||{})[room.uid])||[0,0,0,0,0,0,0],col=room.wcol||'tasks';
+  const tool=(c,ic,lb,sub,dis)=>`<button class="wtool" data-act="rtool" data-c="${c}" ${dis||!open||mine?'disabled':''}><span>${ic}</span><b>${lb}</b><small>${sub}</small></button>`;
+  const prog=st&&st.dur?clamp(st.t/st.dur,0,1)*100:0;
+  /* cabecera */
+  let h=`<div class="ws th-${role}${role==='atc'?' th-atc':''} col-${col}">
+    <div class="ws-head"><div class="ws-id"><span class="ws-ic">${JOB_IC[role]}</span><div><b>${R.n.toUpperCase()}</b><small>${esc(playerName())}${you[5]?' · en prueba ('+you[5]+' turnos)':''}${you[6]?' · '+fmt(you[6])+'/turno':''}</small></div></div>
+      <div class="ws-shift"><div class="ws-st">${status}</div>${st&&!stale?`<div class="ws-clock"><b>🕘 ${clockOf(st.t,st.dur)}</b><span class="ws-bar"><i style="width:${prog}%"></i></span><small>Turno ${st.day}</small></div>`:''}</div>
+      <div class="ws-kpis">${st&&!stale?`<span><small>BOTE</small><b>${fmt(st.money)}</b></span><span><small>REPUTACIÓN</small><b>★ ${(+st.rep).toFixed(1)}</b></span><span><small>COLA</small><b>${st.q}</b></span>`:''}
+        <button class="btn" data-act="guide" title="Cómo se trabaja en tu puesto">📘</button></div></div>
+    ${verMsg}${room.msg?`<div class="${room.msg.bad?'rerr':'rok'}">${esc(room.msg.t)}</div>`:''}
+    <div class="ws-sw"><button class="${col==='tasks'?'on':''}" data-act="wscol" data-k="tasks">🔔 Avisos</button><button class="${col==='desk'?'on':''}" data-act="wscol" data-k="desk">🛠️ Mi mesa</button><button class="${col==='side'?'on':''}" data-act="wscol" data-k="side">⭐ Jornada</button></div>
+    <div class="ws-grid">`;
+  /* columna 1: avisos */
+  h+='<section class="ws-col c-tasks"><h4>🔔 AVISOS DE '+R.s.toUpperCase()+'</h4>';
+  if(role==='atc'&&run&&run.remote)h+='<button class="wbig" data-act="rtill"><span>🧾</span><b>Volver a mi caja</b><small>Caja '+run.till+' · '+run.queue.length+' en tu cola</small></button>';
+  else if(role==='atc'&&open&&!(st.tills&&st.tills[room.uid]))h+=`<div class="wcard warn">🧾 Esperando a que la tienda te abra una caja… ${Object.keys(st.tills||{}).length>=2?'Las cajas 1 y 2 están ocupadas: ayuda con los avisos.':'Suele tardar un par de segundos.'}</div>`;
+  if(stale)h+='<div class="wempty"><span>⏸️</span>La tienda está en pausa: el jefe no tiene el juego abierto.</div>';
+  else if(st&&PHASE[st.phase])h+=`<div class="wcard">${PHASE[st.phase]}</div>`+reportHtml(st.rpt,role);
+  else{
+    if(mine)h+=`<div class="wcard mine"><b>${mine.ic} ${esc(mine.s)}</b><small>Es tuyo · te quedan ${mine.left} s</small></div>`;
+    const op=tasks.filter(t=>!t.who&&!t.npc&&toArr(t.roles).includes(role)&&(t.k!=='tk'||t.dept===role));
+    h+=op.map(t=>`<div class="wcard alertc"><div><b>${t.ic} ${esc(t.s)}</b><small>${esc(t.txt||'')}</small><span class="ws-bar"><i style="width:${Math.max(0,Math.min(100,t.left/TLIFE*100))}%"></i></span></div><button class="btn go" data-act="rtake" data-t="${t.id}" ${mine?'disabled':''}>Me encargo<small>${t.left} s</small></button></div>`).join('')
+      ||(mine?'':'<div class="wempty"><span>☕</span>Nada pendiente ahora mismo. Usa las herramientas de tu mesa: el trabajo no se hace solo.</div>');
+    const busy=tasks.filter(t=>t.who&&t.who!==room.uid&&toArr(t.roles).includes(role));
+    if(busy.length)h+='<h5>EN CURSO EN TU DEPARTAMENTO</h5>'+busy.map(t=>`<div class="wrow">${t.ic} ${esc(t.s)} <small>${whoName(t.who)}</small></div>`).join('');
+  }
+  if(GUIDE[role])h+='<h5>CÓMO HACERLO BIEN</h5><div class="wtips">'+GUIDE[role].steps.slice(1).map(([ic,t])=>`<div><span>${ic}</span><p>${t}</p></div>`).join('')+'</div>';
+  h+='</section>';
+  /* columna 2: la mesa del cargo */
+  h+='<section class="ws-col c-desk"><h4>'+WS_DESK[role]+'</h4>';
+  const tile=(lb,v,cls)=>`<div class="wtile ${cls||''}"><small>${lb}</small><b>${v}</b></div>`;
+  if(role==='alm'){
+    const mx=Math.max(6,...toArr(d.stock).map(x=>(+x[1])+(+x[2])+(+x[3])));
+    h+=`<div class="wtiles">${tile('Agotados',d.out||0,(d.out||0)>3?'bad':'')}${tile('En el muelle',(d.pend||0)+' uds')}${tile('Pedidos en camino',d.ords||0)}${tile('Quejas por agotado',(d.tk||{}).alm||0)}</div>
+      <div class="wtools">${tool(-1,'📋','Hacer inventario','Cuenta un pasillo con la PDA')}${tool(-2,'🧾','Hacer pedido','Hoja de pedido a Hacendado')}</div>
+      <h5>LO QUE MENOS QUEDA <small><i class="lg s"></i>estantería <i class="lg b"></i>almacén <i class="lg c"></i>en camino</small></h5>`
+      +toArr(d.stock).map(([id,sh,bk,ic])=>{const p=CAT.find(x=>x.id===+id)||CAT[0];return `<div class="wstock"><span class="we">${p.e}</span><div><b>${esc(p.n)}</b><span class="sbar"><i class="s" style="width:${sh/mx*100}%"></i><i class="b" style="width:${bk/mx*100}%"></i><i class="c" style="width:${ic/mx*100}%"></i></span><small>${sh} est. · ${bk} alm. · ${ic} en camino · pasillo ${aisleOf(p.id)}</small></div><button class="btn mini" data-act="rtool" data-c="${-(1000+p.id)}" ${!open||mine||!(+bk>0)?'disabled':''}>📦 Reponer</button></div>`;}).join('');
+  }else if(role==='back'){
+    h+=`<div class="wtiles">${tile('Bote',fmt(st?st.money:0),st&&st.money<5000?'bad':'')}${tile('Ventas del turno',fmt(d.sales||0),'good')}${tile('Propinas',fmt(d.tips||0))}${tile('Multas y pérdidas',fmt(d.fines||0),(d.fines||0)>0?'bad':'')}${tile('Nómina a pagar',fmt(d.pay||0))}${tile('Reclamaciones de dinero',(d.tk||{}).back||0,(d.tk||{}).back?'bad':'')}</div>
+      <div class="wtools">${tool(-3,'🧮','Hacer arqueo','Cuenta el cajón y mira si cuadra')}</div>
+      <div class="wcard">💡 Las reclamaciones de dinero te llegan como avisos 📨 en tu columna de avisos. Si no las coges, se resuelven al cerrar… y peor.</div>`;
+  }else if(role==='rrpp'){
+    const rp=st?+st.rep:0;
+    h+=`<div class="wrep"><div class="stars">${'★'.repeat(Math.round(rp))}<i>${'★'.repeat(5-Math.round(rp))}</i></div><b>${rp.toFixed(1)}</b><small>${rp>=4?'La tienda tiene buena fama':rp>=2.5?'Fama regular: cuidado':'¡Reputación por los suelos!'}</small></div>
+      <div class="wtiles">${tile('Quejas en bandeja',(d.tk||{}).rrpp||0,(d.tk||{}).rrpp?'bad':'')}${tile('Clientes enfadados',d.angry||0,(d.angry||0)>1?'bad':'')}${tile('Clientes atendidos',d.served||0)}</div>
+      <h5>RESEÑAS DE HOY EN VITCHGRAM</h5>`+(toArr(d.revs).map(([id,sv,tx,ans,f])=>`<div class="wrev ${sv<=3?'bad':''}"><span>${f||'🙂'}</span><div><b>${'★'.repeat(sv)}${'☆'.repeat(5-sv)}</b><small>«${esc(tx)}»</small></div>${ans?'<em>✔ contestada</em>':sv<=3?`<button class="btn mini" data-act="rtool" data-c="${-(5000+id)}" ${!open||mine?'disabled':''}>💬 Contestar</button>`:''}</div>`).join('')||'<div class="wempty small">Sin reseñas todavía.</div>');
+  }else if(role==='rrhh'){
+    const cnt=(st&&st.cnt)||{},free=Object.keys(ROLES).some(k=>(cnt[k]||0)<ROLES[k].max),ap=toArr(d.apps);
+    h+='<div class="wplazas">'+Object.keys(ROLES).map(k=>`<div><span>${JOB_IC[k]} ${ROLES[k].s}</span><span class="slots">${Array.from({length:ROLES[k].max},(_,i)=>`<i class="${i<(cnt[k]||0)?'on':''}"></i>`).join('')}</span></div>`).join('')+'</div>'
+      +`<div class="wtools">${tool(-4,'🧑‍💼','Hacer una entrevista','Un candidato espera en la puerta',!free)}</div>`
+      +'<h5>SOLICITUDES DE EMPLEO</h5>'+(ap.map(x=>`<div class="wrow"><b>${x[3]?'🟢':'⚪'} ${esc(x[1])}</b> <small>solicita ${JOB_IC[x[2]]||''} ${ROLES[x[2]]?ROLES[x[2]].n:''}</small><span class="wbtns"><button class="btn go mini" data-act="rhh" data-k="hire" data-u="${esc(x[0])}">Contratar</button><button class="btn no mini" data-act="rhh" data-k="reject" data-u="${esc(x[0])}">No</button></span></div>`).join('')||'<div class="wempty small">No hay solicitudes pendientes.</div>')
+      +'<h5>PLANTILLA</h5><div class="wcrew">'+toArr(d.crew).map(c=>`<div class="wmate"><span>${c[0]}</span><b>${esc(c[1])}${c[5]?' 🎮':''}</b><small>${JOB_IC[c[2]]||''} ${ROLES[c[2]]?ROLES[c[2]].s:''} · ${c[3]}</small><small>${esc(c[4])}</small></div>`).join('')+'</div>';
+  }else{
+    h+=`<div class="wtiles">${tile('Cola de la Caja 3',st?st.q:0)}${Object.entries((st&&st.tq)||{}).map(([n,q])=>tile('Cola de la Caja '+n,q)).join('')}${tile('Atendidos en la tienda',d.served||0)}${tile('Se fueron enfadados',d.angry||0,(d.angry||0)?'bad':'')}</div>
+      <div class="wcard">⌨️ En el ordenador: <b>Espacio</b> escanea, <b>B</b> bolsa, <b>Intro</b> cobra, <b>S</b>/<b>N</b> en el DNI.</div>`;
+  }
+  h+='</section>';
+  /* columna 3: jornada, equipo y jefe */
+  h+=`<section class="ws-col c-side"><h4>⭐ TU JORNADA</h4><div class="wtiles two">${tile('Avisos bien',you[0],'good')}${tile('Avisos mal',you[1],you[1]?'bad':'')}${tile('Reclamaciones bien',you[2],'good')}${tile('Reclamaciones mal',you[3],you[3]?'bad':'')}${role==='atc'?tile('Clientes cobrados',you[4]):''}</div>`
+    +(room.note?`<h4>📣 DEL JEFE</h4><div class="wcard boss ${room.note.bad?'bad':''}">${esc(room.note.m)}</div>`:'')
+    +'<h4>👥 EQUIPO EN TIENDA</h4><div class="wcrew">'+(toArr(d.crew).filter(c=>c[6]).map(c=>`<div class="wmate"><span>${c[0]}</span><b>${esc(c[1])}${c[5]===room.uid?' (tú)':c[5]?' 🎮':''}</b><small>${JOB_IC[c[2]]||''} ${esc(c[6])}</small></div>`).join('')||membersHtml())+'</div>'
+    +'<div class="ws-quit"><button class="btn" data-act="rquit" '+(mine?'disabled':'')+'>Dejar el trabajo</button></div></section>';
+  return h+'</div></div>';
 }
 /* --- lado del empleado real --- */
 const PHASE={lobby:'⏳ Esperando a que el jefe abra la tienda…',shop:'🧾 Turno cerrado. El jefe está con las cuentas y los pedidos.',meeting:'🗣️ Reunión de personal. El jefe está decidiendo sobre cada uno.',dead:'🪦 La tienda ha cerrado. Esperando a ver si el jefe vuelve a empezar.'};
@@ -2053,32 +2233,12 @@ function renderMember(){
       if(pend)foot='<button class="btn" data-act="rcancel">Retirar la solicitud</button>';
     }
   }else{
-    kind='work';
-    const openN=tasks.filter(t=>!t.who&&(t.k!=='tk'||t.dept===role)).length;
-    const dd=st&&st.dep,depN=!dd?0:role==='rrhh'?toArr(dd.apps).length:role==='alm'?(dd.out||0):((dd.tk||{})[role]||0);
-    tabs=[['job','🛠️ Trabajo',openN],['dept',JOB_IC[role]+' '+ROLES[role].s,depN],whoTab,['help','📘 Cómo se trabaja']];
-    if(scrTab.work==='who')body=membersHtml();
-    else if(scrTab.work==='help')body='<ol class="gsteps">'+GUIDE[role].steps.map(([ic,t])=>`<li><span>${ic}</span><div>${t}</div></li>`).join('')+'</ol>';
-    else if(scrTab.work==='dept')body=stale?'<div class="supd">⏸️ La tienda está en pausa.</div>':memberDept(st,role)+(PHASE[st.phase]?reportHtml(st.rpt,role):'');
-    else{
-      body=top+`<div class="supd">${JOB_IC[role]} Trabajas en <b>${ROLES[role].n}</b> como <b>${esc(playerName())}</b>.</div>`;
-      if(role==='atc'&&!stale&&(st.phase==='open'||st.phase==='closing')&&!(st.tills&&st.tills[room.uid]))body+=`<div class="task"><div>🧾 Esperando a que la tienda te abra una caja…</div><div class="supd">${Object.keys(st.tills||{}).length>=2?'Las cajas 1 y 2 ya están ocupadas: mientras tanto, ayuda con los avisos.':'Suele tardar un par de segundos. Si no llega, que el jefe recargue la página.'}</div></div>`;
-      if(stale)body+='<div class="supd">⏸️ La tienda está en pausa: el jefe no tiene el juego abierto.</div>';
-      else if(PHASE[st.phase])body+='<div class="supd">'+PHASE[st.phase]+'</div>'+reportHtml(st.rpt,role);
-      else{
-        if(mine)body+=`<div class="task"><div>${mine.ic} ${esc(mine.s)}</div><div class="supd">Es tuyo. Te quedan ${mine.left} s.</div></div>`;
-        const open=tasks.filter(t=>!t.who&&!t.npc&&toArr(t.roles).includes(role)&&(t.k!=='tk'||t.dept===role)).slice(0,4);
-        body+='<div class="zone-title">AVISOS SIN DUEÑO</div>'+(open.map(t=>{const m=toArr(t.roles).includes(role);
-          return `<div class="alert"><span class="at">${t.ic} ${esc(t.s)}</span><span class="who"><button class="btn ${m?'':'off'}" data-act="rtake" data-t="${t.id}" ${mine?'disabled':''} title="Es de tu puesto">Me encargo</button> <small>${t.left} s</small></span></div>`;}).join('')
-          ||'<div class="supd">Nada pendiente. Disimula, que te ve el jefe.</div>');
-        const busy=tasks.filter(t=>t.who&&t.who!==room.uid).slice(0,4);
-        if(busy.length)body+='<div class="zone-title">EN CURSO</div><div class="crew">'+busy.map(t=>`<div>${t.ic} ${esc(t.s)} · ${whoName(t.who)}</div>`).join('')+'</div>';
-      }
-      if(room.note)body+=`<div class="supd">📣 Último aviso del jefe: ${esc(room.note.m)}</div>`;
-    }
-    foot=(run&&run.remote?'<button class="btn go big" data-act="rtill">🧾 Volver a mi caja</button>':'')+(mine?'':'<button class="btn" data-act="rquit">Dejar el trabajo</button>');
+    kind='work';tabs=[];
+    body=workScreen({st,role,me,tasks,mine,stale,status,verMsg,whoName});
+    foot='';
   }
-  const h=screenHtml(kind,'<span class="logo">VITCHMARKET</span>',tabs,body,'',bossBtn+foot);
+  let h=screenHtml(kind,'<span class="logo">VITCHMARKET</span>',tabs,body,'',bossBtn+foot);
+  if(kind==='work')h=h.replace('<div class="card screen">','<div class="card screen ws-screen">').replace('<div class="scr-foot"></div>','');
   if(atTill){if($('#overlay').classList.contains('show'))hideOverlay();}
   else if(h!==room.lastHtml){const pv=$('#pname')?$('#pname').value:null;room.lastHtml=h;showOverlay(h);if(pv!=null&&$('#pname'))$('#pname').value=pv;}
   if(mg&&mg.remote&&st&&!stale&&!tasks.some(t=>t.id===mg.t.id&&t.who===room.uid)){mg=null;closeMG();if(run&&run.remote)run.away=null;toast('Se acabó el tiempo para ese aviso.','bad');}
@@ -4156,6 +4316,8 @@ function onClick(e){
   else if(a==='rhire')hireReal(b.dataset.u);
   else if(a==='rreject')rejectReal(b.dataset.u);
   else if(a==='rtake')roomAct({k:'take',t:+b.dataset.t});
+  else if(a==='rtool'){roomAct({k:'take',t:+b.dataset.c});toast('Se lo pides al jefe…');}
+  else if(a==='wscol'){room.wcol=b.dataset.k;room.lastHtml='';renderMember();}
   else if(a==='rhh')roomAct({k:b.dataset.k,u:b.dataset.u});
   else if(a==='rboss')takeOver();
   if(run&&run.over&&!run.dead&&meta.closed)saveGame(true);
