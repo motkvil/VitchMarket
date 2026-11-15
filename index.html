@@ -376,6 +376,30 @@ body:not([data-tab="caja"]) .queue-wrap{display:none}
 .gpg{align-self:center;font-weight:700;padding:0 6px}
 .guidec .row .btn:first-child{flex:0 0 auto;padding:10px 14px}
 .tab.help{flex:0 0 auto}
+/* Minijuegos de Almacén */
+.mgsteps{display:flex;gap:4px;flex-wrap:wrap}
+.mgsteps span{font-size:11px;padding:3px 8px;border-radius:99px;background:#e9e2cf;color:#5b5646}
+.mgsteps span.on{background:var(--tag);color:var(--ink);font-weight:700}.mgsteps span.ok{background:#cdebd6;color:#1d5c37}
+.crates,.dock{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:6px}
+.crate{display:flex;flex-direction:column;align-items:center;gap:2px;background:#e9d9b0;border-radius:8px;padding:8px 6px;box-shadow:0 3px 0 rgba(0,0,0,.3);font-size:22px;line-height:1.1;text-align:center}
+.crate b{font-size:11px;font-weight:500}.crate small{font-size:10px;color:#5b5646}
+.crate.sel{outline:3px solid var(--sign);background:var(--tag)}
+.crate:active,.unit:active{transform:translateY(2px)}
+.lineal{background:#8b6f4e;border-radius:8px;padding:6px;display:flex;flex-direction:column;gap:5px}
+.lrow{display:grid;grid-template-columns:54px repeat(4,1fr);gap:5px;align-items:stretch}
+.lrow em{font-style:normal;font-size:9px;color:#fff;letter-spacing:1px;align-self:center}
+.lrow.front{border-top:3px solid #5c4630;padding-top:5px}
+.unit{position:relative;min-height:52px;background:rgba(255,255,255,.9);border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:22px;line-height:1;box-shadow:0 2px 0 rgba(0,0,0,.3)}
+.unit small{font-size:9px;color:#5b5646;margin-top:3px}.unit small.nw{color:var(--ok);font-weight:700}
+.unit b{position:absolute;top:-4px;right:-2px;font-size:14px}
+.unit.empty{background:rgba(255,255,255,.18);box-shadow:none;color:#fff;font-size:18px}
+.unit.gone{background:rgba(0,0,0,.2);box-shadow:none;font-size:16px}
+.pda{display:flex;flex-direction:column;gap:6px}.pda .btn{text-align:left}
+.alb{display:flex;flex-direction:column;gap:6px}
+.albl{background:#fff;border-radius:6px;padding:6px 8px;display:flex;flex-direction:column;gap:5px;font-size:12px}
+.albl small{display:block;color:#5b5646}.albl .br{margin-left:4px}
+.albm{display:flex;gap:4px}.albm .btn{padding:5px 4px;font-size:11px}
+@media (max-height:700px){#mg .box{height:46px;font-size:24px}#mg .card{padding:14px;gap:8px}.unit{min-height:42px;font-size:18px}.crate{padding:5px 4px;font-size:18px}}
 .cashier .camb{display:none}
 .logo{color:var(--sign);text-shadow:2px 2px 0 var(--ink);letter-spacing:1px}
 .scr-head .sub{font-family:var(--body);font-size:12px;color:#5b5646;text-shadow:none;letter-spacing:0}
@@ -1442,15 +1466,15 @@ function onAct(a){
     giveReal(t,e,false);
   }else if(a.k==='done'){
     if(!t||t.who!==e.id)return;
-    doneReal(t,e,clamp(+a.sc||0,0,1),!!a.early);
+    doneReal(t,e,clamp(+a.sc||0,0,1),!!a.early,a.x||{});
   }else if(a.k==='drop'){if(t&&t.who===e.id)releaseReal(e);}
   if(run&&!run.over)renderAll();
   pubState(true);
 }
-function doneReal(t,e,sc,early){
+function doneReal(t,e,sc,early,x){
   run.tasks=run.tasks.filter(x=>x!==t);
   const d=run.duty[e.id];if(d){d.busy=0;d.task=null;}
-  const r=applyMG(t,sc,early,e);
+  const r=applyMG(t,sc,early,e,x);
   if(t.k!=='tk'){if(r.good){e.st.tasks++;run.tdone++;}else{e.st.tfail++;run.tlost++;}}
   logE(e,(r.good?'Resolvió':'Hizo mal')+' un aviso: '+t.s);
   toast('🎮 '+e.name+': '+r.msg,r.good?'good':'bad');
@@ -1956,9 +1980,161 @@ const aisleOf=id=>(AISLES.find(a=>id>=a[2]&&id<=a[3])||AISLES[2])[0];
 const ZONES=[['frio','❄️ Cámara de frío'],['fruta','🍎 Fruta y verdura'],['drog','🧴 Droguería'],['seco','📦 Seco y bebidas']];
 const zoneOf=id=>(id<=8||(id>=30&&id<=37)||id>=65)?'frio':(id>=38&&id<=48)?'fruta':(id>=56&&id<=64)?'drog':'seco';
 const ASK={en:'Excuse me, where is the %e%?',fr:'Pardon, où est le %e% ?',de:'Entschuldigung, wo ist %e%?',it:'Scusi, dov\'è %e%?',pt:'Desculpe, onde fica %e%?',zh:'请问，%e% 在哪里？',ar:'من فضلك، أين %e%؟',ro:'Scuzați, unde este %e%?'};
+/* ---------- minijuegos de Almacén ----------
+   rot   (reponer / megafonía): 1 coger la caja buena del almacén · 2 retirar del lineal lo caducado o roto
+         · 3 colocar lo nuevo DETRÁS (rotación: lo viejo se vende primero) · 4 poner la etiqueta con el precio
+         del producto correcto según la PDA.
+   recv  (camión): 1 comprobar el albarán línea a línea (todo bien / falta / roto) y firmar
+         · 2 ubicar cada caja en su zona; lo de frío pierde cadena de frío si esperas a meterlo.
+   spill2 (derrame): cartel, recoger cristales antes de fregar, fregar, retirar el producto roto y quitar el
+         cartel cuando todo esté seco. Cada fallo tiene su consecuencia (ver applyMG). */
+const dayMs=864e5,today0=(()=>{const d=new Date(TODAY);d.setHours(0,0,0,0);return d;})();
+const dShort=d=>String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0');
+const perish=id=>zoneOf(id)==='frio'||zoneOf(id)==='fruta'||aisleOf(id)===2;
+const shuffle=a=>a.map(x=>[Math.random(),x]).sort((p,q)=>p[0]-q[0]).map(x=>x[1]);
+function startRot(t,p){
+  const sameA=shuffle(CAT.filter(x=>x.id!==p.id&&!x.age&&aisleOf(x.id)===aisleOf(p.id)));
+  const decoys=sameA.slice(0,2).concat(shuffle(CAT.filter(x=>x.id!==p.id&&!x.age&&!sameA.slice(0,2).includes(x))).slice(0,1));
+  const per=perish(p.id),front=[];
+  for(let i=0;i<4;i++){
+    if(Math.random()<0.2){front.push(null);continue;}
+    const r=Math.random(),bad=r<0.4?(per&&Math.random()<0.75?'cad':'roto'):null;
+    front.push({bad,d:per?(bad==='cad'?-ri(1,6):ri(2,15)):null,out:false});
+  }
+  if(!front.some(u=>u&&u.bad)){const i=front.findIndex(u=>u);const k=i<0?0:i;front[k]={bad:per?'cad':'roto',d:per?-ri(1,5):null,out:false};}
+  const pda=shuffle([p].concat(sameA.slice(0,2).length?sameA.slice(0,2):decoys.slice(0,2))).map(x=>({id:x.id,n:x.n,f:x.f||'',p:x.p}));
+  return {kind:'rot',t,p,step:0,crates:shuffle([p].concat(decoys)).map(x=>({id:x.id,e:x.e,n:x.n,f:x.f||''})),front,back:[null,null,null,null],newLeft:4,
+    wrongBox:0,goodOut:0,badOut:0,rotErr:0,priceErr:false,pda};
+}
+function startRecv(t){
+  const ids=t.remote?(t.bk||[]):Object.keys(meta.back).filter(id=>meta.back[id]>0).map(Number);
+  const pool=shuffle(ids.length?ids.map(id=>CAT.find(x=>x.id===id)).filter(Boolean):CAT.filter(x=>!x.age));
+  const extra=shuffle(CAT.filter(x=>!x.age&&!pool.includes(x)));
+  const prods=pool.concat(extra).slice(0,4);
+  const lines=prods.map(x=>{const q=ri(1,3),r=Math.random();const falta=r<0.25&&q>1?1:0,roto=!falta&&r<0.45?1:0;
+    return {id:x.id,e:x.e,n:x.n,q,got:q-falta,roto,mark:null};});
+  if(!lines.some(l=>l.got<l.q||l.roto)){const l=lines[ri(0,lines.length-1)];if(l.q>1)l.got=l.q-1;else l.roto=1;}
+  return {kind:'recv',t,step:0,lines,dock:[],sel:-1,placedOk:0,placedBad:0,spoiled:0};
+}
+function startSpill(t){
+  const p=pick(CAT.filter(x=>!x.age&&(aisleOf(x.id)===t.n||Math.random()<0.15)))||pick(CAT.filter(x=>!x.age));
+  const glass=Math.random()<0.6;
+  const cands=shuffle([p].concat(shuffle(CAT.filter(x=>!x.age&&x.id!==p.id)).slice(0,2)));
+  return {kind:'spill2',t,p,glass,sign:false,shards:glass?3:0,spots:[0,0,0,0,0],early:false,cut:false,out:false,wrongOut:0,cands};
+}
+function recvToDock(){
+  mg.dock=[];
+  mg.lines.forEach(l=>{for(let i=0;i<l.got-l.roto;i++)mg.dock.push({id:l.id,e:l.e,n:l.n,z:zoneOf(l.id),life:zoneOf(l.id)==='frio'?3:null,done:false});});
+  mg.dock=shuffle(mg.dock);mg.step=1;
+}
+function finishRot(){
+  const badLeft=mg.front.filter(u=>u&&u.bad&&!u.out).length;
+  mg.x={merma:mg.badOut+mg.goodOut,badLeft,priceErr:mg.priceErr?1:0,rotErr:mg.rotErr};
+  return endMG(clamp(1-0.2*mg.wrongBox-0.25*badLeft-0.15*mg.goodOut-0.15*mg.rotErr-(mg.priceErr?0.3:0),0,1));
+}
+function finishRecv(){
+  const unit=id=>{const x=CAT.find(y=>y.id===id);return x?unitCost(x,'hac')*6:300;};
+  let abono=0,lost=0,falsas=0,okMarks=0;
+  mg.lines.forEach(l=>{
+    const real=l.got<l.q?'falta':l.roto?'roto':'ok',bad=(l.q-l.got)+l.roto;
+    if(l.mark===real){okMarks++;abono+=real==='ok'?0:bad*unit(l.id);}
+    else if(real==='ok')falsas++;
+    else lost+=bad*unit(l.id);
+  });
+  const nBox=mg.placedOk+mg.placedBad+mg.spoiled;
+  mg.x={abono,lost,falsas,spoiled:mg.spoiled,placed:mg.placedOk,ids:mg.dock.filter(b=>b.ok).map(b=>b.id)};
+  return endMG(clamp(0.5*okMarks/mg.lines.length+0.5*(nBox?mg.placedOk/nBox:1)-0.1*falsas,0,1));
+}
+function finishSpill(){
+  const wet=mg.spots.filter(s=>s<2).length;
+  mg.early=mg.early||false;
+  mg.x={cut:mg.cut?1:0,notOut:mg.out?0:1,wrongOut:mg.wrongOut,wetLeft:wet,glass:mg.glass?1:0,pid:mg.p.id};
+  return endMG(clamp(1-(mg.early?0.3:0)-(mg.cut?0.3:0)-(mg.out?0:0.2)-0.1*wet-0.1*mg.wrongOut,0,1));
+}
+function almBody(){
+  const steps=(names,cur)=>'<div class="mgsteps">'+names.map((n,i)=>`<span class="${i===cur?'on':i<cur?'ok':''}">${i<cur?'✔':i+1} ${n}</span>`).join('')+'</div>';
+  if(mg.kind==='rot'){
+    const p=mg.p,unitB=(u,row,i)=>{
+      if(!u)return mg.step===2?`<button class="unit empty" data-act="mgput" data-r="${row}" data-i="${i}">＋</button>`:'<span class="unit empty"></span>';
+      if(u.out)return '<span class="unit gone">🗑️</span>';
+      const lab=u.isNew?'<small class="nw">nuevo</small>':u.d!=null?`<small>cad. ${dShort(new Date(today0.getTime()+u.d*dayMs))}</small>`:'<small>lote ok</small>';
+      return mg.step===1&&!u.isNew?`<button class="unit ${u.bad==='roto'?'broken':''}" data-act="mgout" data-i="${i}">${p.e}${u.bad==='roto'?'<b>💥</b>':''}${lab}</button>`:`<span class="unit ${u.bad==='roto'?'broken':''}">${p.e}${u.bad==='roto'&&!u.out?'<b>💥</b>':''}${lab}</span>`;
+    };
+    const lin=`<div class="lineal"><div class="lrow"><em>DETRÁS</em>${mg.back.map((u,i)=>unitB(u,'b',i)).join('')}</div><div class="lrow front"><em>DELANTE</em>${mg.front.map((u,i)=>unitB(u,'f',i)).join('')}</div></div>`;
+    let h=steps(['Coger','Retirar','Colocar','Etiqueta'],mg.step);
+    if(mg.step===0)h+=`<div class="supd">En el almacén, coge la caja de <b>${p.e} ${p.n}</b>${p.f?' ('+esc(p.f)+')':''}. Hay cajas parecidas.</div>
+      <div class="crates">${mg.crates.map((c,i)=>`<button class="crate" data-act="mgcrate" data-i="${i}">📦<b>${c.n}</b><small>${esc(c.f)}</small></button>`).join('')}</div>${mg.wrongBox?`<div class="supd">❌ Cajas equivocadas: ${mg.wrongBox}</div>`:''}`;
+    else if(mg.step===1)h+=`<div class="supd">Hoy es <b>${dShort(today0)}</b>. Toca lo que esté <b>caducado o roto</b> para retirarlo (va a merma). Lo bueno, déjalo.</div>${lin}<button class="btn go" data-act="mgnext">Lineal revisado ▶</button>`;
+    else if(mg.step===2)h+=`<div class="supd">Te quedan <b>${mg.newLeft}</b> unidades nuevas. Ponlas <b>detrás</b>: lo viejo se vende primero.</div>${lin}`;
+    else h+=`<div class="supd">Mira la PDA y pon la etiqueta con el precio de <b>${p.n}</b>${p.f?' ('+esc(p.f)+')':''}.</div>
+      <div class="pda">${mg.pda.map((x,i)=>`<button class="btn" data-act="mgprice" data-i="${i}">🏷️ ${x.n} <small>${esc(x.f)}</small> · <b>${fmt(x.p)}</b></button>`).join('')}</div>`;
+    return h;
+  }
+  if(mg.kind==='recv'){
+    let h=steps(['Albarán','Ubicar'],mg.step);
+    if(mg.step===0){
+      h+=`<div class="supd">Compara el <b>albarán</b> con lo que ha bajado del camión y marca cada línea. Si firmas sin apuntar una falta o una rotura, la pagas tú.</div>
+        <div class="alb">${mg.lines.map((l,i)=>`<div class="albl"><div><b>${l.e} ${l.n}</b><small>Albarán: ${l.q} ${l.q===1?'caja':'cajas'} · En el muelle: ${'📦'.repeat(l.got-l.roto)}${l.roto?'<span class="br">📦💥</span>':''}</small></div>
+          <div class="albm">${[['ok','✅'],['falta','➖ Falta'],['roto','💥 Roto']].map(([k,lb])=>`<button class="btn ${l.mark===k?'on':''}" data-act="mgmark" data-i="${i}" data-k="${k}">${lb}</button>`).join('')}</div></div>`).join('')}</div>
+        <button class="btn go" data-act="mgsignalb" ${mg.lines.every(l=>l.mark)?'':'disabled'}>✍️ Firmar el albarán</button>`;
+    }else{
+      const left=mg.dock.filter(b=>!b.done);
+      h+=`<div class="supd">Ubica cada caja: tócala y luego su zona. <b>Lo de frío primero</b>: cada caja que metas antes le quita frío (❄️).</div>
+        <div class="dock">${mg.dock.map((b,i)=>b.done?'':`<button class="crate ${mg.sel===i?'sel':''}" data-act="mgpick" data-i="${i}">${b.e}<b>${b.n}</b>${b.life!=null?`<small>${'❄️'.repeat(b.life)}</small>`:''}</button>`).join('')}</div>
+        <div class="zones">${ZONES.map(z=>`<button class="btn" data-act="mgzone2" data-z="${z[0]}" ${mg.sel<0?'disabled':''}>${z[1]}</button>`).join('')}</div>
+        <div class="supd">Bien ubicadas: ${mg.placedOk} · Mal: ${mg.placedBad}${mg.spoiled?' · Echadas a perder: '+mg.spoiled:''} · Quedan ${left.length}</div>`;
+    }
+    return h;
+  }
+  /* derrame */
+  const wet=mg.spots.filter(s=>s<2).length;
+  let h=`<div class="supd">Se ha roto ${mg.glass?'un bote de <b>cristal</b>':'un envase'} en el pasillo ${mg.t.n}. Hazlo en orden: <b>cartel</b> → ${mg.glass?'<b>cristales</b> (antes de fregar, o te cortas) → ':''}<b>fregar</b> → <b>retirar el producto roto</b> → quitar el cartel cuando esté seco.</div>
+    <div class="row"><button class="btn ${mg.sign?'on':''}" data-act="mgsign" ${mg.sign?'disabled':''}>⚠️ ${mg.sign?'Cartel puesto':'Poner el cartel'}</button></div>`;
+  if(mg.glass)h+=`<div class="boxes">${Array.from({length:3},(_,i)=>i<3-mg.shards?'<span class="box done">🧹</span>':`<button class="box" data-act="mgshard" aria-label="Recoger cristales">🔷</button>`).join('')}</div>`;
+  h+=`<div class="boxes">${mg.spots.map((s,i)=>s>=2?'<span class="box done">✨</span>':`<button class="box" data-act="mgmop2" data-i="${i}">${['💦','🫧'][s]}</button>`).join('')}</div>
+    <div class="supd">Entre los restos del suelo se ve ${mg.p.e}. ¿Qué producto se ha roto? Retíralo de la estantería (merma).</div>
+    <div class="row">${mg.cands.map((c,i)=>`<button class="btn ${mg.out&&c.id===mg.p.id?'on':''}" data-act="mgout2" data-i="${i}" ${mg.out?'disabled':''}>${c.e} ${c.n}</button>`).join('')}</div>
+    <button class="btn go" data-act="mgend2">🚧 Quitar el cartel y terminar${wet?' ('+wet+' charcos sin secar)':''}</button>`;
+  return h;
+}
+function almAct(a,b){
+  if(mg.kind==='rot'){
+    if(a==='mgcrate'){const c=mg.crates[+b.dataset.i];if(!c)return;if(c.id===mg.p.id){mg.step=1;sBeep();}else{mg.wrongBox++;sBad();toast(c.n+' no es lo que hay que reponer','bad');}}
+    else if(a==='mgout'){const u=mg.front[+b.dataset.i];if(!u||u.out)return;u.out=true;if(u.bad){mg.badOut++;sCoin();}else{mg.goodOut++;sBad();toast('Eso estaba bien: lo has tirado','bad');}}
+    else if(a==='mgnext'){mg.front=mg.front.map(u=>u&&u.out?null:u);mg.step=2;}
+    else if(a==='mgput'){
+      const row=b.dataset.r,i=+b.dataset.i,arr=row==='b'?mg.back:mg.front;if(arr[i]||mg.newLeft<=0)return;
+      arr[i]={isNew:1};mg.newLeft--;
+      if(row==='f'&&mg.front.some(u=>u&&!u.isNew)){mg.rotErr++;sBad();toast('Nuevo delante de lo viejo: lo viejo acabará caducando','bad');}else sBeep();
+      if(mg.newLeft<=0||![...mg.back,...mg.front].some(u=>!u))mg.step=3;
+    }
+    else if(a==='mgprice'){const x=mg.pda[+b.dataset.i];if(!x)return;mg.priceErr=x.id!==mg.p.id;if(mg.priceErr)toast('Esa etiqueta es de otro producto: en caja se cobrará mal','bad');return finishRot();}
+  }else if(mg.kind==='recv'){
+    if(a==='mgmark'){const l=mg.lines[+b.dataset.i];if(l)l.mark=b.dataset.k;}
+    else if(a==='mgsignalb'){if(!mg.lines.every(l=>l.mark))return;recvToDock();sCoin();if(!mg.dock.length)return finishRecv();}
+    else if(a==='mgpick'){mg.sel=+b.dataset.i;}
+    else if(a==='mgzone2'){
+      const bx=mg.dock[mg.sel];if(!bx||bx.done)return;
+      bx.done=true;bx.ok=b.dataset.z===bx.z;if(bx.ok){mg.placedOk++;sBeep();}else{mg.placedBad++;sBad();toast(bx.n+' no va en esa zona','bad');}
+      mg.dock.forEach(o=>{if(!o.done&&o.life!=null&&bx.life==null){o.life--;if(o.life<=0){o.done=true;mg.spoiled++;toast('❄️ '+o.n+' ha perdido la cadena de frío: a la basura','bad');}}});
+      mg.sel=-1;if(mg.dock.every(o=>o.done))return finishRecv();
+    }
+  }else{
+    if(a==='mgsign'){mg.sign=true;sCoin();}
+    else if(a==='mgshard'){if(mg.shards>0){mg.shards--;sCoin();}}
+    else if(a==='mgmop2'){const i=+b.dataset.i;if(!mg.sign)mg.early=true;if(mg.shards>0&&!mg.cut){mg.cut=true;sBad();toast('🩸 Has fregado con cristales en el suelo y te has cortado','bad');}mg.spots[i]++;sCoin();}
+    else if(a==='mgout2'){const c=mg.cands[+b.dataset.i];if(!c)return;if(c.id===mg.p.id){mg.out=true;sBeep();}else{mg.wrongOut++;sBad();toast(c.n+' estaba bien','bad');}}
+    else if(a==='mgend2')return finishSpill();
+  }
+  renderMG();
+}
+
 function startMG(t){
   const p=CAT.find(x=>x.id===t.pid)||CAT[0];
-  if(t.k==='repo'||t.k==='call'){
+  if(t.k==='repo'||t.k==='call')mg=startRot(t,p);
+  else if(t.k==='spill')mg=startSpill(t);
+  else if(t.k==='truck')mg=startRecv(t);
+  else if(false){
     const dec=CAT.filter(x=>x.e!==p.e&&!x.age),boxes=[];
     for(let i=0;i<6;i++)boxes.push({e:p.e,ok:1});
     for(let i=0;i<3;i++){const d=pick(dec);boxes.push({e:d.e,n:d.n,ok:0});}
@@ -1980,7 +2156,8 @@ function renderMG(){
   if(!mg||mg.kind==='sup')return;
   const t=mg.t,cv=run&&run.away&&run.away.cover&&empById(run.away.cover);
   let body='';
-  if(mg.kind==='shelf'){
+  if(mg.kind==='rot'||mg.kind==='recv'||mg.kind==='spill2')body=almBody();
+  else if(mg.kind==='shelf'){
     const slots=Array.from({length:6},(_,i)=>`<span class="slot2">${i<mg.placed?mg.p.e:''}</span>`).join('');
     body=`<div class="supd">Coloca las 6 unidades de <b>${mg.p.e} ${mg.p.n}</b> en el lineal. Ojo, que en el carro hay cosas de otros pasillos.</div>
       <div class="shelf">${slots}</div>
@@ -2010,6 +2187,7 @@ function renderMG(){
 }
 function mgAct(a,b){
   if(!mg||mg.kind==='sup')return;
+  if(mg.kind==='rot'||mg.kind==='recv'||mg.kind==='spill2')return almAct(a,b);
   if(a==='mgbox'){
     const x=mg.boxes[+b.dataset.i];if(!x||x.done)return;
     if(x.ok){x.done=1;mg.placed++;sBeep();if(mg.placed>=6)return endMG(clamp(1-mg.miss*0.2,0,1));}
@@ -2027,27 +2205,54 @@ function mgAct(a,b){
   }
   renderMG();
 }
-const MGK={repo:'shelf',call:'shelf',spill:'mop',help:'ask',tour:'ask',truck:'truck',tk:'tk'};
+const MGK={repo:'rot',call:'rot',spill:'spill2',help:'ask',tour:'ask',truck:'recv',tk:'tk'};
 const TKO={back:[['💶 Comprobar el ticket y devolver lo que toca',1],['💸 Devolverle el doble para que se calle',0],['🙅 Decirle que sin ticket regalo no hay nada',0]],
  rrpp:[['🙏 Pedir perdón y ofrecerle un vale de 5 €',1],['😏 Contestarle en redes con ironía',0],['🙈 Ignorarlo, ya se cansará',0]],
  alm:[['📦 Mirar en el almacén y apartárselo',1],['🤷 Que vuelva otro día, a ver si hay suerte',0],['🙄 Decirle que ese producto no existe',0]]};
 function tkOpts(t){const o=(TKO[t.dept]||TKO.back).map(x=>x.slice());if(t.mis){o.forEach(x=>{x[1]=0;});o.push(['↩️ Esto no es de mi departamento: devolverla',1]);}return o.sort(()=>Math.random()-0.5);}
 function endMG(sc){
-  const t=mg.t,early=mg.early,remote=mg.remote;mg=null;closeMG();
-  if(t.desk){const r=applyMG(t,sc,early);toast(r.msg,r.good?'good':'bad');r.good?sOk():sBad();renderAll();checkRep();return;}
+  const t=mg.t,early=mg.early,remote=mg.remote,x=mg.x||{};mg=null;closeMG();
+  if(t.desk){const r=applyMG(t,sc,early,null,x);toast(r.msg,r.good?'good':'bad');r.good?sOk():sBad();renderAll();checkRep();return;}
   if(remote&&run&&run.remote){run.away=null;renderAll();}
-  if(remote){room.done[t.id]=1;roomAct({k:'done',t:t.id,sc,early:!!early});toast(sc>=0.6?'Hecho. Se lo cuentas al jefe…':'Regular… Se lo cuentas al jefe.',sc>=0.6?'good':'bad');sc>=0.6?sOk():sBad();room.lastHtml='';renderMember();return;}
-  run.tasks=run.tasks.filter(x=>x!==t);
-  const r=applyMG(t,sc,early);
+  if(remote){room.done[t.id]=1;roomAct({k:'done',t:t.id,sc,early:!!early,x});toast(sc>=0.6?'Hecho. Se lo cuentas al jefe…':'Regular… Se lo cuentas al jefe.',sc>=0.6?'good':'bad');sc>=0.6?sOk():sBad();room.lastHtml='';renderMember();return;}
+  run.tasks=run.tasks.filter(y=>y!==t);
+  const r=applyMG(t,sc,early,null,x);
   if(r.good)run.tdone++;else run.tlost++;
   if(run.away&&run.away.auto)renderAll();else returnTill();
   toast(r.msg,r.good?'good':'bad');if(r.good)sOk();else sBad();
   checkRep();
 }
 /* Efectos de un minijuego terminado (lo hagas tú o un empleado real desde su navegador). */
-function applyMG(t,sc,early,e){
-  const kind=MGK[t.k]||'truck';
+function applyMG(t,sc,early,e,x){
+  const kind=MGK[t.k]||'recv';x=x||{};
   let msg='',good=sc>=0.6;
+  const lose=(id,n)=>{n=Math.max(0,Math.round(+n||0));const s=Math.min(n,meta.stock[id]||0);meta.stock[id]=(meta.stock[id]||0)-s;return n;};
+  if(kind==='rot'){
+    const mv=moveStock(t.pid,Math.round(8*sc)),p=CAT.find(y=>y.id===t.pid)||CAT[0],L=[];
+    const merma=lose(t.pid,x.merma);if(merma)L.push(merma+' a merma');
+    if(+x.badLeft>0&&Math.random()<0.5){addTicket('rrpp','Ha encontrado '+p.n+' caducado en la estantería',0,2,false);meta.rep=clamp(meta.rep-0.15,0,5);L.push('se ha quedado algo caducado a la vista');}
+    if(+x.priceErr){addTicket('back','Le cobraron '+p.n+' a otro precio que el de la etiqueta',Math.max(50,Math.round(p.p*0.3)),1,false);L.push('etiqueta equivocada');}
+    if(+x.rotErr)L.push('lo nuevo quedó delante');
+    msg=(mv?'Lineal repuesto: +'+mv+' uds en estantería':'Lineal revisado, pero en el almacén no quedaba más')+(L.length?' · '+L.join(' · '):'')+'.';
+  }else if(kind==='recv'){
+    meta.money+=Math.round(+x.abono||0)-Math.round(+x.lost||0);
+    let cap=Math.min(24,6*Math.round(+x.placed||0)),tot=0;
+    toArr(x.ids).forEach(id=>{if(cap>0){const mv=moveStock(id,Math.min(6,cap));cap-=mv;tot+=mv;}});
+    Object.keys(meta.back).forEach(id=>{if(cap>0){const mv=moveStock(id,cap);cap-=mv;tot+=mv;}});
+    if(+x.falsas)meta.rep=clamp(meta.rep-0.05*x.falsas,0,5);
+    const L=[];if(+x.abono)L.push('abono del proveedor +'+fmt(+x.abono));if(+x.lost)L.push('firmaste sin apuntar faltas o roturas −'+fmt(+x.lost));if(+x.spoiled)L.push(x.spoiled+' sin cadena de frío');if(+x.falsas)L.push('reclamaste cosas que estaban bien');
+    msg='Camión descargado'+(tot?': +'+tot+' uds a estantería':'')+(L.length?' · '+L.join(' · '):'')+'.';
+    if(sc<0.6)meta.rep=clamp(meta.rep-0.1,0,5);
+  }else if(kind==='spill2'){
+    const L=[];
+    if(early&&Math.random()<0.4){addTicket('back','Un cliente se resbaló en el pasillo '+t.n+' (no había cartel)',ri(1000,3000),3,false);meta.rep=clamp(meta.rep-0.3,0,5);L.push('sin cartel, alguien se ha resbalado');good=false;}
+    if(+x.wetLeft&&Math.random()<0.3){addTicket('back','Un cliente se resbaló en el pasillo '+t.n+' (suelo mojado sin cartel)',ri(800,2000),2,false);L.push('quitaste el cartel con el suelo mojado');good=false;}
+    if(+x.cut){if(e)e.moral=clamp(e.moral-6,0,100);L.push('corte con los cristales');}
+    if(+x.notOut&&Math.random()<0.4){addTicket('alm','Un cliente ha cogido un '+((CAT.find(y=>y.id===+x.pid)||{}).n||'producto')+' roto',0,1,false);L.push('el producto roto seguía en la estantería');}
+    else if(!+x.notOut)lose(+x.pid,1);
+    if(good)meta.rep=clamp(meta.rep+0.05,0,5);
+    msg='Pasillo '+t.n+(good?' limpio y seco':' recogido a medias')+(L.length?' · '+L.join(' · '):'')+'.';
+  }else
   if(kind==='shelf'){const mv=moveStock(t.pid,Math.round(8*sc));msg=mv?'Lineal repuesto: +'+mv+' uds en estantería.':'Has colocado lo que había, pero en el almacén no quedaba más.';}
   else if(kind==='mop'){
     if(early&&Math.random()<0.4){addTicket('back','Un cliente se resbaló en el pasillo '+t.n+' (no había cartel)',ri(1000,3000),3,false);meta.rep=clamp(meta.rep-0.3,0,5);msg='Sin cartel, alguien se ha resbalado mientras fregabas. Reclamación en camino.';good=false;}

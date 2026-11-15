@@ -149,6 +149,9 @@
             },
             "done": {
               ".validate": "true"
+            },
+            "x": {
+              ".validate": "true"
             }
           }
         },
