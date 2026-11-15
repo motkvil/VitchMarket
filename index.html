@@ -1441,7 +1441,7 @@ async function fillRanking(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.15-13';
+const APPV='2026.11.15-14';
 /* Compara versiones por números («-9» < «-11»), no como texto. */
 const verCmp=(a,b)=>{const x=String(a).split(/[.-]/).map(Number),y=String(b).split(/[.-]/).map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
 try{const vt=document.createElement('div');vt.id='vtag';vt.textContent='v'+APPV;document.body.appendChild(vt);}catch(e){}
@@ -2057,6 +2057,7 @@ function assignTask(tid,who){
   if(who==='me'){
     if(run.away&&run.away.auto){if(mg)return;t.who='me';t.until=Infinity;t.span=1;startMG(t);renderAll();return;}
     if(run.away)return;
+    run.hold=t.id;
     askLeave(()=>{
       if(!run.tasks.includes(t)||t.who){toast('Llegas tarde: eso ya no hace falta.','bad');returnTill();return;}
       t.who='me';t.until=Infinity;t.span=1;startMG(t);
@@ -2124,7 +2125,9 @@ function finishTask(t){
 }
 function expireTask(t){
   run.tasks=run.tasks.filter(x=>x!==t);
-  if(t.k==='tk'){renderAll();return;}run.tlost++;
+  if(t.k==='tk'){renderAll();return;}
+  if(t.npc){toast('Nadie de Almacén pudo con: '+t.ic+' '+t.s,'bad');renderAll();return;}
+  run.tlost++;
   meta.rep=clamp(meta.rep-t.pen,0,5);
   if(t.k==='spill'&&Math.random()<0.3){addTicket('back','Un cliente se resbaló en el pasillo '+t.n,ri(1000,3000),3,false);toast('Nadie limpió el pasillo '+t.n+' y alguien se ha caído','bad');}
   else toast('Nadie atendió: '+t.ic+' '+t.s,'bad');
@@ -2146,6 +2149,9 @@ function tickStaff(dt){
      los avisos de su departamento a los 3 s de salir (antes el jefe puede elegir a quién mandar). */
   if(!run.remote)run.tasks.forEach(t=>{
     if(run.over||t.who||t.k==='tk'||TLIFE-(t.dl-run.t)<3)return;
+    /* No se lo quitan al jefe mientras decide: «Voy yo» pendiente o el desplegable de ese aviso abierto. */
+    if(pendingLeave&&run.hold===t.id)return;
+    {const ae=document.activeElement;if(ae&&ae.classList&&ae.classList.contains('force')&&+ae.dataset.t===t.id)return;}
     const c=meta.emp.filter(e=>isFree(e)&&!e.real&&!run.duty[e.id].slack&&t.roles.includes(e.role));if(!c.length)return;
     const sc=e=>(t.lang&&e.langs.includes(t.lang)?2:0)+e.rap;
     const e=c.sort((a,b)=>sc(b)-sc(a))[0];
