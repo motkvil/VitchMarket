@@ -128,6 +128,7 @@ button:focus-visible{outline:3px solid var(--tag);outline-offset:2px}
 .card .sum b{text-align:right}
 .card .sum .tot{border-top:2px dashed var(--ink);padding-top:6px;margin-top:4px;font-weight:500}
 .shop{display:flex;flex-direction:column;gap:6px}
+.row.cashbtns{display:grid;grid-template-columns:auto auto auto 1fr;gap:6px}.row.cashbtns .btn{white-space:nowrap;padding:9px 10px;width:auto;min-width:0}
 .fin .sum .hd{font-size:10px;letter-spacing:2px;color:var(--mute);margin-top:4px}
 .fin .sum .neg{color:var(--sign)}.fin .sum .pos{color:var(--ok)}
 .trend{display:flex;align-items:flex-end;gap:6px;height:64px;padding:4px 0}
@@ -1051,11 +1052,12 @@ function route(d){
   if(d==='atc'){
     if(q.dept==='atc'){sOk();meta.rep=clamp(meta.rep+0.1,0,5);run.served++;toast('Resuelto en el momento','good');removeFront();renderAll();return;}
     c.p=Math.max(0,c.p-c.max*0.35);c.err++;run.errors++;
-    toast('Eso no se resuelve en caja. Derívalo.','bad');sBad();renderQueue();return;
+    toast('Eso no se resuelve en caja: es de '+({back:'Backoffice',rrpp:'RR.PP.',alm:'Almacén'}[q.dept]||'otro departamento')+'.','bad');sBad();renderQueue();return;
   }
   const mis=d!==q.dept;
   addTicket(d,q.t,q.refund,q.sev,mis);
-  toast(mis?'Derivado al departamento equivocado':'Derivado. Se va tranquilo.',mis?'bad':'good');mis?sBad():sOk();
+  const DN={atc:'resolverla tú en caja',back:'Backoffice',rrpp:'RR.PP.',alm:'Almacén'};
+  toast(mis?'Mal derivado: eso era de '+DN[q.dept]+'.':'Derivado. Se va tranquilo.',mis?'bad':'good');mis?sBad():sOk();
   run.served++;removeFront();renderAll();
 }
 function say(c,idx){
@@ -1525,7 +1527,7 @@ async function fillRanking(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.15-17';
+const APPV='2026.11.15-18';
 /* Compara versiones por números («-9» < «-11»), no como texto. */
 const verCmp=(a,b)=>{const x=String(a).split(/[.-]/).map(Number),y=String(b).split(/[.-]/).map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
 try{const vt=document.createElement('div');vt.id='vtag';vt.textContent='v'+APPV;document.body.appendChild(vt);}catch(e){}
@@ -3373,16 +3375,21 @@ function idDecision(sell){
   }
   renderAll();checkRep();
 }
-function toggleBag(){const c=front();if(!c||c.phase==='done')return;c.bag=!c.bag;sCoin();renderAll();}
+function toggleBag(){const c=front();if(!c||c.phase==='done'||run.card)return;c.bag=!c.bag;sCoin();
+  /* Si ya estaba pagando en efectivo y con la bolsa no le llega, saca más dinero. */
+  if(c.phase==='pay'&&c.pay==='cash'&&c.given<totalOf(c)){c.given=cashGiven(totalOf(c));toast('Saca un poco más para la bolsa: entrega '+fmt(c.given)+'.');}
+  renderAll();}
 function goPay(){
   const c=front();if(!c||c.phase!=='scan'||run.pendingId)return;
   if(c.items.some(i=>!i.scanned&&!i.denied)){toast('Quedan productos sin escanear','bad');return;}
+  /* Si no se lleva nada (menor al que se le negó todo), se va sin pagar y sin cuenta de bolsa. */
+  if(c.items.every(i=>i.denied)){c.bag=c.wantsBag=false;toast('No se lleva nada. Siguiente.');finish(c,true);return;}
   const t=totalOf(c);
   if(t===0){finish(c,true);return;}
   c.phase='pay';
   if(c.pay==='cash'){
     const P=PERS[c.pk]||{};
-    if(P.exact&&Math.random()<P.exact){c.given=t;toast('Te paga con los céntimos justos 🪙. No hay cambio: pulsa «Dar cambio».');}
+    if(P.exact&&Math.random()<P.exact){c.given=t;toast('Te paga con los céntimos justos 🪙. No hay cambio.','good');sCoin();finish(c,false);return;}
     else c.given=cashGiven(t);
   }
   renderAll();
@@ -3542,7 +3549,7 @@ function renderRegister(){
       <div class="cashrow due"><span>Cambio a dar</span><b>${fmt(c.given-t)}</b></div>
       <div class="cashrow tray"><span>Cambio en bandeja</span><b>${fmt(traySum())}</b></div>
       <div class="denoms">${d}</div>
-      <div class="row"><button class="btn" data-act="clear">Vaciar</button><button class="btn go" data-act="deliver">Dar cambio</button></div>`;
+      <div class="row cashbtns"><button class="btn ${c.bag?'on':''}" data-act="bag" title="Bolsa +0,15 €">🛍️ Bolsa</button><button class="btn" data-act="undo" title="Quitar la última moneda o billete" ${run.tray.length?'':'disabled'}>↩️ Quitar</button><button class="btn" data-act="clear" title="Vaciar la bandeja" ${run.tray.length?'':'disabled'}>🗑️</button><button class="btn go" data-act="deliver">Dar cambio</button></div>`;
   }
   el.innerHTML=h+supBtn();
 }
@@ -4049,6 +4056,7 @@ function onClick(e){
   else if(a==='card')payCard();
   else if(a==='den')addTray(+b.dataset.v);
   else if(a==='clear')clearTray();
+  else if(a==='undo'){run.tray.pop();sCoin();renderRegister();}
   else if(a==='deliver')deliver();
   else if(a==='cams')toggleCams();
   else if(a==='mute'){muted=!muted;b.textContent=muted?'🔇':'🔊';}
