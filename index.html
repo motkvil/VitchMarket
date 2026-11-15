@@ -316,6 +316,7 @@ body:not([data-tab="caja"]) .queue-wrap{display:none}
 .sidebar{min-height:0;overflow:auto;scrollbar-width:thin;display:flex;flex-direction:column;gap:8px;background:rgba(0,0,0,.28);border-radius:8px;padding:8px}
 .sidehead{display:flex;align-items:center;justify-content:space-between;color:#d8e8de;font-family:var(--display);font-size:13px;letter-spacing:1px}
 .sideclose,.alertbtn{display:none}
+.sidehead .aall{flex:0 0 auto;margin-left:auto;margin-right:6px;font-family:var(--body);letter-spacing:0}
 .sidebar .tasks{padding:8px;gap:6px}
 .camwin{position:static;width:auto;box-shadow:none;border:0;padding:0;z-index:auto}
 .camwin.show{display:block}
@@ -418,7 +419,7 @@ body:not([data-tab="caja"]) .queue-wrap{display:none}
       <section class="dept" id="dept" hidden aria-live="polite"></section>
     </div>
     <aside class="sidebar" id="sidebar" aria-label="Avisos, personal y cámaras">
-      <div class="sidehead"><b>🔔 AVISOS</b><button class="btn mini sideclose" data-act="side" aria-label="Cerrar avisos">✕</button></div>
+      <div class="sidehead"><b>🔔 AVISOS</b><button class="btn mini go aall" id="aallBtn" data-act="aall" disabled title="Reparte todos los avisos pendientes entre el personal libre">⚡ Asignar todo</button><button class="btn mini sideclose" data-act="side" aria-label="Cerrar avisos">✕</button></div>
       <section class="alerts" id="alerts" aria-live="polite"></section>
       <section class="tasks" id="tasks" aria-label="Avisos en curso y personal"></section>
       <div id="camwin" class="camwin" aria-label="Cámaras de seguridad"><div class="camhead"><span>📹 Toca una cámara para ampliarla, y a una persona para ver qué hace</span><button class="btn mini" data-act="cams" aria-label="Cerrar cámaras">✕</button></div><div id="camslot"></div></div>
@@ -1558,6 +1559,20 @@ function pullOff(e){
   d.busy=0;d.task=null;d.slack=null;
   e.moral=clamp(e.moral-2,0,100);
 }
+/* «Asignar todo»: cada aviso sin dueño va a la mejor persona libre (su puesto, su idioma, su rapidez;
+   los jugadores reales, los últimos). Las reclamaciones en directo (tk) se quedan para quien las coja. */
+function assignAll(){
+  if(!run||run.over)return;
+  let n=0;
+  run.tasks.filter(t=>!t.who&&t.k!=='tk').forEach(t=>{
+    const free=meta.emp.filter(isFree);if(!free.length)return;
+    const sc=e=>(t.roles.includes(e.role)||e.pers==='servicial'?2:0)+(t.lang&&e.langs.includes(t.lang)?2:0)-(e.real?1.5:0)+e.rap*0.5-(run.duty[e.id].slack?0.3:0);
+    const e=free.sort((a,b)=>sc(b)-sc(a))[0];
+    assignTask(t.id,String(e.id));n++;
+  });
+  const left=run.tasks.filter(t=>!t.who&&t.k!=='tk').length;
+  toast(n?'⚡ '+n+(n===1?' aviso asignado':' avisos asignados')+(left?'. Quedan '+left+' sin nadie libre.':'.'):'No hay nadie libre para los avisos pendientes.',n?'good':'bad');
+}
 function moveStock(id,max){const mv=Math.min(max,meta.back[id]||0);if(mv>0){meta.back[id]-=mv;meta.stock[id]=(meta.stock[id]||0)+mv;}return mv;}
 function finishTask(t){
   run.tasks=run.tasks.filter(x=>x!==t);
@@ -1678,6 +1693,8 @@ function renderTasks(){
   updateTaskBars();
   const n=run.tasks.filter(t=>!t.who&&t.k!=='tk').length+(isHost()?appsList().length:0),ab=$('#alertBtn');
   if(ab){ab.querySelector('b').textContent=n;ab.classList.toggle('hot',n>0);}
+  const aa=$('#aallBtn'),pendT=run.tasks.filter(t=>!t.who&&t.k!=='tk').length,freeN=meta.emp.filter(isFree).length;
+  if(aa){aa.disabled=!(pendT&&freeN)||run.over;aa.textContent='⚡ Asignar todo'+(pendT&&freeN?' ('+Math.min(pendT,freeN)+')':'');}
 }
 
 /* ---------- salir de caja: qué le dices al cliente, o a quién dejas ---------- */
@@ -2708,6 +2725,7 @@ function onClick(e){
   else if(a==='stab'){scrTab[b.dataset.s]=b.dataset.k;pg=0;rerenderScreen();}
   else if(a==='pg'){pg+=+b.dataset.d;rerenderScreen();}
   else if(a==='side')$('#sidebar').classList.toggle('open');
+  else if(a==='aall')assignAll();
   else if(a==='dtk')deskTicket(+b.dataset.id);
   else if(a==='drepo')deskRepo(+b.dataset.id);
   else if(a==='drev')answerReview(+b.dataset.id);

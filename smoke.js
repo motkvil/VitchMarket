@@ -28,6 +28,7 @@ setInterval(()=>{
   if(Math.random()<.05){const sel=d.querySelector('#alerts select.force');if(sel&&sel.options.length>1){sel.value=sel.options[1+Math.floor(Math.random()*(sel.options.length-1))].value;sel.dispatchEvent(new w.Event('change',{bubbles:true}));stats.force=(stats.force||0)+1;return;}}
   if(Math.random()<.02){const sp=d.querySelector('[data-act=supervise]');if(sp){stats.sup=(stats.sup||0)+1;cl(sp);return;}}
   const rtn=d.querySelector('#register [data-act=return]');if(rtn&&Math.random()<.05){cl(rtn);return;}
+  if(Math.random()<.1){const aa=d.querySelector('#aallBtn:not([disabled])');if(aa){const before=d.querySelectorAll('#alerts .alert').length;cl(aa);stats.aall=(stats.aall||0)+1;stats.aallFreed=(stats.aallFreed||0)+(before-d.querySelectorAll('#alerts .alert').length);return;}}
   if(Math.random()<.3){const as=any(d,'[data-act=assign]:not([disabled])');if(as){stats.assign++;cl(as);return;}}
   const rt=d.querySelector('[data-act=route]');
   if(rt){stats.complaints++;const k=['atc','back','rrpp','alm','no'];cl(d.querySelector('[data-act=route][data-d='+k[Math.floor(Math.random()*5)]+']'));return;}
