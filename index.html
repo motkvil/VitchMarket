@@ -124,7 +124,7 @@ button:focus-visible{outline:3px solid var(--tag);outline-offset:2px}
 .card h1,.card h2{font-family:var(--display);font-weight:400;margin:0;line-height:1.05}
 .card h1{font-size:44px;color:var(--sign)}.card h2{font-size:26px}
 .card ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px}
-.card .sum{display:grid;grid-template-columns:1fr auto;gap:2px 12px}
+.card .sum{display:grid;grid-template-columns:minmax(55%,1fr) auto;gap:2px 12px}
 .card .sum b{text-align:right}
 .card .sum .tot{border-top:2px dashed var(--ink);padding-top:6px;margin-top:4px;font-weight:500}
 .shop{display:flex;flex-direction:column;gap:6px}
@@ -160,6 +160,17 @@ button:focus-visible{outline:3px solid var(--tag);outline-offset:2px}
 #mg{position:fixed;inset:0;background:rgba(10,24,20,.7);display:none;align-items:flex-start;justify-content:center;padding:16px;z-index:25;overflow:auto}
 #mg.show{display:flex}
 .mgc{max-width:460px}
+/* Pantallas anchas: las ventanas largas usan casi todo el ancho, en columnas tipo periódico. */
+@media (min-width:900px){
+  .card.wide{max-width:min(1240px,94vw);display:block;columns:2 440px;column-gap:40px;padding:28px 36px;font-size:15px}
+  .card.wide>*{margin:0 0 12px}
+  .card.wide>h1,.card.wide>h2,.card.wide>.btn.big{column-span:all}
+  .card.wide>.btn{display:block;width:100%}
+  .card.wide .zone-title{break-after:avoid}
+  .card.wide .emp,.card.wide .up,.card.wide .sum,.card.wide .ord,.card.wide .alert,.card.wide label,.card.wide .ordlist,.card.wide .rank,.card.wide .mhud{break-inside:avoid}
+  .card.wide .emp{font-size:13px}
+  .mgc{max-width:640px}
+}
 .mgc h3{margin:0;font-family:var(--display);font-weight:400;font-size:18px;line-height:1.15}
 .opts{display:flex;flex-direction:column;gap:6px}
 .opts .btn{text-align:left}
@@ -1162,7 +1173,7 @@ function renderMember(){
   if(mine&&!mg&&!room.done[mine.id])startMG(Object.assign({remote:1},mine,{roles:toArr(mine.roles),bk:toArr(mine.bk)}));
 }
 setInterval(()=>{if(isMember())renderMember();},2000);
-function showOverlay(html){const o=$('#overlay');const st=o.scrollTop,ol=o.querySelector('.ordlist'),ost=ol?ol.scrollTop:0;o.innerHTML=html;o.classList.add('show');o.scrollTop=st;const nl=o.querySelector('.ordlist');if(nl)nl.scrollTop=ost;}
+function showOverlay(html){const o=$('#overlay');const st=o.scrollTop,ol=o.querySelector('.ordlist'),ost=ol?ol.scrollTop:0;o.innerHTML=html;o.classList.add('show');const cd=o.querySelector('.card');if(cd&&cd.children.length>6)cd.classList.add('wide');o.scrollTop=st;const nl=o.querySelector('.ordlist');if(nl)nl.scrollTop=ost;}
 function hideOverlay(){$('#overlay').classList.remove('show');}
 
 /* ---------- personal: ayudantes ---------- */
@@ -1800,7 +1811,7 @@ function showMeeting(){
   showOverlay(`<div class="card"><h2>Reunión de personal</h2>
     <div class="supd">Datos desde la última reunión. Una decisión por persona. Para despedir hay que dar un motivo que se pueda demostrar con lo registrado; si no, denuncia. Bote: <b>${fmt(meta.money)}</b></div>
     ${meet.gone.map(g=>`<div class="supd">${g}</div>`).join('')}
-    ${meet.rumors.length?'<div class="zone-title">RUMORES</div><div class="shop">'+meet.rumors.map(r=>'<div class="emp">'+r+'</div>').join('')+'</div>':''}
+    ${meet.rumors.length?'<div class="zone-title">RUMORES</div><div class="shop">'+meet.rumors.map(r=>'<div class="emp"><div>'+r+'</div></div>').join('')+'</div>':''}
     <div class="zone-title">PLANTILLA</div><div class="shop">${emps}</div>
     <div class="zone-title">PETICIONES</div><div class="shop">${reqs}</div>
     <div class="zone-title">CANDIDATOS</div><div class="shop">${cands}</div>
