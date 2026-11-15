@@ -1062,6 +1062,13 @@ body::before{background-image:radial-gradient(rgba(229,56,59,.18) 1.2px,transpar
 .wtool{background:#e5383b}
 .gf.al{border-left-color:#ffd23f}
 .mgc .dept-badge{background:#e5383b}
+
+/* 3D */
+.till3d{display:none;position:relative;flex:1.3 1 0;min-height:170px;border-radius:12px;overflow:hidden;background:linear-gradient(#ffffff,#f7e9e9);border:3px solid #7a1418}
+body.b3d .till3d{display:block}
+body.b3d #belt{display:none}
+canvas.vm3d{position:absolute;inset:0;width:100%!important;height:100%!important;display:block;cursor:pointer}
+@media (max-width:820px){.till3d{min-height:150px}}
 </style>
 </head>
 <body>
@@ -1088,6 +1095,7 @@ body::before{background-image:radial-gradient(rgba(229,56,59,.18) 1.2px,transpar
       <main class="stage">
     <section class="counter" aria-label="Cinta">
       <div class="zone-title" title="Toca cada producto para escanearlo">🛒 Cinta</div>
+      <div class="till3d" id="till3d" aria-hidden="true"></div>
       <div class="belt" id="belt"></div>
       <div class="zone-title">🛍️ Embolsado</div>
       <div class="bagged" id="bagged"></div>
@@ -1113,6 +1121,9 @@ body::before{background-image:radial-gradient(rgba(229,56,59,.18) 1.2px,transpar
 <div id="guide" role="dialog" aria-modal="true" aria-label="Cómo se trabaja"></div>
 
 <script src="firebase-config.js"></script>
+<!-- 3D (Three.js desde el CDN, modelos CC0 en assets/3d). Si no carga, el juego sigue en 2D. -->
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
+<script type="module" src="vm3d.js"></script>
 <script src="productos.js"></script>
 <script>
 (function(){
@@ -1866,7 +1877,7 @@ async function fillRanking(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.15-26';
+const APPV='2026.11.15-27';
 /* Compara versiones por números («-9» < «-11»), no como texto. */
 const verCmp=(a,b)=>{const x=String(a).split(/[.-]/).map(Number),y=String(b).split(/[.-]/).map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
 try{const vt=document.createElement('div');vt.id='vtag';vt.textContent='v'+APPV;document.body.appendChild(vt);}catch(e){}
@@ -4301,6 +4312,17 @@ function drawIso(){
   const m=mem?(room.state&&room.state.cam)||null:camModel(),now=performance.now();
   if(now-(cam.stepAt||0)>30){const dt=Math.min(0.1,(now-(iso.last||now))/1000);camStep(m,dt);}
   iso.last=now;
+  /* Con el 3D listo, la tienda la pinta Three.js (vm3d.js) con los mismos datos. */
+  if(window.VM3D&&VM3D.ok){
+    if(iso.cv.parentNode)iso.cv.parentNode.removeChild(iso.cv);
+    if(!VM3D.onPick)VM3D.onPick=i=>toast(i);
+    const ZN=mem?{alm:[262,0,138,156],back:[262,154,68,62],rrpp:[330,154,70,62],rrhh:[262,216,138,44],atc:[0,166,262,94]}[(room.members[room.uid]||{}).role]||null:null;
+    const people=Object.entries(cam.spr).map(([id,s])=>({id,x:s.x,y:s.y,r:s.r,boss:id==='me',mv:s.mv,b:s.b,lab:s.lab,hl:s.hl,info:s.info}))
+      .concat(cam.shop.map(s=>{s.uid=s.uid||'shop'+Math.random().toString(36).slice(2,8);return {id:s.uid,x:s.x,y:s.y,mv:s.mv};}));
+    const tasks=m?toArr(m.tasks).map((t,j)=>{const w=t.k==='truck'?[372,24]:t.k==='cash'?[300,200]:t.k==='cv'||t.k==='feud'?[356,240]:[laneX(t.n)+14,92+(j%3)*10];return {k:t.k,ic:t.ic,x:w[0],y:w[1]};}):[];
+    try{VM3D.store(slot,{people,tasks,zone:ZN,truck:tasks.some(t=>t.k==='truck')});}catch(e){console.warn(e);VM3D.ok=false;}
+    return;
+  }
   const c=iso.bx,W=slot.clientWidth,H=slot.clientHeight,dpr=window.devicePixelRatio||1;
   if(iso.cv.width!==Math.round(W*dpr)||iso.cv.height!==Math.round(H*dpr)){iso.cv.width=Math.round(W*dpr);iso.cv.height=Math.round(H*dpr);}
   c.clearRect(0,0,iso.BW,iso.BH);c.drawImage(iso.st,0,0);
@@ -4363,6 +4385,14 @@ function isoInfo(){
     <div class="ib pet"><div class="ibt">💬 Vitchi te cuenta</div><div class="petrow"><span class="dog">🐶</span><div class="say ${lm?lm.k:''}">${lm?esc(lm.m):'¡Buenas! Hoy toca vender mucho y sin errores. ¡Tú puedes!'}</div></div></div>
     <div class="ib goals"><div class="ibt">🏆 Objetivos del turno</div>${G.map(g=>`<div class="gl ${g[1]>=1?'ok':''}"><i>${g[1]>=1?'✅':'⬜'}</i><span>${g[0]}</span><small>${g[2]}</small></div>`).join('')}<div class="gbar"><i style="width:${done/3*100}%"></i></div><b class="gcount">${done}/3</b></div>`;
   if(h!==isoInfoH){isoInfoH=h;el.innerHTML=h;}
+}
+/* La caja en 3D: el cliente de delante, la cola y los productos de la cinta (se escanean tocándolos). */
+function till3d(){
+  const slot=document.getElementById('till3d'),on=!!(window.VM3D&&VM3D.ok&&run&&slot&&slot.offsetParent!==undefined);
+  document.body.classList.toggle('b3d',on);
+  if(!on||!slot.offsetParent||run.over)return;
+  const c=run.away?null:front();
+  try{VM3D.till(slot,{cid:c?c.id:null,items:c&&c.phase==='scan'?c.items:[],queue:run.queue.length,onScan:id=>{if(run.pendingId){toast('Primero resuelve el DNI','bad');return;}scanItem(id);}});}catch(e){console.warn(e);VM3D.ok=false;}
 }
 function isoClick(ev){
   const r=iso.cv.getBoundingClientRect(),k=iso.cv.width/r.width,x=(ev.clientX-r.left)*k,y=(ev.clientY-r.top)*k;
@@ -4650,7 +4680,7 @@ function tick(ts){
   renderHud();
   if(isHost())pubState(false);
   if(tab!=='caja'&&!isMember()&&(ts-(window._dT||0))>700){window._dT=ts;renderDept();}
-  drawCams();drawIso();if((iso.infoT=(iso.infoT||0)+1)%20===0)isoInfo();
+  drawCams();drawIso();till3d();if((iso.infoT=(iso.infoT||0)+1)%20===0)isoInfo();
   requestAnimationFrame(tick);
 }
 
