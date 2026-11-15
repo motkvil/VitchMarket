@@ -1121,6 +1121,9 @@ async function fillRanking(){
    Los empleados cogen avisos y hacen el minijuego en su navegador; el resultado va a /acts y el jefe lo aplica.
    Sin jefe conectado la tienda se congela; si lleva más de 2 min fuera, otro puede quedarse el puesto.
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
+/* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
+   versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
+const APPV='2026.11.15-3';
 const SHOP='VITCH',DURS=[[100,'100 s (clásico)'],[600,'10 min'],[1800,'30 min'],[3600,'1 hora'],[10800,'3 horas'],[43200,'12 horas']];
 const REAL_LIM=60,TAKEOVER=120000;
 const JOB_IC={jefe:'👑',atc:'🧾',alm:'📦',back:'💼',rrpp:'📣',rrhh:'🗂️'};
@@ -1529,7 +1532,7 @@ function pubState(force){
   }):[];
   const phase=!run?'lobby':run.over?(run.dead?'dead':meet?'meeting':'shop'):run.closing?'closing':'open';
   fb.set(rRef('state'),plain({day:meta.day,t:run?Math.round(run.t):0,dur:run?run.dur:(room.info.dur||100),money:Math.round(meta.money),rep:Math.round(meta.rep*10)/10,
-    q:run?run.queue.length:0,tills:run&&run.tills?Object.fromEntries(Object.entries(run.tills).map(([u,t])=>[u,t.n])):{},tq:run&&run.tills?Object.fromEntries(Object.entries(run.tills).map(([u,t])=>[t.n,Object.keys(t.out).length])):{},up:meta.up,dep:depData(),cnt:Object.fromEntries(Object.keys(ROLES).map(r=>[r,staffOf(r).length])),phase,away:!!(run&&run.away),tasks,rpt:run&&run.over&&room.rpt||null,ts:fb.serverTimestamp()})).catch(()=>{});
+    q:run?run.queue.length:0,v:APPV,tills:run&&run.tills?Object.fromEntries(Object.entries(run.tills).map(([u,t])=>[u,t.n])):{},tq:run&&run.tills?Object.fromEntries(Object.entries(run.tills).map(([u,t])=>[t.n,Object.keys(t.out).length])):{},up:meta.up,dep:depData(),cnt:Object.fromEntries(Object.keys(ROLES).map(r=>[r,staffOf(r).length])),phase,away:!!(run&&run.away),tasks,rpt:run&&run.over&&room.rpt||null,ts:fb.serverTimestamp()})).catch(()=>{});
   if(force||now-room.lastHb>10000){room.lastHb=now;fb.update(rRef('info'),{hb:fb.serverTimestamp(),day:meta.day,status:run&&!run.over?'open':run?'closed':'lobby'}).catch(()=>{});}
 }
 
@@ -1593,7 +1596,8 @@ function renderMember(){
     :`<span class="live"><i></i>EN DIRECTO</span> 👑 Jefe: <b>${bossName}</b> · turnos de ${durTxt(inf.dur)}`;
   const hud=st&&!stale?`<div class="mhud"><span>Turno <b>${st.day}</b></span><span>🕘 <b>${clockOf(st.t,st.dur)}</b></span><span>Bote <b>${fmt(st.money)}</b></span><span>★ <b>${(+st.rep).toFixed(1)}</b></span><span>Cola <b>${st.q}</b></span></div>`:'';
   scrRender=renderMember;
-  const top=`<div class="supd">${status}</div>${hud}${room.msg?`<div class="${room.msg.bad?'rerr':'rok'}">${esc(room.msg.t)}</div>`:''}`;
+  const verMsg=st&&!stale&&st.v!==APPV?`<div class="rerr">⚠️ ${!st.v||st.v<APPV?'El jefe tiene una versión antigua del juego: que recargue la página (en el ordenador, Cmd+Shift+R o Ctrl+F5).':'Tienes una versión antigua del juego: recarga la página.'}</div>`:'';
+  const top=`<div class="supd">${status}</div>${verMsg}${hud}${room.msg?`<div class="${room.msg.bad?'rerr':'rok'}">${esc(room.msg.t)}</div>`:''}`;
   const nWho=Object.values(ms).filter(m=>m&&m.name).length,rankTab=['rank','🏆 Ranking'],whoTab=['who','👥 Quién hay',nWho];
   const bossBtn=role&&inf.host&&!bossOn?'<button class="btn" data-act="rboss" title="El jefe lleva más de 2 minutos sin aparecer">👑 Quedarme con el puesto de jefe</button>':'';
   let kind,tabs,body,foot='';
@@ -1626,6 +1630,7 @@ function renderMember(){
     else if(scrTab.work==='dept')body=stale?'<div class="supd">⏸️ La tienda está en pausa.</div>':memberDept(st,role)+(PHASE[st.phase]?reportHtml(st.rpt,role):'');
     else{
       body=top+`<div class="supd">${JOB_IC[role]} Trabajas en <b>${ROLES[role].n}</b> como <b>${esc(playerName())}</b>.</div>`;
+      if(role==='atc'&&!stale&&(st.phase==='open'||st.phase==='closing')&&!(st.tills&&st.tills[room.uid]))body+=`<div class="task"><div>🧾 Esperando a que la tienda te abra una caja…</div><div class="supd">${Object.keys(st.tills||{}).length>=2?'Las cajas 1 y 2 ya están ocupadas: mientras tanto, ayuda con los avisos.':'Suele tardar un par de segundos. Si no llega, que el jefe recargue la página.'}</div></div>`;
       if(stale)body+='<div class="supd">⏸️ La tienda está en pausa: el jefe no tiene el juego abierto.</div>';
       else if(PHASE[st.phase])body+='<div class="supd">'+PHASE[st.phase]+'</div>'+reportHtml(st.rpt,role);
       else{
