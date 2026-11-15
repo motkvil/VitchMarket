@@ -366,7 +366,16 @@ body:not([data-tab="caja"]) .queue-wrap{display:none}
 .scr-foot .btn.big{flex:1 1 240px}
 .pager{display:flex;align-items:center;gap:8px;flex:0 0 auto}.pager .btn{flex:0 0 auto;padding:8px 14px}
 .cgrid{display:grid;grid-template-columns:repeat(var(--cols,1),minmax(0,1fr));gap:10px;align-items:start}
-.letter{font-size:13px;line-height:1.5;display:block}.letter b{display:inline}
+.letter{font-size:13px;line-height:1.5;display:block}
+.logo{color:var(--sign);text-shadow:2px 2px 0 var(--ink);letter-spacing:1px}
+.scr-head .sub{font-family:var(--body);font-size:12px;color:#5b5646;text-shadow:none;letter-spacing:0}
+.lead{margin:0}
+.card .howto{margin:0;padding:0;list-style:none;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr));gap:6px}
+.howto li{background:#fff;border-radius:6px;padding:7px 10px;font-size:13px}
+.screen .jobs{grid-template-columns:repeat(auto-fit,minmax(120px,1fr))}
+.scr-foot .btn:not(.big){flex:0 1 auto}
+@media (max-width:820px){.screen .jobs{grid-template-columns:repeat(3,1fr);gap:6px}.screen .job{padding:8px 4px 6px;border-width:2px;box-shadow:0 3px 0 var(--ink)}.screen .job .ic{font-size:28px}.screen .job b{font-size:13px}.howto li{font-size:12px;padding:5px 8px}}
+@media (max-height:760px){.screen .job small{display:none}}.letter b{display:inline}
 .emp.firing .duty,.emp.firing .did,.emp.firing .es,.emp.firing .ev{display:none}
 .emp.firing .opts .btn{padding:7px 8px;font-size:12px}
 @media (max-height:700px){
@@ -886,7 +895,7 @@ function endDay(){
   pubState(true);
 }
 /* ---------- pantallas de juego (cierre y reunión): pestañas y páginas, sin desplazar ---------- */
-const scrTab={shop:'sum',meet:'emp'};let pg=0,ordPer=0;
+const scrTab={shop:'sum',meet:'emp',start:'how',lobby:'shop',hub:'jobs',work:'job'};let pg=0,ordPer=0;
 const cols=()=>innerWidth>=1150?3:innerWidth>=760?2:1;
 const rowsFit=(rowH,reserve)=>Math.max(3,Math.floor((innerHeight-reserve)/rowH));
 function paged(items,per,empty){
@@ -899,7 +908,8 @@ function screenHtml(kind,title,tabs,body,nav,foot){
   return `<div class="card screen"><div class="scr-head"><h2>${title}</h2><div class="subtabs">${tabs.map(([k,l,b])=>`<button class="stab ${cur===k?'on':''}" data-act="stab" data-s="${kind}" data-k="${k}">${l}${b?`<i>${b}</i>`:''}</button>`).join('')}</div></div>
     <div class="scr-body">${body}</div><div class="scr-foot">${nav||''}${foot}</div></div>`;
 }
-const rerenderScreen=()=>{if($('#overlay [data-act=endmeet]'))showMeeting();else if($('#overlay .screen'))showShop();};
+let scrRender=null;
+const rerenderScreen=()=>{if(room)room.lastHtml='';if(scrRender)scrRender();};
 function upsHtml(){
   return UPS.map(u=>{
     const own=meta.up[u.k];
@@ -927,6 +937,7 @@ function orderHtml(per){
     <div class="supd">Pedidos en camino: ${meta.orders.length}. Se muestran los 14 productos con menos existencias.</div>`;
 }
 function showShop(noFit){
+  scrRender=()=>showShop();
   const e=lastEnd,r=e.res;
   const DST={ok:'Trabajó',late:'Llegó tarde',abs:'Faltó sin avisar',off:'Libró',gone:'Desconectado/a'};
   const dep=meta.emp.map(e=>{const d=run.duty[e.id];
@@ -974,29 +985,22 @@ function loadGame(){try{const s=localStorage.getItem(SAVE_KEY);if(!s)return null
 function wipeGame(){if(room){if(isHost())fb.remove(rRef('meta')).catch(()=>{});return;}try{localStorage.removeItem(SAVE_KEY);}catch(e){}hasSave=false;}
 
 function showStart(confirmWipe){
-  run=null;
+  run=null;scrRender=()=>showStart(confirmWipe);
   const cont=hasSave||meta.day>1;
-  showOverlay(`<div class="card"><h1>VITCHMARKET</h1>
-    <p>Eres la cajera o el cajero de VitchMarket. Cobra rápido y sin fallos.</p>
-    <ul>
-      <li>Toca cada producto de la cinta para escanearlo. Los de código dañado piden varios toques.</li>
-      <li>Productos <b>18+</b>: mira la fecha de nacimiento del DNI y decide si vendes.</li>
-      <li>Si el cliente pide bolsa, añádela. Si no la pide, no la cobres.</li>
-      <li>Con tarjeta, cobra. En efectivo, entrega el cambio exacto con billetes y monedas.</li>
-      <li>Clientes con <b>reclamación</b>: las dudas rápidas las resuelves tú. Cobros y dinero van a Backoffice. Trato y redes, a Relaciones Públicas. Los departamentos los gestionas entre turnos.</li>
-      <li>Stock: cada producto vendido sale de la estantería. Pide a los distribuidores entre turnos y mantén personal en Almacén para colocarlo. Con la caja en −300 €, quiebra.</li>
-      <li>La paciencia se agota. La reputación a cero y estás despedido.</li>
-    </ul>
-    ${online()?`<div class="zone-title">🏆 RANKING</div><div id="rank"></div>
-      ${nameField('Tu nombre en el ranking (no pongas datos personales)')}`:''}
-    ${offline?'<div class="rerr">📴 Sin conexión con la tienda compartida: juegas en solitario. Recarga cuando vuelva internet.</div>':''}
-    ${!cont?'<button class="btn go big" data-act="start">Abrir caja</button>'
-      :confirmWipe?`<div class="supd">Se borra la partida guardada (turno ${meta.day}, ${fmt(meta.money)}). No se puede deshacer.</div>
-        <button class="btn no big" data-act="restart">Sí, borrar y empezar de cero</button>
-        <button class="btn" data-act="start">No, seguir con mi partida</button>`
-      :`<button class="btn go big" data-act="start">Continuar · turno ${meta.day} · ${fmt(meta.money)}</button>
-        <button class="btn" data-act="wipe">Empezar de cero</button>`}</div>`);
-  fillRanking();
+  if(scrTab.start==='rank'&&!online())scrTab.start='how';
+  const k=scrTab.start;
+  const HOW=['🛒 Toca cada producto de la cinta para escanearlo. Los de código dañado piden varios toques.','🪪 Productos <b>18+</b>: mira la fecha de nacimiento del DNI y decide si vendes.','🛍️ Si el cliente pide bolsa, añádela. Si no la pide, no la cobres.','💶 Con tarjeta, cobra. En efectivo, da el cambio exacto con billetes y monedas.','📨 <b>Reclamaciones</b>: las dudas, tú. Dinero, a Backoffice. Trato y redes, a RR.PP. Agotados, a Almacén.','📦 Lo que vendes sale de la estantería: pide a los distribuidores y ten gente en Almacén. Con −300 €, quiebra.','⭐ La paciencia se agota. Con la reputación a cero, te despiden.'].map(x=>'<li>'+x+'</li>');
+  const P=k==='rank'?{html:'',nav:''}:paged(HOW,innerHeight<700?3:innerHeight<860?5:7);
+  const body=k==='rank'?'<div id="rank"></div>':`${offline?'<div class="rerr">📴 Sin conexión: juegas en solitario.</div>':''}
+    <p class="lead">Eres la cajera o el cajero de VitchMarket y, entre turnos, quien manda. Cobra rápido y sin fallos.</p>
+    <ul class="howto">${P.html}</ul>
+    ${online()?nameField('Tu nombre en el ranking (no pongas datos personales)'):''}`;
+  const foot=!cont?'<button class="btn go big" data-act="start">Abrir caja</button>'
+    :confirmWipe?`<span class="supd">Se borra la partida guardada (turno ${meta.day}, ${fmt(meta.money)}). No se puede deshacer.</span>
+      <button class="btn no big" data-act="restart">Sí, borrar y empezar de cero</button><button class="btn" data-act="start">No, seguir</button>`
+    :`<button class="btn go big" data-act="start">Continuar · turno ${meta.day} · ${fmt(meta.money)}</button><button class="btn" data-act="wipe">Empezar de cero</button>`;
+  showOverlay(screenHtml('start','<span class="logo">VITCHMARKET</span>',[['how','📖 Cómo se juega']].concat(online()?[['rank','🏆 Ranking']]:[]),body,P.nav,foot));
+  if(k==='rank')fillRanking();
 }
 
 /* ---------- ranking online (Firebase Realtime Database, opcional) ----------
@@ -1190,16 +1194,16 @@ function membersHtml(){
   return '<div class="crew">'+(ms.map(([u,m])=>`<div>${m.on?'🟢':'⚪'} <b>${esc(cleanName(m.name))}</b> · ${u===(room.info&&room.info.host)?'👑 Jefe · Caja 3':ROLES[m.role]?JOB_IC[m.role]+' '+ROLES[m.role].n:m.apply&&ROLES[m.apply]?'📝 solicita '+ROLES[m.apply].n:'de visita'}${u===room.uid?' (tú)':''}</div>`).join('')||'Nadie.')+'</div>';
 }
 function showLobby(){
-  room.view='lobby';
-  const dur=room.info.dur||600;
-  const h=`<div class="card hub"><h1>VITCHMARKET</h1>
-    <div class="supd"><span class="live"><i></i>TIENDA COMPARTIDA</span> Eres el jefe: llevas la Caja 3, contratas y decides. La tienda solo avanza mientras tienes el juego abierto.</div>
-    ${appsHtml()}
+  room.view='lobby';scrRender=showLobby;
+  const dur=room.info.dur||600,ap=appsList().length,who=Object.values(room.members||{}).filter(m=>m&&m.name).length;
+  const k=scrTab.lobby;
+  const body=k==='who'?membersHtml():`<div class="supd"><span class="live"><i></i>TIENDA COMPARTIDA</span> Eres el jefe: llevas la Caja 3, contratas y decides. La tienda solo avanza mientras tienes el juego abierto.</div>
+    <div class="mhud"><span>Turno <b>${meta.day}</b></span><span>Bote <b>${fmt(meta.money)}</b></span><span>★ <b>${meta.rep.toFixed(1)}</b></span><span>Plantilla <b>${meta.emp.length}</b></span></div>
     <label class="supd">Duración de cada turno (de 9:00 a 21:00)<select id="rdur" class="pname">${DURS.concat(DURS.some(d=>d[0]===dur)?[]:[[dur,durTxt(dur)]]).map(d=>`<option value="${d[0]}" ${d[0]===dur?'selected':''}>${d[1]}</option>`).join('')}</select></label>
-    <div class="zone-title">QUIÉN HAY</div>${membersHtml()}
-    <div class="supd">Turno ${meta.day} · Bote ${fmt(meta.money)}. Los puestos que no cubre nadie los hace el personal de la casa.</div>
-    <button class="btn go big" data-act="ropen">Abrir tienda · turno ${meta.day}</button>
-    <button class="btn" data-act="rresign">Dejar de ser jefe</button></div>`;
+    ${appsHtml()||'<div class="supd">📝 No hay solicitudes de empleo pendientes.</div>'}
+    <div class="supd">Los puestos que no cubre nadie los hace el personal de la casa.</div>`;
+  const h=screenHtml('lobby','<span class="logo">VITCHMARKET</span> <small class="sub">Sala de espera</small>',[['shop','🏪 Tienda',ap],['who','👥 Quién hay',who]],body,'',
+    `<button class="btn go big" data-act="ropen">Abrir tienda · turno ${meta.day}</button><button class="btn" data-act="rresign">Dejar de ser jefe</button>`);
   if(h!==room.lastHtml||!$('#overlay').classList.contains('show')){room.lastHtml=h;showOverlay(h);}
 }
 function openStore(){if(!isHost())return;room.view=null;fb.update(rRef('info'),{status:'open'}).catch(()=>{});startDay();}
@@ -1422,37 +1426,55 @@ function renderMember(){
     :stale?`<span class="live off"><i></i>EN PAUSA</span> 👑 ${bossName} no tiene el juego abierto.`
     :`<span class="live"><i></i>EN DIRECTO</span> 👑 Jefe: <b>${bossName}</b> · turnos de ${durTxt(inf.dur)}`;
   const hud=st&&!stale?`<div class="mhud"><span>Turno <b>${st.day}</b></span><span>🕘 <b>${clockOf(st.t,st.dur)}</b></span><span>Bote <b>${fmt(st.money)}</b></span><span>★ <b>${(+st.rep).toFixed(1)}</b></span><span>Cola <b>${st.q}</b></span></div>`:'';
-  let h=`<div class="card hub"><h1>VITCHMARKET</h1><div class="supd">${status}</div>${hud}${room.msg?`<div class="${room.msg.bad?'rerr':'rok'}">${esc(room.msg.t)}</div>`:''}`;
+  scrRender=renderMember;
+  const top=`<div class="supd">${status}</div>${hud}${room.msg?`<div class="${room.msg.bad?'rerr':'rok'}">${esc(room.msg.t)}</div>`:''}`;
+  const nWho=Object.values(ms).filter(m=>m&&m.name).length,rankTab=['rank','🏆 Ranking'],whoTab=['who','👥 Quién hay',nWho];
+  const bossBtn=role&&inf.host&&!bossOn?'<button class="btn" data-act="rboss" title="El jefe lleva más de 2 minutos sin aparecer">👑 Quedarme con el puesto de jefe</button>':'';
+  let kind,tabs,body,foot='';
   if(!me.name||!playerName()){
-    h+=`<div class="zone-title">FICHA DE EMPLEO</div><div class="supd">Pon tu nombre de usuario. Luego eliges a qué cargo aplicar.</div>${nameInput('Tu nombre (no pongas datos personales)')}<button class="btn go big" data-act="rreg">Entrar en VitchMarket</button>`;
+    kind='hub';tabs=[['jobs','📝 Ficha de empleo'],rankTab];if(scrTab.hub==='who')scrTab.hub='jobs';
+    body=scrTab.hub==='rank'?(rankCache||'<div class="supd">Cargando…</div>'):top+`<div class="supd">Pon tu nombre de usuario. Luego eliges a qué cargo aplicar.</div>${nameInput('Tu nombre (no pongas datos personales)')}`;
+    foot='<button class="btn go big" data-act="rreg">Entrar en VitchMarket</button>';
   }else if(!role){
-    const cnt=(st&&st.cnt)||{},pend=me.apply&&ROLES[me.apply]?me.apply:null;
-    h+=room.renaming?nameInput('Tu nombre nuevo (se guarda al solicitar un cargo)'):nameField('Tu nombre (no pongas datos personales)');
-    if(pend)h+=`<div class="task"><div>📝 Solicitud enviada: <b>${JOB_IC[pend]} ${ROLES[pend].n}</b></div><div class="supd">${bossOn?'El jefe la verá en cuanto pueda. Si te contrata, entras a trabajar al momento.':'No hay jefe conectado ahora mismo. Tu solicitud espera.'}</div><button class="btn" data-act="rcancel">Retirar la solicitud</button></div>`;
-    const slots=(n,mx)=>'<span class="slots">'+Array.from({length:mx},(_,i)=>`<i class="${i<n?'on':''}"></i>`).join('')+'</span>';
-    h+='<div class="zone-title">ELIGE A QUÉ CARGO APLICAR</div><div class="jobs">'
-      +`<button class="job boss" data-act="rapply" data-r="jefe" ${bossOn?'disabled':''}><span class="ic">👑</span><b>Jefe</b><small>${bossOn?'Ocupado por '+bossName:'¡Vacante! Llevas la Caja 3, contratas y despides'}</small></button>`
-      +Object.keys(ROLES).map(r=>{const n=cnt[r]||0,full=n>=ROLES[r].max;
-        return `<button class="job" data-act="rapply" data-r="${r}" ${pend===r?'disabled':''}><span class="ic">${JOB_IC[r]}</span><b>${ROLES[r].n}</b>${st&&st.cnt?slots(n,ROLES[r].max):''}<small>${ROLES[r].duties.slice(0,2).join(' · ')}${full?'<br><em>Completo: solo si despiden a alguien</em>':''}</small></button>`;}).join('')+'</div>';
-  }else{
-    h+=`<div class="supd">${JOB_IC[role]} Trabajas en <b>${ROLES[role].n}</b> como <b>${esc(playerName())}</b>.</div>`;
-    if(!stale)h+=memberDept(st,role);
-    if(stale)h+='<div class="supd">⏸️ La tienda está en pausa: el jefe no tiene el juego abierto.</div>';
-    else if(PHASE[st.phase])h+='<div class="supd">'+PHASE[st.phase]+'</div>'+reportHtml(st.rpt,role);
+    kind='hub';tabs=[['jobs','🎮 Cargos'],whoTab,rankTab];
+    if(scrTab.hub==='who')body=membersHtml();
+    else if(scrTab.hub==='rank')body=rankCache||'<div class="supd">Cargando…</div>';
     else{
-      if(mine)h+=`<div class="task"><div>${mine.ic} ${esc(mine.s)}</div><div class="supd">Es tuyo. Te quedan ${mine.left} s.</div></div>`;
-      const open=tasks.filter(t=>!t.who&&(t.k!=='tk'||t.dept===role)).sort((a,b)=>toArr(b.roles).includes(role)-toArr(a.roles).includes(role));
-      h+='<div class="zone-title">AVISOS SIN DUEÑO</div>'+(open.map(t=>{const m=toArr(t.roles).includes(role);
-        return `<div class="alert"><span class="at">${t.ic} ${esc(t.s)}</span><span class="who"><button class="btn ${m?'':'off'}" data-act="rtake" data-t="${t.id}" ${mine?'disabled':''} title="${m?'Es de tu puesto':'No es de tu puesto, pero puedes'}">Me encargo</button> <small>${t.left} s</small></span></div>`;}).join('')
-        ||'<div class="supd">Nada pendiente. Disimula, que te ve el jefe.</div>');
-      const busy=tasks.filter(t=>t.who&&t.who!==room.uid);
-      if(busy.length)h+='<div class="zone-title">EN CURSO</div><div class="crew">'+busy.map(t=>`<div>${t.ic} ${esc(t.s)} · ${whoName(t.who)}</div>`).join('')+'</div>';
+      const cnt=(st&&st.cnt)||{},pend=me.apply&&ROLES[me.apply]?me.apply:null;
+      const slots=(n,mx)=>'<span class="slots">'+Array.from({length:mx},(_,i)=>`<i class="${i<n?'on':''}"></i>`).join('')+'</span>';
+      body=top+(room.renaming?nameInput('Tu nombre nuevo (se guarda al solicitar un cargo)'):nameField('Tu nombre (no pongas datos personales)'))
+        +(pend?`<div class="task"><div>📝 Solicitud enviada: <b>${JOB_IC[pend]} ${ROLES[pend].n}</b>. ${bossOn?'El jefe la verá en cuanto pueda.':'No hay jefe conectado: tu solicitud espera.'}</div></div>`:'')
+        +'<div class="jobs">'
+        +`<button class="job boss" data-act="rapply" data-r="jefe" ${bossOn?'disabled':''}><span class="ic">👑</span><b>Jefe</b><small>${bossOn?'Ocupado por '+bossName:'¡Vacante! Llevas la caja, contratas y despides'}</small></button>`
+        +Object.keys(ROLES).map(r=>{const n=cnt[r]||0,full=n>=ROLES[r].max;
+          return `<button class="job" data-act="rapply" data-r="${r}" ${pend===r?'disabled':''}><span class="ic">${JOB_IC[r]}</span><b>${ROLES[r].s}</b>${st&&st.cnt?slots(n,ROLES[r].max):''}<small>${ROLES[r].duties.slice(0,2).join(' · ')}${full?'<br><em>Completo</em>':''}</small></button>`;}).join('')+'</div>';
+      if(pend)foot='<button class="btn" data-act="rcancel">Retirar la solicitud</button>';
     }
-    if(room.note)h+=`<div class="supd">📣 Último aviso del jefe: ${esc(room.note.m)}</div>`;
-    if(!mine)h+='<button class="btn" data-act="rquit">Dejar el trabajo</button>';
+  }else{
+    kind='work';
+    const openN=tasks.filter(t=>!t.who&&(t.k!=='tk'||t.dept===role)).length;
+    const dd=st&&st.dep,depN=!dd?0:role==='rrhh'?toArr(dd.apps).length:role==='alm'?(dd.out||0):((dd.tk||{})[role]||0);
+    tabs=[['job','🛠️ Trabajo',openN],['dept',JOB_IC[role]+' '+ROLES[role].s,depN],whoTab];
+    if(scrTab.work==='who')body=membersHtml();
+    else if(scrTab.work==='dept')body=stale?'<div class="supd">⏸️ La tienda está en pausa.</div>':memberDept(st,role)+(PHASE[st.phase]?reportHtml(st.rpt,role):'');
+    else{
+      body=top+`<div class="supd">${JOB_IC[role]} Trabajas en <b>${ROLES[role].n}</b> como <b>${esc(playerName())}</b>.</div>`;
+      if(stale)body+='<div class="supd">⏸️ La tienda está en pausa: el jefe no tiene el juego abierto.</div>';
+      else if(PHASE[st.phase])body+='<div class="supd">'+PHASE[st.phase]+'</div>'+reportHtml(st.rpt,role);
+      else{
+        if(mine)body+=`<div class="task"><div>${mine.ic} ${esc(mine.s)}</div><div class="supd">Es tuyo. Te quedan ${mine.left} s.</div></div>`;
+        const open=tasks.filter(t=>!t.who&&(t.k!=='tk'||t.dept===role)).sort((a,b)=>toArr(b.roles).includes(role)-toArr(a.roles).includes(role)).slice(0,4);
+        body+='<div class="zone-title">AVISOS SIN DUEÑO</div>'+(open.map(t=>{const m=toArr(t.roles).includes(role);
+          return `<div class="alert"><span class="at">${t.ic} ${esc(t.s)}</span><span class="who"><button class="btn ${m?'':'off'}" data-act="rtake" data-t="${t.id}" ${mine?'disabled':''} title="${m?'Es de tu puesto':'No es de tu puesto, pero puedes'}">Me encargo</button> <small>${t.left} s</small></span></div>`;}).join('')
+          ||'<div class="supd">Nada pendiente. Disimula, que te ve el jefe.</div>');
+        const busy=tasks.filter(t=>t.who&&t.who!==room.uid).slice(0,4);
+        if(busy.length)body+='<div class="zone-title">EN CURSO</div><div class="crew">'+busy.map(t=>`<div>${t.ic} ${esc(t.s)} · ${whoName(t.who)}</div>`).join('')+'</div>';
+      }
+      if(room.note)body+=`<div class="supd">📣 Último aviso del jefe: ${esc(room.note.m)}</div>`;
+    }
+    foot=mine?'':'<button class="btn" data-act="rquit">Dejar el trabajo</button>';
   }
-  if(role&&inf.host&&!bossOn)h+='<div class="supd">👑 El jefe lleva más de 2 minutos sin aparecer.</div><button class="btn" data-act="rboss">👑 Quedarme con el puesto de jefe</button>';
-  h+=`<div class="zone-title">QUIÉN HAY</div>${membersHtml()}<div class="zone-title">🏆 RANKING</div>${rankCache||'<div class="supd">Cargando…</div>'}</div>`;
+  const h=screenHtml(kind,'<span class="logo">VITCHMARKET</span>',tabs,body,'',bossBtn+foot);
   if(h!==room.lastHtml){const pv=$('#pname')?$('#pname').value:null;room.lastHtml=h;showOverlay(h);if(pv!=null&&$('#pname'))$('#pname').value=pv;}
   if(mg&&mg.remote&&st&&!stale&&!tasks.some(t=>t.id===mg.t.id&&t.who===room.uid)){mg=null;closeMG();toast('Se acabó el tiempo para ese aviso.','bad');}
   if(mine&&!mg&&!room.done[mine.id])startMG(Object.assign({remote:1},mine,{roles:toArr(mine.roles),bk:toArr(mine.bk)}));
@@ -2097,6 +2119,7 @@ function endMeeting(){
   meta.day++;startDay();
 }
 function showMeeting(){
+  scrRender=showMeeting;
   const emps=meta.emp.map(e=>{
     const s=e.st,a=meet.acted[e.id];
     const tag=[flag(e)+' '+ROLES[e.role].n,e.days+(e.days===1?' turno':' turnos'),fmt(e.wage)+'/día'].concat(e.trial?['en prueba ('+e.trial+')']:[]).concat(e.warn?['⚠️×'+e.warn]:[]).join(' · ');
