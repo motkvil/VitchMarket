@@ -66,6 +66,7 @@ Estado: `meta` (persiste entre días; `defMeta()`, `ensureMeta()`), `run` (del t
 - Acciones: `scanItem`, `idDecision`, `toggleBag`, `goPay`, `payCard`, `addTray`, `deliver`, `finish`, `route`, `staffChange`, `addTicket`.
 - Render: `renderAll/Hud/Queue/Belt/Register` (reconstruyen DOM en eventos; la paciencia se actualiza por frame). Eventos: un `click` delegado con `data-act`. `showOverlay` conserva el scroll.
 - Hot reload del artifact: `window.claude.hot.snapshot/ready` guarda `meta`.
+- **Guardado de partida** (`saveGame`/`loadGame`/`wipeGame`, clave `vitchmarket.partida.v1` en localStorage, siempre con try/catch): se guarda `meta` al empezar cada turno (`closed:false`), al cerrarlo (`closed:true`) y tras cada clic entre turnos (pedidos, mejoras, reunión). Al cargar: si estaba cerrado, se pasa al turno siguiente (si tocaba reunión, se da por hecha y se reinician las estadísticas); si se recargó a mitad de turno, ese turno empieza de nuevo. Al ser despedido o quebrar se borra. La portada ofrece «Continuar · turno N» y «Empezar de cero» (con confirmación). El hot reload del artifact tiene prioridad sobre localStorage.
 
 ## Pendiente
 1. Equilibrar economía y dificultad jugando de verdad (precios de compra, ventas/día, nómina, stock inicial).

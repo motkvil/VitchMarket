@@ -574,6 +574,7 @@ function startDay(){
   run={t:0,dur:100,queue:[],next:1.5,served:0,angry:0,errors:0,tips:0,fines:0,closing:false,over:false,tray:[],card:false,pendingId:null,flash:0,tickets:[],sales:0,
     tasks:[],nextTask:6,away:null,tdone:0,tlost:0,duty:{},ev:[]};
   ensureMeta();
+  saveGame(false);
   const notes=prepShift();
   const rr=receiveDeliveries();
   hideOverlay();renderAll();
@@ -600,7 +601,7 @@ function leaveAngry(idx){
 }
 function checkRep(){
   if((meta.rep<=0||meta.money<-30000)&&run&&!run.over){
-    run.over=true;mg=null;pendingLeave=null;closeMG();
+    run.over=true;run.dead=true;mg=null;pendingLeave=null;closeMG();wipeGame();
     const days=meta.day;
     showOverlay(`<div class="card"><h2>${meta.money<-30000?'Quiebra':'Te han despedido'}</h2>
       <p>${meta.money<-30000?'La tienda se quedó sin dinero.':'La reputación llegó a cero.'} Sobreviviste ${days} ${days===1?'turno':'turnos'}.</p>
@@ -704,6 +705,7 @@ function endDay(){
   cart={};
   lastEnd={payroll,res};
   if(meta.rep<=0||meta.money<-30000){run.over=false;checkRep();return;}
+  saveGame(true);
   showShop();
 }
 function showShop(){
@@ -759,8 +761,19 @@ function showShop(){
     <div class="shop">${ups}</div>
     ${meetDay?'<button class="btn go big" data-act="meeting">Reunión de personal ▸</button>':`<button class="btn go big" data-act="next">Turno ${meta.day+1} ▸</button>`}</div>`);
 }
-function showStart(){
+/* ---------- guardado de partida (localStorage) ----------
+   Se guarda al empezar cada turno (closed:false) y al cerrarlo, más lo que se decida después:
+   pedidos, mejoras, reunión (closed:true). Si se recarga a mitad de turno, el turno empieza de nuevo
+   desde su inicio. Si se recarga tras el cierre, se pasa al turno siguiente. */
+const SAVE_KEY='vitchmarket.partida.v1';
+let hasSave=false;
+function saveGame(closed){try{meta.closed=!!closed;localStorage.setItem(SAVE_KEY,JSON.stringify(meta));}catch(e){}}
+function loadGame(){try{const s=localStorage.getItem(SAVE_KEY);if(!s)return null;const m=JSON.parse(s);return m&&typeof m.day==='number'&&Array.isArray(m.emp)?m:null;}catch(e){return null;}}
+function wipeGame(){try{localStorage.removeItem(SAVE_KEY);}catch(e){}hasSave=false;}
+
+function showStart(confirmWipe){
   run=null;
+  const cont=hasSave||meta.day>1;
   showOverlay(`<div class="card"><h1>VITCHMARKET</h1>
     <p>Eres la cajera o el cajero de VitchMarket. Cobra rápido y sin fallos.</p>
     <ul>
@@ -772,7 +785,12 @@ function showStart(){
       <li>Stock: cada producto vendido sale de la estantería. Pide a los distribuidores entre turnos y mantén personal en Almacén para colocarlo. Con la caja en −300 €, quiebra.</li>
       <li>La paciencia se agota. La reputación a cero y estás despedido.</li>
     </ul>
-    <button class="btn go big" data-act="start">Abrir caja</button></div>`);
+    ${!cont?'<button class="btn go big" data-act="start">Abrir caja</button>'
+      :confirmWipe?`<div class="supd">Se borra la partida guardada (turno ${meta.day}, ${fmt(meta.money)}). No se puede deshacer.</div>
+        <button class="btn no big" data-act="restart">Sí, borrar y empezar de cero</button>
+        <button class="btn" data-act="start">No, seguir con mi partida</button>`
+      :`<button class="btn go big" data-act="start">Continuar · turno ${meta.day} · ${fmt(meta.money)}</button>
+        <button class="btn" data-act="wipe">Empezar de cero</button>`}</div>`);
 }
 function showOverlay(html){const o=$('#overlay');const st=o.scrollTop,ol=o.querySelector('.ordlist'),ost=ol?ol.scrollTop:0;o.innerHTML=html;o.classList.add('show');o.scrollTop=st;const nl=o.querySelector('.ordlist');if(nl)nl.scrollTop=ost;}
 function hideOverlay(){$('#overlay').classList.remove('show');}
@@ -1631,11 +1649,24 @@ document.addEventListener('click',e=>{
   else if(a==='clear')clearTray();
   else if(a==='deliver')deliver();
   else if(a==='mute'){muted=!muted;b.textContent=muted?'🔇':'🔊';}
+  else if(a==='wipe')showStart(true);
+  if(run&&run.over&&!run.dead&&meta.closed)saveGame(true);
 });
 
 
 if(window.claude&&window.claude.hot&&window.claude.hot.snapshot)window.claude.hot.snapshot(()=>({meta}));
-function boot(d){if(d&&d.meta)meta=Object.assign(defMeta(),d.meta);ensureMeta();renderAll();showStart();requestAnimationFrame(tick);}
+function boot(d){
+  if(d&&d.meta)meta=Object.assign(defMeta(),d.meta);
+  else{
+    const m=loadGame();
+    if(m){
+      /* Guardada tras el cierre: se continúa en el turno siguiente (la reunión pendiente se da por hecha). */
+      if(m.closed){if(m.day%3===1)m.emp.forEach(e=>{e.st=blankSt();});m.day++;m.closed=false;}
+      meta=Object.assign(defMeta(),m);hasSave=true;
+    }
+  }
+  ensureMeta();renderAll();showStart();requestAnimationFrame(tick);
+}
 if(window.claude&&window.claude.hot&&window.claude.hot.ready)window.claude.hot.ready(boot);
 else boot((window.claude&&window.claude.hot&&window.claude.hot.data)||{});
 })();

@@ -22,6 +22,8 @@ python3 -m http.server 8000
 
 Y abre http://localhost:8000.
 
+También funciona en GitHub Pages tal cual (rama `main`, carpeta raíz). La partida se guarda en el navegador al empezar y al cerrar cada turno: si recargas, sigues donde lo dejaste.
+
 ## Test
 
 ```bash
