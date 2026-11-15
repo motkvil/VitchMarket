@@ -20,6 +20,10 @@ setInterval(()=>{
     const og=ov.querySelector('[data-act=ordgo]:not([disabled])');
     if(og){stats.orders=(stats.orders||0)+1;cl(og);return;}
     if(b){if(b.dataset.act==='next'||b.dataset.act==='endmeet')stats.days++;if(b.dataset.act==='meeting')stats.meetings++;cl(b);}return;}
+  const mgel=d.querySelector('#mg.show');
+  if(mgel){const x=any(mgel,'button:not([disabled])');if(x){stats['mg_'+x.dataset.act]=(stats['mg_'+x.dataset.act]||0)+1;cl(x);}return;}
+  if(Math.random()<.02){const sp=d.querySelector('[data-act=supervise]');if(sp){stats.sup=(stats.sup||0)+1;cl(sp);return;}}
+  const rtn=d.querySelector('#register [data-act=return]');if(rtn&&Math.random()<.05){cl(rtn);return;}
   if(Math.random()<.3){const as=any(d,'[data-act=assign]:not([disabled])');if(as){stats.assign++;cl(as);return;}}
   const rt=d.querySelector('[data-act=route]');
   if(rt){stats.complaints++;const k=['atc','back','rrpp','alm','no'];cl(d.querySelector('[data-act=route][data-d='+k[Math.floor(Math.random()*5)]+']'));return;}

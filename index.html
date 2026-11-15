@@ -156,6 +156,27 @@ button:focus-visible{outline:3px solid var(--tag);outline-offset:2px}
 .task .who .btn small{opacity:.6}
 .task .who .btn.off{background:#e9e2cf}
 .crew{display:flex;flex-direction:column;gap:2px;font-size:11px;color:#3d3a30}
+/* Ventana de salir de caja, minijuegos y supervisión */
+#mg{position:fixed;inset:0;background:rgba(10,24,20,.7);display:none;align-items:flex-start;justify-content:center;padding:16px;z-index:25;overflow:auto}
+#mg.show{display:flex}
+.mgc{max-width:460px}
+.mgc h3{margin:0;font-family:var(--display);font-weight:400;font-size:18px;line-height:1.15}
+.opts{display:flex;flex-direction:column;gap:6px}
+.opts .btn{text-align:left}
+.opts .btn small{opacity:.6}
+.aisles,.zones{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.aisles .btn,.zones .btn{font-size:12px}
+.shelf{display:grid;grid-template-columns:repeat(6,1fr);gap:4px;background:#8b6f4e;padding:6px;border-radius:6px}
+.slot2{height:40px;background:rgba(255,255,255,.15);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:24px}
+.boxes{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.box{height:64px;font-size:32px;background:#e9d9b0;border-radius:8px;box-shadow:0 3px 0 rgba(0,0,0,.3)}
+.box:active{transform:translateY(3px);box-shadow:none}
+.box.done{background:transparent;box-shadow:none;display:flex;align-items:center;justify-content:center}
+.bigbox{font-size:64px;line-height:1;display:flex;flex-direction:column;align-items:center;gap:4px}
+.bigbox small{font-size:13px}
+.btn.sup{flex:none;background:#efe7d0}
+.duty{font-size:11px;color:#2a5a75}
+.did{margin:0;padding-left:18px;font-size:12px;display:flex;flex-direction:column;gap:1px}
 .alerts{display:flex;flex-direction:column;gap:6px}
 .alerts:empty{display:none}
 .alert{background:var(--tag);border-radius:6px;padding:6px 8px;display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;font-size:12px;color:var(--ink);box-shadow:0 3px 0 rgba(0,0,0,.3)}
@@ -253,6 +274,7 @@ button:focus-visible{outline:3px solid var(--tag);outline-offset:2px}
   </main>
 </div>
 <div id="toast" role="status"></div><div id="overlay"></div>
+<div id="mg" role="dialog" aria-modal="true"></div>
 
 <script src="productos.js"></script>
 <script>
@@ -327,7 +349,7 @@ const TALK={
  servicial:['Si necesitas algo, me dices.','Te echo una mano con eso.']
 };
 const WAGE=1500,HIRE=4000;
-const blankSt=()=>({ok:0,fail:0,late:0,abs:0,tasks:0,tfail:0,quej:0,fel:0,shifts:0});
+const blankSt=()=>({ok:0,fail:0,late:0,abs:0,tasks:0,tfail:0,quej:0,fel:0,shifts:0,caught:0,cv:0,cvErr:0});
 /* Rasgos ocultos 0–1: rap (rapidez), trato, punt (puntualidad), act (actitud). Moral 0–100. */
 function newEmp(role,m,opt,taken){
   const used=new Set(m.emp.map(e=>e.name).concat(taken||[]));
@@ -578,7 +600,7 @@ function leaveAngry(idx){
 }
 function checkRep(){
   if((meta.rep<=0||meta.money<-30000)&&run&&!run.over){
-    run.over=true;
+    run.over=true;mg=null;pendingLeave=null;closeMG();
     const days=meta.day;
     showOverlay(`<div class="card"><h2>${meta.money<-30000?'Quiebra':'Te han despedido'}</h2>
       <p>${meta.money<-30000?'La tienda se quedó sin dinero.':'La reputación llegó a cero.'} Sobreviviste ${days} ${days===1?'turno':'turnos'}.</p>
@@ -649,7 +671,8 @@ function processTickets(){
       r.in++;
       const e=slots[i];
       if(!e){r.late++;meta.rep=clamp(meta.rep-0.15,0,5);return;}
-      const p=t.mis?0.3:perf(e,true);
+      const dd=run.duty[e.id]||{};
+      const p=t.mis?0.3:clamp(perf(e,true)+(dd.seen?0.05:0)-((dd.slackT||0)>15?0.1:0),0.1,0.97);
       if(Math.random()<p){
         const cost=d==='back'?t.refund:d==='rrpp'?500:0;
         r.ok++;r.cost+=cost;meta.rep=clamp(meta.rep+0.1,0,5);e.st.ok++;
@@ -666,7 +689,7 @@ function processTickets(){
 function endDay(){
   run.over=true;
   run.tasks.forEach(t=>{if(!t.who){meta.rep=clamp(meta.rep-t.pen/2,0,5);run.tlost++;}});
-  run.tasks=[];run.away=null;
+  run.tasks=[];run.away=null;mg=null;pendingLeave=null;closeMG();
   const res=processTickets();
   let payroll=0;
   meta.emp.forEach(e=>{
@@ -769,7 +792,7 @@ function perf(e,match,lang){
 }
 const flag=e=>(NATS[e.nat]||NATS[0]).f;
 const mood=e=>e.moral>=70?'😄':e.moral>=45?'🙂':e.moral>=25?'😒':'😠';
-function score(e){const s=e.st,g=s.ok+s.tasks+s.fel*2,b=s.fail+s.tfail+s.quej*2+s.late+s.abs*2;return (g+1)/(g+b+2);}
+function score(e){const s=e.st,g=s.ok+s.tasks+s.fel*2+s.cv,b=s.fail+s.tfail+s.quej*2+s.late+s.abs*2+s.caught*2+s.cvErr;return (g+1)/(g+b+2);}
 const verdict=e=>{const v=score(e);return v>=0.7?'✅ Cumple de sobra':v>=0.5?'👍 Cumple':v>=0.35?'😬 Flojea':'🚩 Da problemas';};
 
 /* Al empezar el turno: quién viene, quién llega tarde, quién falta y qué incidentes tendrá. */
@@ -777,10 +800,10 @@ function prepShift(){
   const notes=[];
   meta.emp.slice().forEach(e=>{
     if(e.moral<15&&Math.random()<0.4){meta.emp=meta.emp.filter(x=>x!==e);notes.push(e.name+' ha dejado el trabajo');return;}
-    const d={st:'ok',at:0,busy:0,task:null};
+    const d={st:'ok',at:0,busy:0,task:null,slack:null,slackT:0,seen:0};
     if(e.off===meta.day)d.st='off';
-    else if(Math.random()<(e.moral<30?0.3:0.03)*(1.3-e.punt)){d.st='abs';e.st.abs++;notes.push(e.name+' no viene hoy');}
-    else if(Math.random()<0.4*(1-e.punt)){d.st='late';d.at=rnd(8,30);e.st.late++;}
+    else if(Math.random()<(e.moral<30?0.3:0.03)*(1.3-e.punt)){d.st='abs';e.st.abs++;notes.push(e.name+' no viene hoy');logE(e,'Faltó sin avisar');}
+    else if(Math.random()<0.4*(1-e.punt)){d.st='late';d.at=rnd(8,30);e.st.late++;logE(e,'Llegó tarde');}
     if(d.st==='ok'||d.st==='late'){
       e.st.shifts++;
       if(Math.random()<0.3*(1-e.trato)*(e.moral<50?1.6:1))run.ev.push({t:rnd(20,90),e:e.id,k:'quej'});
@@ -809,7 +832,8 @@ const TSHORT={repo:'Reponer «%p%» · pasillo %n%',spill:'Derrame · pasillo %n
 function spawnTask(){
   const pend=Object.values(meta.back).reduce((t,v)=>t+v,0);
   const T=pick(TASKS.filter(x=>x.k!=='truck'||pend>0));
-  const p=pick(CAT.filter(x=>!x.age).sort((a,b)=>(meta.stock[a.id]||0)-(meta.stock[b.id]||0)).slice(0,6)),n=ri(1,9);
+  const p=pick(CAT.filter(x=>!x.age).sort((a,b)=>(meta.stock[a.id]||0)-(meta.stock[b.id]||0)).slice(0,6));
+  const n=(T.k==='repo'||T.k==='call')?aisleOf(p.id):ri(1,9);
   const lg=T.k==='tour'?pick([['en','🇬🇧'],['fr','🇫🇷'],['de','🇩🇪'],['it','🇮🇹'],['pt','🇵🇹'],['zh','🇨🇳'],['ar','🇲🇦'],['ro','🇷🇴']]):null;
   const t={id:++uid,k:T.k,ic:T.ic,roles:T.roles,dur:T.dur,pen:T.pen,pid:p.id,n,lang:lg?lg[0]:null,
     s:TSHORT[T.k].replace('%p%',p.n).replace('%n%',n).replace('%l%',lg?lg[1]:''),
@@ -823,11 +847,15 @@ function assignTask(tid,who){
   const t=run.tasks.find(x=>x.id===tid);if(!t||t.who)return;
   if(who==='me'){
     if(run.away)return;
-    t.who='me';t.span=t.dur*0.8;t.until=run.t+t.span;run.away={until:t.until,span:t.span};
-    sBeep();renderAll();return;
+    askLeave(()=>{
+      if(!run.tasks.includes(t)||t.who){toast('Llegas tarde: eso ya no hace falta.','bad');returnTill();return;}
+      t.who='me';t.until=Infinity;t.span=1;startMG(t);
+    },'Te vas: '+t.ic+' '+t.s);
+    return;
   }
   const e=empById(+who);if(!e||!isFree(e))return;
   t.match=t.roles.includes(e.role);
+  run.duty[e.id].slack=null;
   t.who=e.id;t.span=t.dur*(1.35-0.6*e.rap)*(t.match||e.pers==='servicial'?1:1.4)*(t.lang&&e.langs.includes(t.lang)?0.8:1);t.until=run.t+t.span;
   run.duty[e.id].busy=1;run.duty[e.id].task=t.id;
   sOk();renderAll();
@@ -837,7 +865,7 @@ function finishTask(t){
   run.tasks=run.tasks.filter(x=>x!==t);
   let ok=true,nm='Tú';
   if(t.who==='me'){run.away=null;if(t.lang&&t.lang!=='en'&&Math.random()<0.5)ok=false;}
-  else{const e=empById(t.who);if(e){nm=e.name;const d=run.duty[e.id];if(d){d.busy=0;d.task=null;}ok=Math.random()<perf(e,t.match,t.lang);if(ok)e.st.tasks++;else e.st.tfail++;}}
+  else{const e=empById(t.who);if(e){nm=e.name;const d=run.duty[e.id];if(d){d.busy=0;d.task=null;}ok=Math.random()<perf(e,t.match,t.lang);if(ok)e.st.tasks++;else e.st.tfail++;logE(e,(ok?'Resolvió':'Hizo mal')+' un aviso: '+t.s);}}
   if(!ok){meta.rep=clamp(meta.rep-t.pen/2,0,5);run.tlost++;
     const why=t.lang?'. No se han entendido':(t.match?'':'. No es su puesto');
     toast((t.who==='me'?'Te ha salido regular en el pasillo '+t.n:nm+' lo ha dejado a medias en el pasillo '+t.n)+why,'bad');sBad();renderAll();checkRep();return;}
@@ -860,6 +888,23 @@ function tickStaff(dt){
     run.nextTask-=dt;
     if(run.nextTask<=0){if(run.tasks.filter(t=>!t.who).length<3)spawnTask();run.nextTask=rnd(14,24)*Math.max(0.6,1-meta.day*0.04);}
   }
+  /* Escaqueos: quien está libre a veces se pone a otra cosa. Menos si tiene actitud o le has visto pasar. */
+  meta.emp.forEach(e=>{
+    const d=run.duty[e.id];if(!d||!inStore(e)||d.busy)return;
+    if(d.slack){d.slackT=(d.slackT||0)+dt;if(Math.random()<dt*0.06)d.slack=null;}
+    else if(Math.random()<dt*0.012*(1.3-e.act)*(e.moral<40?1.6:1)*(d.seen?0.5:1))d.slack=pick(SLACK);
+  });
+  /* Quien te cubre la caja atiende al cliente de delante. */
+  if(run.away&&run.away.cover){
+    const e=empById(run.away.cover),c=front();
+    if(e&&c){
+      if(!c.cv)c.cv={t:0,need:c.phase==='complaint'?4:2.5+c.items.length*(1.3-0.6*e.rap)*(e.role==='atc'||e.pers==='servicial'?1:1.4)};
+      c.cv.t+=dt;
+      if(c.cv.t>=c.cv.need){coverServe(c,e);if(run.over)return;}
+    }
+  }
+  if(run.away&&run.closing&&!run.queue.length&&!run.hintEnd){run.hintEnd=1;toast('Ya no queda nadie en la cola. Vuelve a caja para cerrar.');}
+  if(mg&&mg.kind==='sup'){run.supT=(run.supT||0)+dt;if(run.supT>2){run.supT=0;renderSup();}}
   run.nextTalk-=dt;
   if(run.nextTalk<=0){
     run.nextTalk=rnd(14,26);
@@ -875,6 +920,7 @@ function tickStaff(dt){
   run.ev.forEach(v=>{
     if(v.done||run.t<v.t)return;v.done=1;
     const e=empById(v.e);if(!e||!inStore(e))return;
+    logE(e,v.k==='quej'?'Un cliente se quejó de su trato':'Un cliente le felicitó');
     if(v.k==='quej'){e.st.quej++;meta.rep=clamp(meta.rep-0.2,0,5);addTicket('rrpp','Queja por el trato de '+e.name,0,2,false);toast('Un cliente se queja de cómo le ha hablado '+e.name,'bad');sBad();}
     else{e.st.fel++;e.moral=clamp(e.moral+5,0,100);meta.rep=clamp(meta.rep+0.1,0,5);toast('Un cliente felicita a '+e.name+' por su trato','good');}
     dirty=true;
@@ -894,7 +940,6 @@ function updateTaskBars(){
     const f=t.who?clamp(1-(t.until-run.t)/t.span,0,1):clamp((t.dl-run.t)/TLIFE,0,1);
     el.style.width=(f*100)+'%';el.style.background=t.who?'var(--ok)':'';
   });
-  if(run.away){const el=document.querySelector('[data-away]');if(el)el.style.width=(clamp(1-(run.away.until-run.t)/run.away.span,0,1)*100)+'%';}
 }
 function renderTasks(){
   const el=$('#tasks'),al=$('#alerts');if(!el||!al)return;
@@ -925,6 +970,256 @@ function renderTasks(){
   el.innerHTML=`<div class="zone-title">AVISOS EN CURSO</div>${tk||'<div class="supd">Nadie está con ningún aviso.</div>'}
     <div class="zone-title">PERSONAL EN TIENDA</div><div class="crew">${crew||'Nadie. Tú contra el mundo.'}</div>`;
   updateTaskBars();
+}
+
+/* ---------- salir de caja: qué le dices al cliente, o a quién dejas ---------- */
+let mg=null,pendingLeave=null;
+function openMG(html){const m=$('#mg');m.innerHTML=html;m.classList.add('show');}
+function closeMG(){const m=$('#mg');if(m){m.classList.remove('show');m.innerHTML='';}}
+function logE(e,txt){e.log=e.log||[];e.log.push('T'+meta.day+': '+txt);if(e.log.length>6)e.log.shift();}
+const LEAVE={
+ polite:{t:'🙏 «Perdone, un momentito, que ahora mismo vuelvo.»'},
+ rude:{t:'😤 «Espérese un momento, joder, que ya vengo.»'},
+ joke:{t:'😂 «Voy a por tabaco y no vuelvo… ¡es broma! Dos minutos.»'},
+ silent:{t:'🤐 Irte sin decir nada'}
+};
+/* Cada cliente reacciona según su carácter. mult = lo rápido que se le agota la paciencia mientras no estás. */
+function reactLeave(c,o){
+  const pk=c.pk||'normal';
+  if(c.complaint)return o==='rude'?{say:'¿Encima me hablas así? Ahora sí que pongo la reclamación.',rep:-0.3,mult:1.8}:{say:'¿Me dejas aquí plantado con mi reclamación?',rep:-0.05,mult:1.6};
+  if(c.tour)return{say:pick(['What?? Where are you going?','Pardon ? Je ne comprends pas…','Was? Wohin gehen Sie?','Eh? Cosa succede?']),rep:0,mult:o==='silent'?2.2:1.5};
+  if(o==='polite'){
+    if(pk==='prisas')return{say:'¿¡Ahora!? ¿En serio? Increíble.',rep:-0.1,mult:2};
+    if(pk==='borde')return{say:'Pues date prisa, que no tengo todo el día.',rep:0,mult:1.6};
+    if(pk==='abuela'||pk==='majo')return{say:pick(['Ve, ve, que yo espero.','Claro, sin prisa, de verdad.']),rep:0.05,mult:1};
+    return{say:'Vale…',rep:0,mult:1.4};
+  }
+  if(o==='rude'){
+    if(pk==='majo')return{say:'¡Jajaja, qué carácter! Anda, ve.',rep:0,mult:1.1};
+    if(pk==='abuela')return{say:'¡Qué boca! ¡En mis tiempos esto no pasaba!',rep:-0.3,mult:1.6};
+    if(pk==='borde')return{say:'¿Perdona? ¿Así me hablas? Me voy.',rep:-0.3,mult:1,gone:true};
+    if(pk==='influencer')return{say:'Esto lo está viendo todo el mundo en directo…',rep:-0.6,mult:1.4};
+    if(pk==='prisas')return{say:'¿Joder? ¡Joder digo yo, que llego tarde!',rep:-0.2,mult:2};
+    return{say:'Vaya modales…',rep:-0.15,mult:1.5};
+  }
+  if(o==='joke'){
+    if(pk==='majo'||pk==='abuela'||(pk!=='borde'&&pk!=='prisas'&&Math.random()<0.5))return{say:'¡Jajaja! Anda, ve, ve.',rep:0.05,mult:1.1};
+    return{say:'No tiene ninguna gracia.',rep:-0.1,mult:1.8};
+  }
+  return{say:'¿Hola? ¿Se ha ido? ¿En serio?',rep:-0.15,mult:2.2};
+}
+function askLeave(go,what){
+  if(!run||run.over||run.away||mg)return;
+  pendingLeave=go;
+  const c=front();
+  const cov=meta.emp.filter(isFree).sort((a,b)=>(b.role==='atc')-(a.role==='atc')).slice(0,3)
+    .map(e=>`<button class="btn" data-act="leave" data-o="cover" data-e="${e.id}">👤 Dejar a ${e.face} ${e.name} en caja <small>${ROLES[e.role].s}${e.role==='atc'?'':' · no es cajero/a'}</small></button>`).join('');
+  const ph=c?Object.keys(LEAVE).map(k=>`<button class="btn" data-act="leave" data-o="${k}">${LEAVE[k].t}</button>`).join('')
+    :'<button class="btn" data-act="leave" data-o="silent">🚶 No hay nadie en caja: me voy</button>';
+  openMG(`<div class="card mgc"><h3>${what}</h3>
+    <div class="supd">${c?`Tienes a ${c.face} ${c.lab?'<b>'+c.lab+'</b>':'un cliente'} en caja. ¿Qué le dices antes de irte?`:'Tu caja está vacía.'}</div>
+    <div class="opts">${ph}</div>
+    ${cov?'<div class="zone-title">O DEJA A ALGUIEN EN TU CAJA</div><div class="opts">'+cov+'</div>':''}
+    <button class="btn" data-act="leavecancel">Mejor me quedo</button></div>`);
+}
+function doLeave(o,eid){
+  const c=front(),go=pendingLeave;pendingLeave=null;closeMG();
+  if(!go||!run||run.away)return;
+  run.away={mult:2.2,cover:null,served:0};
+  if(o==='cover'){
+    const e=empById(+eid);if(!e||!isFree(e)){run.away=null;renderAll();return;}
+    const d=run.duty[e.id];d.busy=1;d.task='caja';d.slack=null;run.away.cover=e.id;
+    run.chat={face:e.face,text:e.name+': «Ve tranquilo/a, que ya cobro yo.»',angry:false,until:run.t+3.6};
+  }else if(c){
+    const r=reactLeave(c,o);run.away.mult=r.mult;
+    if(r.rep)meta.rep=clamp(meta.rep+r.rep,0,5);
+    run.chat={face:c.face,text:r.say,angry:r.rep<0,until:run.t+4};
+    if(r.gone){c.items.forEach(ret);regVisit(c,false);run.queue.shift();frontChanged();run.angry++;toast('Se ha ido ofendido. Normal.','bad');}
+  }
+  renderAll();renderChat();checkRep();
+  if(run&&!run.over)go();
+}
+function returnTill(){
+  if(!run||!run.away)return;
+  const cv=run.away.cover&&empById(run.away.cover);
+  if(cv){
+    const d=run.duty[cv.id];if(d){d.busy=0;d.task=null;}
+    if(run.away.served)logE(cv,'Te cubrió la caja ('+run.away.served+(run.away.served===1?' cliente)':' clientes)'));
+    toast(cv.name+' te devuelve la caja'+(run.away.served?': '+run.away.served+(run.away.served===1?' cliente atendido':' clientes atendidos'):'')+'.','good');
+  }
+  run.away=null;mg=null;closeMG();renderAll();
+}
+/* Quien te cubre atiende solo al cliente de delante, más lento y con fallos según su rendimiento. */
+function coverServe(c,e){
+  const p=perf(e,e.role==='atc');
+  run.away.served++;e.st.cv++;
+  if(c.phase==='complaint'){
+    const ok=Math.random()<p,dep=ok?c.complaint.dept:pick(['back','rrpp','alm']);
+    if(dep!=='atc')addTicket(dep,c.complaint.t,c.complaint.refund,c.complaint.sev,dep!==c.complaint.dept);
+    if(!ok)e.st.cvErr++;
+    run.served++;removeFront();renderAll();return;
+  }
+  c.items.forEach(i=>{
+    if(i.scanned||i.denied)return;
+    if(i.age&&c.minor&&Math.random()<p){i.denied=true;ret(i);return;}
+    i.scanned=true;
+    if(i.age&&c.minor){c.err++;run.fines+=5000;meta.money-=5000;meta.rep=clamp(meta.rep-1,0,5);toast(e.name+' ha vendido alcohol a un menor. Multa: 50 €','bad');}
+  });
+  c.bag=Math.random()<p?c.wantsBag:!c.wantsBag;
+  if(c.pay==='cash'&&Math.random()<(1-p)*0.6){const loss=ri(50,500);run.fines+=loss;meta.money-=loss;c.err++;toast(e.name+' se ha equivocado con el cambio: −'+fmt(loss),'bad');}
+  if(c.err||c.bag!==c.wantsBag)e.st.cvErr++;
+  finish(c,false);
+}
+function supBtn(){return run&&!run.over?'<button class="btn sup" data-act="supervise">👀 Supervisar la tienda</button>':'';}
+
+/* ---------- minijuegos cuando vas tú ---------- */
+const AISLES=[[1,'Lácteos y huevos',1,8],[2,'Panadería y desayuno',9,13],[3,'Despensa',14,23],[4,'Aperitivos y conservas',24,29],[5,'Carne y pescado',30,37],[6,'Fruta y verdura',38,48],[7,'Bebidas',49,55],[8,'Droguería',56,64],[9,'Congelados',65,66]];
+const aisleOf=id=>(AISLES.find(a=>id>=a[2]&&id<=a[3])||AISLES[2])[0];
+const ZONES=[['frio','❄️ Cámara de frío'],['fruta','🍎 Fruta y verdura'],['drog','🧴 Droguería'],['seco','📦 Seco y bebidas']];
+const zoneOf=id=>(id<=8||(id>=30&&id<=37)||id>=65)?'frio':(id>=38&&id<=48)?'fruta':(id>=56&&id<=64)?'drog':'seco';
+const ASK={en:'Excuse me, where is the %e%?',fr:'Pardon, où est le %e% ?',de:'Entschuldigung, wo ist %e%?',it:'Scusi, dov\'è %e%?',pt:'Desculpe, onde fica %e%?',zh:'请问，%e% 在哪里？',ar:'من فضلك، أين %e%؟',ro:'Scuzați, unde este %e%?'};
+function startMG(t){
+  const p=CAT.find(x=>x.id===t.pid)||CAT[0];
+  if(t.k==='repo'||t.k==='call'){
+    const dec=CAT.filter(x=>x.e!==p.e&&!x.age),boxes=[];
+    for(let i=0;i<6;i++)boxes.push({e:p.e,ok:1});
+    for(let i=0;i<3;i++){const d=pick(dec);boxes.push({e:d.e,n:d.n,ok:0});}
+    boxes.sort(()=>Math.random()-0.5);
+    mg={kind:'shelf',t,p,boxes,placed:0,miss:0};
+  }else if(t.k==='spill')mg={kind:'mop',t,spots:[0,0,0,0,0,0],sign:false,early:false};
+  else if(t.k==='help'||t.k==='tour')mg={kind:'ask',t,p:pick(CAT.filter(x=>!x.age)),tries:0};
+  else{
+    const ids=Object.keys(meta.back).filter(id=>meta.back[id]>0).map(Number),list=[];
+    for(let i=0;i<8;i++)list.push(CAT.find(x=>x.id===(ids.length?pick(ids):pick(CAT).id))||CAT[0]);
+    mg={kind:'truck',t,list,i:0,ok:0};
+  }
+  renderMG();
+}
+function renderMG(){
+  if(!mg||mg.kind==='sup')return;
+  const t=mg.t,cv=run.away&&run.away.cover&&empById(run.away.cover);
+  let body='';
+  if(mg.kind==='shelf'){
+    const slots=Array.from({length:6},(_,i)=>`<span class="slot2">${i<mg.placed?mg.p.e:''}</span>`).join('');
+    body=`<div class="supd">Coloca las 6 unidades de <b>${mg.p.e} ${mg.p.n}</b> en el lineal. Ojo, que en el carro hay cosas de otros pasillos.</div>
+      <div class="shelf">${slots}</div>
+      <div class="boxes">${mg.boxes.map((b,i)=>b.done?'<span class="box done"></span>':`<button class="box" data-act="mgbox" data-i="${i}">${b.e}</button>`).join('')}</div>
+      <div class="supd">Fallos: ${mg.miss}</div>`;
+  }else if(mg.kind==='mop'){
+    body=`<div class="supd">Lo primero, el cartel de suelo mojado. Luego friega cada charco (3 pasadas).</div>
+      <button class="btn ${mg.sign?'on':''}" data-act="mgsign" ${mg.sign?'disabled':''}>⚠️ ${mg.sign?'Cartel puesto':'Poner el cartel'}</button>
+      <div class="boxes">${mg.spots.map((s,i)=>s>=3?'<span class="box done">✨</span>':`<button class="box" data-act="mgmop" data-i="${i}">${['💧','💦','🫧'][s]}</button>`).join('')}</div>`;
+  }else if(mg.kind==='ask'){
+    const q=t.lang?(ASK[t.lang]||ASK.en).replace('%e%',mg.p.e):`¿Dónde tenéis ${mg.p.e} <b>${mg.p.n}</b>?`;
+    body=`<div class="bubble">${t.lang?'🧳':'🙋'} ${q}</div><div class="supd">Mándale al pasillo correcto.</div>
+      <div class="aisles">${AISLES.map(a=>`<button class="btn" data-act="mgaisle" data-a="${a[0]}">${a[0]} · ${a[1]}</button>`).join('')}</div>
+      ${mg.tries?'<div class="supd">«Ahí no estaba…» Prueba otra vez.</div>':''}`;
+  }else{
+    const p=mg.list[mg.i];
+    body=`<div class="supd">Caja ${mg.i+1} de ${mg.list.length}. ¿A qué zona del almacén va?</div>
+      <div class="bigbox">${p.e}<small>${p.n}</small></div>
+      <div class="zones">${ZONES.map(z=>`<button class="btn" data-act="mgzone" data-z="${z[0]}">${z[1]}</button>`).join('')}</div>
+      <div class="supd">Bien colocadas: ${mg.ok}</div>`;
+  }
+  openMG(`<div class="card mgc"><h3>${t.ic} ${t.s}</h3>
+    <div class="supd">${cv?cv.face+' '+cv.name+' te cubre la caja.':'Tu caja está cerrada y la cola espera. Date prisa.'}</div>${body}</div>`);
+}
+function mgAct(a,b){
+  if(!mg||mg.kind==='sup')return;
+  if(a==='mgbox'){
+    const x=mg.boxes[+b.dataset.i];if(!x||x.done)return;
+    if(x.ok){x.done=1;mg.placed++;sBeep();if(mg.placed>=6)return endMG(clamp(1-mg.miss*0.2,0,1));}
+    else{mg.miss++;sBad();toast(x.n+' no va en este pasillo','bad');}
+  }else if(a==='mgsign'){mg.sign=true;sCoin();}
+  else if(a==='mgmop'){if(!mg.sign)mg.early=true;mg.spots[+b.dataset.i]++;sCoin();if(mg.spots.every(s=>s>=3))return endMG(1);}
+  else if(a==='mgaisle'){
+    if(+b.dataset.a===aisleOf(mg.p.id))return endMG(mg.tries===0?1:mg.tries===1?0.5:0.2);
+    mg.tries++;sBad();if(mg.tries>=3)return endMG(0);
+  }else if(a==='mgzone'){
+    const p=mg.list[mg.i];
+    if(b.dataset.z===zoneOf(p.id)){mg.ok++;sBeep();}else{sBad();toast(p.n+' no iba ahí','bad');}
+    mg.i++;if(mg.i>=mg.list.length)return endMG(mg.ok/mg.list.length);
+  }
+  renderMG();
+}
+function endMG(sc){
+  const t=mg.t,kind=mg.kind,early=mg.early;mg=null;closeMG();
+  run.tasks=run.tasks.filter(x=>x!==t);
+  let msg='',good=sc>=0.6;
+  if(kind==='shelf'){const mv=moveStock(t.pid,Math.round(8*sc));msg=mv?'Lineal repuesto: +'+mv+' uds en estantería.':'Has colocado lo que había, pero en el almacén no quedaba más.';}
+  else if(kind==='mop'){
+    if(early&&Math.random()<0.4){addTicket('back','Un cliente se resbaló en el pasillo '+t.n+' (no había cartel)',ri(1000,3000),3,false);meta.rep=clamp(meta.rep-0.3,0,5);msg='Sin cartel, alguien se ha resbalado mientras fregabas. Reclamación en camino.';good=false;}
+    else{meta.rep=clamp(meta.rep+0.05,0,5);msg='Pasillo '+t.n+' limpio y seco.';}
+  }else if(kind==='ask'){
+    meta.rep=clamp(meta.rep+(sc>=1?0.1:sc>=0.5?0:-0.15),0,5);
+    msg=sc>=1?'«¡Muchas gracias!» Cliente feliz.':sc>=0.5?'Al final lo encontró. A la segunda.':'Se ha ido sin encontrarlo.';
+  }else{
+    let cap=Math.round(20*sc),tot=0;
+    Object.keys(meta.back).forEach(id=>{if(cap>0){const mv=moveStock(id,cap);cap-=mv;tot+=mv;}});
+    msg='Camión descargado: '+Math.round(sc*100)+'% bien colocado'+(tot?', +'+tot+' uds a estantería.':'.');
+    if(sc<0.6)meta.rep=clamp(meta.rep-0.1,0,5);
+  }
+  if(good)run.tdone++;else run.tlost++;
+  returnTill();
+  toast(msg,good?'good':'bad');if(good)sOk();else sBad();
+  checkRep();
+}
+
+/* ---------- supervisar la tienda ---------- */
+const SLACK=['📱 Mirando el móvil','☕ De cháchara en el almacén','🚬 «Ha salido un momento»','😶 Mirando a la nada'];
+const DOING={atc:'En caja de apoyo',alm:'Colocando mercancía',back:'Con el papeleo de reembolsos',rrpp:'Contestando reseñas en redes'};
+function openSup(){
+  askLeave(()=>{
+    mg={kind:'sup',acted:{}};
+    meta.emp.filter(inStore).forEach(e=>{run.duty[e.id].seen=1;});
+    renderSup();
+  },'👀 Supervisar la tienda');
+}
+function renderSup(){
+  if(!mg||mg.kind!=='sup')return;
+  const rows=Object.keys(ROLES).map(r=>{
+    const ps=staffOf(r);if(!ps.length)return '';
+    return `<div class="zone-title">${ROLES[r].n.toUpperCase()}</div>`+ps.map(e=>{
+      const d=run.duty[e.id];let s,sl=false;
+      if(!d||d.st==='abs')s='❌ No ha venido hoy';else if(d.st==='off')s='🏖️ Libra hoy';else if(run.t<d.at)s='⏰ Aún no ha llegado';
+      else if(run.away&&run.away.cover===e.id)s='🧾 Te está cubriendo la caja';
+      else if(d.busy){const t=run.tasks.find(x=>x.id===d.task);s='🏃 Con un aviso'+(t?' en el pasillo '+t.n:'');}
+      else if(d.slack){s=d.slack;sl=true;}else s='✅ '+DOING[r];
+      const can=d&&working(e)&&run.t>=d.at&&!mg.acted[e.id]&&!(run.away&&run.away.cover===e.id);
+      const btn=can?`<button class="btn" data-act="supact" data-e="${e.id}" data-k="cheer">👍 Ánimo</button><button class="btn ${sl?'no':''}" data-act="supact" data-e="${e.id}" data-k="push">📢 ¡Espabila!</button>`
+        :(mg.acted[e.id]?`<span class="supd">${mg.acted[e.id]}</span>`:'');
+      return `<div class="up"><div class="t"><b>${e.face} ${flag(e)} ${e.name}</b>${s}</div>${btn}</div>`;
+    }).join('');
+  }).join('');
+  const cv=run.away&&run.away.cover&&empById(run.away.cover);
+  openMG(`<div class="card mgc"><h3>👀 Supervisando la tienda</h3>
+    <div class="supd">${cv?cv.face+' '+cv.name+' está en tu caja ('+(run.away.served||0)+' clientes atendidos).':'Tu caja está cerrada y la cola espera.'} Quien te ha visto pasar trabaja mejor el resto del turno.</div>
+    ${rows||'<div class="supd">No hay nadie.</div>'}
+    <button class="btn go big" data-act="return">Volver a caja</button></div>`);
+}
+function supAct(id,k){
+  const e=empById(id),d=e&&run.duty[e.id];if(!e||!d||!mg||mg.kind!=='sup'||mg.acted[id])return;
+  if(k==='cheer'){e.moral=clamp(e.moral+6,0,100);mg.acted[id]='👍 Le has animado.';logE(e,'Le animaste mientras trabajaba');}
+  else if(d.slack){d.slack=null;d.slackT=0;e.st.caught++;e.moral=clamp(e.moral-6,0,100);e.focus=Math.max(e.focus,1);mg.acted[id]='📢 Pillado. Vuelve al tajo.';logE(e,'Le pillaste sin hacer nada');}
+  else{e.moral=clamp(e.moral-10,0,100);mg.acted[id]='😠 «¡Pero si estaba trabajando!»';logE(e,'Le echaste la bronca sin motivo');}
+  sOk();renderSup();
+}
+const TKN={back:'de dinero',rrpp:'por trato o redes',alm:'por producto agotado'};
+function didList(e){
+  const s=e.st,L=[];
+  if(!s.shifts&&!s.abs)return '<li>Aún no ha trabajado ningún turno contigo.</li>';
+  L.push(`Trabajó ${s.shifts} ${s.shifts===1?'turno':'turnos'}${s.abs?` y faltó ${s.abs} sin avisar`:''}.`);
+  const tn=s.ok+s.fail,tk=TKN[e.role]||'';
+  if(tn===1)L.push((s.ok?'Resolvió bien':'Resolvió mal')+' la única reclamación '+tk+' que le llegó.');
+  else if(tn)L.push(`Resolvió bien ${s.ok} de las ${tn} reclamaciones ${tk} que le llegaron.`);
+  else if(e.role!=='atc')L.push('No le llegó ninguna reclamación.');
+  if(s.tasks+s.tfail)L.push(`Atendió ${s.tasks+s.tfail} ${s.tasks+s.tfail===1?'aviso':'avisos'} en la tienda${s.tfail?` (${s.tfail} mal)`:''}.`);
+  if(s.cv)L.push(`Te cubrió la caja: ${s.cv} ${s.cv===1?'cliente':'clientes'}${s.cvErr?` (${s.cvErr} con fallos)`:''}.`);
+  if(s.late)L.push(`Llegó tarde ${s.late} ${s.late===1?'vez':'veces'}.`);
+  if(s.caught)L.push(`Le pillaste sin hacer nada ${s.caught} ${s.caught===1?'vez':'veces'}.`);
+  if(s.quej)L.push(`Un cliente se quejó de su trato ${s.quej} ${s.quej===1?'vez':'veces'}.`);
+  if(s.fel)L.push(`Le felicitaron ${s.fel} ${s.fel===1?'vez':'veces'}.`);
+  return L.map(x=>'<li>'+x+'</li>').join('');
 }
 
 /* ---------- reunión de personal (cada 3 turnos: 1, 4, 7…) ---------- */
@@ -1023,7 +1318,9 @@ function showMeeting(){
       <button class="btn" data-act="emp" data-e="${e.id}" data-k="raise">💶 +3 €</button>
       <button class="btn no" data-act="emp" data-e="${e.id}" data-k="fire">Despedir</button></div>`;
     return `<div class="emp"><div class="eh"><span class="ef">${e.face}</span><div class="t"><b>${e.name}</b>${tag}</div><span class="mood" title="Ánimo">${mood(e)}</span></div>
-      <div class="es">Turnos ${s.shifts} · Avisos ${s.tasks}✓ ${s.tfail}✗ · Reclamaciones ${s.ok}✓ ${s.fail}✗ · Retrasos ${s.late} · Faltas ${s.abs} · Quejas ${s.quej} · Felicitaciones ${s.fel}</div>
+      <div class="duty"><b>Su trabajo:</b> ${ROLES[e.role].duties.join(' · ')}.</div>
+      <ul class="did">${didList(e)}</ul>
+      ${e.log&&e.log.length?'<div class="es">📒 Lo último: '+e.log.slice(-3).join(' · ')+'</div>':''}
       <div class="es">${e.days>=1?TRAITS[e.pers].ic+' <b>'+TRAITS[e.pers].n+'</b>: '+TRAITS[e.pers].d:'❔ Carácter: aún no le conoces.'} · Habla ${e.langs.map(l=>LANG[l]).join(', ')}.</div>
       <div class="ev">${s.shifts?verdict(e):'Sin datos todavía'}</div>${btns}</div>`;
   }).join('')||'<div class="supd">Plantilla vacía. Tú contra el mundo.</div>';
@@ -1196,12 +1493,16 @@ function renderBelt(){
 function renderRegister(){
   const el=$('#register'),c=front();
   if(run&&run.away){
-    el.innerHTML=`<div class="led"><small>CAJA CERRADA</small><b>🚶</b></div>
-      <div class="paywait">Estás en el pasillo. Tu cola se impacienta el doble…</div><div class="proc"><i data-away style="animation:none"></i></div>`;
+    const cv=run.away.cover&&empById(run.away.cover);
+    el.innerHTML=cv?`<div class="led"><small>TE CUBRE</small><b>${cv.face}</b></div>
+        <div class="paywait">${cv.name} está en tu caja. ${run.away.served} ${run.away.served===1?'cliente atendido':'clientes atendidos'}.</div>
+        <button class="btn go big" data-act="return">Volver a caja</button>`
+      :`<div class="led"><small>CAJA CERRADA</small><b>🚶</b></div>
+        <div class="paywait">Estás fuera de caja. La cola se impacienta…</div>${mg?'':'<button class="btn go big" data-act="return">Volver a caja</button>'}`;
     return;
   }
   if(!c){
-    el.innerHTML=`<div class="led"><small>TOTAL</small><b>0,00 €</b></div><div class="receipt empty">Esperando cliente…</div>`;
+    el.innerHTML=`<div class="led"><small>TOTAL</small><b>0,00 €</b></div><div class="receipt empty">Esperando cliente…</div>${supBtn()}`;
     return;
   }
   if(c.phase==='complaint'){
@@ -1213,7 +1514,7 @@ function renderRegister(){
       <button class="btn" data-act="route" data-d="back">Backoffice</button>
       <button class="btn" data-act="route" data-d="rrpp">RR.PP.</button>
       <button class="btn" data-act="route" data-d="alm">Almacén</button>
-      <button class="btn no" data-act="route" data-d="no">Rechazar</button></div></div>`;
+      <button class="btn no" data-act="route" data-d="no">Rechazar</button></div></div>${supBtn()}`;
     return;
   }
   const t=totalOf(c);
@@ -1246,7 +1547,7 @@ function renderRegister(){
       <div class="denoms">${d}</div>
       <div class="row"><button class="btn" data-act="clear">Vaciar</button><button class="btn go" data-act="deliver">Dar cambio</button></div>`;
   }
-  el.innerHTML=h;
+  el.innerHTML=h+supBtn();
 }
 function renderAll(){renderHud();renderQueue();renderBelt();renderRegister();renderTasks();}
 
@@ -1272,11 +1573,12 @@ function tick(ts){
         }else run.next=2;
       }
     }
-    const helpers=staffOf('atc').filter(isFree).length;
+    const helpers=staffOf('atc').filter(e=>isFree(e)&&!run.duty[e.id].slack).length;
+    const am=run.away&&!run.away.cover?run.away.mult:0;
     const rate=(meta.up.fan?0.8:1)*(1-0.08*helpers);
     for(let i=run.queue.length-1;i>=0;i--){
       const c=run.queue[i];
-      c.p-=dt*rate*(i===0?(run.away?1.8:1):(run.away?1:0.55));
+      c.p-=dt*rate*(i===0?(am||1):(am?1:0.55));
       c.talk-=dt;
       if(c.talk<=0){c.talk=rnd(7,13);if(c.p>0)say(c,i);}
       if(c.p<=0){leaveAngry(i);if(run.over)break;}
@@ -1313,7 +1615,13 @@ document.addEventListener('click',e=>{
   else if(a==='emp')empAct(+b.dataset.e,b.dataset.k);
   else if(a==='req')applyReq(+b.dataset.r,+b.dataset.o);
   else if(a==='hirec')hireCand(+b.dataset.c);
-  else if(a==='assign')assignTask(+b.dataset.t,b.dataset.e);  else if(a==='scan')scanItem(+b.dataset.id);
+  else if(a==='assign')assignTask(+b.dataset.t,b.dataset.e);
+  else if(a==='leave')doLeave(b.dataset.o,b.dataset.e);
+  else if(a==='leavecancel'){pendingLeave=null;closeMG();}
+  else if(a==='supervise')openSup();
+  else if(a==='return')returnTill();
+  else if(a==='supact')supAct(+b.dataset.e,b.dataset.k);
+  else if(a.startsWith('mg'))mgAct(a,b);  else if(a==='scan')scanItem(+b.dataset.id);
   else if(a==='idyes')idDecision(true);
   else if(a==='idno')idDecision(false);
   else if(a==='bag')toggleBag();
