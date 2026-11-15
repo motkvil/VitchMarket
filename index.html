@@ -607,7 +607,7 @@ function cashGiven(t){
 
 /* ---------- ciclo del turno ---------- */
 function startDay(){
-  if(isHost()){room.view=null;syncRealEmps();}
+  if(isHost()){room.view=null;room.rpt=null;syncRealEmps();}
   run={t:0,dur:100,queue:[],next:1.5,served:0,angry:0,errors:0,tips:0,fines:0,closing:false,over:false,tray:[],card:false,pendingId:null,flash:0,tickets:[],sales:0,
     tasks:[],nextTask:6,away:null,tdone:0,tlost:0,duty:{},ev:[]};
   if(isHost())run.dur=room.info.dur||100;
@@ -727,6 +727,8 @@ function processTickets(){
     if(r.late)ws.forEach(e=>{e.moral=clamp(e.moral-4,0,100);});
     meta.money-=r.cost;
   });
+  /* Las que resolvieron en directo los empleados reales (ya pagadas) también cuentan en el resumen. */
+  Object.keys(run.liveTk||{}).forEach(d=>{const L=run.liveTk[d],r=res[d];if(r){r.in+=L.ok+L.fail;r.ok+=L.ok;r.fail+=L.fail;r.cost+=L.cost;}});
   return res;
 }
 function endDay(){
@@ -746,6 +748,7 @@ function endDay(){
   meta.best=Math.max(meta.best,meta.day);
   cart={};
   lastEnd={payroll,res};
+  if(isHost())room.rpt=deptReport();
   if(meta.rep<=0||meta.money<-30000){run.over=false;checkRep();return;}
   saveGame(true);
   submitScore(false);
@@ -830,7 +833,7 @@ function showStart(confirmWipe){
       <li>La paciencia se agota. La reputación a cero y estás despedido.</li>
     </ul>
     ${online()?`<div class="zone-title">🏆 RANKING</div><div id="rank"></div>
-      <label class="supd">Tu nombre en el ranking (no pongas datos personales)<input id="pname" class="pname" maxlength="20" value="${esc(playerName())}" placeholder="Tu nombre o mote"></label>`:''}
+      ${nameField('Tu nombre en el ranking (no pongas datos personales)')}`:''}
     ${online()?`<button class="btn" data-act="rmenu">👥 Jugar con amigos (salas)</button>${savedRoom()?`<button class="btn" data-act="rback2">↩️ Volver a la sala ${esc(savedRoom())}</button>`:''}`:''}
     ${!cont?'<button class="btn go big" data-act="start">Abrir caja</button>'
       :confirmWipe?`<div class="supd">Se borra la partida guardada (turno ${meta.day}, ${fmt(meta.money)}). No se puede deshacer.</div>
@@ -908,14 +911,17 @@ const srvNow=()=>Date.now()+((room&&room.off)||0);
 function savedRoom(){try{return localStorage.getItem(ROOM_KEY)||'';}catch(e){return '';}}
 function setSavedRoom(c){try{if(c)localStorage.setItem(ROOM_KEY,c);else localStorage.removeItem(ROOM_KEY);}catch(e){}}
 function newCode(){const A='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';let s='';for(let i=0;i<5;i++)s+=A[Math.floor(Math.random()*A.length)];return s;}
-function nameOk(){const i=$('#pname'),n=i?cleanName(i.value):'';if(!i||!i.value.trim()){toast('Pon un nombre o un mote','bad');return false;}setPlayerName(n);return true;}
+/* El nombre se pide una vez: si ya hay uno guardado, se muestra con un botón para cambiarlo. */
+const nameInput=label=>`<label class="supd">${label}<input id="pname" class="pname" maxlength="20" value="${esc(playerName())}" placeholder="Tu nombre o mote"></label>`;
+const nameField=label=>playerName()?`<div class="supd" data-label="${esc(label)}">Juegas como <b>${esc(playerName())}</b> <button class="btn mini" data-act="rename">Cambiar</button></div>`:nameInput(label);
+function nameOk(){const i=$('#pname');if(!i&&playerName())return true;const n=i?cleanName(i.value):'';if(!i||!i.value.trim()){toast('Pon un nombre o un mote','bad');return false;}setPlayerName(n);return true;}
 
 function showRoomMenu(err){
   room=null;run=null;
   const code=(new URLSearchParams(location.search).get('sala')||savedRoom()||'').toUpperCase();
   showOverlay(`<div class="card"><h2>👥 Jugar con amigos</h2>
     <div class="supd">Quien crea la sala es el jefe y lleva la Caja 3. Los demás entran con el código, eligen puesto y hacen los avisos de verdad. La tienda solo avanza mientras el jefe tiene el juego abierto.</div>
-    <label class="supd">Tu nombre (no pongas datos personales)<input id="pname" class="pname" maxlength="20" value="${esc(playerName())}" placeholder="Tu nombre o mote"></label>
+    ${nameField('Tu nombre (no pongas datos personales)')}
     ${err?`<div class="rerr">⚠️ ${esc(err)}</div>`:''}
     <div class="zone-title">ENTRAR EN UNA SALA</div>
     <input id="rcode" class="pname" maxlength="5" value="${esc(code)}" placeholder="Código de 5 letras" autocapitalize="characters" autocomplete="off">
@@ -1133,10 +1139,30 @@ function pubState(force){
   }):[];
   const phase=!run?'lobby':run.over?(run.dead?'dead':meet?'meeting':'shop'):run.closing?'closing':'open';
   fb.set(rRef('state'),plain({day:meta.day,t:run?Math.round(run.t):0,dur:run?run.dur:(room.info.dur||100),money:Math.round(meta.money),rep:Math.round(meta.rep*10)/10,
-    q:run?run.queue.length:0,phase,away:!!(run&&run.away),tasks,cam:camModel(),ts:fb.serverTimestamp()})).catch(()=>{});
+    q:run?run.queue.length:0,phase,away:!!(run&&run.away),tasks,rpt:run&&run.over&&room.rpt||null,ts:fb.serverTimestamp()})).catch(()=>{});
   if(force||now-room.lastHb>10000){room.lastHb=now;fb.update(rRef('info'),{hb:fb.serverTimestamp(),day:meta.day,status:run&&!run.over?'open':run?'closed':'lobby'}).catch(()=>{});}
 }
 
+/* Informe del cierre repartido por departamento: cada empleado real ve el suyo (el jefe lo ve todo en el cierre). */
+function deptReport(){
+  const r=lastEnd.res,tk=x=>x.in?x.in+' recibidas · '+x.ok+' bien · '+x.fail+' mal · '+x.late+' sin tiempo · coste '+fmt(x.cost):'ninguna';
+  const pend=Object.values(meta.back).reduce((t,v)=>t+(v||0),0),out=CAT.filter(x=>(meta.stock[x.id]||0)<=0).length;
+  const low=CAT.slice().sort((x,y)=>((meta.stock[x.id]||0)+(meta.back[x.id]||0))-((meta.stock[y.id]||0)+(meta.back[y.id]||0))).slice(0,6)
+    .map(x=>x.e+' '+x.n+': '+(meta.stock[x.id]||0)+' en estantería · '+(meta.back[x.id]||0)+' en almacén');
+  const you={};
+  meta.emp.filter(e=>e.real).forEach(e=>{const s=e.st;you[e.real]=[['Tus avisos',s.tasks+' bien · '+s.tfail+' mal'],['Tus reclamaciones',s.ok+' bien · '+s.fail+' mal']];});
+  return {day:meta.day,you,low,
+    atc:[['Clientes atendidos',run.served],['Se fueron enfadados',run.angry],['Errores en caja',run.errors],['Avisos de la tienda',run.tdone+' ✓ · '+run.tlost+' ✗']],
+    back:[['Ventas del día',fmt(run.sales)],['Propinas',fmt(run.tips)],['Multas y pérdidas en caja',fmt(run.fines)],['Nómina del personal',fmt(lastEnd.payroll)],['Reclamaciones de dinero',tk(r.back)],['Bote',fmt(meta.money)]],
+    rrpp:[['Reputación','★ '+meta.rep.toFixed(1)],['Clientes que se fueron enfadados',run.angry],['Reclamaciones por trato o redes',tk(r.rrpp)]],
+    alm:[['Productos agotados',out],['Mercancía esperando en el almacén',pend+' uds'],['Pedidos en camino',meta.orders.length],['Reclamaciones por agotado',tk(r.alm)]]};
+}
+function reportHtml(rp,role){
+  if(!rp||!rp[role])return '';
+  const rows=toArr(rp[role]).concat(toArr((rp.you||{})[room.uid]));
+  return `<div class="zone-title">INFORME DE ${ROLES[role].n.toUpperCase()} · TURNO ${rp.day}</div><div class="sum">${rows.map(x=>`<span>${esc(x[0])}</span><b>${esc(x[1])}</b>`).join('')}</div>`
+    +(role==='alm'&&rp.low?'<div class="supd">Lo que menos queda:<br>'+toArr(rp.low).map(esc).join('<br>')+'</div>':'');
+}
 /* --- lado del empleado real --- */
 const PHASE={lobby:'⏳ Esperando a que el jefe abra la tienda…',shop:'🧾 Turno cerrado. El jefe está con las cuentas y los pedidos.',meeting:'🗣️ Reunión de personal. El jefe está decidiendo sobre cada uno.',dead:'🪦 La tienda ha cerrado. Esperando a ver si el jefe vuelve a empezar.'};
 function renderMember(){
@@ -1153,9 +1179,8 @@ function renderMember(){
     h+=`<div class="supd">Tu puesto: <b>${ROLES[role].n}</b>${mine?'':' <button class="btn mini" data-act="rrole" data-r="">Cambiar</button>'}</div>`;
     if(st)h+=`<div class="mhud"><span>Turno <b>${st.day}</b></span><span>🕘 <b>${clockOf(st.t,st.dur)}</b></span><span>Bote <b>${fmt(st.money)}</b></span><span>★ <b>${(+st.rep).toFixed(1)}</b></span><span>Cola <b>${st.q}</b></span></div>`;
     if(stale)h+='<div class="supd">⏸️ La tienda está en pausa: el jefe no tiene el juego abierto.</div>';
-    else if(PHASE[st.phase])h+='<div class="supd">'+PHASE[st.phase]+'</div>';
+    else if(PHASE[st.phase])h+='<div class="supd">'+PHASE[st.phase]+'</div>'+reportHtml(st.rpt,role);
     else{
-      h+='<div class="zone-title">📹 CÁMARAS · TOCA UNA PARA AMPLIARLA</div><div id="mcamslot" class="camslot"></div>';
       if(mine)h+=`<div class="task"><div>${mine.ic} ${esc(mine.s)}</div><div class="supd">Es tuyo. Te quedan ${mine.left} s.</div></div>`;
       const open=tasks.filter(t=>!t.who&&(t.k!=='tk'||t.dept===role)).sort((a,b)=>toArr(b.roles).includes(role)-toArr(a.roles).includes(role));
       h+='<div class="zone-title">AVISOS SIN DUEÑO</div>'+(open.map(t=>{const m=toArr(t.roles).includes(role);
@@ -1581,9 +1606,11 @@ function applyMG(t,sc,early,e){
     if(!tk)msg='Esa reclamación ya estaba resuelta.';
     else{
       run.tickets=run.tickets.filter(x=>x!==tk);
+      run.liveTk=run.liveTk||{};const LV=run.liveTk[d]=run.liveTk[d]||{ok:0,fail:0,cost:0},m0=meta.money;
       if(good){const cost=tk.mis?0:d==='back'?tk.refund:d==='rrpp'?500:0;meta.money-=cost;meta.rep=clamp(meta.rep+0.1,0,5);if(e)e.st.ok++;
         msg=tk.mis?'Bien visto: no era de su departamento y la ha devuelto.':'Reclamación resuelta'+(cost?' ('+fmt(cost)+')':'')+'.';}
       else{const cost=d==='back'&&!tk.mis?tk.refund*2:0;meta.money-=cost;meta.rep=clamp(meta.rep-(d==='rrpp'?0.5:0.3),0,5);if(e)e.st.fail++;msg='La reclamación ha salido mal'+(cost?': −'+fmt(cost):'')+'.';}
+      LV[good?'ok':'fail']++;LV.cost+=m0-meta.money;
     }
   }else{
     let cap=Math.round(20*sc),tot=0;
@@ -2139,7 +2166,7 @@ function camWorld(c,m,now){
   });
 }
 function drawCams(){
-  const slot=isMember()?document.getElementById('mcamslot'):(cam.on?document.getElementById('camslot'):null);
+  const slot=!isMember()&&cam.on?document.getElementById('camslot'):null;
   if(!slot||!slot.offsetParent||cam.noctx)return;
   if(!cam.cv){
     cam.cv=document.createElement('canvas');cam.cv.className='camcv';
@@ -2148,7 +2175,7 @@ function drawCams(){
   }
   if(cam.cv.parentNode!==slot)slot.appendChild(cam.cv);
   let m=null;
-  if(isMember()){const st=room.state;if(st&&st.ts&&srvNow()-st.ts<6000)m=st.cam||null;}else m=camModel();
+  m=camModel();
   const dpr=window.devicePixelRatio||1,W=slot.clientWidth||300,H=Math.round(W*(cam.zoom<0?0.62:0.68));
   if(cam.cv.width!==Math.round(W*dpr)||cam.cv.height!==Math.round(H*dpr)){cam.cv.width=Math.round(W*dpr);cam.cv.height=Math.round(H*dpr);cam.cv.style.height=H+'px';}
   const now=performance.now(),dt=Math.min(0.1,(now-cam.last)/1000||0);cam.last=now;
@@ -2276,6 +2303,7 @@ document.addEventListener('click',e=>{
   else if(a==='cams')toggleCams();
   else if(a==='mute'){muted=!muted;b.textContent=muted?'🔇':'🔊';}
   else if(a==='wipe')showStart(true);
+  else if(a==='rename'){const w=b.closest('[data-label]');if(w){w.outerHTML=nameInput(w.dataset.label);const i=$('#pname');if(i){i.focus();i.select();}}}
   else if(a==='rmenu')showRoomMenu();
   else if(a==='rback')showStart();
   else if(a==='rback2'){if(playerName())joinRoom(savedRoom());else showRoomMenu();}
