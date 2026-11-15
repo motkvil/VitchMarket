@@ -684,6 +684,48 @@ button.pdarow:hover{background:rgba(19,54,31,.15)}
 .gshelf.three{grid-template-columns:repeat(3,1fr)}
 .gshelf.three .fc{min-height:70px}.gshelf.three .fc .pk{font-size:32px}
 @media (max-width:420px){.pa{height:100px}.pa .sign{width:24px;height:24px;font-size:13px}.chk{display:none}}
+/* RR.HH.: despacho con currículum, entrevista, contrato y sala de descanso */
+.cvdesk{flex-direction:row;align-items:flex-start;gap:8px}
+.cvpaper{flex:1;background:#fff;border-radius:2px;box-shadow:0 3px 8px rgba(0,0,0,.35);padding:0 0 8px;font-size:11px;transform:rotate(-.8deg);overflow:hidden}
+.cvband{background:var(--thc);color:#fff;font-size:9px;letter-spacing:2px;padding:3px 8px;font-weight:700}
+.cvtop{display:flex;gap:8px;padding:6px 8px;align-items:center}
+.cvtop>div{display:flex;flex-direction:column;gap:1px}.cvtop b{font-size:13px}.cvtop small{font-size:10px;color:#555}
+.cvphoto{flex:0 0 46px;height:54px;border:3px solid #fff;outline:1px solid #ccc;background:#e9eef2;display:flex;align-items:center;justify-content:center;font-size:30px;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+.cvmini{display:flex;gap:8px;align-items:center;background:#fff;border-radius:8px;padding:6px 8px;font-size:12px;box-shadow:0 2px 0 rgba(0,0,0,.12)}.cvmini small{font-size:10px;color:#5b5646}.cvmini .cvphoto{flex-basis:36px;height:40px;font-size:22px}
+.cvsec{display:flex;flex-direction:column;padding:2px 8px;border-top:1px solid #eee}.cvsec b{font-size:9px;letter-spacing:1px;color:var(--thc)}
+.postits{flex:0 0 120px;display:flex;flex-direction:column;gap:6px}
+.postit{background:#fff59d;padding:6px;font-size:10px;line-height:1.3;box-shadow:0 3px 0 rgba(0,0,0,.25);transform:rotate(var(--r));font-family:cursive}
+.chatlog{display:flex;flex-direction:column;gap:4px}
+.cq{align-self:flex-end;max-width:80%;background:var(--thc);color:#fff;border-radius:12px 12px 2px 12px;padding:5px 9px;font-size:11px}
+.ca{display:flex;align-items:flex-end;gap:6px;max-width:92%}
+.ca>span{font-size:22px}.ca>div{background:#fff;border-radius:12px 12px 12px 2px;padding:5px 9px;font-size:12px;font-style:italic;box-shadow:0 1px 0 rgba(0,0,0,.1)}
+.flag{flex:0 0 auto;font-size:16px;opacity:.35;filter:grayscale(1);background:transparent}
+.flag.on{opacity:1;filter:none;animation:fxok .3s}
+.qcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px}
+.qcard{background:#fff;border:1px solid #d9d0e6;border-left:4px solid var(--thc);border-radius:6px;padding:7px 8px;text-align:left;font-size:12px;box-shadow:0 2px 0 rgba(0,0,0,.12)}
+.qcard:hover{background:#f6f0fc}
+.contract{background:repeating-linear-gradient(#fffef9 0 21px,#eef1f6 21px 22px);border:1px solid #d8d2c4;border-radius:2px;box-shadow:0 3px 8px rgba(0,0,0,.25);padding:10px;display:flex;flex-direction:column;gap:8px}
+.contract>b{font-family:var(--display);font-weight:400;font-size:15px;text-align:center}.contract>small{text-align:center;font-size:10px;color:#5b5646}
+.contract small.bad{color:var(--sign)}
+.wage{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.wpill{background:#fff;border:2px solid #d9d0e6;border-radius:10px;padding:6px 4px;font-weight:700;font-size:13px;display:flex;flex-direction:column;align-items:center}
+.wpill small{font-weight:400;font-size:9px;color:#5b5646}.wpill.on{border-color:var(--thc);background:#f3ebfb}
+.stamps2{display:flex;gap:8px}
+.breakroom{border-radius:10px;overflow:hidden;box-shadow:inset 0 0 0 3px #b9a98a}
+.br-wall{display:flex;justify-content:space-between;padding:6px 12px;font-size:20px;background:repeating-linear-gradient(90deg,#efe3c8 0 30px,#e6d8b9 30px 31px)}
+.br-scene{display:flex;align-items:flex-end;justify-content:space-between;gap:6px;padding:8px;background:linear-gradient(#e6d8b9,#e6d8b9 60%,#9b8462 60%)}
+.fperson{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;text-align:center}
+.fface{font-size:40px;line-height:1}
+.fperson b{font-size:12px}.fperson small{font-size:9px;color:#fff;background:rgba(0,0,0,.35);border-radius:99px;padding:0 6px}
+.fbub{order:-1;position:relative;background:#fff;border-radius:10px;padding:5px 7px;font-size:11px;line-height:1.3;margin-bottom:6px;box-shadow:0 2px 0 rgba(0,0,0,.2)}
+.fbub:after{content:'';position:absolute;bottom:-6px;left:50%;margin-left:-6px;border:6px solid transparent;border-top-color:#fff;border-bottom:0}
+.vs{font-size:22px;align-self:center;animation:nudge 1s ease-in-out infinite}
+.folders{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.folder{position:relative;background:#f1d79a;border-radius:0 6px 6px 6px;padding:16px 8px 6px;font-size:11px;box-shadow:0 2px 0 rgba(0,0,0,.25);display:flex;flex-direction:column;gap:1px}
+.ftab{position:absolute;top:-10px;left:0;background:#f1d79a;border-radius:6px 6px 0 0;padding:2px 8px;font-style:normal;font-size:8px;font-weight:700;letter-spacing:1px}
+.verdict{display:grid;grid-template-columns:1fr auto 1fr;gap:6px}
+@media (max-width:420px){.cvdesk{flex-direction:column}.postits{flex:none;flex-direction:row;flex-wrap:wrap}.postit{flex:1 1 120px}.verdict{grid-template-columns:1fr 1fr}.verdict .go{grid-column:1/-1;order:3}}
+@media (max-height:760px){.cq,.ca>div{padding:3px 7px;font-size:10px}.ca>span{font-size:18px}.chatlog{gap:2px}.postit{padding:4px;font-size:9px}.cvsec{padding:1px 6px}.cvband{padding:2px 8px}.fface{font-size:30px}.br-wall{display:none}.folder{padding:12px 6px 4px;font-size:10px}.cvtop{padding:4px 6px}.cvphoto{flex-basis:38px;height:44px;font-size:24px}}
 </style>
 </head>
 <body>
@@ -1356,7 +1398,7 @@ async function fillRanking(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.15-6';
+const APPV='2026.11.15-7';
 const SHOP='VITCH',DURS=[[100,'100 s (clásico)'],[600,'10 min'],[1800,'30 min'],[3600,'1 hora'],[10800,'3 horas'],[43200,'12 horas']];
 const REAL_LIM=60,TAKEOVER=120000;
 const JOB_IC={jefe:'👑',atc:'🧾',alm:'📦',back:'💼',rrpp:'📣',rrhh:'🗂️'};
@@ -2643,34 +2685,39 @@ function startFeud(t){return {kind:'feud',t,fd:t.fd||makeFeud()};}
 function rrhhBody(){
   const steps=(names,cur)=>'<div class="mgsteps">'+names.map((n,i)=>`<span class="${i===cur?'on':i<cur?'ok':''}">${i<cur?'✔':i+1} ${n}</span>`).join('')+'</div>';
   if(mg.kind==='cv'){
-    const c=mg.c,R=ROLES[c.role];
-    let h=steps(['Preguntas','Decisión'],mg.step)+`<div class="cvc"><div class="eh"><span class="ef">${c.face}</span><div class="t"><b>${c.name}</b>${(NATS[c.nat]||NATS[0]).f} ${(NATS[c.nat]||NATS[0]).c} · para ${R.n} · pide ${fmt(c.wage)}/día</div></div>
-      <div class="es">📄 ${c.exp?c.exp+(c.exp===1?' año':' años')+' de experiencia':'Sin experiencia'} · Último trabajo: ${c.prev} · Idiomas: ${c.langs.map(l=>LANG[l]).join(', ')}</div>
-      ${mg.notes.map(n=>`<div class="es">📎 ${n}</div>`).join('')}</div>`;
-    h+='<div class="qas">'+mg.asked.map(k=>{const x=mg.ans[k];return `<div class="qa">${x.q}<i>${x.a}</i>${mg.step===0?`<button class="btn mini ${mg.flags[k]?'no':''}" data-act="mgflag" data-k="${k}">🚩 ${mg.flags[k]?'No me lo creo':'¿Miente?'}</button>`:mg.flags[k]?' 🚩':''}</div>`;}).join('')+'</div>';
+    const c=mg.c,R=ROLES[c.role],N=NATS[c.nat]||NATS[0];
+    let h=steps(['Entrevista','Decisión'],mg.step)+(mg.step?`<div class="cvmini"><span class="cvphoto">${c.face}</span><div><b>${c.name}</b> · ${R.n} · pide ${fmt(c.wage)}/día<br><small>${mg.notes.length?mg.notes.map(n=>'📎 '+n).join(' '):'Sin notas en el currículum.'}</small></div></div>`:'')+(mg.step?'':`<div class="office cvdesk">
+      <div class="cvpaper"><div class="cvband">CURRÍCULUM VITAE</div>
+        <div class="cvtop"><span class="cvphoto">${c.face}</span><div><b>${c.name}</b><small>${N.f} ${N.c}</small><small>Solicita: <b>${R.n}</b></small><small>Pide: <b>${fmt(c.wage)}/día</b></small></div></div>
+        <div class="cvsec"><b>Experiencia</b><span>${c.exp?c.exp+(c.exp===1?' año':' años'):'Ninguna'} · ${c.prev}</span></div>
+        <div class="cvsec"><b>Idiomas</b><span>${c.langs.map(l=>LANG[l]).join(', ')}</span></div></div>
+      ${mg.notes.length?`<div class="postits">${mg.notes.map((n,i)=>`<div class="postit" style="--r:${i%2?2:-3}deg">📎 ${n}</div>`).join('')}</div>`:''}</div>`);
+    h+='<div class="chatlog">'+mg.asked.map(k=>{const x=mg.ans[k];return `<div class="cq">${x.q}</div><div class="ca"><span>${c.face}</span><div>${x.a.replace(/[«»]/g,'')}</div>${mg.step===0?`<button class="flag ${mg.flags[k]?'on':''}" data-act="mgflag" data-k="${k}" title="¿Miente?">🚩</button>`:mg.flags[k]?'<b class="flag on">🚩</b>':''}</div>`;}).join('')+'</div>';
     if(mg.step===0){
       const left=3-mg.asked.length;
-      h+=left?`<div class="supd">Te quedan <b>${left}</b> ${left===1?'pregunta':'preguntas'}. Compara las respuestas con el currículum.</div><div class="opts cvq">${Object.keys(CVQ).filter(k=>!mg.asked.includes(k)).map(k=>`<button class="btn" data-act="mgask" data-k="${k}">❓ ${CVQ[k]}</button>`).join('')}</div>`
-        :'<div class="supd">Marca con 🚩 lo que no te creas y pasa a decidir.</div><button class="btn go" data-act="mgcvnext">Decidir ▶</button>';
+      h+=left?`<div class="brief">🗣️ Te quedan <b>${left}</b> ${left===1?'pregunta':'preguntas'}. Toca 🚩 en lo que no cuadre con el currículum.</div><div class="qcards cvq">${Object.keys(CVQ).filter(k=>!mg.asked.includes(k)).map(k=>`<button class="qcard" data-act="mgask" data-k="${k}">❓ ${CVQ[k]}</button>`).join('')}</div>`
+        :'<div class="brief">🚩 Marca lo que no te creas y pasa a decidir.</div><button class="btn go" data-act="mgcvnext">Decidir ▶</button>';
     }else{
-      h+=`<div class="supd">¿Le contratas? Pide ${fmt(c.wage)}/día. Si le ofreces menos, empezará con el ánimo bajo.${meta.money<HIRE&&!mg.t.remote?' Ojo: contratar cuesta '+fmt(HIRE)+' y no llega el bote.':''}</div>
-        <div class="row wrap">${[-200,0,200].map(d=>`<button class="btn ${mg.offer===d?'on':''}" data-act="mgoffer" data-d="${d}">${fmt(c.wage+d)}/día</button>`).join('')}</div>
-        <div class="row wrap"><button class="btn go" data-act="mghire" data-k="1">✅ Contratar (prueba de 3 turnos)</button><button class="btn no" data-act="mghire" data-k="0">❌ No le contratamos</button></div>`;
+      h+=`<div class="contract"><b>CONTRATO DE TRABAJO</b><small>${c.name} · ${R.n} · periodo de prueba: 3 turnos</small>
+        <div class="wage">${[-200,0,200].map(d=>`<button class="wpill ${mg.offer===d?'on':''}" data-act="mgoffer" data-d="${d}">${fmt(c.wage+d)}<small>/día${d<0?' · menos':d>0?' · más':' · lo que pide'}</small></button>`).join('')}</div>
+        <div class="stamps2"><button class="stamp big s-ok" data-act="mghire" data-k="1">✔ CONTRATADO</button><button class="stamp big s-roto" data-act="mghire" data-k="0">✖ NO APTO</button></div>
+        ${meta.money<HIRE&&!mg.t.remote?`<small class="bad">Ojo: contratar cuesta ${fmt(HIRE)} y no llega el bote.</small>`:''}</div>`;
     }
     return h;
   }
   const f=mg.fd;
-  if(!f)return '<div class="supd">Ya se han calmado solos.</div><button class="btn go" data-act="mgfeud" data-k="both">Vale</button>';
-  const card=(x,other)=>`<div class="emp"><div class="eh"><span class="ef">${x.face}</span><div class="t"><b>${x.name}</b>${x.role}</div></div>
-    <div class="bubble">«${other.name} ${f.why}.»</div>
-    <div class="es">📒 Ficha: ⏰ ${x.late} retrasos · 📱 ${x.caught} veces pillado/a · 😡 ${x.quej} quejas · ❌ ${x.tfail} mal hechos · ✅ ${x.tasks} bien hechos</div></div>`;
-  return `<div class="supd">Escucha a los dos y mira sus fichas: la razón la suele tener quien mejor trabaja. Si están parecidos, media.</div>
-    <div class="cgrid" style="--cols:${innerWidth>=640?2:1}">${card(f.a,f.b)}${card(f.b,f.a)}</div>
-    <div class="row wrap"><button class="btn" data-act="mgfeud" data-k="a">👉 Razón a ${f.a.name}</button><button class="btn" data-act="mgfeud" data-k="b">👉 Razón a ${f.b.name}</button><button class="btn go" data-act="mgfeud" data-k="both">🤝 Mediar: los dos tienen parte</button></div>`;
+  if(!f)return '<div class="brief">Ya se han calmado solos.</div><button class="btn go" data-act="mgfeud" data-k="both">Vale</button>';
+  const person=(x,o,side)=>`<div class="fperson ${side}"><span class="fface">${x.face}</span><div class="fbub">«${o.name} ${f.why}.»</div><b>${x.name}</b><small>${x.role}</small></div>`;
+  const folder=x=>`<div class="folder"><i class="ftab">FICHA · ${x.name.toUpperCase()}</i><div>⏰ ${x.late} retrasos</div><div>📱 ${x.caught} veces pillado/a</div><div>😡 ${x.quej} quejas</div><div>❌ ${x.tfail} mal hechos</div><div>✅ ${x.tasks} bien hechos</div></div>`;
+  return `<div class="breakroom"><div class="br-wall"><span>☕</span><span>🕒</span><span>🗄️</span></div>
+      <div class="br-scene">${person(f.a,f.b,'l')}<span class="vs">⚡</span>${person(f.b,f.a,'r')}</div></div>
+    <div class="brief">⚖️ La razón la suele tener quien mejor trabaja. Si sus fichas se parecen, media.</div>
+    <div class="folders">${folder(f.a)}${folder(f.b)}</div>
+    <div class="verdict"><button class="btn" data-act="mgfeud" data-k="a">👉 Razón a ${f.a.name}</button><button class="btn go" data-act="mgfeud" data-k="both">🤝 Mediar</button><button class="btn" data-act="mgfeud" data-k="b">Razón a ${f.b.name} 👈</button></div>`;
 }
 function rrhhAct(a,b){
   if(mg.kind==='cv'){
-    if(a==='mgask'){const k=b.dataset.k;if(mg.asked.length>=3||mg.asked.includes(k))return;mg.asked.push(k);mg.ans[k]=mg.mkAns(k);sCoin();}
+    if(a==='mgask'){const k=b.dataset.k;if(mg.asked.length>=3||mg.asked.includes(k))return;mg.asked.push(k);mg.ans[k]=mg.mkAns(k);sCoin();mg.fx={sel:'.chatlog .ca:last-child',k:'ok'};}
     else if(a==='mgflag'){const k=b.dataset.k;mg.flags[k]=!mg.flags[k];}
     else if(a==='mgcvnext'){mg.step=1;}
     else if(a==='mgoffer'){mg.offer=+b.dataset.d;}
