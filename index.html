@@ -209,6 +209,84 @@ button:focus-visible{outline:3px solid var(--tag);outline-offset:2px}
 .wtips span{font-size:18px}.wtips p{margin:0;font-size:11px;line-height:1.4;color:#3d3a32}
 @media (max-width:1000px){.ws-screen .scr-head{display:none}}
 @media (max-width:520px){.ws-head{grid-template-columns:1fr}.ws-kpis{order:2}.ws-kpis span{flex:1}.ws-shift{order:3}.ws-id small{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:70vw}.ws-sw button{font-size:11px}}
+/* Puesto de trabajo como juego */
+.gs .btn.mini{padding:7px 12px;font-size:12px;height:auto;min-height:32px;line-height:1.2;white-space:nowrap;width:auto;flex:0 0 auto}
+.ws-screen .scr-head{display:none}
+.gs{display:flex;flex-direction:column;gap:8px;flex:1;min-height:0}
+.scr-body>.gs{flex:1;min-height:0}
+.gs-hud{display:grid;grid-template-columns:auto 1fr auto;gap:8px 16px;align-items:center;background:linear-gradient(180deg,var(--thc),color-mix(in srgb,var(--thc) 65%,#000));color:#fff;border-radius:14px;padding:8px 12px;box-shadow:0 5px 0 rgba(0,0,0,.3),inset 0 2px 0 rgba(255,255,255,.25)}
+.gs-id{display:flex;align-items:center;gap:10px}.gs-ic{font-size:30px;width:48px;height:48px;border-radius:12px;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;box-shadow:inset 0 -3px 0 rgba(0,0,0,.2)}
+.gs-id b{font-family:var(--display);font-size:20px;letter-spacing:1px;display:block;line-height:1.05}.gs-id small{font-size:11px;opacity:.9}
+.gs-clock{display:flex;align-items:center;gap:10px;min-width:0}.gs-clock small{font-size:10px;letter-spacing:1px;opacity:.85;white-space:nowrap}
+.led{font-family:var(--led);font-weight:400;color:var(--tag);font-size:22px;text-shadow:0 0 8px rgba(255,210,63,.45);white-space:nowrap}
+.gs-bar{flex:1;display:block;height:9px;background:rgba(0,0,0,.3);border-radius:99px;overflow:hidden;min-width:40px}.gs-bar i{display:block;height:100%;background:var(--tag);border-radius:99px;transition:width .8s linear}
+.gs-stats{display:flex;align-items:center;gap:6px}.gs-stats span{display:flex;flex-direction:column;align-items:center;background:rgba(0,0,0,.25);border-radius:10px;padding:3px 10px}.gs-stats small{font-size:8px;letter-spacing:1.5px;opacity:.85}.gs-stats .led{font-size:17px}
+.gs-mini{width:38px;height:38px;border-radius:10px;background:#fff;color:var(--ink);font-size:18px;box-shadow:0 3px 0 rgba(0,0,0,.3);flex:0 0 auto}.gs-mini:disabled{opacity:.5}
+.gs-status{font-size:11px;color:#5b5646}
+.gs-main{flex:1;min-height:0;display:grid;grid-template-columns:1fr 300px;gap:10px}
+.gs-scene{position:relative;min-height:0;border-radius:16px;overflow:hidden;display:flex;flex-direction:column;border:4px solid color-mix(in srgb,var(--thc) 55%,#3a2f22);box-shadow:inset 0 0 40px rgba(0,0,0,.25)}
+.gs-wall{flex:0 0 auto;padding:8px 14px;background:repeating-linear-gradient(90deg,rgba(255,255,255,.06) 0 60px,rgba(0,0,0,.05) 60px 62px),color-mix(in srgb,var(--thc) 30%,#e9e2d2);border-bottom:6px solid color-mix(in srgb,var(--thc) 45%,#5b4a36)}
+.gs-wall span{font-family:var(--display);font-size:12px;letter-spacing:3px;background:#2b2f2e;color:#ffd23f;padding:3px 10px;border-radius:4px;box-shadow:0 2px 0 rgba(0,0,0,.4)}
+.gs-objs{flex:1;min-height:0;display:grid;grid-template-columns:repeat(3,1fr);grid-auto-rows:1fr;gap:14px;padding:16px;background:radial-gradient(circle at 50% 120%,rgba(0,0,0,.18),transparent 60%),repeating-conic-gradient(#d9d2c2 0 25%,#e6dfcf 0 50%) 0 0/46px 46px}
+.sc-alm .gs-objs{background:linear-gradient(rgba(0,0,0,.06),rgba(0,0,0,.06)),repeating-linear-gradient(90deg,#b9b4a8 0 2px,transparent 2px 120px),#cfc9bb}
+.sc-back .gs-objs{background:repeating-linear-gradient(0deg,#c9a77c 0 18px,#bd9a6e 18px 20px)}
+.sc-rrpp .gs-objs{background:radial-gradient(circle at 20% 20%,#f7d6e2,transparent 50%),repeating-conic-gradient(#efe6ee 0 25%,#f7f1f6 0 50%) 0 0/40px 40px}
+.sc-rrhh .gs-objs{background:repeating-linear-gradient(45deg,#b79a7a 0 14px,#ad8f6e 14px 28px)}
+.sc-atc .gs-objs{background:repeating-conic-gradient(#cfd8d2 0 25%,#e3ebe6 0 50%) 0 0/46px 46px}
+.obj{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:linear-gradient(#fffdf7,#efe7d6);border-radius:18px;border:3px solid #fff;box-shadow:0 8px 0 rgba(0,0,0,.28),0 12px 18px rgba(0,0,0,.18);padding:10px 8px;min-height:0;transition:transform .12s}
+.obj .oic{font-size:clamp(34px,5.5vh,60px);line-height:1;filter:drop-shadow(0 4px 0 rgba(0,0,0,.18))}
+.obj b{font-family:var(--display);font-size:15px;letter-spacing:.5px}.obj small{font-size:11px;color:#5b5646;text-align:center;line-height:1.25;max-width:95%}
+.obj:not(:disabled):hover{transform:translateY(-3px)}.obj:not(:disabled):active{transform:translateY(4px);box-shadow:0 3px 0 rgba(0,0,0,.28)}
+.obj.off{filter:saturate(.35);opacity:.75}
+.obj.hot{border-color:var(--sign);animation:objpulse 1.2s ease-in-out infinite}
+@keyframes objpulse{0%,100%{box-shadow:0 8px 0 rgba(0,0,0,.28),0 0 0 0 rgba(229,56,59,.5)}50%{box-shadow:0 8px 0 rgba(0,0,0,.28),0 0 0 10px rgba(229,56,59,0)}}
+.bang{position:absolute;top:-16px;left:50%;transform:translateX(-50%);background:var(--sign);color:#fff;border-radius:99px;padding:2px 10px;font-size:16px;box-shadow:0 3px 0 rgba(0,0,0,.3);animation:bob 1s ease-in-out infinite;white-space:nowrap}
+.bang em{font-style:normal;font-family:var(--led);font-size:13px;margin-left:4px}
+@keyframes bob{0%,100%{transform:translate(-50%,0)}50%{transform:translate(-50%,-5px)}}
+.obadge{position:absolute;top:8px;right:8px;background:var(--ink);color:var(--tag);font-family:var(--led);font-size:13px;border-radius:99px;padding:1px 8px}
+.gs-crew{display:flex;gap:10px;justify-content:center;padding:6px;background:rgba(0,0,0,.18);min-height:0}
+.spr{display:flex;flex-direction:column;align-items:center;font-size:26px;line-height:1;animation:idle 2.4s ease-in-out infinite}.spr small{font-size:9px;background:rgba(0,0,0,.55);color:#fff;border-radius:99px;padding:1px 6px;margin-top:2px}
+.spr.me small{background:var(--tag);color:var(--ink);font-weight:700}
+@keyframes idle{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+.gs-closed{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:rgba(43,47,46,.92);color:#fff;border-radius:14px;padding:14px 20px;text-align:center;display:flex;flex-direction:column;gap:4px;box-shadow:0 8px 0 rgba(0,0,0,.3);max-width:80%;pointer-events:none}
+.gs-closed b{font-family:var(--display);font-size:18px;letter-spacing:1px}.gs-closed small{font-size:12px;opacity:.9}
+.gs-pick{position:absolute;inset:44px 12px 12px;background:#fffaf0;border-radius:16px;border:3px solid var(--thc);box-shadow:0 10px 30px rgba(0,0,0,.35);display:flex;flex-direction:column;z-index:3;min-height:0}
+.pk-head{display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border-bottom:2px dashed #e3dccb}.pk-head b{font-family:var(--display);font-size:15px}
+.pk-body{flex:1;min-height:0;overflow:auto;padding:8px 10px;display:flex;flex-direction:column;gap:6px}
+.pk-row{display:grid;grid-template-columns:34px 1fr auto;gap:8px;align-items:center;background:#fff;border:2px solid #e3dccb;border-radius:12px;padding:6px 8px}
+.pk-row .pe{font-size:24px}.pk-row b{font-size:13px;display:block}.pk-row small{font-size:11px;color:var(--mute)}.pk-row em{font-size:11px;color:var(--ok);font-style:normal}.pk-row .btn{width:auto}
+.pk-row b.stars{color:#f5b301}
+.pk-plz{display:flex;flex-wrap:wrap;gap:6px}.pk-plz span{background:#fff;border:2px solid #e3dccb;border-radius:99px;padding:2px 10px;font-size:12px}.pk-plz i{font-style:normal;font-family:var(--led)}
+.gs-feed{min-height:0;overflow:auto;scrollbar-width:thin;display:flex;flex-direction:column;gap:6px;background:#2b2f2e;border-radius:16px;padding:10px;color:#e9f1ec}
+.gs-feed h5{font-size:10px;letter-spacing:2px;color:#9fb3a8;margin:6px 0 0}
+.gs-feed .zone-title{color:#9fb3a8}.gs-feed .sum{color:#e9f1ec;font-size:12px}
+.gf{background:#3a403e;border-radius:10px;padding:8px 10px;font-size:12px;display:flex;flex-direction:column;gap:4px;text-align:left;color:#e9f1ec;width:100%}
+.gf.mine{background:var(--ok);color:#fff}.gf.mine small{font-size:9px;letter-spacing:1.5px;opacity:.85}.gf.mine b{font-size:14px}
+.gf.al{border-left:5px solid var(--sign)}.gf.al:not(:disabled):hover{background:#454c4a}.gf.al:disabled{opacity:.55}
+.gf.mute{color:#9fb3a8;font-style:italic}
+.gf.boss{background:#5a4b12;color:#ffe9a8}.gf.boss.bad{background:#5e2320;color:#ffd5d0}
+.gf.score{flex-direction:row;justify-content:space-around;font-size:14px}.gf.score b{font-family:var(--led);font-weight:400;color:var(--tag);font-size:20px}
+.gs-bar2{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:8px}
+.hk{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:linear-gradient(var(--thc),color-mix(in srgb,var(--thc) 70%,#000));color:#fff;border-radius:14px;padding:8px 6px 10px;box-shadow:0 6px 0 rgba(0,0,0,.35),inset 0 2px 0 rgba(255,255,255,.3);min-height:64px}
+.hk span{font-size:26px;line-height:1}.hk b{font-size:12px;text-align:center;line-height:1.2}.hk small{font-size:9px;opacity:.9}
+.hk i{position:absolute;top:5px;left:7px;font-style:normal;font-family:var(--led);font-size:12px;background:rgba(0,0,0,.3);border-radius:4px;padding:0 4px}
+.hk:not(:disabled):active{transform:translateY(4px);box-shadow:0 2px 0 rgba(0,0,0,.35)}
+.hk:disabled{filter:grayscale(.9);opacity:.55;box-shadow:0 3px 0 rgba(0,0,0,.25)}
+.hk.hot{outline:3px solid var(--tag);animation:objpulse 1.2s ease-in-out infinite}
+@media (max-width:1000px){
+  .gs-main{grid-template-columns:1fr;grid-template-rows:1fr auto}.gs-feed{max-height:30vh}
+  .gs-hud{grid-template-columns:1fr auto}.gs-clock{grid-column:1/-1;order:3}
+  .gs-objs{grid-template-columns:repeat(2,1fr);gap:10px;padding:12px}
+}
+@media (max-width:560px){
+  .gs-hud{padding:6px 8px;gap:4px 8px;grid-template-columns:1fr}.gs-stats{order:2;flex-wrap:nowrap;justify-content:space-between}.gs-stats span{flex:1}.gs-clock .led{font-size:16px}
+  .gs-main{grid-template-rows:1fr auto}.gs-feed h5:nth-last-of-type(1),.gf.score{display:none}
+  .obj small{display:none}.obj .oic{font-size:34px}.obj .obadge{top:4px;right:4px;font-size:11px}.bang{font-size:13px;top:-12px}.gs-ic{width:36px;height:36px;font-size:22px}.gs-id b{font-size:15px}.gs-stats span{padding:2px 6px}.gs-stats .led{font-size:13px}.gs-mini{width:32px;height:32px;font-size:15px}
+  .gs-stats{flex-wrap:wrap;justify-content:flex-end}
+  .gs-objs{gap:8px;padding:8px}.obj{border-radius:14px;padding:6px 4px}.obj b{font-size:12px}.obj small{font-size:9px}
+  .gs-feed{max-height:20vh;padding:6px}.gs-bar2{gap:5px}.hk{min-height:52px;padding:6px 3px}.hk span{font-size:20px}.hk b{font-size:9px}.hk small{display:none}.hk i{display:none}
+  .gs-status{display:none}.gs-crew .spr{font-size:20px}
+}
 .row.cashbtns{display:grid;grid-template-columns:auto auto auto 1fr;gap:6px}.row.cashbtns .btn{white-space:nowrap;padding:9px 10px;width:auto;min-width:0}
 .fin .sum .hd{font-size:10px;letter-spacing:2px;color:var(--mute);margin-top:4px}
 .fin .sum .neg{color:var(--sign)}.fin .sum .pos{color:var(--ok)}
@@ -1620,7 +1698,7 @@ async function fillRanking(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.15-21';
+const APPV='2026.11.15-22';
 /* Compara versiones por números («-9» < «-11»), no como texto. */
 const verCmp=(a,b)=>{const x=String(a).split(/[.-]/).map(Number),y=String(b).split(/[.-]/).map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
 try{const vt=document.createElement('div');vt.id='vtag';vt.textContent='v'+APPV;document.body.appendChild(vt);}catch(e){}
@@ -1978,7 +2056,7 @@ function toolTask(e,code){
   if(!run||run.over||!isFree(e)){note(e.real,'Termina lo que tienes entre manos primero.',true);return;}
   const r=e.role,open=k=>run.tasks.find(t=>t.k===k&&!t.who);
   let t=null;
-  if(code<=-5000&&r==='rrpp'){
+  if(code<=-5000&&code>-7000&&r==='rrpp'){
     const id=-code-5000,rv=run.reviews&&run.reviews.find(x=>x.id===id);
     if(!rv||rv.ans){note(e.real,'Esa reseña ya está contestada.',true);return;}
     rv.ans=1;const good=Math.random()<perf(e,true);meta.rep=clamp(meta.rep+(good?0.05:-0.03),0,5);if(good)e.st.tasks++;else e.st.tfail++;
@@ -1993,6 +2071,20 @@ function toolTask(e,code){
   else if(code===-1&&r==='alm'){t=open('inv');if(!t){const n=ri(1,9);t=almTask('inv','📋',9,'Inventario del pasillo '+n,'Contar lo que queda en el pasillo '+n+' y apuntar lo que falta.',{n});}}
   else if(code===-2&&r==='alm'){t=open('order')||almTask('order','🧾',8,'Pedido a Hacendado de lo que se acaba','Hacer el pedido de lo que se acaba al distribuidor.');}
   else if(code===-3&&r==='back'){t=open('cash');if(!t){const n=ri(1,3);t=almTask('cash','🧮',12,TSHORT.cash.replace('%n%',n),'Arqueo de la caja '+n+': contar el cajón y ver si cuadra.',{n,roles:['back']});}}
+  else if(code===-9&&r==='alm'){t=open('truck');if(!t){const pend=Object.values(meta.back).reduce((a,v)=>a+v,0);if(!pend){note(e.real,'En el muelle no hay nada que colocar.',true);return;}t=almTask('truck','🚚',14,'Colocar mercancía del muelle ('+pend+' uds)','Hay '+pend+' uds en el muelle: descargar, almacenar y subir a la estantería.');}}
+  else if(code===-7&&r==='rrpp'){
+    if(run.t-(run.promoT||-99)<45){note(e.real,'Ya hay una campaña en marcha: espera un poco.',true);return;}
+    if(meta.money<1000){note(e.real,'No hay bote para pagar la campaña.',true);return;}
+    run.promoT=run.t;meta.money-=1000;const good=Math.random()<perf(e,true);meta.rep=clamp(meta.rep+(good?0.1:0.02),0,5);if(good)e.st.tasks++;else e.st.tfail++;
+    logE(e,'Lanzó una campaña en redes');note(e.real,good?'📣 La campaña ha funcionado: más gente habla bien de la tienda (+reputación, −10 €).':'📣 La campaña ha pasado sin pena ni gloria (−10 €).',!good);return;
+  }
+  else if(code<=-7000&&code>-8000&&r==='rrhh'){
+    const m=empById(-code-7000);run.cheer=run.cheer||{};
+    if(!m||m.real){return;}
+    if(run.t-(run.cheer[m.id]||-99)<30){note(e.real,m.name+' ya ha tenido su charla: espera un poco.',true);return;}
+    run.cheer[m.id]=run.t;const good=Math.random()<perf(e,true);m.moral=clamp(m.moral+(good?7:2),0,100);if(good)e.st.tasks++;
+    logE(e,'Habló con '+m.name+' para animarle');note(e.real,good?'👍 '+m.name+' sale de la charla con otra cara (+ánimo).':'🙂 '+m.name+' te escucha, pero sin mucho entusiasmo.');return;
+  }
   else if(code===-4&&r==='rrhh'){t=open('cv')||almTask('cv','🧑‍💼',14,TSHORT.cv,'Un candidato espera en la puerta para la entrevista.',{roles:['rrhh'],cand:makeCand()});}
   if(!t){note(e.real,'Eso no es de tu puesto.',true);return;}
   giveReal(t,e,false);
@@ -2104,7 +2196,7 @@ function wsData(live){
     ords:meta.orders.length,tips:live?run.tips:0,fines:live?run.fines:0,served:live?run.served:0,angry:live?run.angry:0,
     pay:meta.emp.reduce((a,e)=>a+Math.round(e.wage*Math.max(1,((run&&run.dur)||100)/100)),0),
     revs:live&&run.reviews?run.reviews.slice(0,6).map(r=>[r.id,r.st,r.t,r.ans?1:0,r.f]):[],
-    crew:meta.emp.map(e=>[e.face,cleanName(e.name),e.role,mood(e),verdict(e),e.real||'',live?(doing[e.id]||(working(e)?'aún no ha llegado':'no viene hoy')):'']),
+    crew:meta.emp.map(e=>[e.face,cleanName(e.name),e.role,mood(e),verdict(e),e.real||'',live?(doing[e.id]||(working(e)?'aún no ha llegado':'no viene hoy')):'',e.id]),
     you:Object.fromEntries(meta.emp.filter(e=>e.real).map(e=>[e.real,[e.st.tasks,e.st.tfail,e.st.ok,e.st.fail,e.st.cv,e.trial||0,e.wage]]))
   };
 }
@@ -2119,74 +2211,88 @@ function memberDept(st,role){
   return h;
 }
 /* --- lado del empleado real ---
-   Puesto de trabajo: una sola pantalla con tres columnas (en el móvil, una cada vez con el selector de arriba):
-   🔔 avisos de su departamento · 🛠️ su mesa con herramientas de su cargo · ⭐ su jornada, el equipo y el jefe. */
-const WS_DESK={atc:'🧾 TU CAJA',alm:'📟 STOCK Y MUELLE',back:'🗄️ CUENTAS Y CAJA FUERTE',rrpp:'📱 REPUTACIÓN Y RESEÑAS',rrhh:'🗂️ PLANTILLA Y CONTRATOS'};
+   Puesto de trabajo como juego: HUD arriba, la sala del departamento en el centro (cada objeto es un sitio
+   de trabajo: si tiene un aviso esperando sale un ❗ y al tocarlo lo coges; si no, hace su acción) y una barra
+   de acciones abajo (teclas 1–6). Un panel lateral con tu aviso en curso, los avisos, lo del jefe y tu jornada. */
+const SCN={
+ alm:{bg:'Almacén · muelle 2',objs:[
+  {k:'dock',ic:'🚚',n:'Muelle',kinds:['truck'],tool:-9,sub:'Colocar lo que ha llegado'},
+  {k:'rack',ic:'🗄️',n:'Estanterías',kinds:['repo','call'],pick:'repo',sub:'Reponer lo que falta'},
+  {k:'pda',ic:'📟',n:'PDA',kinds:['inv'],tool:-1,sub:'Hacer inventario'},
+  {k:'clip',ic:'📋',n:'Pedidos',kinds:['order'],tool:-2,sub:'Hoja de pedido'},
+  {k:'floor',ic:'🧴',n:'Pasillos',kinds:['spill'],sub:'Derrames y roturas'},
+  {k:'desk',ic:'🙋',n:'Mostrador',kinds:['tk'],sub:'Quejas por agotado'}]},
+ back:{bg:'Oficina de Backoffice',objs:[
+  {k:'inbox',ic:'📥',n:'Bandeja',kinds:['tk'],sub:'Reclamaciones de dinero'},
+  {k:'safe',ic:'🔐',n:'Caja fuerte',kinds:['cash'],tool:-3,sub:'Hacer arqueo'},
+  {k:'pc',ic:'🖥️',n:'Ordenador',pick:'cuentas',sub:'Ver las cuentas'},
+  {k:'calc',ic:'🧾',n:'Archivo',pick:'nomina',sub:'Nómina y gastos'}]},
+ rrpp:{bg:'Atención al cliente',objs:[
+  {k:'phone',ic:'📱',n:'VitchGram',kinds:[],pick:'rev',sub:'Contestar reseñas'},
+  {k:'inbox',ic:'📨',n:'Quejas',kinds:['tk'],sub:'Quejas y amenazas en redes'},
+  {k:'desk',ic:'🛎️',n:'Información',kinds:['help','tour'],sub:'Clientes perdidos'},
+  {k:'mega',ic:'📣',n:'Promoción',tool:-7,sub:'Campaña en redes (10 €)'}]},
+ rrhh:{bg:'Despacho de RR.HH.',objs:[
+  {k:'door',ic:'🚪',n:'Puerta',kinds:['cv'],tool:-4,sub:'Entrevistar a un candidato'},
+  {k:'board',ic:'📌',n:'Tablón',pick:'crew',sub:'Animar a la plantilla'},
+  {k:'cab',ic:'🗃️',n:'Solicitudes',pick:'apps',sub:'Contratar o rechazar'},
+  {k:'break',ic:'☕',n:'Sala de descanso',kinds:['feud'],sub:'Broncas entre compañeros'}]},
+ atc:{bg:'Línea de cajas',objs:[
+  {k:'till',ic:'🧾',n:'Mi caja',go:'rtill',sub:'Cobrar a tu cola'},
+  {k:'rack',ic:'🗄️',n:'Lineales',kinds:['repo','call'],sub:'Reponer si te llaman'},
+  {k:'floor',ic:'🧴',n:'Pasillos',kinds:['spill'],sub:'Derrames'},
+  {k:'desk',ic:'🙋',n:'Sala',kinds:['help','tour'],sub:'Clientes perdidos'}]}
+};
 function workScreen(o){
-  const {st,role,me,tasks,mine,stale,status,verMsg,whoName}=o,d=(st&&st.dep)||{},open=!stale&&st&&st.phase==='open';
-  const R=ROLES[role],you=((d.you||{})[room.uid])||[0,0,0,0,0,0,0],col=room.wcol||'tasks';
-  const tool=(c,ic,lb,sub,dis)=>`<button class="wtool" data-act="rtool" data-c="${c}" ${dis||!open||mine?'disabled':''}><span>${ic}</span><b>${lb}</b><small>${sub}</small></button>`;
+  const {st,role,me,tasks,mine,stale,status,verMsg,whoName}=o,d=(st&&st.dep)||{},live=!stale&&st&&st.phase==='open';
+  const R=ROLES[role],you=((d.you||{})[room.uid])||[0,0,0,0,0,0,0],S=SCN[role]||SCN.atc;
+  const why=stale?'La tienda está en pausa':!st?'Conectando…':st.phase==='lobby'?'La tienda aún no ha abierto':st.phase!=='open'?'El turno está cerrado':mine?'Termina primero lo que tienes':'';
+  const open=tasks.filter(t=>!t.who&&!t.npc&&toArr(t.roles).includes(role)&&(t.k!=='tk'||t.dept===role));
   const prog=st&&st.dur?clamp(st.t/st.dur,0,1)*100:0;
-  /* cabecera */
-  let h=`<div class="ws th-${role}${role==='atc'?' th-atc':''} col-${col}">
-    <div class="ws-head"><div class="ws-id"><span class="ws-ic">${JOB_IC[role]}</span><div><b>${R.n.toUpperCase()}</b><small>${esc(playerName())}${you[5]?' · en prueba ('+you[5]+' turnos)':''}${you[6]?' · '+fmt(you[6])+'/turno':''}</small></div></div>
-      <div class="ws-shift"><div class="ws-st">${status}</div>${st&&!stale?`<div class="ws-clock"><b>🕘 ${clockOf(st.t,st.dur)}</b><span class="ws-bar"><i style="width:${prog}%"></i></span><small>Turno ${st.day}</small></div>`:''}</div>
-      <div class="ws-kpis">${st&&!stale?`<span><small>BOTE</small><b>${fmt(st.money)}</b></span><span><small>REPUTACIÓN</small><b>★ ${(+st.rep).toFixed(1)}</b></span><span><small>COLA</small><b>${st.q}</b></span>`:''}
-        <button class="btn" data-act="guide" title="Cómo se trabaja en tu puesto">📘</button></div></div>
-    ${verMsg}${room.msg?`<div class="${room.msg.bad?'rerr':'rok'}">${esc(room.msg.t)}</div>`:''}
-    <div class="ws-sw"><button class="${col==='tasks'?'on':''}" data-act="wscol" data-k="tasks">🔔 Avisos</button><button class="${col==='desk'?'on':''}" data-act="wscol" data-k="desk">🛠️ Mi mesa</button><button class="${col==='side'?'on':''}" data-act="wscol" data-k="side">⭐ Jornada</button></div>
-    <div class="ws-grid">`;
-  /* columna 1: avisos */
-  h+='<section class="ws-col c-tasks"><h4>🔔 AVISOS DE '+R.s.toUpperCase()+'</h4>';
-  if(role==='atc'&&run&&run.remote)h+='<button class="wbig" data-act="rtill"><span>🧾</span><b>Volver a mi caja</b><small>Caja '+run.till+' · '+run.queue.length+' en tu cola</small></button>';
-  else if(role==='atc'&&open&&!(st.tills&&st.tills[room.uid]))h+=`<div class="wcard warn">🧾 Esperando a que la tienda te abra una caja… ${Object.keys(st.tills||{}).length>=2?'Las cajas 1 y 2 están ocupadas: ayuda con los avisos.':'Suele tardar un par de segundos.'}</div>`;
-  if(stale)h+='<div class="wempty"><span>⏸️</span>La tienda está en pausa: el jefe no tiene el juego abierto.</div>';
-  else if(st&&PHASE[st.phase])h+=`<div class="wcard">${PHASE[st.phase]}</div>`+reportHtml(st.rpt,role);
-  else{
-    if(mine)h+=`<div class="wcard mine"><b>${mine.ic} ${esc(mine.s)}</b><small>Es tuyo · te quedan ${mine.left} s</small></div>`;
-    const op=tasks.filter(t=>!t.who&&!t.npc&&toArr(t.roles).includes(role)&&(t.k!=='tk'||t.dept===role));
-    h+=op.map(t=>`<div class="wcard alertc"><div><b>${t.ic} ${esc(t.s)}</b><small>${esc(t.txt||'')}</small><span class="ws-bar"><i style="width:${Math.max(0,Math.min(100,t.left/TLIFE*100))}%"></i></span></div><button class="btn go" data-act="rtake" data-t="${t.id}" ${mine?'disabled':''}>Me encargo<small>${t.left} s</small></button></div>`).join('')
-      ||(mine?'':'<div class="wempty"><span>☕</span>Nada pendiente ahora mismo. Usa las herramientas de tu mesa: el trabajo no se hace solo.</div>');
-    const busy=tasks.filter(t=>t.who&&t.who!==room.uid&&toArr(t.roles).includes(role));
-    if(busy.length)h+='<h5>EN CURSO EN TU DEPARTAMENTO</h5>'+busy.map(t=>`<div class="wrow">${t.ic} ${esc(t.s)} <small>${whoName(t.who)}</small></div>`).join('');
-  }
-  if(GUIDE[role])h+='<h5>CÓMO HACERLO BIEN</h5><div class="wtips">'+GUIDE[role].steps.slice(1).map(([ic,t])=>`<div><span>${ic}</span><p>${t}</p></div>`).join('')+'</div>';
-  h+='</section>';
-  /* columna 2: la mesa del cargo */
-  h+='<section class="ws-col c-desk"><h4>'+WS_DESK[role]+'</h4>';
-  const tile=(lb,v,cls)=>`<div class="wtile ${cls||''}"><small>${lb}</small><b>${v}</b></div>`;
-  if(role==='alm'){
-    const mx=Math.max(6,...toArr(d.stock).map(x=>(+x[1])+(+x[2])+(+x[3])));
-    h+=`<div class="wtiles">${tile('Agotados',d.out||0,(d.out||0)>3?'bad':'')}${tile('En el muelle',(d.pend||0)+' uds')}${tile('Pedidos en camino',d.ords||0)}${tile('Quejas por agotado',(d.tk||{}).alm||0)}</div>
-      <div class="wtools">${tool(-1,'📋','Hacer inventario','Cuenta un pasillo con la PDA')}${tool(-2,'🧾','Hacer pedido','Hoja de pedido a Hacendado')}</div>
-      <h5>LO QUE MENOS QUEDA <small><i class="lg s"></i>estantería <i class="lg b"></i>almacén <i class="lg c"></i>en camino</small></h5>`
-      +toArr(d.stock).map(([id,sh,bk,ic])=>{const p=CAT.find(x=>x.id===+id)||CAT[0];return `<div class="wstock"><span class="we">${p.e}</span><div><b>${esc(p.n)}</b><span class="sbar"><i class="s" style="width:${sh/mx*100}%"></i><i class="b" style="width:${bk/mx*100}%"></i><i class="c" style="width:${ic/mx*100}%"></i></span><small>${sh} est. · ${bk} alm. · ${ic} en camino · pasillo ${aisleOf(p.id)}</small></div><button class="btn mini" data-act="rtool" data-c="${-(1000+p.id)}" ${!open||mine||!(+bk>0)?'disabled':''}>📦 Reponer</button></div>`;}).join('');
-  }else if(role==='back'){
-    h+=`<div class="wtiles">${tile('Bote',fmt(st?st.money:0),st&&st.money<5000?'bad':'')}${tile('Ventas del turno',fmt(d.sales||0),'good')}${tile('Propinas',fmt(d.tips||0))}${tile('Multas y pérdidas',fmt(d.fines||0),(d.fines||0)>0?'bad':'')}${tile('Nómina a pagar',fmt(d.pay||0))}${tile('Reclamaciones de dinero',(d.tk||{}).back||0,(d.tk||{}).back?'bad':'')}</div>
-      <div class="wtools">${tool(-3,'🧮','Hacer arqueo','Cuenta el cajón y mira si cuadra')}</div>
-      <div class="wcard">💡 Las reclamaciones de dinero te llegan como avisos 📨 en tu columna de avisos. Si no las coges, se resuelven al cerrar… y peor.</div>`;
-  }else if(role==='rrpp'){
-    const rp=st?+st.rep:0;
-    h+=`<div class="wrep"><div class="stars">${'★'.repeat(Math.round(rp))}<i>${'★'.repeat(5-Math.round(rp))}</i></div><b>${rp.toFixed(1)}</b><small>${rp>=4?'La tienda tiene buena fama':rp>=2.5?'Fama regular: cuidado':'¡Reputación por los suelos!'}</small></div>
-      <div class="wtiles">${tile('Quejas en bandeja',(d.tk||{}).rrpp||0,(d.tk||{}).rrpp?'bad':'')}${tile('Clientes enfadados',d.angry||0,(d.angry||0)>1?'bad':'')}${tile('Clientes atendidos',d.served||0)}</div>
-      <h5>RESEÑAS DE HOY EN VITCHGRAM</h5>`+(toArr(d.revs).map(([id,sv,tx,ans,f])=>`<div class="wrev ${sv<=3?'bad':''}"><span>${f||'🙂'}</span><div><b>${'★'.repeat(sv)}${'☆'.repeat(5-sv)}</b><small>«${esc(tx)}»</small></div>${ans?'<em>✔ contestada</em>':sv<=3?`<button class="btn mini" data-act="rtool" data-c="${-(5000+id)}" ${!open||mine?'disabled':''}>💬 Contestar</button>`:''}</div>`).join('')||'<div class="wempty small">Sin reseñas todavía.</div>');
-  }else if(role==='rrhh'){
-    const cnt=(st&&st.cnt)||{},free=Object.keys(ROLES).some(k=>(cnt[k]||0)<ROLES[k].max),ap=toArr(d.apps);
-    h+='<div class="wplazas">'+Object.keys(ROLES).map(k=>`<div><span>${JOB_IC[k]} ${ROLES[k].s}</span><span class="slots">${Array.from({length:ROLES[k].max},(_,i)=>`<i class="${i<(cnt[k]||0)?'on':''}"></i>`).join('')}</span></div>`).join('')+'</div>'
-      +`<div class="wtools">${tool(-4,'🧑‍💼','Hacer una entrevista','Un candidato espera en la puerta',!free)}</div>`
-      +'<h5>SOLICITUDES DE EMPLEO</h5>'+(ap.map(x=>`<div class="wrow"><b>${x[3]?'🟢':'⚪'} ${esc(x[1])}</b> <small>solicita ${JOB_IC[x[2]]||''} ${ROLES[x[2]]?ROLES[x[2]].n:''}</small><span class="wbtns"><button class="btn go mini" data-act="rhh" data-k="hire" data-u="${esc(x[0])}">Contratar</button><button class="btn no mini" data-act="rhh" data-k="reject" data-u="${esc(x[0])}">No</button></span></div>`).join('')||'<div class="wempty small">No hay solicitudes pendientes.</div>')
-      +'<h5>PLANTILLA</h5><div class="wcrew">'+toArr(d.crew).map(c=>`<div class="wmate"><span>${c[0]}</span><b>${esc(c[1])}${c[5]?' 🎮':''}</b><small>${JOB_IC[c[2]]||''} ${ROLES[c[2]]?ROLES[c[2]].s:''} · ${c[3]}</small><small>${esc(c[4])}</small></div>`).join('')+'</div>';
-  }else{
-    h+=`<div class="wtiles">${tile('Cola de la Caja 3',st?st.q:0)}${Object.entries((st&&st.tq)||{}).map(([n,q])=>tile('Cola de la Caja '+n,q)).join('')}${tile('Atendidos en la tienda',d.served||0)}${tile('Se fueron enfadados',d.angry||0,(d.angry||0)?'bad':'')}</div>
-      <div class="wcard">⌨️ En el ordenador: <b>Espacio</b> escanea, <b>B</b> bolsa, <b>Intro</b> cobra, <b>S</b>/<b>N</b> en el DNI.</div>`;
-  }
-  h+='</section>';
-  /* columna 3: jornada, equipo y jefe */
-  h+=`<section class="ws-col c-side"><h4>⭐ TU JORNADA</h4><div class="wtiles two">${tile('Avisos bien',you[0],'good')}${tile('Avisos mal',you[1],you[1]?'bad':'')}${tile('Reclamaciones bien',you[2],'good')}${tile('Reclamaciones mal',you[3],you[3]?'bad':'')}${role==='atc'?tile('Clientes cobrados',you[4]):''}</div>`
-    +(room.note?`<h4>📣 DEL JEFE</h4><div class="wcard boss ${room.note.bad?'bad':''}">${esc(room.note.m)}</div>`:'')
-    +'<h4>👥 EQUIPO EN TIENDA</h4><div class="wcrew">'+(toArr(d.crew).filter(c=>c[6]).map(c=>`<div class="wmate"><span>${c[0]}</span><b>${esc(c[1])}${c[5]===room.uid?' (tú)':c[5]?' 🎮':''}</b><small>${JOB_IC[c[2]]||''} ${esc(c[6])}</small></div>`).join('')||membersHtml())+'</div>'
-    +'<div class="ws-quit"><button class="btn" data-act="rquit" '+(mine?'disabled':'')+'>Dejar el trabajo</button></div></section>';
-  return h+'</div></div>';
+  const badge=k=>({dock:d.pend?d.pend+' uds':'',rack:d.out||'',clip:d.ords?d.ords+' en camino':'',inbox:role==='back'?(d.tk||{}).back||'':(d.tk||{}).rrpp||'',cab:toArr(d.apps).length||'',
+    phone:toArr(d.revs).filter(r=>r[1]<=3&&!r[3]).length||'',board:toArr(d.crew).length||''})[k]||'';
+  /* Lo que hace cada objeto: coger su aviso, abrir un panel o pedir su herramienta. */
+  const objAct=(ob,t)=>t?`data-act="rtake" data-t="${t.id}"`:ob.go?`data-act="${ob.go}"`:ob.pick?`data-act="wpick" data-k="${ob.pick}"`:ob.tool!=null?`data-act="rtool" data-c="${ob.tool}"`:'';
+  const usable=(ob,t)=>t?(live&&!mine):ob.go?true:ob.pick?true:ob.tool!=null?(live&&!mine):false;
+  let h=`<div class="gs th-${role}">
+   <div class="gs-hud"><div class="gs-id"><span class="gs-ic">${JOB_IC[role]}</span><div><b>${R.n.toUpperCase()}</b><small>${esc(playerName())}${you[5]?' · en prueba':''}</small></div></div>
+    <div class="gs-clock">${st&&!stale?`<b class="led">${clockOf(st.t,st.dur)}</b><span class="gs-bar"><i style="width:${prog}%"></i></span><small>TURNO ${st.day}</small>`:''}</div>
+    <div class="gs-stats">${st&&!stale?`<span><small>BOTE</small><b class="led">${fmt(st.money)}</b></span><span><small>FAMA</small><b class="led">★${(+st.rep).toFixed(1)}</b></span><span><small>COLA</small><b class="led">${st.q}</b></span>`:''}
+     <button class="gs-mini" data-act="guide" title="Cómo se trabaja">📘</button><button class="gs-mini" data-act="rquit" title="Dejar el trabajo" ${mine?'disabled':''}>🚪</button></div></div>
+   <div class="gs-status">${status}</div>${verMsg}${room.msg?`<div class="${room.msg.bad?'rerr':'rok'}">${esc(room.msg.t)}</div>`:''}
+   <div class="gs-main"><div class="gs-scene sc-${role}"><div class="gs-wall"><span>${S.bg.toUpperCase()}</span></div><div class="gs-objs">`;
+  S.objs.forEach(ob=>{
+    const t=ob.kinds?open.find(x=>ob.kinds.includes(x.k)):null,ok=usable(ob,t),b=badge(ob.k),busy=tasks.find(x=>x.who&&ob.kinds&&ob.kinds.includes(x.k)&&toArr(x.roles).includes(role));
+    h+=`<button class="obj o-${ob.k} ${t?'hot':''} ${ok?'':'off'}" ${ok?objAct(ob,t):'disabled'} title="${esc(t?t.txt||t.s:ob.sub)}">
+      ${t?`<span class="bang">❗<em>${t.left}s</em></span>`:''}${b!==''?`<span class="obadge">${b}</span>`:''}
+      <span class="oic">${ob.ic}</span><b>${ob.n}</b><small>${t?esc(t.s):busy?'⏳ '+esc(whoName(busy.who)):ob.sub}</small></button>`;
+  });
+  h+='</div><div class="gs-crew">'+toArr(d.crew).filter(c=>c[2]===role&&c[6]).map(c=>`<span class="spr ${c[5]===room.uid?'me':''}" title="${esc(c[1])}: ${esc(c[6])}">${c[0]}<small>${c[5]===room.uid?'TÚ':esc(c[1])}</small></span>`).join('')+'</div>';
+  if(why&&!mine)h+=`<div class="gs-closed"><b>${stale?'⏸️':st&&st.phase==='lobby'?'⏳':'🧾'} ${why}</b>${st&&PHASE[st.phase]?'<small>'+PHASE[st.phase]+'</small>':''}</div>`;
+  if(room.wpick)h+=pickPanel(room.wpick,d,st,role,live&&!mine);
+  h+='</div><aside class="gs-feed">';
+  if(mine)h+=`<div class="gf mine"><small>ESTÁS CON</small><b>${mine.ic} ${esc(mine.s)}</b><span class="gs-bar"><i style="width:${Math.max(0,mine.left/REAL_LIM*100)}%"></i></span></div>`;
+  h+='<h5>🔔 AVISOS ('+open.length+')</h5>'+(open.map(t=>`<button class="gf al" data-act="rtake" data-t="${t.id}" ${live&&!mine?'':'disabled'}><b>${t.ic} ${esc(t.s)}</b><span class="gs-bar"><i style="width:${Math.max(0,Math.min(100,t.left/TLIFE*100))}%"></i></span></button>`).join('')||'<div class="gf mute">Sin avisos. Usa tu sala: hay trabajo.</div>');
+  if(st&&st.rpt&&PHASE[st.phase])h+=reportHtml(st.rpt,role);
+  if(room.note)h+=`<h5>📻 EL JEFE</h5><div class="gf boss ${room.note.bad?'bad':''}">${esc(room.note.m)}</div>`;
+  h+=`<h5>⭐ TU JORNADA</h5><div class="gf score"><span>✅ <b>${you[0]+you[2]}</b></span><span>❌ <b>${you[1]+you[3]}</b></span>${role==='atc'?`<span>🧾 <b>${you[4]}</b></span>`:''}</div></aside></div>`;
+  /* barra de acciones */
+  const acts=S.objs.filter(ob=>ob.tool!=null||ob.pick||ob.go).slice(0,6);
+  h+='<div class="gs-bar2">'+acts.map((ob,i)=>{const t=ob.kinds?open.find(x=>ob.kinds.includes(x.k)):null,ok=usable(ob,t);
+    return `<button class="hk ${t?'hot':''}" ${ok?objAct(ob,t):'disabled'} title="${esc(ok?ob.sub:why||ob.sub)}"><i>${i+1}</i><span>${ob.ic}</span><b>${ob.sub}</b>${ok?'':`<small>${why||'—'}</small>`}</button>`;}).join('')+'</div>';
+  return h+'</div>';
+}
+/* Paneles que abren los objetos de la sala (elegir producto, reseña, compañero o solicitud). */
+function pickPanel(k,d,st,role,can){
+  let t='',b='';
+  if(k==='repo'){t='🗄️ ¿Qué repones?';b=toArr(d.stock).map(([id,sh,bk,ic])=>{const p=CAT.find(x=>x.id===+id)||CAT[0];return `<div class="pk-row"><span class="pe">${p.e}</span><div><b>${esc(p.n)}</b><small>${sh} en estantería · ${bk} en almacén · ${ic} en camino</small></div><button class="btn go mini" data-act="rtool" data-c="${-(1000+p.id)}" ${can&&+bk>0?'':'disabled'}>${+bk>0?'📦 Reponer':'Sin stock'}</button></div>`;}).join('');}
+  else if(k==='rev'){t='📱 Reseñas de hoy';b=toArr(d.revs).map(([id,sv,tx,ans,f])=>`<div class="pk-row"><span class="pe">${f||'🙂'}</span><div><b class="stars">${'★'.repeat(sv)}${'☆'.repeat(5-sv)}</b><small>«${esc(tx)}»</small></div>${ans?'<em>✔ contestada</em>':sv<=3?`<button class="btn go mini" data-act="rtool" data-c="${-(5000+id)}" ${can?'':'disabled'}>💬 Contestar</button>`:'<em>👍</em>'}</div>`).join('')||'<div class="gf mute">Aún no hay reseñas.</div>';}
+  else if(k==='crew'){t='📌 La plantilla';b=toArr(d.crew).map(c=>`<div class="pk-row"><span class="pe">${c[0]}</span><div><b>${esc(c[1])}${c[5]?' 🎮':''} ${c[3]}</b><small>${JOB_IC[c[2]]||''} ${ROLES[c[2]]?ROLES[c[2]].s:''} · ${esc(c[4])}${c[6]?' · '+esc(c[6]):''}</small></div>${!c[5]&&c[7]!=null?`<button class="btn go mini" data-act="rtool" data-c="${-(7000+c[7])}" ${can?'':'disabled'}>👍 Animar</button>`:''}</div>`).join('');}
+  else if(k==='apps'){t='🗃️ Solicitudes de empleo';const ap=toArr(d.apps),cnt=(st&&st.cnt)||{};
+    b='<div class="pk-plz">'+Object.keys(ROLES).map(r=>`<span>${JOB_IC[r]} ${ROLES[r].s} <i>${cnt[r]||0}/${ROLES[r].max}</i></span>`).join('')+'</div>'+(ap.map(x=>`<div class="pk-row"><span class="pe">${x[3]?'🟢':'⚪'}</span><div><b>${esc(x[1])}</b><small>solicita ${JOB_IC[x[2]]||''} ${ROLES[x[2]]?ROLES[x[2]].n:''}</small></div><span class="wbtns"><button class="btn go mini" data-act="rhh" data-k="hire" data-u="${esc(x[0])}">Contratar</button><button class="btn no mini" data-act="rhh" data-k="reject" data-u="${esc(x[0])}">No</button></span></div>`).join('')||'<div class="gf mute">No hay solicitudes ahora mismo.</div>');}
+  else if(k==='cuentas'){t='🖥️ Cuentas del turno';b=`<div class="wtiles">${[['Bote',fmt(st?st.money:0)],['Ventas',fmt(d.sales||0)],['Propinas',fmt(d.tips||0)],['Multas y pérdidas',fmt(d.fines||0)],['Atendidos',d.served||0],['Enfadados',d.angry||0]].map(([l,v])=>`<div class="wtile"><small>${l}</small><b>${v}</b></div>`).join('')}</div>`;}
+  else if(k==='nomina'){t='🧾 Nómina y gastos';b=`<div class="wtiles"><div class="wtile"><small>Nómina del turno</small><b>${fmt(d.pay||0)}</b></div><div class="wtile"><small>Pedidos en camino</small><b>${d.ords||0}</b></div><div class="wtile"><small>Reclamaciones de dinero</small><b>${(d.tk||{}).back||0}</b></div></div>`+toArr(d.crew).map(c=>`<div class="pk-row"><span class="pe">${c[0]}</span><div><b>${esc(c[1])}</b><small>${JOB_IC[c[2]]||''} ${ROLES[c[2]]?ROLES[c[2]].s:''}</small></div></div>`).join('');}
+  return `<div class="gs-pick"><div class="pk-head"><b>${t}</b><button class="gs-mini" data-act="wpick" data-k="">✕</button></div><div class="pk-body">${b}</div></div>`;
 }
 /* --- lado del empleado real --- */
 const PHASE={lobby:'⏳ Esperando a que el jefe abra la tienda…',shop:'🧾 Turno cerrado. El jefe está con las cuentas y los pedidos.',meeting:'🗣️ Reunión de personal. El jefe está decidiendo sobre cada uno.',dead:'🪦 La tienda ha cerrado. Esperando a ver si el jefe vuelve a empezar.'};
@@ -4317,7 +4423,7 @@ function onClick(e){
   else if(a==='rreject')rejectReal(b.dataset.u);
   else if(a==='rtake')roomAct({k:'take',t:+b.dataset.t});
   else if(a==='rtool'){roomAct({k:'take',t:+b.dataset.c});toast('Se lo pides al jefe…');}
-  else if(a==='wscol'){room.wcol=b.dataset.k;room.lastHtml='';renderMember();}
+  else if(a==='wpick'){room.wpick=b.dataset.k||null;room.lastHtml='';renderMember();}
   else if(a==='rhh')roomAct({k:b.dataset.k,u:b.dataset.u});
   else if(a==='rboss')takeOver();
   if(run&&run.over&&!run.dead&&meta.closed)saveGame(true);
@@ -4330,7 +4436,9 @@ document.addEventListener('keydown',ev=>{
   const tg=ev.target;if(tg&&(tg.tagName==='INPUT'||tg.tagName==='TEXTAREA'||tg.tagName==='SELECT'||tg.isContentEditable))return;
   if(ev.ctrlKey||ev.metaKey||ev.altKey)return;
   const k=ev.key.toLowerCase(),show=id=>{const x=$(id);return x&&x.classList.contains('show');};
-  if(k==='escape'){const x=document.querySelector('#mg.show [data-act=leavecancel],#guide.show [data-act=gclose]');if(x){ev.preventDefault();x.click();}return;}
+  if(k==='escape'){const x=document.querySelector('#mg.show [data-act=leavecancel],#guide.show [data-act=gclose],#overlay.show .gs-pick [data-act=wpick]');if(x){ev.preventDefault();x.click();}return;}
+  /* En el puesto de trabajo del empleado real, 1–6 son los botones de la barra de acciones. */
+  if(isMember()&&show('#overlay')&&!show('#mg')&&!show('#guide')&&/^[1-6]$/.test(k)){const b=document.querySelectorAll('#overlay .gs-bar2 .hk')[+k-1];if(b&&!b.disabled){ev.preventDefault();b.click();}return;}
   if(!run||run.over||show('#overlay')||show('#mg')||show('#guide'))return;
   if(!run.remote&&tab!=='caja')return;
   const q=sel=>document.querySelector('#register '+sel+':not([disabled])');
