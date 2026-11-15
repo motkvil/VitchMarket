@@ -348,6 +348,34 @@ body:not([data-tab="caja"]) .queue-wrap{display:none}
 }
 @media (prefers-reduced-motion:reduce){.alertbtn.hot{animation:none}.sidebar{transition:none}}
 .register{gap:8px}
+/* Pantallas del cierre y la reunión: fijas, con pestañas y páginas */
+#overlay:has(.screen){overflow:hidden;padding:0}
+.card.screen{position:fixed;inset:10px;margin:0 auto;max-width:1240px;width:auto;display:flex;flex-direction:column;gap:10px;overflow:hidden;padding:16px 20px}
+.card.screen>*{margin:0}
+.scr-head{display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px}
+.scr-head h2{font-size:24px}
+.subtabs{display:flex;flex-wrap:wrap;gap:5px}
+.stab{background:#e9e2cf;border:2px solid var(--ink);border-bottom-width:4px;border-radius:8px;padding:5px 10px;font-family:var(--display);font-size:12px;color:var(--ink)}
+.stab.on{background:var(--tag);transform:translateY(2px);border-bottom-width:2px}
+.stab i{background:var(--sign);color:#fff;border-radius:99px;padding:0 6px;font-style:normal;font-size:10px;margin-left:5px;font-family:var(--body)}
+.scr-body{flex:1;min-height:0;overflow:auto;scrollbar-width:thin;display:flex;flex-direction:column;gap:10px}
+.scr-body>.sum{max-width:720px;width:100%}
+.scr-body .ordlist{max-height:none;overflow:visible}
+.scr-foot{display:flex;align-items:center;gap:8px 14px;flex-wrap:wrap;border-top:2px dashed #cfc7b4;padding-top:10px}
+.scr-foot .btn.big{flex:1 1 240px}
+.pager{display:flex;align-items:center;gap:8px;flex:0 0 auto}.pager .btn{flex:0 0 auto;padding:8px 14px}
+.cgrid{display:grid;grid-template-columns:repeat(var(--cols,1),minmax(0,1fr));gap:10px;align-items:start}
+.letter{font-size:13px;line-height:1.5;display:block}.letter b{display:inline}
+.emp.firing .duty,.emp.firing .did,.emp.firing .es,.emp.firing .ev{display:none}
+.emp.firing .opts .btn{padding:7px 8px;font-size:12px}
+@media (max-height:700px){
+  .card.screen{gap:6px}.scr-head{gap:4px 10px}.scr-foot{padding-top:6px}.scr-foot .btn.big{padding:9px}
+  .scr-body .sum{font-size:12px;gap:0 10px;line-height:1.3}.scr-body .sum span.sm,.scr-body .sum b.sm{font-size:10px}
+  .scr-body .up{padding:5px 8px}.scr-body .up .t{font-size:10px}.scr-body .up .t b{font-size:12px}
+  .emp.firing .opts{display:grid;grid-template-columns:1fr 1fr;gap:4px}.emp.firing .opts .btn{padding:5px 6px;font-size:10px}.emp.firing .opts .btn small{display:block}
+  .emp.firing>.supd{font-size:10px}
+}
+@media (max-width:820px){.card.screen{inset:4px;padding:10px 12px;gap:8px}.scr-head h2{font-size:18px}.stab{font-size:10px;padding:4px 7px}.scr-foot .supd{flex-basis:100%}}
 .receipt{flex:0 1 auto;min-height:44px}
 .cashrow{padding:0 2px}.cashrow b{font-size:24px}
 .denoms{grid-template-columns:repeat(6,1fr);gap:5px}
@@ -848,7 +876,7 @@ function endDay(){
   meta.money-=payroll;
   meta.best=Math.max(meta.best,meta.day);
   cart={};
-  lastEnd={payroll,res};
+  lastEnd={payroll,res};scrTab.shop='sum';pg=0;
   if(isHost())room.rpt=deptReport();
   if(meta.rep<=0||meta.money<-30000){run.over=false;checkRep();return;}
   saveGame(true);
@@ -856,6 +884,21 @@ function endDay(){
   showShop();
   pubState(true);
 }
+/* ---------- pantallas de juego (cierre y reunión): pestañas y páginas, sin desplazar ---------- */
+const scrTab={shop:'sum',meet:'emp'};let pg=0,ordPer=0;
+const cols=()=>innerWidth>=1150?3:innerWidth>=760?2:1;
+const rowsFit=(rowH,reserve)=>Math.max(3,Math.floor((innerHeight-reserve)/rowH));
+function paged(items,per,empty){
+  const n=Math.max(1,Math.ceil(items.length/per));if(pg>=n)pg=n-1;if(pg<0)pg=0;
+  return {html:items.length?items.slice(pg*per,pg*per+per).join(''):(empty||''),
+    nav:n>1?`<div class="pager"><button class="btn" data-act="pg" data-d="-1" ${pg?'':'disabled'} aria-label="Página anterior">◀</button><b>${pg+1} / ${n}</b><button class="btn" data-act="pg" data-d="1" ${pg<n-1?'':'disabled'} aria-label="Página siguiente">▶</button></div>`:''};
+}
+function screenHtml(kind,title,tabs,body,nav,foot){
+  const cur=scrTab[kind];
+  return `<div class="card screen"><div class="scr-head"><h2>${title}</h2><div class="subtabs">${tabs.map(([k,l,b])=>`<button class="stab ${cur===k?'on':''}" data-act="stab" data-s="${kind}" data-k="${k}">${l}${b?`<i>${b}</i>`:''}</button>`).join('')}</div></div>
+    <div class="scr-body">${body}</div><div class="scr-foot">${nav||''}${foot}</div></div>`;
+}
+const rerenderScreen=()=>{if($('#overlay [data-act=endmeet]'))showMeeting();else if($('#overlay .screen'))showShop();};
 function upsHtml(){
   return UPS.map(u=>{
     const own=meta.up[u.k];
@@ -863,37 +906,38 @@ function upsHtml(){
       <button class="btn ${own?'':'go'}" data-act="buy" data-k="${u.k}" ${own||meta.money<u.c?'disabled':''}>${own?'Comprado':'Comprar'}</button></div>`;
   }).join('');
 }
-function orderHtml(){
+function orderHtml(per){
   const incoming={};
   meta.orders.forEach(o=>Object.entries(o.items).forEach(([id,q])=>{incoming[id]=(incoming[id]||0)+q;}));
-  const rows=CAT.slice().sort((x,y)=>((meta.stock[x.id]||0)+(meta.back[x.id]||0))-((meta.stock[y.id]||0)+(meta.back[y.id]||0))||x.id-y.id).slice(0,14).map(x=>{
+  const rowsA=CAT.slice().sort((x,y)=>((meta.stock[x.id]||0)+(meta.back[x.id]||0))-((meta.stock[y.id]||0)+(meta.back[y.id]||0))||x.id-y.id).slice(0,14).map(x=>{
     const stk=meta.stock[x.id]||0,bk=meta.back[x.id]||0,inc=incoming[x.id]||0,q=cart[x.id]||0;
     return `<div class="ord"><div class="on">${x.e} ${x.n}<small>${x.f||''}</small></div>
       <div class="oq"><span>${fmt(unitCost(x,ordSup))}</span><button class="btn" data-act="ordm" data-id="${x.id}" ${q?'':'disabled'}>−</button><b>${q}</b><button class="btn" data-act="ordp" data-id="${x.id}">+6</button></div>
       <div class="os">Estantería ${stk} · Almacén ${bk}${inc?' · en camino '+inc:''}</div></div>`;
-  }).join('');
+  });
+  const P=per?paged(rowsA,per):{html:rowsA.join(''),nav:''},rows=P.html;
   const sups=SUPS.map(z=>`<button class="btn ${ordSup===z.k?'on':''}" data-act="sup" data-k="${z.k}">${z.n}</button>`).join('');
   const sp=SUPS.find(z=>z.k===ordSup),cost=cartCost(),nd=meta.day+(run&&!run.over?0:1);
   return `<div class="zone-title">DISTRIBUIDORES · PEDIDO</div>
     <div class="sups">${sups}</div>
     <div class="supd">${sp.d} Fiabilidad ${Math.round(sp.rel*100)}% · coste ${Math.round(sp.cf*100)}% del precio de venta · llega en el turno ${meta.day+sp.lead}.</div>
     <div class="ordlist">${rows}</div>
-    <button class="btn go" data-act="ordgo" ${cost>0&&meta.money>=cost?'':'disabled'}>Pedir · ${fmt(cost)}</button>
+    <div class="row">${P.nav}<button class="btn go" data-act="ordgo" ${cost>0&&meta.money>=cost?'':'disabled'}>Pedir · ${fmt(cost)}</button></div>
     <div class="supd">Pedidos en camino: ${meta.orders.length}. Se muestran los 14 productos con menos existencias.</div>`;
 }
-function showShop(){
+function showShop(noFit){
   const e=lastEnd,r=e.res;
-  const ups=upsHtml();
-  const DST={ok:'Trabajó',late:'Llegó tarde',abs:'Faltó sin avisar',off:'Libró'};
+  const DST={ok:'Trabajó',late:'Llegó tarde',abs:'Faltó sin avisar',off:'Libró',gone:'Desconectado/a'};
   const dep=meta.emp.map(e=>{const d=run.duty[e.id];
-    return `<div class="up"><div class="t"><b>${e.face} ${flag(e)} ${e.name} · ${ROLES[e.role].n}</b>${d?DST[d.st]:'—'}${e.trial?' · en prueba':''}</div><span class="mood" title="Ánimo">${mood(e)}</span></div>`;
-  }).join('')||'<div class="supd">No tienes a nadie contratado.</div>';
+    return `<div class="up"><div class="t"><b>${e.face} ${e.real?'🎮':flag(e)} ${e.name} · ${ROLES[e.role].n}</b>${d?DST[d.st]||'—':'—'}${e.trial?' · en prueba':''}</div><span class="mood" title="Ánimo">${mood(e)}</span></div>`;
+  });
   const meetDay=meta.day%3===1;
   let nm=meta.day+1;while(nm%3!==1)nm++;
   const dl=(n,x)=>`<span class="sm">${n}: ${x.in} recibidas</span><b class="sm">${x.ok} ok · ${x.fail} mal · ${x.late} sin tiempo (−${fmt(x.cost)})</b>`;
-  const out=CAT.filter(x=>(meta.stock[x.id]||0)<=0).length;
-  showOverlay(`<div class="card"><h2>Cierre · turno ${meta.day}</h2>${isHost()?appsHtml():''}
-    <div class="sum">
+  const out=CAT.filter(x=>(meta.stock[x.id]||0)<=0).length,ap=isHost()?appsList().length:0;
+  if(scrTab.shop==='apps'&&!ap)scrTab.shop='sum';
+  const k=scrTab.shop;let body='',nav='';
+  if(k==='sum')body=`<div class="sum">
       <span>Clientes atendidos</span><b>${run.served}</b>
       <span>Se fueron enfadados</span><b>${run.angry}</b>
       <span>Errores</span><b>${run.errors}</b>
@@ -907,13 +951,16 @@ function showShop(){
       <span class="tot">Bote</span><b class="tot">${fmt(meta.money)}</b>
       <span>Reputación</span><b>★ ${meta.rep.toFixed(1)}</b>
     </div>
-    <div class="zone-title">PLANTILLA HOY</div>
-    <div class="shop">${dep}</div>
-    <div class="supd">${meetDay?'Hoy toca <b>reunión de personal</b>: valorar, contratar y despedir.':'Próxima reunión de personal al cerrar el turno '+nm+'.'}</div>
-    ${orderHtml()}
-    <div class="zone-title">TIENDA DEL PERSONAL</div>
-    <div class="shop">${ups}</div>
-    ${meetDay?'<button class="btn go big" data-act="meeting">Reunión de personal ▸</button>':`<button class="btn go big" data-act="next">Turno ${meta.day+1} ▸</button>`}</div>`);
+    <div class="supd">${meetDay?'Hoy toca <b>reunión de personal</b>: valorar, contratar y despedir.':'Próxima reunión de personal al cerrar el turno '+nm+'.'}</div>`;
+  else if(k==='staff'){const P=paged(dep,rowsFit(54,250),'<div class="supd">No tienes a nadie contratado.</div>');body=`<div class="shop">${P.html}</div>`;nav=P.nav;}
+  else if(k==='order'){if(!ordPer)ordPer=rowsFit(50,330);body=orderHtml(ordPer);}
+  else if(k==='ups')body=`<div class="shop">${upsHtml()}</div>`;
+  else body=appsHtml();
+  const tabs=[['sum','📊 Resumen'],['staff','👥 Plantilla',meta.emp.length],['order','📦 Pedido',Object.keys(cart).length],['ups','⭐ Mejoras']].concat(ap?[['apps','📝 Solicitudes',ap]]:[]);
+  showOverlay(screenHtml('shop','Cierre · turno '+meta.day,tabs,body,nav,
+    `<span class="supd">Bote <b>${fmt(meta.money)}</b> · ★ ${meta.rep.toFixed(1)}</span>`+(meetDay?'<button class="btn go big" data-act="meeting">Reunión de personal ▸</button>':`<button class="btn go big" data-act="next">Turno ${meta.day+1} ▸</button>`)));
+  /* El pedido mide la pantalla real: quita productos de la página hasta que no sobre nada. */
+  if(k==='order'&&!noFit){for(let n=0;n<14;n++){const sb=$('#overlay .scr-body');if(!sb||sb.scrollHeight<=sb.clientHeight+1||ordPer<=3)break;ordPer--;showShop(true);}}
 }
 /* ---------- guardado de partida (localStorage) ----------
    Se guarda al empezar cada turno (closed:false) y al cerrarlo, más lo que se decida después:
@@ -1410,7 +1457,7 @@ function renderMember(){
   if(mine&&!mg&&!room.done[mine.id])startMG(Object.assign({remote:1},mine,{roles:toArr(mine.roles),bk:toArr(mine.bk)}));
 }
 setInterval(()=>{if(isMember())renderMember();},2000);
-function showOverlay(html){const o=$('#overlay');const st=o.scrollTop,ol=o.querySelector('.ordlist'),ost=ol?ol.scrollTop:0;o.innerHTML=html;o.classList.add('show');const cd=o.querySelector('.card');if(cd&&cd.children.length>6)cd.classList.add('wide');o.scrollTop=st;const nl=o.querySelector('.ordlist');if(nl)nl.scrollTop=ost;}
+function showOverlay(html){const o=$('#overlay');const st=o.scrollTop,ol=o.querySelector('.ordlist'),ost=ol?ol.scrollTop:0;o.innerHTML=html;o.classList.add('show');const cd=o.querySelector('.card');if(cd&&cd.children.length>6&&!cd.classList.contains('screen'))cd.classList.add('wide');o.scrollTop=st;const nl=o.querySelector('.ordlist');if(nl)nl.scrollTop=ost;}
 function hideOverlay(){$('#overlay').classList.remove('show');}
 
 /* ---------- personal: ayudantes ---------- */
@@ -1954,14 +2001,14 @@ function genRumors(){
     return `${s.face} <b>${s.name}</b> te dice en voz baja: «Que sepas que ${o.name} ${RUMOR[Math.random()<0.8?low:pick(ks)]}.»`;
   }).filter(Boolean);
 }
-function startMeeting(){meet={acted:{},gone:[],reqs:genReqs(),cands:genCands(),rumors:genRumors()};showMeeting();}
+function startMeeting(){scrTab.meet='emp';pg=0;meet={acted:{},gone:[],reqs:genReqs(),cands:genCands(),rumors:genRumors()};showMeeting();}
 function empAct(id,k){
   const e=empById(id);if(!meet||!e||meet.acted[id])return;
   let msg='';
   if(k==='praise'){e.moral=clamp(e.moral+12,0,100);msg='👏 Felicitado. Se le nota en la cara.';}
   else if(k==='warn'){
     e.warn++;e.moral=clamp(e.moral-12,0,100);e.focus=3;msg='⚠️ Toque dado (lleva '+e.warn+'). Va a espabilar… o no.';
-    if(!e.real&&e.moral<20&&Math.random()<0.3){meta.emp=meta.emp.filter(x=>x!==e);meet.gone.push(e.face+' '+e.name+' se lo tomó fatal y se fue dando un portazo.');sBad();renderHud();showMeeting();return;}
+    if(!e.real&&e.moral<20&&Math.random()<0.3){meta.emp=meta.emp.filter(x=>x!==e);meet.gone.push(e.face+' '+e.name+' se lo tomó fatal y se fue dando un portazo.');scrTab.meet='gone';pg=0;sBad();renderHud();showMeeting();return;}
   }
   else if(k==='raise'){e.wage+=300;e.moral=clamp(e.moral+20,0,100);msg='💶 +3 €/día. Ahora te quiere un poquito más.';}
   else if(k==='fire'){meet.firing=id;showMeeting();return;}
@@ -2004,7 +2051,7 @@ function fireEmp(id,r){
   meta.emp.forEach(x=>{x.moral=clamp(x.moral+(bad?3:-8),0,100);});
   L.push(bad?'El resto respira aliviado.':'El resto se ha quedado tenso.');
   if(e.real&&isHost()){note(e.real,'Estás despedido/a. Motivo: '+F.t.replace(/^\S+ /,'')+'. Liquidación: '+fmt(fin+ind)+(extra?' (más lo que le ha sacado tu denuncia al jefe: '+fmt(extra)+')':'')+'.',true);fb.update(rRef('members/'+e.real),{role:null}).catch(()=>{});}
-  meet.gone.push(L.join('<br>'));
+  meet.gone.push(L.join('<br>'));scrTab.meet='gone';pg=0;
   sBad();renderHud();showMeeting();
 }
 function applyReq(i,o){
@@ -2045,13 +2092,13 @@ function showMeeting(){
       <button class="btn" data-act="emp" data-e="${e.id}" data-k="warn">⚠️ Toque</button>
       <button class="btn" data-act="emp" data-e="${e.id}" data-k="raise">💶 +3 €</button>
       <button class="btn no" data-act="emp" data-e="${e.id}" data-k="fire">Despedir</button></div>`;
-    return `<div class="emp"><div class="eh"><span class="ef">${e.face}</span><div class="t"><b>${e.name}</b>${tag}</div><span class="mood" title="Ánimo">${mood(e)}</span></div>
+    return `<div class="emp ${meet.firing===e.id&&!a?'firing':''}"><div class="eh"><span class="ef">${e.face}</span><div class="t"><b>${e.name}</b>${tag}</div><span class="mood" title="Ánimo">${mood(e)}</span></div>
       <div class="duty"><b>Su trabajo:</b> ${ROLES[e.role].duties.join(' · ')}.</div>
       <ul class="did">${didList(e)}</ul>
       ${e.log&&e.log.length?'<div class="es">📒 Lo último: '+e.log.slice(-3).join(' · ')+'</div>':''}
       <div class="es">${e.real?'🎮 <b>Persona real.</b> Su carácter lo conoces tú mejor que nadie':e.days>=1&&TRAITS[e.pers]?TRAITS[e.pers].ic+' <b>'+TRAITS[e.pers].n+'</b>: '+TRAITS[e.pers].d:'❔ Carácter: aún no le conoces.'} · Habla ${e.langs.map(l=>LANG[l]).join(', ')}.</div>
       <div class="ev">${s.shifts?verdict(e):'Sin datos todavía'}</div>${btns}</div>`;
-  }).join('')||'<div class="supd">Plantilla vacía. Tú contra el mundo.</div>';
+  });
   const reqs=meet.reqs.map((r,i)=>{
     const a=empById(r.a),b=r.b&&empById(r.b);if(!a||(r.k==='feud'&&!b))return '';
     const txt=r.k==='raise'?`${a.face} <b>${a.name}</b> pide 3 € más al día. ${a.days>=3?'«Llevo '+a.days+' turnos dejándome la piel.»':'«Con lo que curro, me lo merezco.»'}`
@@ -2061,24 +2108,29 @@ function showMeeting(){
     const ops=r.k==='raise'?['Aceptar','Negar']:r.k==='off'?['Que libre','Ni hablar']:r.k==='extra'?['Aceptar (10 €)','No hace falta']:['Mediar','Razón a '+a.name,'Razón a '+b.name];
     const act=r.done!=null?`<div class="supd">${r.done}</div>`:`<div class="row ea">${ops.map((o,j)=>`<button class="btn" data-act="req" data-r="${i}" data-o="${j}">${o}</button>`).join('')}</div>`;
     return `<div class="emp"><div>${txt}</div>${act}</div>`;
-  }).join('')||'<div class="supd">Nadie pide nada. Sospechoso.</div>';
+  }).filter(Boolean);
   const cands=meet.cands.map((c,i)=>{
     const full=staffOf(c.role).length>=ROLES[c.role].max;
     const qa=c.qa.map(x=>`<div class="qa">${x.q}<i>«${x.a}»</i></div>`).join('');
     const btn=c.hired?'<div class="supd">Fichado. Empieza el próximo turno, en periodo de prueba.</div>'
       :`<button class="btn go" data-act="hirec" data-c="${i}" ${full||meta.money<HIRE?'disabled':''}>${full?'Puesto completo':'Contratar · '+fmt(HIRE)}</button>`;
     return `<div class="emp"><div class="eh"><span class="ef">${c.face}</span><div class="t"><b>${c.name}</b>${flag(c)} ${(NATS[c.nat]||NATS[0]).c} · para ${ROLES[c.role].n} · habla ${c.langs.map(l=>LANG[l]).join(', ')} ·${c.exp?c.exp+(c.exp===1?' año':' años')+' de experiencia':'sin experiencia'} · pide ${fmt(c.wage)}/día</div></div>${qa}${btn}</div>`;
-  }).join('');
+  });
   const duties=Object.keys(ROLES).map(k=>`<div class="up"><div class="t"><b>${ROLES[k].n} · ${staffOf(k).length}/${ROLES[k].max}</b>${ROLES[k].duties.join(' · ')}</div></div>`).join('');
-  showOverlay(`<div class="card"><h2>Reunión de personal</h2>${isHost()?appsHtml():''}
-    <div class="supd">Datos desde la última reunión. Una decisión por persona. Para despedir hay que dar un motivo que se pueda demostrar con lo registrado; si no, denuncia. Bote: <b>${fmt(meta.money)}</b></div>
-    ${meet.gone.map(g=>`<div class="supd">${g}</div>`).join('')}
-    ${meet.rumors.length?'<div class="zone-title">RUMORES</div><div class="shop">'+meet.rumors.map(r=>'<div class="emp"><div>'+r+'</div></div>').join('')+'</div>':''}
-    <div class="zone-title">PLANTILLA</div><div class="shop">${emps}</div>
-    <div class="zone-title">PETICIONES</div><div class="shop">${reqs}</div>
-    <div class="zone-title">CANDIDATOS</div><div class="shop">${cands}</div>
-    <div class="zone-title">OBLIGACIONES DE CADA PUESTO</div><div class="shop">${duties}</div>
-    <button class="btn go big" data-act="endmeet">Turno ${meta.day+1} ▸</button></div>`);
+  const ap=isHost()?appsList().length:0,c=cols();
+  const avail=k=>k==='emp'||k==='req'||k==='cand'||k==='duty'||(k==='rum'&&meet.rumors.length)||(k==='gone'&&meet.gone.length)||(k==='apps'&&ap);
+  if(!avail(scrTab.meet))scrTab.meet='emp';
+  const k=scrTab.meet;let body='',nav='';
+  if(k==='emp'){const P=paged(emps,c,'<div class="supd">Plantilla vacía. Tú contra el mundo.</div>');body=`<div class="supd">Datos desde la última reunión. Una decisión por persona. Para despedir hay que dar un motivo que se pueda demostrar con lo registrado; si no, denuncia.</div><div class="cgrid" style="--cols:${c}">${P.html}</div>`;nav=P.nav;}
+  else if(k==='req'){const P=paged(reqs,c*2,'<div class="supd">Nadie pide nada. Sospechoso.</div>');body=`<div class="cgrid" style="--cols:${c}">${P.html}</div>`;nav=P.nav;}
+  else if(k==='cand'){const P=paged(cands,c);body=`<div class="cgrid" style="--cols:${c}">${P.html}</div>`;nav=P.nav;}
+  else if(k==='rum')body='<div class="shop">'+meet.rumors.map(r=>'<div class="emp"><div>'+r+'</div></div>').join('')+'</div>';
+  else if(k==='gone'){const P=paged(meet.gone.slice().reverse().map(g=>`<div class="emp letter">${g}</div>`),1);body=P.html;nav=P.nav;}
+  else if(k==='duty')body=`<div class="cgrid" style="--cols:${Math.min(c,2)}">${duties}</div>`;
+  else body=appsHtml();
+  const pend=meet.reqs.filter(r=>r.done==null&&empById(r.a)).length;
+  const tabs=[['emp','👥 Plantilla',meta.emp.length],['req','🙋 Peticiones',pend],['cand','🧑‍💼 Candidatos']].concat(meet.rumors.length?[['rum','👂 Rumores',meet.rumors.length]]:[],meet.gone.length?[['gone','✉️ Cartas',meet.gone.length]]:[],[['duty','📋 Puestos']],ap?[['apps','📝 Solicitudes',ap]]:[]);
+  showOverlay(screenHtml('meet','Reunión de personal',tabs,body,nav,`<span class="supd">Bote <b>${fmt(meta.money)}</b></span><button class="btn go big" data-act="endmeet">Turno ${meta.day+1} ▸</button>`));
 }
 
 /* ---------- acciones ---------- */
@@ -2569,6 +2621,7 @@ function renderDept(force){
 }
 /* Pedidos y mejoras se manejan igual desde el cierre que desde las pestañas. */
 function refreshView(){if($('#overlay').classList.contains('show')&&$('#overlay [data-act=next],#overlay [data-act=meeting]'))showShop();else renderDept(true);}
+addEventListener('resize',()=>{ordPer=0;if($('#overlay').classList.contains('show'))rerenderScreen();});
 /* El jefe resuelve una reclamación de la bandeja con el mismo minijuego que los empleados reales. */
 function deskTicket(id){
   const tk=run&&!run.over&&run.tickets.find(x=>x.id===id);if(!tk||mg)return;
@@ -2652,6 +2705,8 @@ function onClick(e){
   else if(a==='ordp'){cart[b.dataset.id]=(cart[b.dataset.id]||0)+6;refreshView();}
   else if(a==='ordm'){const q=(cart[b.dataset.id]||0)-6;if(q<=0)delete cart[b.dataset.id];else cart[b.dataset.id]=q;refreshView();}
   else if(a==='tab')setTab(b.dataset.k);
+  else if(a==='stab'){scrTab[b.dataset.s]=b.dataset.k;pg=0;rerenderScreen();}
+  else if(a==='pg'){pg+=+b.dataset.d;rerenderScreen();}
   else if(a==='side')$('#sidebar').classList.toggle('open');
   else if(a==='dtk')deskTicket(+b.dataset.id);
   else if(a==='drepo')deskRepo(+b.dataset.id);
