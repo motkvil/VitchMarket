@@ -1102,6 +1102,9 @@ body.b3d .till3d{flex:1 1 0;min-height:200px}
   body.b3d .side{min-height:0}
   body.b3d .register{overflow:auto}
 }
+
+/* El contenedor de los departamentos no lleva marco: con el de las tarjetas basta */
+.dept{background:transparent;border:0;box-shadow:none;border-radius:0;padding:0}
 </style>
 </head>
 <body>
@@ -1915,7 +1918,7 @@ async function fillRanking(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.15-31';
+const APPV='2026.11.15-32';
 /* Compara versiones por números («-9» < «-11»), no como texto. */
 const verCmp=(a,b)=>{const x=String(a).split(/[.-]/).map(Number),y=String(b).split(/[.-]/).map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
 try{const vt=document.createElement('div');vt.id='vtag';vt.textContent='v'+APPV;document.body.appendChild(vt);}catch(e){}
