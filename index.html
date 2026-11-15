@@ -316,7 +316,8 @@ body:not([data-tab="caja"]) .queue-wrap{display:none}
 .sidebar{min-height:0;overflow:auto;scrollbar-width:thin;display:flex;flex-direction:column;gap:8px;background:rgba(0,0,0,.28);border-radius:8px;padding:8px}
 .sidehead{display:flex;align-items:center;justify-content:space-between;color:#d8e8de;font-family:var(--display);font-size:13px;letter-spacing:1px}
 .sideclose,.alertbtn{display:none}
-.sidehead .aall{flex:0 0 auto;width:auto;white-space:nowrap;margin-left:auto;margin-right:6px;font-family:var(--body);letter-spacing:0}
+.sidehead .aall:disabled{opacity:1;background:transparent;box-shadow:none;border:2px dashed #3d6b55;color:#a9cdb9;cursor:default}
+.sidehead .aall{flex:0 0 auto;width:auto;height:auto;min-height:32px;padding:6px 12px;font-size:12px;line-height:1.2;white-space:nowrap;margin-left:auto;margin-right:6px;font-family:var(--body);letter-spacing:0}
 .sidebar .tasks{padding:8px;gap:6px}
 .camwin{position:static;width:auto;box-shadow:none;border:0;padding:0;z-index:auto}
 .camwin.show{display:block}
@@ -340,7 +341,7 @@ body:not([data-tab="caja"]) .queue-wrap{display:none}
   /* Avisos: panel que sube desde abajo, sin empujar nada */
   .sidebar{position:fixed;left:0;right:0;bottom:0;max-height:72vh;z-index:18;border-radius:14px 14px 0 0;background:#10201b;box-shadow:0 -10px 30px rgba(0,0,0,.6);transform:translateY(105%);transition:transform .2s}
   .sidebar.open{transform:none}
-  .sideclose{display:block;flex:0 0 auto}
+  .sideclose{display:block;flex:0 0 auto;width:auto;height:auto;min-width:36px;min-height:32px;padding:4px 10px;font-size:14px;line-height:1}
   .alertbtn{display:flex;align-items:center;gap:4px;position:fixed;right:10px;bottom:10px;z-index:17;background:var(--ink);color:#fff;border:2px solid var(--tag);border-radius:99px;padding:8px 14px;font-size:18px;box-shadow:0 4px 12px rgba(0,0,0,.5)}
   .alertbtn b{font-family:var(--led);font-size:22px;font-weight:400;color:var(--tag)}
   .alertbtn.hot{background:var(--sign);animation:ring 1s infinite}
@@ -1441,7 +1442,7 @@ async function fillRanking(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.15-15';
+const APPV='2026.11.15-16';
 /* Compara versiones por números («-9» < «-11»), no como texto. */
 const verCmp=(a,b)=>{const x=String(a).split(/[.-]/).map(Number),y=String(b).split(/[.-]/).map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
 try{const vt=document.createElement('div');vt.id='vtag';vt.textContent='v'+APPV;document.body.appendChild(vt);}catch(e){}
