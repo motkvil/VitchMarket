@@ -115,7 +115,7 @@
               ".validate": "newData.isString()"
             },
             "k": {
-              ".validate": "newData.val() === 'take' || newData.val() === 'done' || newData.val() === 'drop' || newData.val() === 'hire' || newData.val() === 'reject'"
+              ".validate": "newData.val() === 'take' || newData.val() === 'done' || newData.val() === 'drop' || newData.val() === 'hire' || newData.val() === 'reject' || newData.val() === 'till'"
             },
             "t": {
               ".validate": "newData.isNumber()"
@@ -134,7 +134,27 @@
             },
             "u": {
               ".validate": "newData.isString() && newData.val().length <= 128"
+            },
+            "d": {
+              ".validate": "true"
+            },
+            "tk": {
+              ".validate": "true"
+            },
+            "ret": {
+              ".validate": "true"
+            },
+            "rev": {
+              ".validate": "true"
+            },
+            "done": {
+              ".validate": "true"
             }
+          }
+        },
+        "till": {
+          "$uid": {
+            ".write": "auth != null && (auth.uid === $uid || root.child('rooms/'+$code+'/info/host').val() === auth.uid)"
           }
         }
       }

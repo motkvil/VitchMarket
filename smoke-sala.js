@@ -43,7 +43,7 @@ function notify(p){
     },0);
   });
 }
-let uidN=0;const acts={};
+let uidN=0;const acts={},tillSum={served:0,sales:0};
 function client(){
   const uid='uid'+(++uidN);
   const ref=(db,p)=>({path:p||''});
@@ -52,7 +52,7 @@ function client(){
     set:async(r,v)=>{setAt(r.path,v);notify(r.path);},
     update:async(r,o)=>{Object.keys(o).forEach(k=>setAt(r.path+'/'+k,o[k]));notify(r.path);},
     remove:async r=>{setAt(r.path,null);notify(r.path);},
-    push:async(r,v)=>{if(v&&v.k)acts[v.k]=(acts[v.k]||0)+1;const k='a'+(++pushN);setAt(r.path+'/'+k,v);notify(r.path+'/'+k);return{key:k};},
+    push:async(r,v)=>{if(v&&v.k)acts[v.k]=(acts[v.k]||0)+1;if(v&&v.k==="till"&&v.d){tillSum.served+=(+v.d.served||0);tillSum.sales+=(+v.d.sales||0);}const k='a'+(++pushN);setAt(r.path+'/'+k,v);notify(r.path+'/'+k);return{key:k};},
     onValue(r,cb){if(r.path==='.info/serverTimeOffset'){setTimeout(()=>cb({val:()=>skew}),0);return()=>{};}
       const L={type:'value',path:r.path,cb};listeners.push(L);setTimeout(()=>{if(!L.off)cb(snap(r.path));},0);return()=>{L.off=1;};},
     onChildAdded(r,cb){const L={type:'child',path:r.path,cb,seen:new Set()};listeners.push(L);notify(r.path);return()=>{L.off=1;};},
@@ -83,6 +83,7 @@ const D=[5000,2000,1000,500,200,100,50,20,10,5,2,1];
 const st={hostDays:0,takes:0,mgB:0,assignReal:0};
 
 function hostBot(d){
+  {const g=d.querySelector('#guide.show [data-act=gclose],#guide.show [data-act=gpg][data-d="1"]');if(g){(typeof stats!=='undefined'?stats:st).guide=((typeof stats!=='undefined'?stats:st).guide||0)+1;g.click();return;}}
   const hire=d.querySelector('[data-act=rhire]:not([disabled])');if(hire){st.hired=(st.hired||0)+1;cl(hire);return;}
   const ov=d.querySelector('#overlay.show');
   if(ov){
@@ -108,7 +109,23 @@ function hostBot(d){
     cl(d.querySelector('[data-act=deliver]'));}
 }
 let tkSeen=0;
+function cashier(d){
+  const rt=d.querySelector('[data-act=route]');
+  if(rt){const k=['atc','back','rrpp','alm'];cl(d.querySelector('[data-act=route][data-d='+k[Math.floor(Math.random()*4)]+']'));return true;}
+  const idy=d.querySelector('[data-act=idyes]');if(idy){cl(Math.random()<.5?idy:d.querySelector('[data-act=idno]'));return true;}
+  const it=d.querySelector('.item');if(it){cl(it);return true;}
+  const pay=d.querySelector('[data-act=pay]:not([disabled])');if(pay){cl(pay);return true;}
+  const card=d.querySelector('[data-act=card]');if(card){cl(card);return true;}
+  const due=d.querySelector('.cashrow.due b');
+  if(due){const c=Math.round(parseFloat(due.textContent.replace(',','.'))*100);
+    const cur=Math.round(parseFloat(d.querySelector('.cashrow.tray b').textContent.replace(',','.'))*100);
+    if(cur<c){for(const v of D){if(c-cur>=v){cl(d.querySelector('[data-act=den][data-v="'+v+'"]'));return true;}}}
+    cl(d.querySelector('[data-act=deliver]'));return true;}
+  return false;
+}
 function memberBot(d){
+  {const g=d.querySelector('#guide.show [data-act=gclose],#guide.show [data-act=gpg][data-d="1"]');if(g){(typeof stats!=='undefined'?stats:st).guide=((typeof stats!=='undefined'?stats:st).guide||0)+1;g.click();return;}}
+  if(!d.querySelector('#overlay.show')&&!d.querySelector('#mg.show')&&d.querySelector('#hTill')&&d.querySelector('#hTill').textContent!=='3'){st.tillSeen=1;if(cashier(d)){st.cashierActs=(st.cashierActs||0)+1;return;}}
   if(d.querySelector('[data-act=mgtk]'))tkSeen++;
   const mgel=d.querySelector('#mg.show');
   if(mgel){const x=any(mgel,'button:not([disabled])');if(x){st.mgB++;cl(x);}return;}
@@ -135,7 +152,7 @@ function memberBot(d){
     const hB=setInterval(()=>{try{memberBot(db);}catch(e){errs.push('BOT empleada '+e.message);}},60);
     await sleep(45000);
     clearInterval(hA);clearInterval(hB);
-    st.acts=acts;st.actsLeft=Object.keys(getAt('rooms/'+code+'/acts')||{}).length;
+    st.acts=acts;st.tillSum=tillSum;st.actsLeft=Object.keys(getAt('rooms/'+code+'/acts')||{}).length;
     const metaDb=getAt('rooms/'+code+'/meta')||{};
     const realEmp=Object.values(metaDb.emp||{}).find(e=>e&&e.real);
     st.tkSeen=tkSeen;st.realEmp=realEmp?{name:realEmp.name,role:realEmp.role,tasks:realEmp.st&&realEmp.st.tasks,tfail:realEmp.st&&realEmp.st.tfail,ok:realEmp.st&&realEmp.st.ok,fail:realEmp.st&&realEmp.st.fail}:null;

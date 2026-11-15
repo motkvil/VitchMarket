@@ -367,6 +367,16 @@ body:not([data-tab="caja"]) .queue-wrap{display:none}
 .pager{display:flex;align-items:center;gap:8px;flex:0 0 auto}.pager .btn{flex:0 0 auto;padding:8px 14px}
 .cgrid{display:grid;grid-template-columns:repeat(var(--cols,1),minmax(0,1fr));gap:10px;align-items:start}
 .letter{font-size:13px;line-height:1.5;display:block}
+#guide{position:fixed;inset:0;background:rgba(10,24,20,.75);display:none;align-items:center;justify-content:center;padding:12px;z-index:26}
+#guide.show{display:flex}
+.guidec{max-width:560px;width:100%;margin:0}
+.gsteps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.gsteps li{display:flex;gap:10px;align-items:flex-start;background:#fff;border-radius:8px;padding:9px 12px;font-size:13px;line-height:1.45}
+.gsteps li span{font-size:24px;line-height:1}
+.gpg{align-self:center;font-weight:700;padding:0 6px}
+.guidec .row .btn:first-child{flex:0 0 auto;padding:10px 14px}
+.tab.help{flex:0 0 auto}
+.cashier .camb{display:none}
 .logo{color:var(--sign);text-shadow:2px 2px 0 var(--ink);letter-spacing:1px}
 .scr-head .sub{font-family:var(--body);font-size:12px;color:#5b5646;text-shadow:none;letter-spacing:0}
 .lead{margin:0}
@@ -396,7 +406,7 @@ body:not([data-tab="caja"]) .queue-wrap{display:none}
 <body>
 <div id="app">
   <header class="hud">
-    <div class="brand">VITCHMARKET<small>CAJA 3 · TURNO <span id="hDay">1</span></small></div>
+    <div class="brand">VITCHMARKET<small>CAJA <span id="hTill">3</span> · TURNO <span id="hDay">1</span></small></div>
     <div class="stat"><span>Hora</span><b id="hClock">09:00</b></div>
     <div class="stat"><span>Bote</span><b id="hMoney">0,00 €</b></div>
     <div class="stat"><span>Reputación</span><b id="hRep">★ 5.0</b></div>
@@ -438,6 +448,7 @@ body:not([data-tab="caja"]) .queue-wrap{display:none}
 </div>
 <div id="toast" role="status"></div><div id="overlay"></div>
 <div id="mg" role="dialog" aria-modal="true"></div>
+<div id="guide" role="dialog" aria-modal="true" aria-label="Cómo se trabaja"></div>
 
 <script src="firebase-config.js"></script>
 <script src="productos.js"></script>
@@ -569,7 +580,7 @@ function pickProduct(arr){
   for(let i=0;i<a.length;i++){r-=w[i];if(r<=0)return a[i];}
   return a[a.length-1];
 }
-function ret(i){if(!i.ret){i.ret=1;meta.stock[i.pid]=(meta.stock[i.pid]||0)+1;}}
+function ret(i){if(!i.ret){i.ret=1;meta.stock[i.pid]=(meta.stock[i.pid]||0)+1;if(run&&run.remote)run.outRet.push(i.pid);}}
 function newCustomer(){
   if(Math.random()<COMPL_P)return complaintCustomer();
   const day=meta.day;
@@ -686,6 +697,7 @@ function complaintCustomer(forceStock){
     complaint:{title:q.title,t:q.t.replace('%i%',it.n),dept:q.dept,refund:q.refund?ri(200,1500):0,sev:q.dept==='atc'?1:ri(1,3)}};
 }
 function addTicket(dept,text,refund,sev,mis){
+  if(run&&run.remote){run.outTk.push({dept,t:text,refund:refund||0,sev:sev||1,mis:!!mis});return;}
   const tk={id:++uid,dept,t:text,refund,sev,mis};run.tickets.push(tk);
   /* Si hay alguien real de ese departamento conectado, le llega como aviso para resolverla en directo. */
   if(isHost()&&!run.over&&meta.emp.some(e=>e.real&&e.role===dept&&inStore(e)))
@@ -759,9 +771,10 @@ function startDay(){
   if(msg.length)toast(msg.join(' · '),(rr.pending||notes.length)?'bad':'good');
   if(tab!=='caja')autoTill();
   pubState(true);
+  openGuide('j_'+tab,true);
 }
 function frontChanged(){run.tray=[];run.card=false;run.pendingId=null;}
-function removeFront(){run.queue.shift();frontChanged();}
+function removeFront(){const c=run.queue.shift();if(run.remote&&c)run.done.push(c.id);frontChanged();}
 
 function leaveAngry(idx){
   const c=run.queue[idx];
@@ -769,6 +782,7 @@ function leaveAngry(idx){
   regVisit(c,false);
   if((PERS[c.pk]||{}).influ)meta.rep=clamp(meta.rep-0.3,0,5);
   run.queue.splice(idx,1);
+  if(run.remote)run.done.push(c.id);
   if(idx===0)frontChanged();
   run.angry++;
   if(Math.random()<0.7)addReview(1,c.face);
@@ -778,6 +792,7 @@ function leaveAngry(idx){
   renderAll();checkRep();
 }
 function checkRep(){
+  if(run&&run.remote)return;
   if((meta.rep<=0||meta.money<-30000)&&run&&!run.over){
     run.over=true;run.dead=true;mg=null;pendingLeave=null;closeMG();wipeGame();
     const days=meta.day;
@@ -871,6 +886,7 @@ function processTickets(){
   return res;
 }
 function endDay(){
+  if(run.tills)Object.keys(run.tills).forEach(u=>closeTill(u));
   run.over=true;
   run.tasks.forEach(t=>{if(!t.who&&t.k!=='tk'){meta.rep=clamp(meta.rep-t.pen/2,0,5);run.tlost++;}});
   run.tasks=[];run.away=null;mg=null;pendingLeave=null;closeMG();
@@ -1273,6 +1289,102 @@ async function loadRank(){
   if(isMember())renderMember();
 }
 
+/* ---------- cajas de verdad para los cajeros reales ----------
+   El navegador del jefe crea los clientes y reparte la cola entre su Caja 3 y las cajas abiertas por
+   jugadores de Caja (Caja 1 y 2): cada cliente se manda entero a /till/{uid}/{cid}. El cajero lo atiende en su
+   navegador con la caja de siempre (run.remote) y cada segundo manda lo que ha pasado (act «till»: dinero,
+   reputación, atendidos, enfadados, reclamaciones, reseñas, unidades devueltas y clientes terminados).
+   El jefe lo suma a la tienda. Si el cajero se desconecta, sus clientes se pierden y el stock vuelve. */
+const TILL_MAX=5;
+/* --- lado del jefe --- */
+function tillOf(e){return run&&run.tills&&e.real?run.tills[e.real]:null;}
+function syncTills(){
+  if(!isHost()||!run||run.over)return;
+  run.tills=run.tills||{};
+  const want=meta.emp.filter(e=>e.real&&e.role==='atc'&&inStore(e)).slice(0,2);
+  Object.keys(run.tills).forEach(u=>{if(!want.some(e=>e.real===u))closeTill(u,'se ha ido de la caja');});
+  want.forEach(e=>{
+    if(run.tills[e.real])return;
+    const used=Object.values(run.tills).map(t=>t.n),n=[1,2].find(x=>!used.includes(x));
+    run.tills[e.real]={n,out:{},eid:e.id};
+    toast('🧾 '+e.name+' abre la Caja '+n,'good');note(e.real,'🧾 Tienes abierta la Caja '+n+'. ¡A cobrar!');
+  });
+}
+function closeTill(u,why){
+  const t=run&&run.tills&&run.tills[u];if(!t)return;
+  Object.values(t.out).forEach(pids=>toArr(pids).forEach(pid=>{meta.stock[pid]=(meta.stock[pid]||0)+1;}));
+  fb.remove(rRef('till/'+u)).catch(()=>{});
+  delete run.tills[u];
+  if(why)toast('🧾 La Caja '+t.n+' cierra: '+why,'bad');
+}
+const tillsBusy=()=>run&&run.tills?Object.values(run.tills).reduce((s,t)=>s+Object.keys(t.out).length,0):0;
+/* Manda el cliente a la caja real con menos cola si tiene menos gente que la Caja 3. Devuelve true si lo ha mandado. */
+function sendToTill(c){
+  if(!isHost()||!run.tills||c.cut)return false;
+  const ts=Object.entries(run.tills).filter(([u,t])=>Object.keys(t.out).length<TILL_MAX);
+  if(!ts.length)return false;
+  const [u,t]=ts.sort((a,b)=>Object.keys(a[1].out).length-Object.keys(b[1].out).length)[0];
+  if(Object.keys(t.out).length>run.queue.length)return false;
+  t.out[c.id]=c.items.map(i=>i.pid);
+  fb.set(rRef('till/'+u+'/'+c.id),plain(Object.assign({},c,{birth:+c.birth}))).catch(()=>{});
+  return true;
+}
+/* Lo que manda el cajero real cada segundo. */
+function applyTill(e,a){
+  const t=run.tills&&run.tills[e.real],d=a.d||{};
+  meta.money+=Math.round(+d.money||0);meta.rep=clamp(meta.rep+(+d.rep||0),0,5);
+  ['served','angry','errors','tips','sales','fines'].forEach(k=>{run[k]=(run[k]||0)+Math.round(+d[k]||0);});
+  e.st.cv+=Math.round(+d.served||0);e.st.cvErr+=Math.round(+d.errors||0);
+  toArr(a.ret).forEach(pid=>{meta.stock[pid]=(meta.stock[pid]||0)+1;});
+  toArr(a.tk).forEach(x=>{if(x&&ROLES[x.dept])addTicket(x.dept,String(x.t||'Reclamación').slice(0,120),+x.refund||0,+x.sev||1,!!x.mis);});
+  toArr(a.rev).forEach(x=>{if(x)addReview(clamp(+x[0]||3,1,5),x[1]);});
+  if(t)toArr(a.done).forEach(cid=>{delete t.out[cid];});
+  renderAll();checkRep();
+}
+
+/* --- lado del cajero real --- */
+let tillOff=null;
+function startRemoteTill(n){
+  document.body.classList.add('cashier');
+  const st=room.state||{};
+  meta=defMeta();meta.emp=[];meta.regs={};meta.money=0;meta.rep=2.5;meta.day=st.day||1;meta.up=Object.assign({scanner:0,fan:0,coffee:0},st.up);
+  run={remote:1,till:n,t:0,dur:1e9,queue:[],next:1e9,served:0,angry:0,errors:0,tips:0,fines:0,closing:false,over:false,tray:[],card:false,pendingId:null,flash:0,
+    tickets:[],sales:0,tasks:[],nextTask:1e9,away:null,tdone:0,tlost:0,duty:{},ev:[],reviews:[],outTk:[],outRet:[],outRev:[],done:[],syncT:0};
+  room.panel=false;tab='caja';document.body.dataset.tab='caja';$('.stage').hidden=false;$('#dept').hidden=true;
+  tillOff=fb.onChildAdded(rRef('till/'+room.uid),s=>{
+    const c=s.val();fb.remove(s.ref).catch(()=>{});
+    if(!c)return;
+    if(!run||!run.remote){roomAct({k:'till',d:{},ret:toArr(c.items).map(i=>i.pid),done:[c.id]});return;}
+    c.items=toArr(c.items);c.birth=new Date(c.birth);c.p=c.max;
+    run.queue.push(c);renderAll();beep(990,.06,'triangle',.04);
+  });
+  hideOverlay();renderAll();toast('🧾 Caja '+n+' abierta. Cobra a los clientes que te lleguen.','good');
+}
+function stopRemoteTill(){
+  if(!run||!run.remote)return;
+  tillSync(true);
+  if(tillOff){tillOff();tillOff=null;}
+  document.body.classList.remove('cashier');
+  run=null;mg=null;closeMG();room.lastHtml='';renderAll();renderMember();
+}
+function tillSync(force){
+  if(!run||!run.remote)return;
+  const d={money:meta.money,rep:Math.round((meta.rep-2.5)*100)/100,served:run.served,angry:run.angry,errors:run.errors,tips:run.tips,sales:run.sales,fines:run.fines};
+  const any=Object.values(d).some(v=>v)||run.outTk.length||run.outRet.length||run.outRev.length||run.done.length;
+  if(!any)return;
+  roomAct({k:'till',d,tk:run.outTk,ret:run.outRet,rev:run.outRev,done:run.done});
+  meta.money=0;meta.rep=2.5;['served','angry','errors','tips','sales','fines'].forEach(k=>{run[k]=0;});
+  run.outTk=[];run.outRet=[];run.outRev=[];run.done=[];
+}
+/* Al cajero le llega su caja cuando la tienda está abierta y el jefe le ha dado una. */
+function checkRemoteTill(){
+  if(!isMember())return;
+  const st=room.state,me=(room.members||{})[room.uid]||{};
+  const n=st&&st.tills&&st.tills[room.uid],open=st&&(st.phase==='open'||st.phase==='closing')&&st.ts&&srvNow()-st.ts<6000;
+  if(me.role==='atc'&&n&&open){if(!run||!run.remote)startRemoteTill(n);else run.till=n;if(st.up)meta.up=Object.assign(meta.up,st.up);}
+  else if(run&&run.remote)stopRemoteTill();
+}
+
 /* --- lado del jefe: empleados reales dentro de meta.emp (e.real = uid) --- */
 function syncRealEmps(){
   if(!isHost())return;
@@ -1297,6 +1409,7 @@ function syncRealEmps(){
       }else if(!m.on&&d&&d.st!=='gone'){releaseReal(e);d.st='gone';ch=true;toast('📴 '+nm+' se ha desconectado','bad');}
     }
   });
+  if(run&&!run.over)syncTills();
   if(ch&&run&&!run.over){renderAll();pubState(true);}
 }
 function releaseReal(e){
@@ -1313,6 +1426,7 @@ function giveReal(t,e,byBoss){
 function onAct(a){
   if(!a||!isHost())return;
   const e=meta.emp.find(x=>x.real===a.uid);if(!e)return;
+  if(a.k==='till'){if(run&&!run.over)applyTill(e,a);else{toArr(a.ret).forEach(pid=>{meta.stock[pid]=(meta.stock[pid]||0)+1;});}return;}
   if(a.k==='hire'||a.k==='reject'){
     if(e.role!=='rrhh'){note(e.real,'Eso solo lo puede hacer Recursos Humanos.',true);return;}
     const m=room.members[a.u];if(!m||!m.apply)return;
@@ -1365,7 +1479,7 @@ function pubState(force){
   }):[];
   const phase=!run?'lobby':run.over?(run.dead?'dead':meet?'meeting':'shop'):run.closing?'closing':'open';
   fb.set(rRef('state'),plain({day:meta.day,t:run?Math.round(run.t):0,dur:run?run.dur:(room.info.dur||100),money:Math.round(meta.money),rep:Math.round(meta.rep*10)/10,
-    q:run?run.queue.length:0,dep:depData(),cnt:Object.fromEntries(Object.keys(ROLES).map(r=>[r,staffOf(r).length])),phase,away:!!(run&&run.away),tasks,rpt:run&&run.over&&room.rpt||null,ts:fb.serverTimestamp()})).catch(()=>{});
+    q:run?run.queue.length:0,tills:run&&run.tills?Object.fromEntries(Object.entries(run.tills).map(([u,t])=>[u,t.n])):{},tq:run&&run.tills?Object.fromEntries(Object.entries(run.tills).map(([u,t])=>[t.n,Object.keys(t.out).length])):{},up:meta.up,dep:depData(),cnt:Object.fromEntries(Object.keys(ROLES).map(r=>[r,staffOf(r).length])),phase,away:!!(run&&run.away),tasks,rpt:run&&run.over&&room.rpt||null,ts:fb.serverTimestamp()})).catch(()=>{});
   if(force||now-room.lastHb>10000){room.lastHb=now;fb.update(rRef('info'),{hb:fb.serverTimestamp(),day:meta.day,status:run&&!run.over?'open':run?'closed':'lobby'}).catch(()=>{});}
 }
 
@@ -1414,6 +1528,8 @@ const PHASE={lobby:'⏳ Esperando a que el jefe abra la tienda…',shop:'🧾 Tu
 /* Portada online (registrarse y solicitar cargo) y pantalla de trabajo del empleado real. */
 function renderMember(){
   if(!isMember())return;
+  checkRemoteTill();
+  const atTill=!!(run&&run.remote&&!room.panel);
   $('#camwin').classList.remove('show');
   if(document.activeElement&&document.activeElement.id==='pname')return;
   loadRank();
@@ -1454,8 +1570,9 @@ function renderMember(){
     kind='work';
     const openN=tasks.filter(t=>!t.who&&(t.k!=='tk'||t.dept===role)).length;
     const dd=st&&st.dep,depN=!dd?0:role==='rrhh'?toArr(dd.apps).length:role==='alm'?(dd.out||0):((dd.tk||{})[role]||0);
-    tabs=[['job','🛠️ Trabajo',openN],['dept',JOB_IC[role]+' '+ROLES[role].s,depN],whoTab];
+    tabs=[['job','🛠️ Trabajo',openN],['dept',JOB_IC[role]+' '+ROLES[role].s,depN],whoTab,['help','📘 Cómo se trabaja']];
     if(scrTab.work==='who')body=membersHtml();
+    else if(scrTab.work==='help')body='<ol class="gsteps">'+GUIDE[role].steps.map(([ic,t])=>`<li><span>${ic}</span><div>${t}</div></li>`).join('')+'</ol>';
     else if(scrTab.work==='dept')body=stale?'<div class="supd">⏸️ La tienda está en pausa.</div>':memberDept(st,role)+(PHASE[st.phase]?reportHtml(st.rpt,role):'');
     else{
       body=top+`<div class="supd">${JOB_IC[role]} Trabajas en <b>${ROLES[role].n}</b> como <b>${esc(playerName())}</b>.</div>`;
@@ -1472,11 +1589,13 @@ function renderMember(){
       }
       if(room.note)body+=`<div class="supd">📣 Último aviso del jefe: ${esc(room.note.m)}</div>`;
     }
-    foot=mine?'':'<button class="btn" data-act="rquit">Dejar el trabajo</button>';
+    foot=(run&&run.remote?'<button class="btn go big" data-act="rtill">🧾 Volver a mi caja</button>':'')+(mine?'':'<button class="btn" data-act="rquit">Dejar el trabajo</button>');
   }
   const h=screenHtml(kind,'<span class="logo">VITCHMARKET</span>',tabs,body,'',bossBtn+foot);
-  if(h!==room.lastHtml){const pv=$('#pname')?$('#pname').value:null;room.lastHtml=h;showOverlay(h);if(pv!=null&&$('#pname'))$('#pname').value=pv;}
-  if(mg&&mg.remote&&st&&!stale&&!tasks.some(t=>t.id===mg.t.id&&t.who===room.uid)){mg=null;closeMG();toast('Se acabó el tiempo para ese aviso.','bad');}
+  if(atTill){if($('#overlay').classList.contains('show'))hideOverlay();}
+  else if(h!==room.lastHtml){const pv=$('#pname')?$('#pname').value:null;room.lastHtml=h;showOverlay(h);if(pv!=null&&$('#pname'))$('#pname').value=pv;}
+  if(mg&&mg.remote&&st&&!stale&&!tasks.some(t=>t.id===mg.t.id&&t.who===room.uid)){mg=null;closeMG();if(run&&run.remote)run.away=null;toast('Se acabó el tiempo para ese aviso.','bad');}
+  if(role&&!mine)openGuide(role,true);
   if(mine&&!mg&&!room.done[mine.id])startMG(Object.assign({remote:1},mine,{roles:toArr(mine.roles),bk:toArr(mine.bk)}));
 }
 setInterval(()=>{if(isMember())renderMember();},2000);
@@ -1620,6 +1739,7 @@ function expireTask(t){
   sBad();renderAll();checkRep();
 }
 function tickStaff(dt){
+  if(isHost()&&(run.tillT=(run.tillT||0)+dt)>2){run.tillT=0;syncTills();}
   if(!run.closing){
     run.nextTask-=dt;
     if(run.nextTask<=0){if(run.tasks.filter(t=>!t.who&&t.k!=='tk').length<3)spawnTask();run.nextTask=rnd(14,24)*Math.max(0.6,1-meta.day*0.04);}
@@ -1681,6 +1801,17 @@ function updateTaskBars(){
 function renderTasks(){
   const el=$('#tasks'),al=$('#alerts');if(!el||!al)return;
   if(!run){el.innerHTML='';al.innerHTML='';return;}
+  if(run.remote){
+    const st=room.state||{},me=(room.members||{})[room.uid]||{},open=toArr(st.tasks).filter(t=>!t.who&&(t.k!=='tk'||t.dept===me.role)).length;
+    al.innerHTML='';
+    el.innerHTML=`<div class="zone-title">🧾 TU CAJA ${run.till}</div><div class="supd">${run.queue.length} ${run.queue.length===1?'cliente':'clientes'} en tu cola. Los clientes te los manda la tienda: cóbrales bien y rápido.</div>
+      <div class="zone-title">AVISOS DE SALA</div><div class="supd">${open?open+' sin dueño. Si vas a uno, tu caja se queda parada y tu cola se impacienta.':'No hay avisos sin dueño.'}</div>
+      <button class="btn" data-act="rpanel">📋 Mi puesto y avisos</button><button class="btn" data-act="guide">📘 Cómo se trabaja</button>`;
+    const ab=$('#alertBtn');if(ab){ab.querySelector('b').textContent=open;ab.classList.toggle('hot',open>0);}
+    const aa=$('#aallBtn');if(aa)aa.hidden=true;
+    return;
+  }
+  {const aa=$('#aallBtn');if(aa)aa.hidden=false;}
   /* Desplegable con TODO el personal en tienda, ocupado o no: el jefe manda por necesidad del servicio. */
   const forceSel=t=>{const ps=meta.emp.filter(inStore);if(!ps.length)return '';
     return `<select class="force" data-t="${t.id}" aria-label="Mandar a cualquiera"><option value="">📢 Mandar a…</option>${ps.map(e=>{const d=run.duty[e.id];
@@ -1707,7 +1838,7 @@ function renderTasks(){
   const crew=meta.emp.map(e=>{
     const d=run.duty[e.id];let s;
     if(!d)s='—';else if(d.st==='gone')s='desconectado/a';else if(d.st==='abs')s='falta hoy';else if(d.st==='off')s='libra hoy';else if(run.t<d.at)s='no ha llegado';
-    else if(d.busy)s='en un aviso';else s=e.role==='atc'?'en caja de apoyo':'en su puesto';
+    else if(d.busy)s='en un aviso';else if(run.tills&&e.real&&run.tills[e.real])s='en la Caja '+run.tills[e.real].n+' ('+Object.keys(run.tills[e.real].out).length+' en cola)';else s=e.role==='atc'?'en caja de apoyo':'en su puesto';
     return `<div>${e.face} ${e.real?'🎮':flag(e)} ${e.name} · ${ROLES[e.role].s} · ${s}</div>`;
   }).join('');
   el.innerHTML=`<div class="zone-title">AVISOS EN CURSO</div>${tk||'<div class="supd">Nadie está con ningún aviso.</div>'}
@@ -1817,7 +1948,7 @@ function coverServe(c,e){
   if(c.err||c.bag!==c.wantsBag)e.st.cvErr++;
   finish(c,false);
 }
-function supBtn(){return run&&!run.over?'<button class="btn sup" data-act="supervise">👀 Supervisar la tienda</button>':'';}
+function supBtn(){return run&&!run.over&&!run.remote?'<button class="btn sup" data-act="supervise">👀 Supervisar la tienda</button>':'';}
 
 /* ---------- minijuegos cuando vas tú ---------- */
 const AISLES=[[1,'Lácteos y huevos',1,8],[2,'Panadería y desayuno',9,13],[3,'Despensa',14,23],[4,'Aperitivos y conservas',24,29],[5,'Carne y pescado',30,37],[6,'Fruta y verdura',38,48],[7,'Bebidas',49,55],[8,'Droguería',56,64],[9,'Congelados',65,66]];
@@ -1842,6 +1973,7 @@ function startMG(t){
     mg={kind:'truck',t,list,i:0,ok:0};
   }
   mg.remote=!!t.remote;
+  if(t.remote&&run&&run.remote){run.away={mult:2.2};room.panel=false;hideOverlay();}
   renderMG();
 }
 function renderMG(){
@@ -1903,6 +2035,7 @@ function tkOpts(t){const o=(TKO[t.dept]||TKO.back).map(x=>x.slice());if(t.mis){o
 function endMG(sc){
   const t=mg.t,early=mg.early,remote=mg.remote;mg=null;closeMG();
   if(t.desk){const r=applyMG(t,sc,early);toast(r.msg,r.good?'good':'bad');r.good?sOk():sBad();renderAll();checkRep();return;}
+  if(remote&&run&&run.remote){run.away=null;renderAll();}
   if(remote){room.done[t.id]=1;roomAct({k:'done',t:t.id,sc,early:!!early});toast(sc>=0.6?'Hecho. Se lo cuentas al jefe…':'Regular… Se lo cuentas al jefe.',sc>=0.6?'good':'bad');sc>=0.6?sOk():sBad();room.lastHtml='';renderMember();return;}
   run.tasks=run.tasks.filter(x=>x!==t);
   const r=applyMG(t,sc,early);
@@ -2264,6 +2397,9 @@ function finish(c,noTip){
 
 /* ---------- render ---------- */
 function renderHud(){
+  if(run&&run.remote){const st=room.state||{};$('#hTill').textContent=run.till;$('#hDay').textContent=st.day||1;$('#hMoney').textContent=fmt(st.money||0);$('#hRep').textContent='★ '+(+st.rep||0).toFixed(1);
+    $('#hTk').textContent=st.dep&&st.dep.tk?Object.values(st.dep.tk).reduce((a,b)=>a+(+b||0),0):0;$('#hOut').textContent=(st.dep&&st.dep.out)||0;const c=clockOf(st.t,st.dur);$('#hClock').textContent=c;$('#hBar').style.width=Math.min(1,(st.t||0)/(st.dur||100))*100+'%';return;}
+  $('#hTill').textContent='3';
   $('#hDay').textContent=meta.day;
   $('#hMoney').textContent=fmt(meta.money);
   $('#hTk').textContent=run?run.tickets.length:0;
@@ -2395,6 +2531,7 @@ function camModel(){
     let w={k:'post',r:e.role,i:i-1},b='',x='en su puesto';
     if(run.away&&run.away.cover===e.id){w={k:'till'};b='🧾';x='te está cubriendo la caja';}
     else if(d.busy){const t=run.tasks.find(y=>y.id===d.task);if(t){w=taskSpot(t);b=t.ic;x='con un aviso: '+t.s;}}
+    else if(run.tills&&e.real&&run.tills[e.real]){const tl=run.tills[e.real];w={k:'till',n:tl.n};b='🧾';x='en la Caja '+tl.n+' ('+Object.keys(tl.out).length+' en cola)';}
     else if(d.slack){const p=d.slack.split(' ');b=p[0];x=p.slice(1).join(' ');if(b==='☕')w={k:'brk'};else if(b==='🚬')w={k:'door'};}
     staff.push({id:e.id,f:e.face,n:e.name,u:e.real||'',r:e.role,w,b,x});
   });
@@ -2409,7 +2546,7 @@ function camModel(){
     tasks:run.tasks.filter(t=>!t.who).map(t=>({id:t.id,k:t.k,ic:t.ic,n:t.n||0}))};
 }
 function camPos(w,j){
-  if(w.k==='till')return SPOT.till;
+  if(w.k==='till')return w.n===1?[52,228]:w.n===2?[120,228]:SPOT.till;
   if(w.k==='door')return SPOT.door;
   if(w.k==='dock')return SPOT.dock;
   if(w.k==='brk')return SPOT.brk;
@@ -2550,7 +2687,7 @@ const TABS=[['caja','🧾','Caja'],['alm','📦','Almacén'],['back','💼','Bac
 let tab='caja';
 const REV={5:['Rápidos y simpáticos. Así da gusto.','La cajera, un amor. Volveré.','Todo perfecto, hasta me sobró paciencia.'],4:['Bien, sin más.','Correcto. La cola, regular.'],
   3:['Se equivocaron en algo, pero bueno.','Atención justita.'],2:['Lento y con errores. Mejorad.','Me cobraron mal y nadie se disculpó.'],1:['Me fui sin comprar: una cola eterna.','Pésima atención. No vuelvo.','Ni una caja abierta en condiciones.']};
-function addReview(st,face){if(!run)return;run.reviews=run.reviews||[];run.reviews.unshift({id:++uid,st,f:face||'🙂',t:pick(REV[st]),ans:0});if(run.reviews.length>12)run.reviews.pop();}
+function addReview(st,face){if(!run)return;if(run.remote){run.outRev.push([st,face||'🙂']);return;}run.reviews=run.reviews||[];run.reviews.unshift({id:++uid,st,f:face||'🙂',t:pick(REV[st]),ans:0});if(run.reviews.length>12)run.reviews.pop();}
 const tabBadge=k=>{
   if(k==='caja')return run&&!run.over?run.queue.length:0;
   if(k==='alm')return CAT.filter(x=>(meta.stock[x.id]||0)<=0).length;
@@ -2561,7 +2698,7 @@ const tabBadge=k=>{
 function renderTabs(){
   const el=$('#tabs');if(!el)return;
   if(isMember()){el.innerHTML='';return;}
-  el.innerHTML=TABS.map(([k,ic,n])=>{const b=tabBadge(k);return `<button class="tab ${tab===k?'on':''}" data-act="tab" data-k="${k}">${ic}<span>${n}</span>${b?`<i>${b}</i>`:''}</button>`;}).join('');
+  el.innerHTML=TABS.map(([k,ic,n])=>{const b=tabBadge(k);return `<button class="tab ${tab===k?'on':''}" data-act="tab" data-k="${k}">${ic}<span>${n}</span>${b?`<i>${b}</i>`:''}</button>`;}).join('')+'<button class="tab help" data-act="guide" title="Cómo se trabaja en esta pestaña" aria-label="Cómo se trabaja">📘</button>';
 }
 function setTab(k){
   if(!TABS.some(x=>x[0]===k))return;
@@ -2573,6 +2710,7 @@ function setTab(k){
     else if(caja&&run.away&&run.away.auto)returnTill();
   }
   renderTabs();renderDept(true);
+  openGuide('j_'+k,true);
 }
 /* Un cajero de la casa se pone en la Caja 3 mientras el jefe dirige (primero los de Caja). */
 function pickCashier(){const f=meta.emp.filter(e=>isFree(e)&&!e.real&&!run.duty[e.id].slack);return f.find(x=>x.role==='atc')||f.find(x=>x.pers==='servicial')||f[0]||null;}
@@ -2642,7 +2780,7 @@ function dirHtml(){
   return `<div class="dgrid"><div class="dpanel"><h2>👑 Dirección</h2>
     <div class="sum"><span>Turno</span><b>${meta.day}</b><span>Bote</span><b>${fmt(meta.money)}</b><span>Reputación</span><b>★ ${meta.rep.toFixed(1)}</b><span>Clientes atendidos</span><b>${r.served||0}</b><span>Se fueron enfadados</span><b>${r.angry||0}</b><span>Ventas</span><b>${fmt(r.sales||0)}</b></div>
     <div class="dcards">
-      ${card('caja','🧾','Caja',live?(cv?cv.face+' '+cv.name+' en la Caja 3':run.away?'Caja 3 sin nadie':'Tú en la Caja 3')+' · cola '+run.queue.length:'Cerrada')}
+      ${card('caja','🧾','Cajas',live?(cv?cv.face+' '+cv.name+' en la Caja 3':run.away?'Caja 3 sin nadie':'Tú en la Caja 3')+' · cola '+run.queue.length+Object.values(run.tills||{}).map(t=>{const e=empById(t.eid);return '<br>Caja '+t.n+': 🎮 '+(e?e.name:'?')+' · cola '+Object.keys(t.out).length;}).join(''):'Cerradas')}
       ${card('alm','📦','Almacén',present('alm')+' · '+tabBadge('alm')+' agotados')}
       ${card('back','💼','Backoffice',present('back')+' · '+(live?run.tickets.filter(t=>t.dept==='back').length:0)+' en bandeja')}
       ${card('rrpp','📣','RR.PP.',present('rrpp')+' · '+tabBadge('rrpp')+' pendientes')}
@@ -2677,18 +2815,106 @@ function deskRepo(pid){
 }
 function answerReview(id){const r=run&&run.reviews&&run.reviews.find(x=>x.id===id);if(!r||r.ans)return;r.ans=1;meta.rep=clamp(meta.rep+0.04,0,5);sOk();toast('Reseña respondida con mucho tacto.','good');renderAll();}
 
+/* ---------- tutoriales: «Cómo se trabaja» por puesto y bienvenida la primera vez ----------
+   GUIDE[k] = {t: título, steps: [[icono, texto]]}. Claves: puestos de empleado real (atc, alm, back, rrpp, rrhh)
+   y pestañas del jefe (j_caja, j_alm, j_back, j_rrpp, j_rrhh, j_dir). La primera vez que alguien entra en un
+   puesto o pestaña se abre sola (recordado en localStorage, con try/catch); luego, con el botón 📘.
+   Mientras está abierta, el turno se para en ese navegador. */
+const GUIDE={
+ atc:{t:'🧾 Caja',steps:[
+  ['🎯','<b>Tu misión:</b> cobrar rápido y sin fallos a los clientes que te manda la tienda a tu caja.'],
+  ['🛒','Toca cada producto de la cinta para pasarlo por el escáner. Los de <b>código dañado</b> (borde rojo) piden 3 toques.'],
+  ['🪪','Si lleva <b>alcohol (18+)</b>, mira la fecha de nacimiento del DNI. Vender a un menor = 50 € de multa y reputación por los suelos.'],
+  ['🛍️','<b>Bolsa:</b> si la pide, añádela. Si no la pide, ni se te ocurra cobrarla.'],
+  ['💶','<b>Tarjeta:</b> cobra y espera. <b>Efectivo:</b> pon en la bandeja el cambio exacto y dale a «Dar cambio». De más, lo pierde la tienda; de menos, no te lo aceptan.'],
+  ['📨','<b>Reclamaciones:</b> las dudas, las resuelves tú. Dinero, a Backoffice. Trato y redes, a RR.PP. Agotados, a Almacén. Si la mandas mal, sale mal.'],
+  ['🚶','Puedes coger <b>avisos de sala</b> desde «Mi puesto y avisos», pero mientras estás en el pasillo tu caja se para y tu cola se impacienta.'],
+  ['⭐','<b>Te valoran por</b> clientes bien atendidos, errores y propinas. Si se te va alguien harto de esperar, se nota.']]},
+ alm:{t:'📦 Almacén',steps:[
+  ['🎯','<b>Tu misión:</b> que no falte nada en las estanterías y que la tienda esté limpia.'],
+  ['📦','<b>Reponer:</b> pulsa «Me encargo» y coloca las 6 unidades del producto en el lineal. Ojo con las cajas de otros pasillos: cada fallo resta.'],
+  ['🚚','<b>Camión:</b> manda cada caja a su zona (frío, fruta, droguería o seco).'],
+  ['🧴','<b>Derrame:</b> primero el cartel de suelo mojado y luego friega los charcos. Sin cartel, alguien se cae y llega una reclamación.'],
+  ['📨','Las <b>reclamaciones por producto agotado</b> te llegan a ti: elige bien qué hacer.'],
+  ['⏱️','Tienes <b>60 s</b> por aviso. En la pestaña de tu departamento ves lo que menos queda.'],
+  ['⭐','<b>Te valoran por</b> los avisos bien hechos y por no dejar que caduquen.']]},
+ back:{t:'💼 Backoffice',steps:[
+  ['🎯','<b>Tu misión:</b> el dinero. Reembolsos, cobros mal hechos y que no se escape ni un euro.'],
+  ['📨','Te llegan las <b>reclamaciones de dinero</b>: «Me encargo» y elige la respuesta correcta. Solo hay una oportunidad.'],
+  ['↩️','Si una reclamación <b>no es de tu departamento</b>, devuélvela: también cuenta como bien hecha.'],
+  ['🙋','Cuando estés libre, echa una mano con los <b>avisos de sala</b>.'],
+  ['📊','En la pestaña de tu departamento ves el bote, las ventas y lo que hay en la bandeja.'],
+  ['⭐','<b>Te valoran por</b> las reclamaciones bien resueltas. Una mal resuelta cuesta el doble.']]},
+ rrpp:{t:'📣 Relaciones Públicas',steps:[
+  ['🎯','<b>Tu misión:</b> la reputación de la tienda. Quejas por trato, amenazas en redes y clientes perdidos.'],
+  ['📨','Te llegan las <b>quejas por trato y redes</b>: elige bien la respuesta. Una mala respuesta en redes hunde la reputación.'],
+  ['🧭','<b>Cliente o turista perdido:</b> mándale al pasillo correcto. El turista pregunta en su idioma: fíjate en el emoji del producto.'],
+  ['⭐','En la pestaña de tu departamento ves la reputación y las últimas reseñas.'],
+  ['🏆','<b>Te valoran por</b> las quejas bien resueltas y por los clientes que encuentran lo que buscan.']]},
+ rrhh:{t:'🗂️ Recursos Humanos',steps:[
+  ['🎯','<b>Tu misión:</b> la gente. Contratar a quien vale y cuidar el ánimo de la plantilla.'],
+  ['📝','En la pestaña de tu departamento salen las <b>solicitudes de empleo</b> de personas reales: «Contratar» o «No».'],
+  ['⚖️','No metas a nadie si su <b>puesto está completo</b>: se te dirá. Los nuevos entran en periodo de prueba.'],
+  ['😊','El día que trabajas, toda la plantilla está un poco más contenta.'],
+  ['🙋','Cuando estés libre, echa una mano con los <b>avisos de sala</b>.']]},
+ j_caja:{t:'🧾 Caja · jefe',steps:[
+  ['🎯','Aquí cobras tú en la <b>Caja 3</b>. Si cambias de pestaña, un cajero de la casa se pone en tu caja y tú diriges.'],
+  ['🛒','Toca cada producto para escanearlo, revisa el DNI del alcohol, la bolsa, y cobra con tarjeta o con el cambio exacto.'],
+  ['🔔','A la derecha (en el móvil, en la 🔔) salen los <b>avisos</b>: asigna a alguien, mándale con «📢 Mandar a…» aunque esté ocupado, ve tú con «Voy yo» o usa <b>⚡ Asignar todo</b>.'],
+  ['🧾','Si hay cajeros reales, abren la <b>Caja 1 y la Caja 2</b> y la tienda les reparte la cola.']]},
+ j_alm:{t:'📦 Almacén · jefe',steps:[
+  ['📋','Aquí ves las <b>existencias</b> de todo: en rojo lo agotado. «Mandar reponer» crea un aviso para que alguien lo ponga en la estantería.'],
+  ['🚚','Haz los <b>pedidos a distribuidores</b>: el barato puede llegar incompleto, el caro siempre llega y el chollo tarda dos turnos.'],
+  ['👷','Sin gente en Almacén, la mercancía se queda en el muelle y no llega a la estantería.']]},
+ j_back:{t:'💼 Backoffice · jefe',steps:[
+  ['💶','Las <b>cuentas</b> del turno: ventas, propinas, multas y nómina. Si el bote baja de −300 €, quiebra.'],
+  ['📨','La <b>bandeja de reclamaciones de dinero</b>: «Resolver yo» si quieres hacerlo tú. Las que nadie resuelva se reparten al cerrar.']]},
+ j_rrpp:{t:'📣 RR.PP. · jefe',steps:[
+  ['⭐','La <b>reputación</b> y las <b>reseñas</b> de los clientes. Responder a una mala suaviza el golpe.'],
+  ['📨','La bandeja de <b>quejas por trato y redes</b>: «Resolver yo» o deja que lo haga tu gente.']]},
+ j_rrhh:{t:'🗂️ RR.HH. · jefe',steps:[
+  ['📝','Las <b>solicitudes de empleo</b> de personas reales: contrata o rechaza. Si tienes a alguien real en RR.HH., también puede hacerlo.'],
+  ['👥','La plantilla con sus contratos, sueldos, avisos y ánimo. Cada 3 turnos hay <b>reunión de personal</b>: felicitar, dar un toque, subir el sueldo o despedir (con motivo, o hay denuncia).']]},
+ j_dir:{t:'👑 Dirección',steps:[
+  ['📊','El <b>resumen</b> de la tienda y una tarjeta por departamento: toca una para ir.'],
+  ['📹','Las <b>cámaras</b>: toca una para ampliarla y a una persona para ver qué hace (o si se escaquea).'],
+  ['⭐','Las <b>mejoras</b> de la tienda: escáner, ventilador y termo de café.']]}
+};
+let guide=null;
+const guideSeen=k=>{try{return localStorage.getItem('vitchmarket.guia.'+k)==='1';}catch(e){return true;}};
+const guideMark=k=>{try{localStorage.setItem('vitchmarket.guia.'+k,'1');}catch(e){}};
+const guideKey=()=>isMember()?((room.members[room.uid]||{}).role||null):'j_'+tab;
+function openGuide(k,auto){
+  if(!k||!GUIDE[k])return;
+  if(auto&&(guideSeen(k)||mg||guide))return;
+  guide={k,pg:0};guideMark(k);renderGuide();
+}
+function renderGuide(){
+  const el=$('#guide');if(!el)return;
+  if(!guide){el.classList.remove('show');el.innerHTML='';return;}
+  const G=GUIDE[guide.k],per=innerHeight<700?2:innerHeight<860?3:4,n=Math.ceil(G.steps.length/per),pgI=clamp(guide.pg,0,n-1);
+  const steps=G.steps.slice(pgI*per,pgI*per+per).map(([ic,t])=>`<li><span>${ic}</span><div>${t}</div></li>`).join('');
+  el.innerHTML=`<div class="card mgc guidec"><h3>📘 Cómo se trabaja · ${G.t}</h3><ol class="gsteps">${steps}</ol>
+    <div class="row"><button class="btn" data-act="gpg" data-d="-1" ${pgI?'':'disabled'}>◀</button><span class="gpg">${pgI+1} / ${n}</span>
+    ${pgI<n-1?'<button class="btn go" data-act="gpg" data-d="1">Siguiente ▶</button>':'<button class="btn go" data-act="gclose">¡A currar!</button>'}</div>
+    <div class="supd">El turno está en pausa mientras lees. Lo puedes volver a ver con el botón 📘.</div></div>`;
+  el.classList.add('show');
+}
+
 /* ---------- bucle ---------- */
 function tick(ts){
   const dt=Math.min(0.1,(ts-last)/1000||0);last=ts;
-  if(run&&!run.over){
+  if(run&&!run.over&&!guide){
     run.t+=dt;
     if(!run.closing&&run.t>=run.dur){run.closing=true;renderQueue();}
     if(!run.closing){
       run.next-=dt;
       if(run.next<=0){
-        if(run.queue.length<5){
+        if(run.queue.length<5||(run.tills&&Object.values(run.tills).some(t=>Object.keys(t.out).length<TILL_MAX))){
           const nc=newCustomer();
-          if(nc.cut&&run.queue.length>=2){
+          if(sendToTill(nc)){}
+          else if(run.queue.length>=5){nc.items.forEach(ret);}
+          else if(nc.cut&&run.queue.length>=2){
             run.queue.splice(1,0,nc);
             run.queue.slice(2).forEach(q=>{q.p=Math.max(1,q.p-q.max*0.12);});
             toast('Alguien se ha colado. La cola murmura…','bad');
@@ -2709,8 +2935,12 @@ function tick(ts){
       if(c.talk<=0){c.talk=rnd(7,13);if(c.p>0)say(c,i);}
       if(c.p<=0){leaveAngry(i);if(run.over)break;}
     }
+    if(run&&run.remote){run.syncT+=dt;if(run.syncT>1){run.syncT=0;tillSync();}}
+    else{
     if(run&&!run.over)tickStaff(dt);
-    if(run&&!run.over&&run.closing&&run.queue.length===0&&(!run.away||run.away.auto)&&!mg)endDay();
+    if(run&&!run.over&&run.closing&&run.queue.length===0&&tillsBusy()&&(run.waitT=(run.waitT||0)+dt)>45)Object.keys(run.tills).forEach(u=>closeTill(u,'se acabó el turno'));
+    if(run&&!run.over&&run.closing&&run.queue.length===0&&!tillsBusy()&&(!run.away||run.away.auto)&&!mg)endDay();
+    }
     updatePatience();
     renderChat();
   }
@@ -2749,6 +2979,11 @@ function onClick(e){
   else if(a==='pg'){pg+=+b.dataset.d;rerenderScreen();}
   else if(a==='side')$('#sidebar').classList.toggle('open');
   else if(a==='aall')assignAll();
+  else if(a==='guide')openGuide(guideKey(),false);
+  else if(a==='gpg'&&guide){guide.pg+=+b.dataset.d;renderGuide();}
+  else if(a==='gclose'){guide=null;renderGuide();}
+  else if(a==='rpanel'&&isMember()){room.panel=true;room.lastHtml='';renderMember();}
+  else if(a==='rtill'&&isMember()){room.panel=false;hideOverlay();renderAll();}
   else if(a==='dtk')deskTicket(+b.dataset.id);
   else if(a==='drepo')deskRepo(+b.dataset.id);
   else if(a==='drev')answerReview(+b.dataset.id);

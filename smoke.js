@@ -11,6 +11,7 @@ let stats={days:0,complaints:0,cash:0,ids:0,meet:0,meetings:0,assign:0};
 const any=(root,s)=>{const a=root.querySelectorAll(s);return a.length?a[Math.floor(Math.random()*a.length)]:null;};
 setInterval(()=>{
   try{
+  {const g=d.querySelector('#guide.show [data-act=gclose],#guide.show [data-act=gpg][data-d="1"]');if(g){(typeof stats!=='undefined'?stats:st).guide=((typeof stats!=='undefined'?stats:st).guide||0)+1;g.click();return;}}
   const ov=d.querySelector('#overlay.show');
   if(ov){
     const b=ov.querySelector('[data-act=start],[data-act=next],[data-act=restart],[data-act=meeting],[data-act=endmeet]');
