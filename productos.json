@@ -1,0 +1,472 @@
+{
+ "fuente": "Aproximado de memoria (no verificado). Ejecuta fetch_mercadona.py para datos reales.",
+ "verificado": false,
+ "productos": [
+  {
+   "id": 1,
+   "n": "Leche entera",
+   "f": "Hacendado 1 L",
+   "p": 95,
+   "e": "🥛"
+  },
+  {
+   "id": 2,
+   "n": "Leche semidesnatada",
+   "f": "Hacendado 1 L",
+   "p": 92,
+   "e": "🥛"
+  },
+  {
+   "id": 3,
+   "n": "Yogur natural",
+   "f": "Pack 4 · Hacendado",
+   "p": 89,
+   "e": "🥣"
+  },
+  {
+   "id": 4,
+   "n": "Yogur griego",
+   "f": "Pack 2 · Hacendado",
+   "p": 119,
+   "e": "🥣"
+  },
+  {
+   "id": 5,
+   "n": "Queso rallado",
+   "f": "Mozzarella 200 g",
+   "p": 185,
+   "e": "🧀"
+  },
+  {
+   "id": 6,
+   "n": "Queso en lonchas",
+   "f": "Tierno 200 g",
+   "p": 160,
+   "e": "🧀"
+  },
+  {
+   "id": 7,
+   "n": "Mantequilla",
+   "f": "250 g",
+   "p": 235,
+   "e": "🧈"
+  },
+  {
+   "id": 8,
+   "n": "Huevos",
+   "f": "Docena M",
+   "p": 235,
+   "e": "🥚"
+  },
+  {
+   "id": 9,
+   "n": "Pan de molde",
+   "f": "Blanco 460 g",
+   "p": 150,
+   "e": "🍞"
+  },
+  {
+   "id": 10,
+   "n": "Barra de pan",
+   "f": "Cocida",
+   "p": 40,
+   "e": "🥖"
+  },
+  {
+   "id": 11,
+   "n": "Croissants",
+   "f": "Pack 6",
+   "p": 150,
+   "e": "🥐"
+  },
+  {
+   "id": 12,
+   "n": "Galletas María",
+   "f": "800 g",
+   "p": 190,
+   "e": "🍪"
+  },
+  {
+   "id": 13,
+   "n": "Cereales corn flakes",
+   "f": "500 g",
+   "p": 185,
+   "e": "🌽"
+  },
+  {
+   "id": 14,
+   "n": "Espaguetis",
+   "f": "500 g",
+   "p": 89,
+   "e": "🍝"
+  },
+  {
+   "id": 15,
+   "n": "Arroz largo",
+   "f": "1 kg",
+   "p": 135,
+   "e": "🍚"
+  },
+  {
+   "id": 16,
+   "n": "Tomate frito",
+   "f": "400 g",
+   "p": 100,
+   "e": "🍅"
+  },
+  {
+   "id": 17,
+   "n": "Aceite de oliva virgen extra",
+   "f": "1 L",
+   "p": 895,
+   "e": "🫒"
+  },
+  {
+   "id": 18,
+   "n": "Aceite de girasol",
+   "f": "1 L",
+   "p": 195,
+   "e": "🌻"
+  },
+  {
+   "id": 19,
+   "n": "Azúcar",
+   "f": "1 kg",
+   "p": 115,
+   "e": "🍬"
+  },
+  {
+   "id": 20,
+   "n": "Sal fina",
+   "f": "1 kg",
+   "p": 30,
+   "e": "🧂"
+  },
+  {
+   "id": 21,
+   "n": "Harina de trigo",
+   "f": "1 kg",
+   "p": 89,
+   "e": "🌾"
+  },
+  {
+   "id": 22,
+   "n": "Café molido mezcla",
+   "f": "250 g",
+   "p": 230,
+   "e": "☕"
+  },
+  {
+   "id": 23,
+   "n": "Chocolate negro",
+   "f": "Tableta 100 g",
+   "p": 135,
+   "e": "🍫"
+  },
+  {
+   "id": 24,
+   "n": "Patatas fritas lisas",
+   "f": "160 g",
+   "p": 140,
+   "e": "🍟"
+  },
+  {
+   "id": 25,
+   "n": "Aceitunas rellenas",
+   "f": "Lata 300 g",
+   "p": 95,
+   "e": "🫒"
+  },
+  {
+   "id": 26,
+   "n": "Atún claro",
+   "f": "Pack 3 latas",
+   "p": 295,
+   "e": "🐟"
+  },
+  {
+   "id": 27,
+   "n": "Garbanzos cocidos",
+   "f": "Bote 400 g",
+   "p": 85,
+   "e": "🫘"
+  },
+  {
+   "id": 28,
+   "n": "Lentejas cocidas",
+   "f": "Bote 400 g",
+   "p": 85,
+   "e": "🫘"
+  },
+  {
+   "id": 29,
+   "n": "Gazpacho",
+   "f": "1 L",
+   "p": 195,
+   "e": "🍅"
+  },
+  {
+   "id": 30,
+   "n": "Pechuga de pollo",
+   "f": "Bandeja",
+   "p": 550,
+   "e": "🍗"
+  },
+  {
+   "id": 31,
+   "n": "Muslos de pollo",
+   "f": "Bandeja",
+   "p": 390,
+   "e": "🍗"
+  },
+  {
+   "id": 32,
+   "n": "Filetes de merluza",
+   "f": "Congelados",
+   "p": 650,
+   "e": "🐟"
+  },
+  {
+   "id": 33,
+   "n": "Salmón fresco",
+   "f": "Lomos",
+   "p": 850,
+   "e": "🐟"
+  },
+  {
+   "id": 34,
+   "n": "Jamón cocido",
+   "f": "Lonchas 200 g",
+   "p": 199,
+   "e": "🥓"
+  },
+  {
+   "id": 35,
+   "n": "Chorizo",
+   "f": "Ristra",
+   "p": 220,
+   "e": "🌭"
+  },
+  {
+   "id": 36,
+   "n": "Salchichas",
+   "f": "Frankfurt",
+   "p": 155,
+   "e": "🌭"
+  },
+  {
+   "id": 37,
+   "n": "Pizza barbacoa",
+   "f": "Fresca",
+   "p": 320,
+   "e": "🍕"
+  },
+  {
+   "id": 38,
+   "n": "Plátanos",
+   "f": "1 kg",
+   "p": 210,
+   "e": "🍌"
+  },
+  {
+   "id": 39,
+   "n": "Manzanas golden",
+   "f": "1 kg",
+   "p": 225,
+   "e": "🍎"
+  },
+  {
+   "id": 40,
+   "n": "Naranjas",
+   "f": "Malla 3 kg",
+   "p": 360,
+   "e": "🍊"
+  },
+  {
+   "id": 41,
+   "n": "Tomates ramo",
+   "f": "1 kg",
+   "p": 220,
+   "e": "🍅"
+  },
+  {
+   "id": 42,
+   "n": "Lechuga iceberg",
+   "f": "1 ud",
+   "p": 115,
+   "e": "🥬"
+  },
+  {
+   "id": 43,
+   "n": "Cebollas",
+   "f": "Malla 1 kg",
+   "p": 150,
+   "e": "🧅"
+  },
+  {
+   "id": 44,
+   "n": "Zanahorias",
+   "f": "Bolsa 1 kg",
+   "p": 120,
+   "e": "🥕"
+  },
+  {
+   "id": 45,
+   "n": "Aguacates",
+   "f": "2 uds",
+   "p": 260,
+   "e": "🥑"
+  },
+  {
+   "id": 46,
+   "n": "Limones",
+   "f": "Malla",
+   "p": 180,
+   "e": "🍋"
+  },
+  {
+   "id": 47,
+   "n": "Fresas",
+   "f": "Bandeja",
+   "p": 250,
+   "e": "🍓"
+  },
+  {
+   "id": 48,
+   "n": "Patatas",
+   "f": "Bolsa 3 kg",
+   "p": 340,
+   "e": "🥔"
+  },
+  {
+   "id": 49,
+   "n": "Agua mineral",
+   "f": "Pack 6 x 1,5 L",
+   "p": 210,
+   "e": "💧"
+  },
+  {
+   "id": 50,
+   "n": "Cola",
+   "f": "2 L",
+   "p": 125,
+   "e": "🥤"
+  },
+  {
+   "id": 51,
+   "n": "Zumo de naranja",
+   "f": "1 L",
+   "p": 145,
+   "e": "🧃"
+  },
+  {
+   "id": 52,
+   "n": "Cerveza",
+   "f": "Pack 6 latas",
+   "p": 330,
+   "e": "🍺",
+   "age": true
+  },
+  {
+   "id": 53,
+   "n": "Vino tinto Rioja",
+   "f": "75 cl",
+   "p": 360,
+   "e": "🍷",
+   "age": true
+  },
+  {
+   "id": 54,
+   "n": "Cava brut",
+   "f": "75 cl",
+   "p": 420,
+   "e": "🥂",
+   "age": true
+  },
+  {
+   "id": 55,
+   "n": "Whisky",
+   "f": "70 cl",
+   "p": 1200,
+   "e": "🥃",
+   "age": true
+  },
+  {
+   "id": 56,
+   "n": "Papel higiénico",
+   "f": "12 rollos",
+   "p": 550,
+   "e": "🧻"
+  },
+  {
+   "id": 57,
+   "n": "Papel de cocina",
+   "f": "2 rollos",
+   "p": 195,
+   "e": "🧻"
+  },
+  {
+   "id": 58,
+   "n": "Gel de ducha",
+   "f": "750 ml",
+   "p": 160,
+   "e": "🧴"
+  },
+  {
+   "id": 59,
+   "n": "Champú",
+   "f": "400 ml",
+   "p": 250,
+   "e": "🧴"
+  },
+  {
+   "id": 60,
+   "n": "Pasta de dientes",
+   "f": "75 ml",
+   "p": 130,
+   "e": "🪥"
+  },
+  {
+   "id": 61,
+   "n": "Detergente líquido",
+   "f": "Botella",
+   "p": 650,
+   "e": "🧺"
+  },
+  {
+   "id": 62,
+   "n": "Lavavajillas",
+   "f": "1 L",
+   "p": 160,
+   "e": "🧽"
+  },
+  {
+   "id": 63,
+   "n": "Bolsas de basura",
+   "f": "Rollo 20",
+   "p": 120,
+   "e": "🗑️"
+  },
+  {
+   "id": 64,
+   "n": "Suavizante",
+   "f": "Botella",
+   "p": 250,
+   "e": "🧴"
+  },
+  {
+   "id": 65,
+   "n": "Helado de vainilla",
+   "f": "Tarrina 1 L",
+   "p": 250,
+   "e": "🍦"
+  },
+  {
+   "id": 66,
+   "n": "Brócoli congelado",
+   "f": "Bolsa",
+   "p": 170,
+   "e": "🥦"
+  }
+ ]
+}

@@ -1,0 +1,73 @@
+# VitchMarket
+
+El juego y el súper se llaman **VitchMarket** (antes "Caja 3" / "Super Florida"; no volver a usar esos nombres). "Caja 3" solo queda como el número de caja en el HUD.
+
+Juego de simulación de supermercado. El jugador es cajero/a y, entre turnos, jefe de la tienda: departamentos, stock y distribuidores. Un solo archivo HTML (HTML + CSS + JS vanilla, sin build ni dependencias) más un catálogo de productos aparte.
+
+## Cómo trabajar con Mor (usuario)
+- Responder en español, corto y directo. Tono sarcástico, mandón, con humor ácido. Llamarle "mor" (nunca "Luis"; si usa nombre, "Vili").
+- Cambios quirúrgicos sobre el código existente, no reescrituras completas.
+- En guías paso a paso (terminal, instalación): un solo paso por mensaje y esperar su confirmación.
+- No presentar como hecho lo que no se ha verificado. Cerrar con "No verificado: …" si aplica.
+- Mor pidió dejar la API de Mercadona para más adelante.
+
+## Archivos
+| Archivo | Qué es |
+|---|---|
+| `index.html` | El juego entero (CSS + JS en el mismo archivo). |
+| `productos.js` | Catálogo: `window.CATALOGO=[{id,n,f,p,e,age?}]`. `p` en céntimos, `e` emoji, `f` formato, `age:true` = +18. Se carga con `<script src="productos.js">` ANTES del script principal. |
+| `productos.json` | Mismo catálogo con metadatos (`fuente`, `verificado:false`). |
+| `fetch_mercadona.py` | (Aparcado) descarga el catálogo real de Mercadona y regenera `productos.js/json`. Sin probar: la API daba 403 desde el sandbox. |
+| `catalogo_base.py` | Genera el catálogo base de 66 productos con precios APROXIMADOS de memoria (no verificados). |
+| `smoke.js` | Bot jsdom que juega varios turnos (reclamaciones, DNI, efectivo, contratación, pedidos) y reporta errores JS. |
+
+## Ejecutar
+1. En la carpeta del juego: `python3 -m http.server 8000` y abrir http://localhost:8000
+2. Test: `npm i jsdom && node smoke.js` (debe imprimir `errors: []`). El bot acorta el turno, pone un suelo de reputación para no ser despedido y usa avisos y reunión.
+3. En la app de Claude (navegador integrado) el servidor está en `.claude/launch.json` (Node; `python3 -m http.server` no tiene permiso para leer Documents desde la app). Con el panel del navegador oculto el juego se pausa (rAF).
+
+Repositorio: https://github.com/motkvil/VitchMarket (rama `main`).
+
+Versión publicada como artifact de claude.ai (privado): https://claude.ai/artifact/CxsCuAZCHxJe5uLAQZaKaw (slug `60e15f65-59aa-4f88-a7af-329a34b1ce80`). Restricciones del artifact: sin `fetch` a otros hosts, sin alert/confirm, scripts solo de cdnjs/jsdelivr/unpkg o archivos propios por ruta relativa, localStorage solo como comodidad (try/catch).
+
+## Mecánicas implementadas
+- **Turno**: 100 s reales = 9:00–21:00; luego se cierra al vaciarse la cola. Cola máx. 5.
+- **Escaneo**: tocar cada producto. Código dañado (prob. 0.08 + 0.03·día) pide 3 toques (2 con escáner láser). Productos +18 (desde el día 2): DNI con fecha de nacimiento vs hoy; vender/negar. 45% de los compradores de alcohol son menores (multa 50 € y −1 rep).
+- **Bolsa**: 30% la pide; cobrarla sin pedirla o no darla = error (−0.3 rep).
+- **Pago**: tarjeta (55%, 8% rechazo → efectivo) o efectivo (12 denominaciones, se muestra "Cambio a dar"). Pasarse = pérdida; faltar = no se acepta.
+- **Paciencia**: `max = clamp(24 + items·3.2 − día·1.2, 20, 60)` s; frente 1×, cola 0.55×; ATC staff −8% c/u, ventilador −20%. A 0 se va enfadado (−0.5/−0.3 rep). Frases en `#chat`.
+- **Ingresos**: el total cobrado entra al bote (`finish`). Propinas `frac·2.50 €` si no hubo errores (×1.5 termo).
+- **Reputación** 0–5; a 0 te despiden. **Quiebra** si el bote baja de −300 €.
+- **Reclamaciones** (`COMPL_P = 0.14`): resolver tú (solo dudas) / Backoffice (dinero y cobros) / RR.PP. (trato y redes) / Almacén (producto agotado) / rechazar. Derivar mal = ticket mal enrutado (éxito 30%). Tickets automáticos: cliente que se va enfadado (35% → RR.PP.), error en compra (40% → Backoffice). Más reclamaciones de "agotado" si hay productos a 0.
+- **Personal** (`meta.emp[]`, sustituye al antiguo `meta.staff`, que solo se usa para migrar partidas viejas en `ensureMeta`). Cada trabajador: `{id,name,face,role,rap,trato,punt,act,moral,wage,days,warn,trial,focus,off,st}`. Rasgos ocultos 0–1 (rapidez, trato, puntualidad, actitud); moral 0–100 (se muestra solo como emoji). `st` = estadísticas desde la última reunión. Inicio: 1 Backoffice, 1 RR.PP., 1 Almacén, 0 Caja.
+  - **Puestos y obligaciones** (`ROLES`): Caja (atc, máx. 3: caja de apoyo −8% de impaciencia mientras esté libre, reponer si la llaman, derrames, ayuda en sala), Almacén (máx. 4: colocar mercancía `30+40·rap` uds/día, camiones, lineales, derrames, reclamaciones de agotado), Backoffice (máx. 4: reembolsos, 2 tickets/turno o 3 si rap>0.7), RR.PP. (máx. 4: trato y redes, ayuda en sala).
+  - **Rendimiento** `perf(e,match)` = 0.5 + 0.35·media(rap,act) + (moral−50)/300 + 0.08 si tiene `focus` + antigüedad − 0.15 si la tarea no es de su puesto; acotado 0.15–0.97.
+  - **Al empezar turno** (`prepShift`): moral<15 → puede dimitir; faltas (más si moral<30 y poca puntualidad); retrasos (llega a los 8–30 s); incidentes programados en `run.ev`: queja de un cliente por su trato (−0.2 rep y ticket a RR.PP.) o felicitación (+0.1 rep, +moral).
+  - **Tickets** (`processTickets`): se reparten entre quienes trabajaron ese día; éxito = `perf`. Backoffice: éxito = reembolso, fallo = el doble. RR.PP.: éxito 5 €, fallo −0.5 rep. Almacén: fallo −0.3 rep. Sin capacidad: −0.15 rep y −4 de moral al departamento.
+  - **Nómina** = suma de `wage` (15 €/día por defecto), salvo quien faltó sin avisar.
+- **Avisos durante el turno** (`TASKS`, panel `#tasks` bajo la caja y botón flotante `#taskfab`): lineal vacío, derrame, cliente pide ayuda, megafonía «Caja 3, al pasillo N» y camión (solo si hay mercancía en almacén). Aparecen cada 14–24 s (más a menudo con los días), máx. 3 abiertos, caducan a los 30 s (−rep; un derrame sin limpiar puede acabar en caída y ticket a Backoffice). Se asignan a un trabajador libre (si no es de su puesto tarda ×1.4 y tiene −0.15 de éxito) o «Voy yo»: la caja se cierra (`run.away`), no se puede cobrar y la cola se impacienta (frente ×1.8). Reponer/megafonía mueve hasta 8 uds del almacén a la estantería; camión, hasta 20.
+- **Reunión de personal** al cerrar los turnos 1, 4, 7… (`meta.day%3===1`; el botón del cierre pasa a ser «Reunión de personal»). Ficha de cada persona con sus números y valoración (`score`). Una decisión por persona: felicitar (+12 moral), toque (+1 aviso, −12 moral, `focus` 3 turnos; con moral<20 puede irse), +3 €/día (+20 moral) o despedir (gratis en prueba; si no, 20 € + 2 €/turno trabajado; sin avisos previos, 50% de denuncia de 30–80 € y −0.3 rep; el resto pierde 8 de moral, o gana 3 si el despedido era malo). Peticiones: aumento, librar un turno, horas extra, dos que no se hablan. Candidatos: 3 con CV y 2 preguntas de entrevista cuyas respuestas reflejan rasgos reales, pero mienten un 25% de las veces (siempre a mejor). Contratar 40 € y entran en prueba 3 turnos.
+- **Stock** (`meta.stock[id]` en estantería, `meta.back[id]` en almacén): inicio 4 uds/producto. Al crear un cliente se reservan sus productos (`meta.stock[id]--`); los no vendidos se devuelven (`ret()`). Demanda ponderada (`id%3===0` pesa ×3). Si no hay nada disponible, el cliente llega con reclamación "agotado".
+- **Distribuidores** (`SUPS`, pedido en la pantalla de cierre, lotes de 6 uds, 14 productos con menos existencias): Hacendado Directo (coste 62% del PVP, llega en 1 turno, fiabilidad 93%), Reparto Exprés (82%, 1 turno, 99.5%), Chollo Import (50%, 2 turnos, 70%). Entrega incompleta = 50% de la cantidad. Se paga al pedir.
+- **Almacén**: las entregas llegan a `meta.back`; al empezar el turno se colocan en estantería hasta `staff.alm × 50` uds/día (primero lo que menos hay). El resto espera.
+- **UI**: HUD rojo + cola de clientes `position: sticky`. El cierre de turno es un overlay largo con resumen, departamentos, pedido y mejoras (escáner 40 €, ventilador 50 €, termo 60 €).
+
+## Arquitectura del JS (un IIFE en `index.html`)
+Estado: `meta` (persiste entre días; `defMeta()`, `ensureMeta()`), `run` (del turno). Dinero SIEMPRE en céntimos enteros (`fmt()`).
+- Clientes: `pickProduct`, `newCustomer`, `complaintCustomer`, `say`/`renderChat`, tabla `COMPL`.
+- Turno: `startDay` (`prepShift` + recibe entregas), `tick` (rAF, llama a `tickStaff`), `endDay`, `processTickets`, `showShop`, `placeOrder`, `receiveDeliveries`, `showStart`, `checkRep`.
+- Personal: `newEmp`, `staffOf`, `working`/`inStore`/`isFree`, `perf`, `score`, `prepShift`, `spawnTask`/`assignTask`/`finishTask`/`expireTask`, `renderTasks`, reunión (`startMeeting`, `showMeeting`, `empAct`, `applyReq`, `hireCand`, `endMeeting`).
+- Acciones: `scanItem`, `idDecision`, `toggleBag`, `goPay`, `payCard`, `addTray`, `deliver`, `finish`, `route`, `staffChange`, `addTicket`.
+- Render: `renderAll/Hud/Queue/Belt/Register` (reconstruyen DOM en eventos; la paciencia se actualiza por frame). Eventos: un `click` delegado con `data-act`. `showOverlay` conserva el scroll.
+- Hot reload del artifact: `window.claude.hot.snapshot/ready` guarda `meta`.
+
+## Pendiente
+1. Equilibrar economía y dificultad jugando de verdad (precios de compra, ventas/día, nómina, stock inicial).
+2. Catálogo real de Mercadona (aparcado por Mor).
+3. Posibles departamentos/mecánicas extra: mermas y caducidad, ladrones, cupones, pausa, panel de estantería visible durante el turno, guardado en localStorage (try/catch), más tipos de reclamación.
+4. Opcional: ocultar "Cambio a dar" a partir de cierto día.
+5. Probar en móvil y revisar el layout sticky.
+
+## Verificación hecha y no hecha
+- Sintaxis JS y bot jsdom (varios días, reclamaciones a todos los departamentos, contratación, pedidos a distribuidores, pagos en efectivo con cambio exacto): sin errores JS.
+- NO probado a mano en navegador real ni en móvil. El equilibrio económico está sin ajustar.
