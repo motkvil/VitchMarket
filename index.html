@@ -316,7 +316,7 @@ body:not([data-tab="caja"]) .queue-wrap{display:none}
 .sidebar{min-height:0;overflow:auto;scrollbar-width:thin;display:flex;flex-direction:column;gap:8px;background:rgba(0,0,0,.28);border-radius:8px;padding:8px}
 .sidehead{display:flex;align-items:center;justify-content:space-between;color:#d8e8de;font-family:var(--display);font-size:13px;letter-spacing:1px}
 .sideclose,.alertbtn{display:none}
-.sidehead .aall{flex:0 0 auto;margin-left:auto;margin-right:6px;font-family:var(--body);letter-spacing:0}
+.sidehead .aall{flex:0 0 auto;width:auto;white-space:nowrap;margin-left:auto;margin-right:6px;font-family:var(--body);letter-spacing:0}
 .sidebar .tasks{padding:8px;gap:6px}
 .camwin{position:static;width:auto;box-shadow:none;border:0;padding:0;z-index:auto}
 .camwin.show{display:block}
@@ -1092,7 +1092,7 @@ function startDay(){
   const rr=receiveDeliveries();
   hideOverlay();renderAll();
   const msg=[];
-  if(rr.arrived||rr.pending)msg.push('Reposición: '+rr.shelved+' uds colocadas'+(rr.short?', '+rr.short+' no llegaron':'')+(rr.pending?', '+rr.pending+' esperan en el almacén':''));
+  if(rr.arrived||rr.pending)msg.push((rr.arrived?'🚚 Han llegado '+rr.arrived+' uds al muelle':'🚚 Quedan '+rr.pending+' uds en el muelle')+(rr.short?', '+rr.short+' no llegaron':'')+'. Almacén las irá colocando');
   if(notes.length)msg.push(notes.join('. '));
   if(msg.length)toast(msg.join(' · '),(rr.pending||notes.length)?'bad':'good');
   if(tab!=='caja')autoTill();
@@ -1166,7 +1166,8 @@ function receiveDeliveries(){
       meta.back[id]=(meta.back[id]||0)+got;
     });
   });
-  let cap=staffOf('alm').filter(working).reduce((t,e)=>t+Math.round(30+40*e.rap),0);
+  /* Lo que llega se queda en el muelle: Almacén lo coloca a la vista con el aviso 🚚 (almRoutine). */
+  let cap=0;
   const ids=Object.keys(meta.back).filter(id=>meta.back[id]>0).sort((x,y)=>(meta.stock[x]||0)-(meta.stock[y]||0));
   for(const id of ids){
     if(cap<=0)break;
@@ -1175,6 +1176,47 @@ function receiveDeliveries(){
   }
   rr.pending=Object.values(meta.back).reduce((t,v)=>t+v,0);
   return rr;
+}
+/* Pedido automático de Almacén a Hacendado Directo: lo que (estantería + almacén + en camino) tiene 3 uds o menos,
+   hasta 8 productos en lotes de 6 y gastando como mucho el 35% del bote. Si le sale mal (perf), se le olvida la mitad. */
+const incoming=()=>{const inc={};meta.orders.forEach(o=>Object.entries(o.items).forEach(([id,q])=>{inc[id]=(inc[id]||0)+q;}));return inc;};
+const lowList=()=>{const inc=incoming();return CAT.filter(x=>(meta.stock[x.id]||0)+(meta.back[x.id]||0)+(inc[x.id]||0)<=3);};
+/* La rutina de Almacén, a la vista (cada cosa es un aviso con barra y sale en las cámaras):
+   🚚 si hay mercancía en el muelle, descargarla y colocarla; 📦 reponer lo que se vende si queda en el almacén;
+   📋 inventario de un pasillo cada ~30 s; 🧾 pedido a Hacendado cuando algo se acaba. Los dos últimos son solo de NPC. */
+function almTask(k,ic,dur,s,txt,extra){
+  const t=Object.assign({id:++uid,k,ic,roles:['alm'],dur,pen:0.05,pid:0,n:0,lang:null,s,txt,dl:run.t+TLIFE,who:null,until:0,span:1,match:true},extra||{});
+  run.tasks.push(t);return t;
+}
+function almRoutine(){
+  if(run.over)return;
+  const alm=staffOf('alm').filter(inStore);if(!alm.length)return;
+  const open=k=>run.tasks.filter(t=>t.k===k);
+  const pend=Object.values(meta.back).reduce((t,v)=>t+v,0);
+  if(pend>0&&!open('truck').length){
+    const t=almTask('truck','🚚',14,'Colocar mercancía del muelle ('+pend+' uds)','Hay '+pend+' uds en el muelle: descargar, almacenar y subir a la estantería.');
+    t.pen=0.15;toast('🚚 '+t.txt);
+  }
+  const rep=open('repo').concat(open('call'));
+  if(rep.length<2){
+    const p=CAT.filter(x=>(meta.stock[x.id]||0)<=1&&(meta.back[x.id]||0)>0&&!rep.some(t=>t.pid===x.id)).sort((a,b)=>(meta.stock[a.id]||0)-(meta.stock[b.id]||0))[0];
+    if(p){const n=aisleOf(p.id);const t=almTask('repo','📦',10,TSHORT.repo.replace('%p%',p.n).replace('%n%',n),'Se está acabando «'+p.n+'» en el pasillo '+n+' y queda en el almacén: hay que reponer.',{pid:p.id,n,roles:['alm','atc']});t.pen=0.1;}
+  }
+  if(run.closing||!alm.some(e=>!e.real))return;
+  if(!open('inv').length&&run.t-(run.invAt||-20)>30){run.invAt=run.t;const n=ri(1,9);almTask('inv','📋',9,'Inventario del pasillo '+n,'Contar lo que queda en el pasillo '+n+' y apuntar lo que falta.',{n,npc:1});}
+  if(!open('order').length&&run.t-(run.ordAt||-20)>20&&lowList().length&&meta.money>0){run.ordAt=run.t;almTask('order','🧾',8,'Pedido a Hacendado de lo que se acaba','Hacer el pedido de lo que se acaba al distribuidor.',{npc:1});}
+}
+function autoOrder(e,ok){
+  if(meta.money<=0)return;
+  const low=lowList().sort((a,b)=>(meta.stock[a.id]||0)-(meta.stock[b.id]||0)).slice(0,8);
+  if(!low.length)return;
+  const budget=Math.floor(meta.money*0.35),items={};let cost=0,n=0;
+  (ok?low:low.slice(0,Math.ceil(low.length/2))).forEach(x=>{const c=6*unitCost(x,'hac');if(cost+c<=budget){items[x.id]=6;cost+=c;n++;}});
+  if(!n)return;
+  meta.money-=cost;meta.orders.push({day:meta.day+1,sup:'hac',items});
+  logE(e,'Pidió a Hacendado Directo '+n+' productos que se acababan ('+fmt(cost)+')');
+  toast('📦 '+e.name+' pide a Hacendado Directo '+n+(n===1?' producto':' productos')+' que se acaban ('+fmt(cost)+'). Llega el turno '+(meta.day+1)+'.'+(ok?'':' Se le ha olvidado apuntar algunos.'),ok?'good':'bad');
+  renderHud();
 }
 function placeOrder(){
   const cost=cartCost(),sup=SUPS.find(z=>z.k===ordSup);
@@ -1399,7 +1441,7 @@ async function fillRanking(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.15-9';
+const APPV='2026.11.15-11';
 try{const vt=document.createElement('div');vt.id='vtag';vt.textContent='v'+APPV;document.body.appendChild(vt);}catch(e){}
 const SHOP='VITCH',DURS=[[100,'100 s (clásico)'],[600,'10 min'],[1800,'30 min'],[3600,'1 hora'],[10800,'3 horas'],[43200,'12 horas']];
 const REAL_LIM=60,TAKEOVER=120000;
@@ -1804,7 +1846,7 @@ function pubState(force){
   room.lastPub=now;
   const tasks=run&&!run.over?run.tasks.map(t=>{
     const e=typeof t.who==='number'?empById(t.who):null,left=(t.who?t.until:t.dl)-run.t;
-    return {id:t.id,k:t.k,ic:t.ic,s:t.s,txt:t.txt,n:t.n||0,cand:t.cand||null,fd:t.fd||null,pid:t.pid||0,lang:t.lang||'',roles:t.roles,left:isFinite(left)?Math.max(0,Math.round(left)):-1,
+    return {id:t.id,k:t.k,ic:t.ic,s:t.s,txt:t.txt,n:t.n||0,cand:t.cand||null,fd:t.fd||null,pid:t.pid||0,lang:t.lang||'',roles:t.roles,npc:t.npc?1:0,left:isFinite(left)?Math.max(0,Math.round(left)):-1,
       who:t.who==='me'?'jefe':e?(e.real||e.name):'',bk:t.k==='truck'?Object.keys(meta.back).filter(id=>meta.back[id]>0).map(Number).slice(0,12):[],
       dept:t.dept||'',mis:!!t.mis,refund:t.refund||0};
   }):[];
@@ -1913,7 +1955,7 @@ function renderMember(){
       else if(PHASE[st.phase])body+='<div class="supd">'+PHASE[st.phase]+'</div>'+reportHtml(st.rpt,role);
       else{
         if(mine)body+=`<div class="task"><div>${mine.ic} ${esc(mine.s)}</div><div class="supd">Es tuyo. Te quedan ${mine.left} s.</div></div>`;
-        const open=tasks.filter(t=>!t.who&&toArr(t.roles).includes(role)&&(t.k!=='tk'||t.dept===role)).slice(0,4);
+        const open=tasks.filter(t=>!t.who&&!t.npc&&toArr(t.roles).includes(role)&&(t.k!=='tk'||t.dept===role)).slice(0,4);
         body+='<div class="zone-title">AVISOS SIN DUEÑO</div>'+(open.map(t=>{const m=toArr(t.roles).includes(role);
           return `<div class="alert"><span class="at">${t.ic} ${esc(t.s)}</span><span class="who"><button class="btn ${m?'':'off'}" data-act="rtake" data-t="${t.id}" ${mine?'disabled':''} title="Es de tu puesto">Me encargo</button> <small>${t.left} s</small></span></div>`;}).join('')
           ||'<div class="supd">Nada pendiente. Disimula, que te ve el jefe.</div>');
@@ -1993,9 +2035,8 @@ const TLIFE=30;
 /* Texto corto para la cabecera (el largo va en el title y en el toast). */
 const TSHORT={repo:'Reponer «%p%» · pasillo %n%',spill:'Derrame · pasillo %n%',help:'Un cliente pide ayuda · pasillo %n%',call:'Te llaman al pasillo %n% (megafonía)',tour:'Turista %l% perdido · pasillo %n%',truck:'Camión en el muelle',cash:'Arqueo de la caja %n%',cv:'Entrevista a un candidato',feud:'Bronca entre compañeros'};
 function spawnTask(){
-  const pend=Object.values(meta.back).reduce((t,v)=>t+v,0);
   const hasRR=staffOf('rrhh').some(e=>inStore(e)),fd=hasRR?makeFeud():null;
-  const T=pick(TASKS.filter(x=>(x.k!=='truck'||pend>0)&&(x.k!=='cv'||hasRR)&&(x.k!=='feud'||fd)));
+  const T=pick(TASKS.filter(x=>x.k!=='truck'&&(x.k!=='cv'||hasRR)&&(x.k!=='feud'||fd)));
   const p=pick(CAT.filter(x=>!x.age).sort((a,b)=>(meta.stock[a.id]||0)-(meta.stock[b.id]||0)).slice(0,6));
   const n=(T.k==='repo'||T.k==='call')?aisleOf(p.id):T.k==='cash'?ri(1,3):ri(1,9);
   const lg=T.k==='tour'?pick([['en','🇬🇧'],['fr','🇫🇷'],['de','🇩🇪'],['it','🇮🇹'],['pt','🇵🇹'],['zh','🇨🇳'],['ar','🇲🇦'],['ro','🇷🇴']]):null;
@@ -2021,6 +2062,7 @@ function assignTask(tid,who){
     return;
   }
   const e=empById(+who);if(!e||!inStore(e))return;
+  if(t.npc&&e.real)return;
   if(!t.roles.includes(e.role)){toast(e.name+' es de '+ROLES[e.role].n+': eso no es de su departamento.','bad');return;}
   if(!isFree(e))pullOff(e);
   if(e.real){giveReal(t,e,true);sOk();renderAll();pubState(true);return;}
@@ -2046,7 +2088,7 @@ function assignAll(){
   if(!run||run.over)return;
   let n=0;
   run.tasks.filter(t=>!t.who&&t.k!=='tk').forEach(t=>{
-    const free=meta.emp.filter(e=>isFree(e)&&t.roles.includes(e.role));if(!free.length)return;
+    const free=meta.emp.filter(e=>isFree(e)&&t.roles.includes(e.role)&&!(t.npc&&e.real));if(!free.length)return;
     const sc=e=>(t.roles.includes(e.role)?2:0)+(t.lang&&e.langs.includes(t.lang)?2:0)-(e.real?1.5:0)+e.rap*0.5-(run.duty[e.id].slack?0.3:0);
     const e=free.sort((a,b)=>sc(b)-sc(a))[0];
     assignTask(t.id,String(e.id));n++;
@@ -2060,12 +2102,18 @@ function finishTask(t){
   let ok=true,nm='Tú';
   if(t.who==='me'){run.away=null;if(t.lang&&t.lang!=='en'&&Math.random()<0.5)ok=false;}
   else{const e=empById(t.who);if(e){nm=e.name;const d=run.duty[e.id];if(d){d.busy=0;d.task=null;}ok=Math.random()<perf(e,t.match,t.lang);if(ok)e.st.tasks++;else e.st.tfail++;logE(e,(ok?'Resolvió':'Hizo mal')+' un aviso: '+t.s);}}
+  if(t.k==='order'){run.tdone++;autoOrder(empById(t.who)||{name:'Tú',st:{}},ok);renderAll();return;}
+  if(t.k==='inv'){run.tdone++;const e=empById(t.who),inc=incoming(),ps=CAT.filter(x=>aisleOf(x.id)===t.n);
+    const out=ps.filter(x=>!(meta.stock[x.id]>0)),low=ps.filter(x=>meta.stock[x.id]>0&&meta.stock[x.id]<=2);
+    if(e)logE(e,'Hizo inventario del pasillo '+t.n);
+    toast('📋 Inventario del pasillo '+t.n+(ok?': '+ps.length+' productos, '+(out.length?out.length+' agotados ('+out.slice(0,3).map(x=>x.e).join('')+')':'ninguno agotado')+(low.length?', '+low.length+' a punto de acabarse':''):' a medias: '+(e?e.name:'')+' se ha liado contando.'),ok?'good':'bad');
+    if(ok)run.ordAt=-99;renderAll();return;}
   if(!ok){meta.rep=clamp(meta.rep-t.pen/2,0,5);run.tlost++;
     const why=t.lang?'. No se han entendido':(t.match?'':'. No es su puesto');
     toast((t.who==='me'?'Te ha salido regular en el pasillo '+t.n:nm+' lo ha dejado a medias en el pasillo '+t.n)+why,'bad');sBad();renderAll();checkRep();return;}
   run.tdone++;let extra='';
   if(t.k==='repo'||t.k==='call'){const mv=moveStock(t.pid,8);extra=mv?' (+'+mv+' uds en estantería)':' (en el almacén no quedaba)';}
-  else if(t.k==='truck'){let cap=20,tot=0;Object.keys(meta.back).forEach(id=>{if(cap>0){const mv=moveStock(id,cap);cap-=mv;tot+=mv;}});extra=' (+'+tot+' uds)';}
+  else if(t.k==='truck'){let cap=30,tot=0;Object.keys(meta.back).sort((x,y)=>(meta.stock[x]||0)-(meta.stock[y]||0)).forEach(id=>{if(cap>0){const mv=moveStock(id,cap);cap-=mv;tot+=mv;}});extra=' (+'+tot+' uds)';}
   else if(t.k==='cv'){const c=t.cand,q=c?(c.rap+c.trato+c.punt+c.act)/4:0;extra=q>=0.55?' · '+hireFromCv(c,c.wage):' · no le ha convencido';}
   else if(t.k==='feud'&&t.fd)extra=' · '+applyFeud({a:t.fd.a.id,b:t.fd.b.id,truth:t.fd.truth},true);
   else meta.rep=clamp(meta.rep+0.05,0,5);
@@ -2077,7 +2125,7 @@ function expireTask(t){
   if(t.k==='tk'){renderAll();return;}run.tlost++;
   meta.rep=clamp(meta.rep-t.pen,0,5);
   if(t.k==='spill'&&Math.random()<0.3){addTicket('back','Un cliente se resbaló en el pasillo '+t.n,ri(1000,3000),3,false);toast('Nadie limpió el pasillo '+t.n+' y alguien se ha caído','bad');}
-  else toast('Nadie atendió: '+t.ic+' pasillo '+t.n,'bad');
+  else toast('Nadie atendió: '+t.ic+' '+t.s,'bad');
   sBad();renderAll();checkRep();
 }
 function tickStaff(dt){
@@ -2092,6 +2140,16 @@ function tickStaff(dt){
     if(d.slack){d.slackT=(d.slackT||0)+dt;if(Math.random()<dt*0.06)d.slack=null;}
     else if(Math.random()<dt*0.012*(1.3-e.act)*(e.moral<40?1.6:1)*(d.seen?0.5:1))d.slack=pick(SLACK);
   });
+  /* Cada uno hace su trabajo sin que se lo manden: quien está libre (y no escaqueándose) coge solo
+     los avisos de su departamento a los 3 s de salir (antes el jefe puede elegir a quién mandar). */
+  if(!run.remote)run.tasks.forEach(t=>{
+    if(run.over||t.who||t.k==='tk'||TLIFE-(t.dl-run.t)<3)return;
+    const c=meta.emp.filter(e=>isFree(e)&&!e.real&&!run.duty[e.id].slack&&t.roles.includes(e.role));if(!c.length)return;
+    const sc=e=>(t.lang&&e.langs.includes(t.lang)?2:0)+e.rap;
+    const e=c.sort((a,b)=>sc(b)-sc(a))[0];
+    assignTask(t.id,String(e.id));toast(e.face+' '+e.name+' se encarga: '+t.s);
+  });
+  if(!run.remote&&(run.almT=(run.almT||0)+dt)>3){run.almT=0;almRoutine();}
   /* Quien te cubre la caja atiende al cliente de delante. */
   if(run.away&&run.away.cover){
     const e=empById(run.away.cover),c=front();
@@ -2144,7 +2202,7 @@ function renderTasks(){
   const el=$('#tasks'),al=$('#alerts');if(!el||!al)return;
   if(!run){el.innerHTML='';al.innerHTML='';return;}
   if(run.remote){
-    const st=room.state||{},me=(room.members||{})[room.uid]||{},open=toArr(st.tasks).filter(t=>!t.who&&toArr(t.roles).includes(me.role)&&(t.k!=='tk'||t.dept===me.role)).length;
+    const st=room.state||{},me=(room.members||{})[room.uid]||{},open=toArr(st.tasks).filter(t=>!t.who&&!t.npc&&toArr(t.roles).includes(me.role)&&(t.k!=='tk'||t.dept===me.role)).length;
     al.innerHTML='';
     el.innerHTML=`<div class="zone-title">🧾 TU CAJA ${run.till}</div><div class="supd">${run.queue.length} ${run.queue.length===1?'cliente':'clientes'} en tu cola. Los clientes te los manda la tienda: cóbrales bien y rápido.</div>
       <div class="zone-title">AVISOS DE SALA</div><div class="supd">${open?open+' sin dueño. Si vas a uno, tu caja se queda parada y tu cola se impacienta.':'No hay avisos sin dueño.'}</div>
@@ -2155,7 +2213,7 @@ function renderTasks(){
   }
   {const aa=$('#aallBtn');if(aa)aa.hidden=false;}
   /* Desplegable con TODO el personal en tienda, ocupado o no: el jefe manda por necesidad del servicio. */
-  const forceSel=t=>{const ps=meta.emp.filter(e=>inStore(e)&&t.roles.includes(e.role));if(!ps.length)return '';
+  const forceSel=t=>{const ps=meta.emp.filter(e=>inStore(e)&&t.roles.includes(e.role)&&!(t.npc&&e.real));if(!ps.length)return '';
     return `<select class="force" data-t="${t.id}" aria-label="Mandar a alguien de su departamento"><option value="">📢 Mandar a…</option>${ps.map(e=>{const d=run.duty[e.id];
       const st=run.away&&run.away.cover===e.id?'en la Caja 3':d.busy?'ocupado/a':d.slack?'escaqueándose':'libre';
       return `<option value="${e.id}">${e.name}${e.real?' 🎮':''} · ${ROLES[e.role].s} · ${st}</option>`;}).join('')}</select>`;};
@@ -2164,12 +2222,12 @@ function renderTasks(){
   /* Avisos sin asignar: arriba, en la cabecera fija, para que se vean siempre. */
   if(!keepAl)al.innerHTML=(isHost()?appsAlerts():'')+run.tasks.filter(t=>!t.who&&t.k!=='tk').map(t=>{
     const sc=e=>(t.roles.includes(e.role)||e.pers==='servicial'?1:0)+(t.lang&&e.langs.includes(t.lang)?2:0);
-    const opts=free.filter(e=>t.roles.includes(e.role)).sort((a,b)=>sc(b)-sc(a)).slice(0,3).map(e=>{
+    const opts=free.filter(e=>t.roles.includes(e.role)&&!(t.npc&&e.real)).sort((a,b)=>sc(b)-sc(a)).slice(0,3).map(e=>{
       const m=t.roles.includes(e.role),sp=t.lang&&e.langs.includes(t.lang);
       return `<button class="btn ${m?'':'off'}" data-act="assign" data-t="${t.id}" data-e="${e.id}" title="${m?'Es de su puesto':'No es su puesto: tardará más y puede salir mal'}${sp?'. Habla su idioma':''}">${e.face} ${e.name}${e.real?' 🎮':''}${sp?' 🗣️':''} <small>${ROLES[e.role].s}</small></button>`;
     }).join('');
     return `<div class="alert" title="${t.txt.replace(/"/g,'&quot;')}"><span class="at">${t.ic} ${t.s}</span>
-      <span class="who">${opts}${forceSel(t)}<button class="btn" data-act="assign" data-t="${t.id}" data-e="me" ${run.away&&!run.away.auto||mg?'disabled':''}>🚶 Voy yo</button></span>
+      <span class="who">${opts}${forceSel(t)}${t.npc?'':`<button class="btn" data-act="assign" data-t="${t.id}" data-e="me" ${run.away&&!run.away.auto||mg?'disabled':''}>🚶 Voy yo</button>`}</span>
       <span class="tb"><i data-tid="${t.id}"></i></span></div>`;
   }).join('');
   /* Avisos ya asignados: abajo, junto al estado del personal. */
@@ -3407,7 +3465,7 @@ const aislePt=()=>[laneX(ri(1,9)),rnd(30,140)];
 const cam={on:false,zoom:-1,spr:{},shop:[],cv:null,ctx:null,noctx:false,last:0,hits:[]};
 try{const v=localStorage.getItem(CAM_KEY);cam.on=v==null?window.innerWidth>=900:v==='1';}catch(e){}
 function toggleCams(){cam.on=!cam.on;const w=$('#camwin');if(w)w.classList.toggle('show',cam.on);try{localStorage.setItem(CAM_KEY,cam.on?'1':'0');}catch(e){}}
-const taskSpot=t=>t.k==='truck'?{k:'dock'}:t.k==='cash'?{k:'post',r:'back',i:1}:t.k==='cv'||t.k==='feud'?{k:'post',r:'rrhh',i:1}:t.k==='tk'?{k:'post',r:t.dept||'back',i:0}:{k:'aisle',n:t.n||1};
+const taskSpot=t=>t.k==='truck'?{k:'dock'}:t.k==='order'?{k:'post',r:'alm',i:1}:t.k==='cash'?{k:'post',r:'back',i:1}:t.k==='cv'||t.k==='feud'?{k:'post',r:'rrhh',i:1}:t.k==='tk'?{k:'post',r:t.dept||'back',i:0}:{k:'aisle',n:t.n||1};
 function camModel(){
   if(!run||run.over)return null;
   const idx={},staff=[];
@@ -3749,7 +3807,8 @@ const GUIDE={
   ['🧾','Si hay cajeros reales, abren la <b>Caja 1 y la Caja 2</b> y la tienda les reparte la cola.']]},
  j_alm:{t:'📦 Almacén · jefe',steps:[
   ['📋','Aquí ves las <b>existencias</b> de todo: en rojo lo agotado. «Mandar reponer» crea un aviso para que alguien lo ponga en la estantería.'],
-  ['🚚','Haz los <b>pedidos a distribuidores</b>: el barato puede llegar incompleto, el caro siempre llega y el chollo tarda dos turnos.'],
+  ['🚚','La gente de Almacén <b>pide sola</b> a Hacendado lo que se acaba (máx. un 35% del bote). Tú puedes hacer pedidos extra: el barato puede llegar incompleto, el caro siempre llega y el chollo tarda dos turnos.'],
+  ['🙋','Todos <b>cogen solos</b> los avisos de su departamento si están libres. Tú decides si quieres mandar a alguien en concreto antes.'],
   ['👷','Sin gente en Almacén, la mercancía se queda en el muelle y no llega a la estantería.']]},
  j_back:{t:'💼 Backoffice · jefe',steps:[
   ['💶','Las <b>cuentas</b> del turno: ventas, propinas, multas y nómina. Si el bote baja de −300 €, quiebra.'],
