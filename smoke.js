@@ -22,6 +22,9 @@ setInterval(()=>{
     if(b){if(b.dataset.act==='next'||b.dataset.act==='endmeet')stats.days++;if(b.dataset.act==='meeting')stats.meetings++;cl(b);}return;}
   const mgel=d.querySelector('#mg.show');
   if(mgel){const x=any(mgel,'button:not([disabled])');if(x){stats['mg_'+x.dataset.act]=(stats['mg_'+x.dataset.act]||0)+1;cl(x);}return;}
+  if(Math.random()<.03){const tb=any(d,'[data-act=tab]');if(tb){stats['tab_'+tb.dataset.k]=(stats['tab_'+tb.dataset.k]||0)+1;cl(tb);return;}}
+  if(Math.random()<.2){const x=any(d,'#dept [data-act=dtk],#dept [data-act=drepo],#dept [data-act=drev],#dept [data-act=ordp],#dept [data-act=ordgo]:not([disabled])');if(x){stats['d_'+x.dataset.act]=(stats['d_'+x.dataset.act]||0)+1;cl(x);return;}}
+  if(Math.random()<.05){const sel=d.querySelector('#alerts select.force');if(sel&&sel.options.length>1){sel.value=sel.options[1+Math.floor(Math.random()*(sel.options.length-1))].value;sel.dispatchEvent(new w.Event('change',{bubbles:true}));stats.force=(stats.force||0)+1;return;}}
   if(Math.random()<.02){const sp=d.querySelector('[data-act=supervise]');if(sp){stats.sup=(stats.sup||0)+1;cl(sp);return;}}
   const rtn=d.querySelector('#register [data-act=return]');if(rtn&&Math.random()<.05){cl(rtn);return;}
   if(Math.random()<.3){const as=any(d,'[data-act=assign]:not([disabled])');if(as){stats.assign++;cl(as);return;}}
