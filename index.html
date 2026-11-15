@@ -1081,12 +1081,8 @@ canvas.vm3d{position:absolute;inset:0;width:100%!important;height:100%!important
 
 /* 3D: la ventanilla arriba (cliente de frente) y la cinta abajo */
 .win3d{display:none;position:relative;height:clamp(150px,24vh,250px);border-radius:12px;overflow:hidden;border:3px solid #7a1418;background:#fdf3f3}
-body.b3d .win3d{display:block}
-body.b3d .queue-wrap{position:relative}
-body.b3d #queue{position:absolute;top:14px;left:18px;z-index:2;gap:5px;transform-origin:top left;transform:scale(.62);background:rgba(255,255,255,.85);border-radius:12px;padding:4px 6px}
-body.b3d #queue .slot{display:none}
 body.b3d .counter .bagt,body.b3d #bagged{display:none}
-body.b3d .till3d{flex:1 1 0;min-height:140px}
+body.b3d .till3d{flex:1 1 0;min-height:200px}
 @media (max-width:820px){.win3d{height:clamp(120px,20vh,180px)}}
 
 /* Avisos emergentes y campana arriba, para no tapar la caja ni las herramientas */
@@ -1097,6 +1093,14 @@ body.b3d .till3d{flex:1 1 0;min-height:140px}
   .alertbtn{top:6px;bottom:auto;right:6px;padding:5px 10px;font-size:15px;border-width:2px}
   .alertbtn b{font-size:17px}
   .hud{margin-right:62px}
+}
+
+@media (min-width:1280px){
+  body.b3d .stage{grid-template-columns:1fr;grid-template-rows:minmax(200px,42%) minmax(0,1fr);gap:8px}
+  body.b3d .counter{padding:8px}
+  body.b3d .counter>.zone-title{display:none}
+  body.b3d .side{min-height:0}
+  body.b3d .register{overflow:auto}
 }
 </style>
 </head>
@@ -1117,7 +1121,6 @@ body.b3d .till3d{flex:1 1 0;min-height:140px}
   <div class="play">
     <div class="mainc">
       <section class="queue-wrap" aria-label="Cola de clientes">
-        <div class="win3d" id="win3d" aria-hidden="true"></div>
         <div class="queue" id="queue"></div>
         <div class="bubble muted" id="bubble"></div>
         <div class="chat" id="chat" aria-live="polite"></div>
@@ -1912,7 +1915,7 @@ async function fillRanking(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.15-30';
+const APPV='2026.11.15-31';
 /* Compara versiones por números («-9» < «-11»), no como texto. */
 const verCmp=(a,b)=>{const x=String(a).split(/[.-]/).map(Number),y=String(b).split(/[.-]/).map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
 try{const vt=document.createElement('div');vt.id='vtag';vt.textContent='v'+APPV;document.body.appendChild(vt);}catch(e){}
@@ -4448,8 +4451,7 @@ function till3d(){
   document.body.classList.toggle('b3d',on);
   if(!on||!slot.offsetParent||run.over)return;
   const c=run.away?null:front();
-  try{VM3D.till(slot,{cid:c?c.id:null,items:c?c.items:[],onScan:id=>{if(run.pendingId){toast('Primero resuelve el DNI','bad');return;}scanItem(id);}});
-    const ws=document.getElementById('win3d');if(ws&&ws.offsetParent&&VM3D.win)VM3D.win(ws,{queue:run.queue.map(q=>({id:q.id,mood:q.p/q.max}))});}catch(e){console.warn(e);VM3D.ok=false;}
+  try{VM3D.till(slot,{cid:c?c.id:null,items:c?c.items:[],queue:run.queue.map(q=>({id:q.id,mood:q.p/q.max})),onScan:id=>{if(run.pendingId){toast('Primero resuelve el DNI','bad');return;}scanItem(id);}});}catch(e){console.warn(e);VM3D.ok=false;}
 }
 function isoClick(ev){
   const r=iso.cv.getBoundingClientRect(),k=iso.cv.width/r.width,x=(ev.clientX-r.left)*k,y=(ev.clientY-r.top)*k;
