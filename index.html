@@ -633,6 +633,57 @@ button.pdarow:hover{background:rgba(19,54,31,.15)}
 .office .supd{color:#f6ead6}
 .stamp.big[disabled]{opacity:.3}
 @media (max-width:420px){.dr-coins{grid-template-columns:repeat(4,1fr)}.methods{grid-template-columns:1fr 1fr 1fr;gap:6px}.meth .ico{font-size:30px}.thermal{max-width:none}}
+/* RR.PP.: móvil con la red social y plano de la tienda */
+.phone{position:relative;align-self:center;width:min(330px,100%);background:#111;border-radius:34px;padding:12px 10px 18px;box-shadow:0 10px 24px rgba(0,0,0,.4),inset 0 0 0 2px #333}
+.ph-notch{position:absolute;left:50%;top:10px;width:90px;height:18px;margin-left:-45px;background:#000;border-radius:0 0 12px 12px;z-index:2}
+.ph-status{display:flex;justify-content:space-between;color:#fff;font-size:10px;padding:2px 14px 6px}
+.ph-bar{display:flex;justify-content:space-between;align-items:center;background:#fff;border-radius:16px 16px 0 0;padding:8px 12px;border-bottom:1px solid #eee}
+.ph-bar b{font-family:var(--display);font-weight:400;background:linear-gradient(90deg,#d6336c,#f08a24);-webkit-background-clip:text;background-clip:text;color:transparent;font-size:16px}
+.ph-feed{background:#fff;padding:8px 10px;display:flex;flex-direction:column;gap:8px;min-height:150px}
+.sp{display:flex;gap:8px;font-size:12px;color:#222}
+.av{flex:0 0 32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:13px}
+.av.vm{background:var(--sign);font-size:10px}
+.sp-b{flex:1}.sp-b small{color:#8a8f94}.sp-b p{margin:3px 0}
+.ht{color:#2f6db5}
+.sp-act{display:flex;gap:14px;color:#6b7076;font-size:11px}
+.sp.me .sp-b{background:#eaf4ff;border-radius:10px;padding:6px 8px}
+.caret{display:inline-block;width:2px;height:12px;background:#2f6db5;margin-left:2px;vertical-align:middle;animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.smood{display:flex;align-items:center;gap:8px;background:#f6f7f8;border-radius:10px;padding:5px 8px;font-size:11px}
+.smood span{font-size:22px}.mbar{flex:1;height:10px;background:#e3e6e9;border-radius:5px;overflow:hidden}.mbar i{display:block;height:100%;transition:width .3s}
+.ph-sug{background:#f6f7f8;border-radius:0 0 16px 16px;padding:8px;display:flex;flex-direction:column;gap:6px}
+.ph-sug small{font-size:9px;letter-spacing:1px;color:#6b7076}
+.chip{background:#fff;border:1px solid #d6dbe0;border-radius:16px;padding:7px 10px;text-align:left;font-size:12px;color:#222;box-shadow:0 1px 0 rgba(0,0,0,.08)}
+.chip:hover{border-color:#2f6db5;background:#f2f8ff}
+.ph-home{display:block;width:90px;height:4px;border-radius:2px;background:#555;margin:10px auto 0}
+.plan{background:repeating-conic-gradient(#d9dee2 0 25%,#cfd5da 0 50%) 0 0/24px 24px;border-radius:10px;padding:10px;box-shadow:inset 0 0 0 4px #9aa3a9;display:flex;flex-direction:column;gap:10px}
+.plan-aisles{display:grid;grid-template-columns:repeat(9,1fr);gap:5px}
+.pa{position:relative;height:120px;display:flex;justify-content:center;background:transparent}
+.pa .sh{position:absolute;top:30px;bottom:18px;width:38%;background:repeating-linear-gradient(#7d6a4f 0 6px,#a8916d 6px 8px);border-radius:3px;box-shadow:0 2px 0 rgba(0,0,0,.25)}
+.pa .sh.l{left:4%}.pa .sh.r{right:4%}
+.pa .sign{position:absolute;top:0;left:50%;transform:translateX(-50%);width:28px;height:28px;border-radius:50%;background:#fff;box-shadow:0 2px 0 rgba(0,0,0,.3),0 0 0 2px var(--thc);display:flex;align-items:center;justify-content:center;font-size:15px;z-index:1}
+.pa b{position:absolute;bottom:0;font-size:11px;background:var(--ink);color:#fff;border-radius:4px;padding:0 5px}
+.pa:hover .sh{filter:brightness(1.15)}.pa:hover .sign{transform:translateX(-50%) scale(1.12)}
+.pa.no{opacity:.4}.pa.no:after{content:'✖';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:var(--sign);font-size:24px;font-weight:700}
+.plan-front{display:flex;align-items:center;gap:6px;font-size:11px;border-top:3px dashed #9aa3a9;padding-top:8px}
+.chk{background:#4b5550;color:#fff;border-radius:4px;padding:3px 6px}.you{flex:1;text-align:center;font-weight:700}.pdoor{font-size:20px}
+.mgc>.btn.mini{flex:0 0 auto;align-self:center;padding:5px 12px}
+.qas .qa{padding:5px 8px}
+@media (max-height:900px){.mgc>h3+.supd{display:none}.mgc .cvq .btn{padding:6px 8px;font-size:12px}}.cvc{padding:6px 8px;gap:2px}.cvc .es{font-size:10px}
+@media (max-height:760px){
+  #mg{padding:6px}#mg .card.mgc{padding:12px;gap:7px}
+  .mgc .dept-badge,.mgc>h3+.supd{display:none}.mgc>h3{font-size:15px}
+  .brief{padding:4px 8px;font-size:11px;line-height:1.35}.mgsteps span{padding:1px 6px;font-size:10px}
+  .paper{gap:2px;padding:6px 8px}.pl{padding:2px 0}.stamp{padding:2px 0;font-size:10px}.phd{font-size:11px}
+  .clip{padding:12px 8px 8px}.pallet{gap:4px;padding:5px}.cbox.sm{min-height:46px;padding:5px 4px 4px}.door{padding:6px 4px 5px}.door span{font-size:18px}
+  .wh{padding:8px 8px 0}.cbox{min-height:60px}.gondola{padding:5px}.fc{min-height:48px}.fc .pk{font-size:22px}
+  .floor{height:150px}.thermal{font-size:10px;padding:8px 8px 14px}.slot{min-height:38px}.money.coin{width:28px;height:28px}
+  .plan .pa{height:86px}.qas .qa{font-size:11px}
+}
+@media (max-height:760px){.phone{padding:8px 8px 10px;border-radius:24px}.ph-status{display:none}.ph-notch{display:none}.ph-feed{min-height:0;gap:5px}.ph-home{display:none}.sp-act{display:none}.chip{padding:5px 8px;font-size:11px}}
+.gshelf.three{grid-template-columns:repeat(3,1fr)}
+.gshelf.three .fc{min-height:70px}.gshelf.three .fc .pk{font-size:32px}
+@media (max-width:420px){.pa{height:100px}.pa .sign{width:24px;height:24px;font-size:13px}.chk{display:none}}
 </style>
 </head>
 <body>
@@ -1305,7 +1356,7 @@ async function fillRanking(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.15-5';
+const APPV='2026.11.15-6';
 const SHOP='VITCH',DURS=[[100,'100 s (clásico)'],[600,'10 min'],[1800,'30 min'],[3600,'1 hora'],[10800,'3 horas'],[43200,'12 horas']];
 const REAL_LIM=60,TAKEOVER=120000;
 const JOB_IC={jefe:'👑',atc:'🧾',alm:'📦',back:'💼',rrpp:'📣',rrhh:'🗂️'};
@@ -2496,23 +2547,37 @@ function rrppBody(){
   const steps=(names,cur)=>'<div class="mgsteps">'+names.map((n,i)=>`<span class="${i===cur?'on':i<cur?'ok':''}">${i<cur?'✔':i+1} ${n}</span>`).join('')+'</div>';
   if(mg.kind==='social'){
     const a=clamp(mg.anger,0,100),K=['hi','why','comp'],L=['Saludo','Explicación','Compensación'],st=mg.sstep||0;
-    let h=steps(L.concat(['Publicar']),st)+`<div class="post"><b>${mg.h}</b> <small>· hace un momento</small><p>${esc(mg.t.txt||'Fatal la atención en VitchMarket.')} #VitchMarket 😡</p><small>❤️ ${mg.likes} · 🔁 ${Math.round(mg.likes/3)}</small></div>
-      <div class="meter"><span>Enfado</span><i style="width:${a}%;background:${a>=60?'var(--sign)':a>=30?'var(--tag)':'var(--ok)'}"></i><b>${a}</b></div>`;
-    if(st<3)h+=`<div class="supd">Elige el ${L[st].toLowerCase()} de tu respuesta. Por debajo de 30 de enfado se calma; si te pasas compensando, lo paga la tienda.</div>
-      <div class="opts">${mg.opts[K[st]].map(i=>`<button class="btn" data-act="mgsoc" data-k="${K[st]}" data-i="${i}">${SOC[K[st]][i][0]}</button>`).join('')}</div>`;
-    else h+=`<div class="post reply"><b>@VitchMarket</b><p>${K.map(k=>SOC[k][mg.pick[k]][0].replace(/^\S+ /,'').replace(/[«»]/g,'')).join(' ')}</p></div>
-      <div class="row wrap"><button class="btn go" data-act="mgpost">📤 Publicar respuesta</button><button class="btn" data-act="mgsocre">✏️ Rehacer</button></div>`;
-    return h+'<button class="btn mini" data-act="mgsocmis">↩️ Esto no es de RR.PP.</button>';
+    const face=a>=60?'🤬':a>=30?'😠':'🙂',col=a>=60?'var(--sign)':a>=30?'#f2a03d':'var(--ok)';
+    const ini=mg.h.replace(/[^a-z]/gi,'').slice(0,1).toUpperCase(),hue=(mg.h.length*47)%360;
+    const draft=K.filter(k=>mg.pick[k]!=null).map(k=>SOC[k][mg.pick[k]][0].replace(/^\S+ /,'').replace(/[«»]/g,'')).join(' ');
+    const now=new Date();
+    return steps(L.concat(['Publicar']),st)+`<div class="phone"><i class="ph-notch"></i>
+      <div class="ph-status"><span>${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}</span><span>📶 🔋</span></div>
+      <div class="ph-bar"><b>VitchGram</b><span>🔔 💬</span></div>
+      <div class="ph-feed">
+        <div class="sp"><span class="av" style="background:hsl(${hue} 60% 55%)">${ini}</span><div class="sp-b"><div><b>${mg.h}</b> <small>· ahora</small></div>
+          <p>${esc(mg.t.txt||'Fatal la atención en VitchMarket.')} 😡 <span class="ht">#VitchMarket #nuncamás</span></p>
+          <div class="sp-act"><span>💬 ${Math.round(mg.likes/4)}</span><span>🔁 ${Math.round(mg.likes/3)}</span><span>❤️ ${mg.likes}</span></div></div></div>
+        <div class="smood"><span>${face}</span><div class="mbar"><i style="width:${a}%;background:${col}"></i></div><b>${a}</b></div>
+        ${draft?`<div class="sp me"><span class="av vm">VM</span><div class="sp-b"><div><b>@VitchMarket</b> <small>${st<3?'· escribiendo…':'· borrador'}</small></div><p>${esc(draft)}${st<3?'<i class="caret"></i>':''}</p></div></div>`:''}
+      </div>
+      ${st<3?`<div class="ph-sug"><small>${L[st].toUpperCase()} · elige cómo sigue tu respuesta</small>${mg.opts[K[st]].map(i=>`<button class="chip" data-act="mgsoc" data-k="${K[st]}" data-i="${i}">${SOC[K[st]][i][0]}</button>`).join('')}</div>`
+        :`<div class="ph-sug"><small>¿Lo publicas? Por debajo de 30 de enfado se calma.</small><div class="row"><button class="btn" data-act="mgsocre">✏️ Rehacer</button><button class="btn go" data-act="mgpost">📤 Publicar</button></div></div>`}
+      <i class="ph-home"></i></div>
+      <button class="btn mini" data-act="mgsocmis">↩️ Esto no es de RR.PP.</button>`;
   }
-  const p=mg.p,lang=mg.t.lang;
+  const p=mg.p,lang=mg.t.lang,tried=mg.triedA||[];
   const q=lang?(ASK[lang]||ASK.en).replace('%e%',p.e):`¿Dónde tenéis <b>${p.n}</b>?`;
-  let h=steps(['Pasillo','Estantería'],mg.step)+`<div class="bubble">${lang?'🧳':'🙋'} ${q}</div>`;
+  let h=steps(['Pasillo','Estantería'],mg.step)+`<div class="ccust"><span>${lang?'🧳':'🙋'}</span><div class="bubble">${q}</div></div>`;
   if(mg.step===0){
-    h+=`<div class="supd">Llévale por el plano al pasillo correcto. Los carteles solo tienen dibujo.${mg.tries?' «Aquí no está…» ('+mg.tries+' fallos)':''}</div>
-      <div class="map"><div class="mapdoor">🚪 ENTRADA · CAJAS</div>${AISLES.map((a,i)=>`<button class="aisle" data-act="mgmap" data-a="${a[0]}"><b>${a[0]}</b><span>${AISLE_IC[i]}</span></button>`).join('')}</div>`;
+    h+=`<div class="brief">🗺️ Llévale por el plano al pasillo bueno. Los carteles colgantes solo tienen dibujo.${mg.tries?' <b>«Aquí no está…»</b>':''}</div>
+      <div class="plan"><div class="plan-aisles">${AISLES.map((a,i)=>`<button class="pa ${tried.includes(a[0])?'no':''}" data-act="mgmap" data-a="${a[0]}"><span class="sign">${AISLE_IC[i]}</span><i class="sh l"></i><i class="sh r"></i><b>${a[0]}</b></button>`).join('')}</div>
+      <div class="plan-front"><span class="chk">🧾 1</span><span class="chk">🧾 2</span><span class="chk">🧾 3</span><span class="you">${lang?'🧳':'🙋'} ← estáis aquí</span><span class="pdoor">🚪</span></div></div>`;
   }else{
-    h+=`<div class="supd">Pasillo ${aisleOf(p.id)}. Señálale el producto en la estantería.${mg.ptries?' («Ese no es…»)':''}</div>
-      <div class="crates">${mg.shelf.map((x,i)=>`<button class="crate" data-act="mgprod" data-i="${i}">${x.e}<b>${lang?'':x.n}</b><small>${lang?'':esc(x.f||'')}</small></button>`).join('')}</div>`;
+    const sh=mg.shelf,top=sh.slice(0,3),bot=sh.slice(3);
+    const fc=(x,i)=>`<button class="fc" data-act="mgprod" data-i="${i}"><span class="pk">${x.e}</span>${lang?'':`<em class="stk lot">${x.n}</em>`}</button>`;
+    h+=`<div class="brief">👉 Pasillo ${aisleOf(p.id)}. Señálale el producto en la estantería.${mg.ptries?' <b>«Ese no es…»</b>':''}</div>
+      <div class="gondola"><div class="gshelf three">${top.map((x,i)=>fc(x,i)).join('')}</div><div class="rail"></div><div class="gshelf three">${bot.map((x,i)=>fc(x,i+3)).join('')}</div><div class="rail"></div></div>`;
   }
   return h;
 }
@@ -2532,11 +2597,11 @@ function rrppAct(a,b){
       if(+b.dataset.a===aisleOf(mg.p.id)){mg.step=1;sBeep();
         const same=shuffle(CAT.filter(x=>!x.age&&aisleOf(x.id)===aisleOf(mg.p.id)&&x.id!==mg.p.id)).slice(0,5);
         mg.shelf=shuffle([mg.p].concat(same));}
-      else{mg.tries++;sBad();if(mg.tries>=3){mg.x={};return endMG(0);}}
+      else{mg.tries++;mg.triedA=(mg.triedA||[]).concat([+b.dataset.a]);mg.fx={sel:`[data-act=mgmap][data-a="${b.dataset.a}"]`,k:'bad'};sBad();if(mg.tries>=3){mg.x={};return endMG(0);}}
     }else if(a==='mgprod'){
       const x=mg.shelf[+b.dataset.i];if(!x)return;
       if(x.id===mg.p.id){mg.x={};return endMG(clamp(1-0.3*mg.tries-0.2*mg.ptries,0.2,1));}
-      mg.ptries++;sBad();if(mg.ptries>=3){mg.x={};return endMG(0.2);}
+      mg.ptries++;mg.fx={sel:`[data-act=mgprod][data-i="${b.dataset.i}"]`,k:'bad'};sBad();if(mg.ptries>=3){mg.x={};return endMG(0.2);}
     }
   }
   renderMG();
@@ -2585,7 +2650,7 @@ function rrhhBody(){
     h+='<div class="qas">'+mg.asked.map(k=>{const x=mg.ans[k];return `<div class="qa">${x.q}<i>${x.a}</i>${mg.step===0?`<button class="btn mini ${mg.flags[k]?'no':''}" data-act="mgflag" data-k="${k}">🚩 ${mg.flags[k]?'No me lo creo':'¿Miente?'}</button>`:mg.flags[k]?' 🚩':''}</div>`;}).join('')+'</div>';
     if(mg.step===0){
       const left=3-mg.asked.length;
-      h+=left?`<div class="supd">Te quedan <b>${left}</b> ${left===1?'pregunta':'preguntas'}. Compara las respuestas con el currículum.</div><div class="opts">${Object.keys(CVQ).filter(k=>!mg.asked.includes(k)).map(k=>`<button class="btn" data-act="mgask" data-k="${k}">❓ ${CVQ[k]}</button>`).join('')}</div>`
+      h+=left?`<div class="supd">Te quedan <b>${left}</b> ${left===1?'pregunta':'preguntas'}. Compara las respuestas con el currículum.</div><div class="opts cvq">${Object.keys(CVQ).filter(k=>!mg.asked.includes(k)).map(k=>`<button class="btn" data-act="mgask" data-k="${k}">❓ ${CVQ[k]}</button>`).join('')}</div>`
         :'<div class="supd">Marca con 🚩 lo que no te creas y pasa a decidir.</div><button class="btn go" data-act="mgcvnext">Decidir ▶</button>';
     }else{
       h+=`<div class="supd">¿Le contratas? Pide ${fmt(c.wage)}/día. Si le ofreces menos, empezará con el ánimo bajo.${meta.money<HIRE&&!mg.t.remote?' Ojo: contratar cuesta '+fmt(HIRE)+' y no llega el bote.':''}</div>
