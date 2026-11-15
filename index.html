@@ -156,8 +156,16 @@ button:focus-visible{outline:3px solid var(--tag);outline-offset:2px}
 .task .who .btn small{opacity:.6}
 .task .who .btn.off{background:#e9e2cf}
 .crew{display:flex;flex-direction:column;gap:2px;font-size:11px;color:#3d3a30}
-#taskfab{position:fixed;right:16px;bottom:16px;z-index:15;background:var(--sign);color:#fff;border-radius:22px;padding:10px 14px;font-weight:500;box-shadow:0 3px 0 rgba(0,0,0,.35);display:none}
-#taskfab.show{display:block}
+.alerts{display:flex;flex-direction:column;gap:6px}
+.alerts:empty{display:none}
+.alert{background:var(--tag);border-radius:6px;padding:6px 8px;display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;font-size:12px;color:var(--ink);box-shadow:0 3px 0 rgba(0,0,0,.3)}
+.alert .at{flex:1 1 180px;font-weight:500}
+.alert .who{display:flex;flex-wrap:wrap;gap:4px}
+.alert .who .btn{flex:0 0 auto;padding:4px 7px;font-size:11px;box-shadow:0 2px 0 rgba(0,0,0,.3)}
+.alert .who .btn small{opacity:.6}
+.alert .who .btn.off{background:#efe7d0}
+.alert .tb{flex-basis:100%;height:4px;background:rgba(0,0,0,.15);border-radius:2px;overflow:hidden}
+.alert .tb i{display:block;height:100%;width:100%;background:var(--sign)}
 .mood{font-size:20px;line-height:1}
 .emp{background:#fff;border-radius:6px;padding:8px 10px;display:flex;flex-direction:column;gap:5px;font-size:12px}
 .eh{display:flex;align-items:center;gap:8px}
@@ -191,6 +199,14 @@ button:focus-visible{outline:3px solid var(--tag);outline-offset:2px}
   .bubble{padding:4px 10px;min-height:28px;font-size:12px}
   .chat{min-height:18px;font-size:12px}
   .chat .who{font-size:16px}
+  /* Avisos compactos: texto en una línea y botones en una fila deslizable */
+  .alerts{gap:4px}
+  .alert{padding:4px 6px;gap:3px 6px}
+  .alert .at{flex-basis:100%;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .alert .who{flex:1 1 100%;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+  .alert .who::-webkit-scrollbar{display:none}
+  .alert .who .btn{padding:3px 6px}
+  .alert .who .btn small{display:none}
 }
 @media (max-width:420px){
   .hud{gap:2px 8px;padding:6px 8px}
@@ -220,6 +236,7 @@ button:focus-visible{outline:3px solid var(--tag);outline-offset:2px}
     <div class="bubble muted" id="bubble"></div>
     <div class="chat" id="chat" aria-live="polite"></div>
   </section>
+  <section class="alerts" id="alerts" aria-label="Avisos" aria-live="polite"></section>
   </div>
 
   <main class="stage">
@@ -235,9 +252,7 @@ button:focus-visible{outline:3px solid var(--tag);outline-offset:2px}
     </div>
   </main>
 </div>
-<div id="toast" role="status"></div>
-<button id="taskfab" data-act="tasks" aria-label="Ver avisos"></button>
-<div id="overlay"></div>
+<div id="toast" role="status"></div><div id="overlay"></div>
 
 <script src="productos.js"></script>
 <script>
@@ -789,12 +804,15 @@ const TASKS=[
  {k:'truck',ic:'🚚',roles:['alm'],dur:14,pen:0.3,t:'Ha llegado un camión al muelle. Hay que descargarlo.'}
 ];
 const TLIFE=30;
+/* Texto corto para la cabecera (el largo va en el title y en el toast). */
+const TSHORT={repo:'Reponer «%p%» · pasillo %n%',spill:'Derrame · pasillo %n%',help:'Un cliente pide ayuda · pasillo %n%',call:'Te llaman al pasillo %n% (megafonía)',tour:'Turista %l% perdido · pasillo %n%',truck:'Camión en el muelle'};
 function spawnTask(){
   const pend=Object.values(meta.back).reduce((t,v)=>t+v,0);
   const T=pick(TASKS.filter(x=>x.k!=='truck'||pend>0));
   const p=pick(CAT.filter(x=>!x.age).sort((a,b)=>(meta.stock[a.id]||0)-(meta.stock[b.id]||0)).slice(0,6)),n=ri(1,9);
   const lg=T.k==='tour'?pick([['en','🇬🇧'],['fr','🇫🇷'],['de','🇩🇪'],['it','🇮🇹'],['pt','🇵🇹'],['zh','🇨🇳'],['ar','🇲🇦'],['ro','🇷🇴']]):null;
   const t={id:++uid,k:T.k,ic:T.ic,roles:T.roles,dur:T.dur,pen:T.pen,pid:p.id,n,lang:lg?lg[0]:null,
+    s:TSHORT[T.k].replace('%p%',p.n).replace('%n%',n).replace('%l%',lg?lg[1]:''),
     txt:T.t.replace('%p%',p.n).replace('%n%',n).replace('%l%',lg?lg[1]+' (habla '+LANG[lg[0]]+')':''),dl:run.t+TLIFE,who:null,until:0,span:1,match:true};
   run.tasks.push(t);
   toast(t.ic+' '+t.txt);beep(660,.12,'triangle',.05);
@@ -879,23 +897,24 @@ function updateTaskBars(){
   if(run.away){const el=document.querySelector('[data-away]');if(el)el.style.width=(clamp(1-(run.away.until-run.t)/run.away.span,0,1)*100)+'%';}
 }
 function renderTasks(){
-  const el=$('#tasks'),fab=$('#taskfab');if(!el)return;
-  if(!run){el.innerHTML='';fab.className='';return;}
-  const open=run.tasks.filter(t=>!t.who).length;
-  fab.className=open?'show':'';fab.textContent='📢 '+open+(open===1?' aviso':' avisos');
+  const el=$('#tasks'),al=$('#alerts');if(!el||!al)return;
+  if(!run){el.innerHTML='';al.innerHTML='';return;}
   const free=meta.emp.filter(isFree);
-  const tk=run.tasks.map(t=>{
-    let who;
-    if(t.who){const e=t.who==='me'?null:empById(t.who);who=`<div class="supd">${e?e.face+' '+e.name+' está en ello…':'Vas tú. La caja está cerrada.'}</div>`;}
-    else{
-      const sc=e=>(t.roles.includes(e.role)||e.pers==='servicial'?1:0)+(t.lang&&e.langs.includes(t.lang)?2:0);
-      const opts=free.slice().sort((a,b)=>sc(b)-sc(a)).slice(0,3).map(e=>{
-        const m=t.roles.includes(e.role),sp=t.lang&&e.langs.includes(t.lang);
-        return `<button class="btn ${m?'':'off'}" data-act="assign" data-t="${t.id}" data-e="${e.id}" title="${m?'Es de su puesto':'No es su puesto: tardará más y puede salir mal'}${sp?'. Habla su idioma':''}">${e.face} ${e.name}${sp?' 🗣️':''} <small>${ROLES[e.role].s}</small></button>`;
-      }).join('');
-      who=`<div class="who">${opts}<button class="btn" data-act="assign" data-t="${t.id}" data-e="me" ${run.away?'disabled':''}>🚶 Voy yo</button></div>`;
-    }
-    return `<div class="task"><div>${t.ic} ${t.txt}</div><div class="tb"><i data-tid="${t.id}"></i></div>${who}</div>`;
+  /* Avisos sin asignar: arriba, en la cabecera fija, para que se vean siempre. */
+  al.innerHTML=run.tasks.filter(t=>!t.who).map(t=>{
+    const sc=e=>(t.roles.includes(e.role)||e.pers==='servicial'?1:0)+(t.lang&&e.langs.includes(t.lang)?2:0);
+    const opts=free.slice().sort((a,b)=>sc(b)-sc(a)).slice(0,3).map(e=>{
+      const m=t.roles.includes(e.role),sp=t.lang&&e.langs.includes(t.lang);
+      return `<button class="btn ${m?'':'off'}" data-act="assign" data-t="${t.id}" data-e="${e.id}" title="${m?'Es de su puesto':'No es su puesto: tardará más y puede salir mal'}${sp?'. Habla su idioma':''}">${e.face} ${e.name}${sp?' 🗣️':''} <small>${ROLES[e.role].s}</small></button>`;
+    }).join('');
+    return `<div class="alert" title="${t.txt.replace(/"/g,'&quot;')}"><span class="at">${t.ic} ${t.s}</span>
+      <span class="who">${opts}<button class="btn" data-act="assign" data-t="${t.id}" data-e="me" ${run.away?'disabled':''}>🚶 Voy yo</button></span>
+      <span class="tb"><i data-tid="${t.id}"></i></span></div>`;
+  }).join('');
+  /* Avisos ya asignados: abajo, junto al estado del personal. */
+  const tk=run.tasks.filter(t=>t.who).map(t=>{
+    const e=t.who==='me'?null:empById(t.who);
+    return `<div class="task"><div>${t.ic} ${t.s}</div><div class="tb"><i data-tid="${t.id}"></i></div><div class="supd">${e?e.face+' '+e.name+' está en ello…':'Vas tú. La caja está cerrada.'}</div></div>`;
   }).join('');
   const crew=meta.emp.map(e=>{
     const d=run.duty[e.id];let s;
@@ -903,7 +922,7 @@ function renderTasks(){
     else if(d.busy)s='en un aviso';else s=e.role==='atc'?'en caja de apoyo':'en su puesto';
     return `<div>${e.face} ${flag(e)} ${e.name} · ${ROLES[e.role].s} · ${s}</div>`;
   }).join('');
-  el.innerHTML=`<div class="zone-title">AVISOS</div>${tk||'<div class="supd">Todo tranquilo. Por ahora.</div>'}
+  el.innerHTML=`<div class="zone-title">AVISOS EN CURSO</div>${tk||'<div class="supd">Nadie está con ningún aviso.</div>'}
     <div class="zone-title">PERSONAL EN TIENDA</div><div class="crew">${crew||'Nadie. Tú contra el mundo.'}</div>`;
   updateTaskBars();
 }
@@ -1294,9 +1313,7 @@ document.addEventListener('click',e=>{
   else if(a==='emp')empAct(+b.dataset.e,b.dataset.k);
   else if(a==='req')applyReq(+b.dataset.r,+b.dataset.o);
   else if(a==='hirec')hireCand(+b.dataset.c);
-  else if(a==='assign')assignTask(+b.dataset.t,b.dataset.e);
-  else if(a==='tasks'){const t=$('#tasks');if(t)t.scrollIntoView({behavior:'smooth',block:'center'});}
-  else if(a==='scan')scanItem(+b.dataset.id);
+  else if(a==='assign')assignTask(+b.dataset.t,b.dataset.e);  else if(a==='scan')scanItem(+b.dataset.id);
   else if(a==='idyes')idDecision(true);
   else if(a==='idno')idDecision(false);
   else if(a==='bag')toggleBag();
