@@ -128,6 +128,18 @@ button:focus-visible{outline:3px solid var(--tag);outline-offset:2px}
 .card .sum b{text-align:right}
 .card .sum .tot{border-top:2px dashed var(--ink);padding-top:6px;margin-top:4px;font-weight:500}
 .shop{display:flex;flex-direction:column;gap:6px}
+.gshelf.inv5{grid-template-columns:repeat(5,1fr)}.gshelf.inv5 .fc{min-height:44px}.gshelf.inv5 .fc .pk{font-size:22px}
+.numpad{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.nk{font-family:var(--led);font-size:22px;background:linear-gradient(#4a5157,#353b40);color:#e9f1ec;border-radius:8px;padding:8px 0;box-shadow:0 3px 0 #0d0f10}
+.nk:active{transform:translateY(2px);box-shadow:0 1px 0 #0d0f10}
+.ordh,.ordl{display:grid;grid-template-columns:1fr 30px 30px 36px 62px;gap:4px;align-items:center;text-align:right;font-size:12px}
+.ordh{font-size:9px;letter-spacing:1px;color:#5b5646}.ordh span:first-child,.ordl span{text-align:left}
+.ordl{background:transparent;border-bottom:1px dashed #c9c1ad;padding:5px 2px;width:100%}.ordl small{font-size:10px;color:#5b5646}
+.ordl.on{background:rgba(42,157,92,.14)}.ordl b{font-family:var(--led);font-size:15px;font-weight:400;white-space:nowrap}.ordl b:last-child{font-size:13px}
+.ordt{display:flex;justify-content:space-between;font-weight:700;font-size:12px;padding-top:4px}.ordt.bad{color:var(--sign)}
+.kk{display:none;font-style:normal;font-family:var(--led);font-size:11px;background:rgba(0,0,0,.12);border-radius:4px;padding:0 4px;margin-right:4px}
+.kbd{display:none;font-size:10px;color:var(--mute);text-align:center;padding:4px 0 0;line-height:1.5}.kbd b{font-family:var(--led);font-weight:400;background:#fff;border:1px solid #cfc8b6;border-radius:4px;padding:0 4px;color:var(--ink)}
+@media (hover:hover) and (pointer:fine){.kbd{display:block}.kk{display:inline}}
 .row.cashbtns{display:grid;grid-template-columns:auto auto auto 1fr;gap:6px}.row.cashbtns .btn{white-space:nowrap;padding:9px 10px;width:auto;min-width:0}
 .fin .sum .hd{font-size:10px;letter-spacing:2px;color:var(--mute);margin-top:4px}
 .fin .sum .neg{color:var(--sign)}.fin .sum .pos{color:var(--ok)}
@@ -1217,16 +1229,16 @@ function almRoutine(){
     if(p){const n=aisleOf(p.id);const t=almTask('repo','📦',10,TSHORT.repo.replace('%p%',p.n).replace('%n%',n),'Se está acabando «'+p.n+'» en el pasillo '+n+' y queda en el almacén: hay que reponer.',{pid:p.id,n,roles:['alm','atc']});t.pen=0.1;}
   }
   if(run.closing||!alm.some(e=>!e.real))return;
-  if(!open('inv').length&&run.t-(run.invAt||-20)>30){run.invAt=run.t;const n=ri(1,9);almTask('inv','📋',9,'Inventario del pasillo '+n,'Contar lo que queda en el pasillo '+n+' y apuntar lo que falta.',{n,npc:1});}
-  if(!open('order').length&&run.t-(run.ordAt||-20)>20&&lowList().length&&meta.money>0){run.ordAt=run.t;almTask('order','🧾',8,'Pedido a Hacendado de lo que se acaba','Hacer el pedido de lo que se acaba al distribuidor.',{npc:1});}
+  if(!open('inv').length&&run.t-(run.invAt||-20)>30){run.invAt=run.t;const n=ri(1,9);almTask('inv','📋',9,'Inventario del pasillo '+n,'Contar lo que queda en el pasillo '+n+' y apuntar lo que falta.',{n});}
+  if(!open('order').length&&run.t-(run.ordAt||-20)>20&&lowList().length&&meta.money>0){run.ordAt=run.t;almTask('order','🧾',8,'Pedido a Hacendado de lo que se acaba','Hacer el pedido de lo que se acaba al distribuidor.');}
 }
+/* Presupuesto de un pedido: el 35% del bote y, en todo el turno, el 80% de lo que había al abrir (mín. 50 €). */
+const orderBudget=()=>Math.max(0,Math.min(Math.floor(meta.money*0.35),Math.max(5000,Math.round((run.m0||meta.money)*0.8))-(run.autoBuy||0)));
 function autoOrder(e,ok){
   if(meta.money<=0)return;
-  const low=lowList().sort((a,b)=>(meta.stock[a.id]||0)-(meta.stock[b.id]||0)).slice(0,12);
+  const pr=run.prio||[],low=lowList().sort((a,b)=>(pr.includes(b.id)-pr.includes(a.id))||(meta.stock[a.id]||0)-(meta.stock[b.id]||0)).slice(0,12);
   if(!low.length)return;
-  /* Tope: el 35% del bote por pedido y, en todo el turno, el 80% de lo que había al abrir (mín. 50 €). */
-  const cap=Math.max(5000,Math.round((run.m0||meta.money)*0.8))-(run.autoBuy||0);
-  const budget=Math.min(Math.floor(meta.money*0.35),cap),items={};let cost=0,n=0;
+  const budget=orderBudget(),items={};let cost=0,n=0;
   (ok?low:low.slice(0,Math.ceil(low.length/2))).forEach(x=>{const c=6*unitCost(x,'hac');if(cost+c<=budget){items[x.id]=6;cost+=c;n++;}});
   if(!n)return;
   meta.money-=cost;noteBuy(cost);run.autoBuy=(run.autoBuy||0)+cost;meta.orders.push({day:meta.day+1,sup:'hac',items});
@@ -1236,6 +1248,16 @@ function autoOrder(e,ok){
 }
 /* Compras a distribuidores: cuentan en el turno en curso; las del cierre, en el turno siguiente. */
 function noteBuy(c){if(run&&!run.over&&!run.remote)run.buy=(run.buy||0)+c;else meta.buyNext=(meta.buyNext||0)+c;}
+/* Datos de los minijuegos de inventario y pedido (los calcula el jefe; al empleado real le llegan en el aviso). */
+function invData(n){const ps=shuffle(CAT.filter(x=>aisleOf(x.id)===n)).slice(0,4);return ps.map(x=>[x.id,clamp(meta.stock[x.id]||0,0,9)]);}
+function ordData(){
+  const inc=incoming(),row=x=>[x.id,meta.stock[x.id]||0,meta.back[x.id]||0,inc[x.id]||0,6*unitCost(x,'hac')];
+  const need=lowList().sort((a,b)=>(meta.stock[a.id]||0)-(meta.stock[b.id]||0)).slice(0,5);
+  const ok=shuffle(CAT.filter(x=>!need.includes(x)&&(meta.stock[x.id]||0)+(meta.back[x.id]||0)+(inc[x.id]||0)>=3)).slice(0,7-need.length);
+  return {c:shuffle(need.concat(ok)).map(row),bud:orderBudget()};
+}
+function startInv(t){const d=t.inv&&t.inv.length?t.inv:invData(t.n||1);return {kind:'inv',t,list:d.map(([id,q])=>({p:CAT.find(x=>x.id===+id)||CAT[0],q:+q,said:null,slots:shuffle(Array.from({length:10},(_,i)=>i<+q))})),i:0};}
+function startOrd(t){const d=t.ord&&t.ord.c?t.ord:ordData();return {kind:'order',t,bud:+d.bud||0,c:toArr(d.c).map(([id,s,b,c,cost])=>({p:CAT.find(x=>x.id===+id)||CAT[0],s:+s,b:+b,c:+c,cost:+cost,need:(+s)+(+b)+(+c)<=2,on:false}))};}
 function placeOrder(){
   const cost=cartCost(),sup=SUPS.find(z=>z.k===ordSup);
   if(cost<=0||meta.money<cost)return;
@@ -1529,7 +1551,7 @@ async function fillRanking(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.15-19';
+const APPV='2026.11.15-20';
 /* Compara versiones por números («-9» < «-11»), no como texto. */
 const verCmp=(a,b)=>{const x=String(a).split(/[.-]/).map(Number),y=String(b).split(/[.-]/).map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
 try{const vt=document.createElement('div');vt.id='vtag';vt.textContent='v'+APPV;document.body.appendChild(vt);}catch(e){}
@@ -1937,7 +1959,7 @@ function pubState(force){
   const tasks=run&&!run.over?run.tasks.map(t=>{
     const e=typeof t.who==='number'?empById(t.who):null,left=(t.who?t.until:t.dl)-run.t;
     return {id:t.id,k:t.k,ic:t.ic,s:t.s,txt:t.txt,n:t.n||0,cand:t.cand||null,fd:t.fd||null,pid:t.pid||0,lang:t.lang||'',roles:t.roles,npc:t.npc?1:0,left:isFinite(left)?Math.max(0,Math.round(left)):-1,
-      who:t.who==='me'?'jefe':e?(e.real||e.name):'',bk:t.k==='truck'?Object.keys(meta.back).filter(id=>meta.back[id]>0).map(Number).slice(0,12):[],
+      who:t.who==='me'?'jefe':e?(e.real||e.name):'',inv:t.k==='inv'?(t.inv||(t.inv=invData(t.n))):null,ord:t.k==='order'?(t.ord||(t.ord=ordData())):null,bk:t.k==='truck'?Object.keys(meta.back).filter(id=>meta.back[id]>0).map(Number).slice(0,12):[],
       dept:t.dept||'',mis:!!t.mis,refund:t.refund||0};
   }):[];
   const phase=!run?'lobby':run.over?(run.dead?'dead':meet?'meeting':'shop'):run.closing?'closing':'open';
@@ -2214,7 +2236,7 @@ function finishTask(t){
 function expireTask(t){
   run.tasks=run.tasks.filter(x=>x!==t);
   if(t.k==='tk'){renderAll();return;}
-  if(t.npc){toast('Nadie de Almacén pudo con: '+t.ic+' '+t.s,'bad');renderAll();return;}
+  if(t.k==='inv'||t.k==='order'){toast('Nadie de Almacén pudo con: '+t.ic+' '+t.s,'bad');renderAll();return;}
   run.tlost++;
   meta.rep=clamp(meta.rep-t.pen,0,5);
   if(t.k==='spill'&&Math.random()<0.3){addTicket('back','Un cliente se resbaló en el pasillo '+t.n,ri(1000,3000),3,false);toast('Nadie limpió el pasillo '+t.n+' y alguien se ha caído','bad');}
@@ -2524,6 +2546,50 @@ function finishSpill(){
   mg.early=mg.early||false;
   mg.x={cut:mg.cut?1:0,notOut:mg.out?0:1,wrongOut:mg.wrongOut,wetLeft:wet,glass:mg.glass?1:0,pid:mg.p.id};
   return endMG(clamp(1-(mg.early?0.3:0)-(mg.cut?0.3:0)-(mg.out?0:0.2)-0.1*wet-0.1*mg.wrongOut,0,1));
+}
+/* Inventario: contar las unidades de la góndola y apuntarlo en la PDA. Pedido: hoja de pedido con presupuesto. */
+function invBody(){
+  if(mg.kind==='inv'){
+    const L=mg.list;
+    if(mg.i>=L.length){
+      return `<div class="pdadev"><div class="pdahead"><span>PDA VM-3000</span><span>📶 🔋</span></div><div class="pdascr"><div class="pdat">INVENTARIO · PASILLO ${mg.t.n}</div>
+        ${L.map(u=>`<div class="pdarow"><span>${u.p.e}</span><small>${esc(u.p.n)}</small><b>${u.said}${u.said!==u.q?' ✗':''}${u.said<=2?' ⚠️':''}</b></div>`).join('')}</div><div class="pdakeys"><i></i><i></i><i></i></div></div>
+        <div class="brief">⚠️ = queda poco: se manda a pedidos. ${L.filter(u=>u.said!==u.q).length?'Hay recuentos que no cuadran (✗).':'Todo contado bien.'}</div>
+        <button class="btn go" data-act="mginvsend">📲 Enviar el recuento a pedidos</button>`;
+    }
+    const u=L[mg.i],cold=zoneOf(u.p.id)==='frio';
+    const cell=f=>f?`<span class="fc"><span class="pk">${u.p.e}</span></span>`:'<span class="fc empty"></span>';
+    return `<div class="mgsteps">${L.map((x,j)=>`<span class="${j===mg.i?'on':j<mg.i?'ok':''}">${j<mg.i?'✔':j+1} ${x.p.e}</span>`).join('')}</div>
+      <div class="brief">📋 Cuenta cuántas unidades de <b>${u.p.e} ${esc(u.p.n)}</b> quedan en el lineal y apúntalo.</div>
+      <div class="gondola ${cold?'fridge':''}">${cold?'<div class="fridge-top">❄️ MURAL REFRIGERADO</div>':''}
+        <div class="gshelf inv5">${u.slots.slice(0,5).map(cell).join('')}</div><div class="rail"><span class="ptag"><b>${fmt(u.p.p)}</b><small>${esc(u.p.n)}</small></span></div>
+        <div class="gshelf inv5">${u.slots.slice(5).map(cell).join('')}</div></div>
+      <div class="pdadev"><div class="pdahead"><span>PDA · PASILLO ${mg.t.n}</span><span>${mg.i+1}/${L.length}</span></div>
+        <div class="numpad">${Array.from({length:10},(_,k)=>`<button class="nk" data-act="mgcount" data-k="${k}">${k}</button>`).join('')}</div></div>`;
+  }
+  const C=mg.c,tot=C.filter(x=>x.on).reduce((a,x)=>a+x.cost,0),over=tot>mg.bud;
+  return `<div class="brief">🧾 Pide lo que se acaba (entre estantería, almacén y lo que ya viene quedan <b>2 o menos</b>). Lo que va sobrado, no: es dinero parado.</div>
+    <div class="clip"><i class="clamp"></i><div class="paper"><div class="phd"><b>HOJA DE PEDIDO</b><small>Hacendado Directo · llega mañana</small></div>
+      <div class="ordh"><span></span><span>Est.</span><span>Alm.</span><span>Viene</span><span>Lote 6</span></div>
+      ${C.map((x,i)=>`<button class="ordl ${x.on?'on':''}" data-act="mgordl" data-i="${i}"><span>${x.on?'☑':'☐'} ${x.p.e} <small>${esc(x.p.n)}</small></span><b>${x.s}</b><b>${x.b}</b><b>${x.c}</b><b>${fmt(x.cost)}</b></button>`).join('')}
+      <div class="ordt ${over?'bad':''}"><span>Total ${fmt(tot)}</span><span>Presupuesto ${fmt(mg.bud)}</span></div></div></div>
+    <button class="btn go" data-act="mgordsend" ${over||!tot?'disabled':''}>📠 ${over?'Te pasas del presupuesto':'Enviar el pedido'}</button>
+    <button class="btn" data-act="mgordnone">✋ No hace falta pedir nada</button>`;
+}
+function invAct(a,b){
+  if(mg.kind==='inv'){
+    if(a==='mgcount'){const u=mg.list[mg.i];if(!u)return;u.said=+b.dataset.k;if(u.said===u.q)sBeep();else{sBad();mg.fx={sel:'.gondola',k:'bad'};}mg.i++;}
+    else if(a==='mginvsend'){const L=mg.list;mg.x={low:L.filter(u=>u.said<=2).map(u=>u.p.id),ok:L.filter(u=>u.said===u.q).length,n:L.length};return endMG(mg.x.ok/L.length);}
+  }else{
+    if(a==='mgordl'){const x=mg.c[+b.dataset.i];if(x){x.on=!x.on;sCoin();}}
+    else if(a==='mgordsend'||a==='mgordnone'){
+      const C=mg.c,need=C.filter(x=>x.need).length,hit=C.filter(x=>x.need&&x.on).length,waste=C.filter(x=>!x.need&&x.on).length;
+      if(a==='mgordnone')C.forEach(x=>{x.on=false;});
+      const sc=a==='mgordnone'?(need?0:1):clamp((need?hit/need:1)-0.25*waste,0,1);
+      mg.x={items:Object.fromEntries(C.filter(x=>x.on).map(x=>[x.p.id,6])),miss:need-hit,waste};return endMG(sc);
+    }
+  }
+  renderMG();
 }
 function almBody(){
   const steps=(names,cur)=>'<div class="mgsteps">'+names.map((n,i)=>`<span class="${i===cur?'on':i<cur?'ok':''}">${i<cur?'✔':i+1} ${n}</span>`).join('')+'</div>';
@@ -2931,6 +2997,8 @@ function startMG(t){
   else if(t.k==='truck')mg=startRecv(t);
   else if(t.k==='tk'&&t.dept==='back')mg=startRefund(t);
   else if(t.k==='tk'&&t.dept==='alm')mg=startAgot(t);
+  else if(t.k==='inv')mg=startInv(t);
+  else if(t.k==='order')mg=startOrd(t);
   else if(t.k==='cash')mg=startCash(t);
   else if(t.k==='tk'&&t.dept==='rrpp')mg=startSocial(t);
   else if(t.k==='help'||t.k==='tour')mg=startMap(t);
@@ -2958,7 +3026,8 @@ function renderMG(){
   if(!mg||mg.kind==='sup')return;
   const t=mg.t,cv=run&&run.away&&run.away.cover&&empById(run.away.cover);
   let body='';
-  if(mg.kind==='rot'||mg.kind==='recv'||mg.kind==='spill2'||mg.kind==='agot')body=almBody();
+  if(mg.kind==='inv'||mg.kind==='order')body=invBody();
+  else if(mg.kind==='rot'||mg.kind==='recv'||mg.kind==='spill2'||mg.kind==='agot')body=almBody();
   else if(mg.kind==='refund'||mg.kind==='cash')body=backBody();
   else if(mg.kind==='social'||mg.kind==='map')body=rrppBody();
   else if(mg.kind==='cv'||mg.kind==='feud')body=rrhhBody();
@@ -2987,7 +3056,7 @@ function renderMG(){
       <div class="zones">${ZONES.map(z=>`<button class="btn" data-act="mgzone" data-z="${z[0]}">${z[1]}</button>`).join('')}</div>
       <div class="supd">Bien colocadas: ${mg.ok}</div>`;
   }
-  const TH={rot:'alm',recv:'alm',spill2:'alm',agot:'alm',refund:'back',cash:'back',social:'rrpp',map:'rrpp',cv:'rrhh',feud:'rrhh'}[mg.kind];
+  const TH={rot:'alm',recv:'alm',spill2:'alm',agot:'alm',inv:'alm',order:'alm',refund:'back',cash:'back',social:'rrpp',map:'rrpp',cv:'rrhh',feud:'rrhh'}[mg.kind];
   const THN={alm:'📦 ALMACÉN',back:'💼 BACKOFFICE',rrpp:'📣 RELACIONES PÚBLICAS',rrhh:'🗂️ RECURSOS HUMANOS'}[TH];
   openMG(`<div class="card mgc ${TH?'th-'+TH:''}">${TH?`<span class="dept-badge">${THN}</span>`:''}<h3>${t.ic} ${t.s}</h3>
     <div class="supd">${mg.remote?'Tienes '+REAL_LIM+' s desde que lo cogiste. El jefe lo ve todo.':cv?cv.face+' '+cv.name+' te cubre la caja.':'Tu caja está cerrada y la cola espera. Date prisa.'}</div>${body}</div>`);
@@ -2996,6 +3065,7 @@ function renderMG(){
 function mgAct(a,b){
   if(!mg||mg.kind==='sup')return;
   if(mg.kind==='agot'){if(a==='mgagot'){const o=mg.opts[+b.dataset.i];if(o)return endMG(o[1]);}return;}
+  if(mg.kind==='inv'||mg.kind==='order')return invAct(a,b);
   if(mg.kind==='rot'||mg.kind==='recv'||mg.kind==='spill2')return almAct(a,b);
   if(mg.kind==='refund'||mg.kind==='cash')return backAct(a,b);
   if(mg.kind==='social'||mg.kind==='map')return rrppAct(a,b);
@@ -3017,7 +3087,7 @@ function mgAct(a,b){
   }
   renderMG();
 }
-const MGK={repo:'rot',call:'rot',spill:'spill2',help:'ask',tour:'ask',truck:'recv',tk:'tk',cash:'cash',cv:'cv',feud:'feud'};
+const MGK={inv:'inv',order:'order',repo:'rot',call:'rot',spill:'spill2',help:'ask',tour:'ask',truck:'recv',tk:'tk',cash:'cash',cv:'cv',feud:'feud'};
 const TKO={back:[['💶 Comprobar el ticket y devolver lo que toca',1],['💸 Devolverle el doble para que se calle',0],['🙅 Decirle que sin ticket regalo no hay nada',0]],
  rrpp:[['🙏 Pedir perdón y ofrecerle un vale de 5 €',1],['😏 Contestarle en redes con ironía',0],['🙈 Ignorarlo, ya se cansará',0]],
  alm:[['📦 Mirar en el almacén y apartárselo',1],['🤷 Que vuelva otro día, a ver si hay suerte',0],['🙄 Decirle que ese producto no existe',0]]};
@@ -3039,7 +3109,17 @@ function applyMG(t,sc,early,e,x){
   const kind=MGK[t.k]||'recv';x=x||{};
   let msg='',good=sc>=0.6;
   const lose=(id,n)=>{n=Math.max(0,Math.round(+n||0));const s=Math.min(n,meta.stock[id]||0);meta.stock[id]=(meta.stock[id]||0)-s;return n;};
-  if(kind==='rot'){
+  if(kind==='inv'){
+    const low=toArr(x.low).map(Number).filter(id=>CAT.some(y=>y.id===id));
+    if(good){run.prio=(run.prio||[]).concat(low);run.ordAt=-99;}
+    msg='Inventario del pasillo '+t.n+': '+(+x.ok||0)+' de '+(+x.n||0)+' bien contados'+(good?(low.length?' · '+low.length+' a pedidos':' · nada que pedir'):' · recuento poco fiable, no se manda a pedidos')+'.';
+  }else if(kind==='order'){
+    let cost=0;const items={};
+    Object.keys(x.items||{}).forEach(id=>{const p=CAT.find(y=>y.id===+id);if(!p)return;const c=6*unitCost(p,'hac');if(cost+c<=meta.money){items[id]=6;cost+=c;}});
+    if(cost){meta.money-=cost;noteBuy(cost);run.autoBuy=(run.autoBuy||0)+cost;meta.orders.push({day:meta.day+1,sup:'hac',items});}
+    run.ordAt=run.t;
+    msg=(cost?'Pedido a Hacendado: '+Object.keys(items).length+' productos ('+fmt(cost)+'), llega mañana':'Sin pedido')+(+x.miss?' · se han quedado '+x.miss+' sin pedir':'')+(+x.waste?' · '+x.waste+' iban sobrados':'')+'.';
+  }else if(kind==='rot'){
     const mv=moveStock(t.pid,Math.round(8*sc)),p=CAT.find(y=>y.id===t.pid)||CAT[0],L=[];
     const merma=lose(t.pid,x.merma);if(merma)L.push(merma+' a merma');
     if(+x.badLeft>0&&Math.random()<0.5){addTicket('rrpp','Ha encontrado '+p.n+' caducado en la estantería',0,2,false);meta.rep=clamp(meta.rep-0.15,0,5);L.push('se ha quedado algo caducado a la vista');}
@@ -3516,11 +3596,11 @@ function renderRegister(){
     el.innerHTML=`<div class="led"><small>RECLAMACIÓN</small><b>📣</b></div>
       <div class="idcard"><h4>${q.title.toUpperCase()}</h4><div>«${q.t}»</div>
       <div class="hintline">Dinero y cobros → Backoffice · Trato y redes → RR.PP. · Agotados → Almacén · Dudas → tú</div>
-      <div class="routes"><button class="btn go" data-act="route" data-d="atc">Resolver yo (ATC)</button>
-      <button class="btn" data-act="route" data-d="back">Backoffice</button>
-      <button class="btn" data-act="route" data-d="rrpp">RR.PP.</button>
-      <button class="btn" data-act="route" data-d="alm">Almacén</button>
-      <button class="btn no" data-act="route" data-d="no">Rechazar</button></div></div>${supBtn()}`;
+      <div class="routes"><button class="btn go" data-act="route" data-d="atc"><i class="kk">1</i>Resolver yo (ATC)</button>
+      <button class="btn" data-act="route" data-d="back"><i class="kk">2</i>Backoffice</button>
+      <button class="btn" data-act="route" data-d="rrpp"><i class="kk">3</i>RR.PP.</button>
+      <button class="btn" data-act="route" data-d="alm"><i class="kk">4</i>Almacén</button>
+      <button class="btn no" data-act="route" data-d="no"><i class="kk">5</i>Rechazar</button></div></div>${supBtn()}${KBD}`;
     return;
   }
   const t=totalOf(c);
@@ -3553,7 +3633,7 @@ function renderRegister(){
       <div class="denoms">${d}</div>
       <div class="row cashbtns"><button class="btn ${c.bag?'on':''}" data-act="bag" title="Bolsa +0,15 €">🛍️ Bolsa</button><button class="btn" data-act="undo" title="Quitar la última moneda o billete" ${run.tray.length?'':'disabled'}>↩️ Quitar</button><button class="btn" data-act="clear" title="Vaciar la bandeja" ${run.tray.length?'':'disabled'}>🗑️</button><button class="btn go" data-act="deliver">Dar cambio</button></div>`;
   }
-  el.innerHTML=h+supBtn();
+  el.innerHTML=h+supBtn()+KBD;
 }
 function renderAll(){renderHud();renderQueue();renderBelt();renderRegister();renderTasks();if(typeof renderDept==='function')renderDept();}
 
@@ -3874,6 +3954,7 @@ const GUIDE={
   ['🎯','<b>Tu misión:</b> cobrar rápido y sin fallos a los clientes que te manda la tienda a tu caja.'],
   ['🛒','Toca cada producto de la cinta para pasarlo por el escáner. Los de <b>código dañado</b> (borde rojo) piden 3 toques.'],
   ['🪪','Si lleva <b>alcohol (18+)</b>, mira la fecha de nacimiento del DNI. Vender a un menor = 50 € de multa y reputación por los suelos.'],
+  ['⌨️','Con teclado va más rápido: <b>Espacio</b> escanea, <b>B</b> bolsa, <b>Intro</b> cobra o da el cambio, <b>S</b>/<b>N</b> en el DNI, <b>⌫</b> quita la última moneda.'],
   ['🛍️','<b>Bolsa:</b> si la pide, añádela. Si no la pide, ni se te ocurra cobrarla.'],
   ['💶','<b>Tarjeta:</b> cobra y espera. <b>Efectivo:</b> pon en la bandeja el cambio exacto y dale a «Dar cambio». De más, lo pierde la tienda; de menos, no te lo aceptan.'],
   ['📨','<b>Reclamaciones:</b> las dudas, las resuelves tú. Dinero, a Backoffice. Trato y redes, a RR.PP. Agotados, a Almacén. Si la mandas mal, sale mal.'],
@@ -3884,6 +3965,8 @@ const GUIDE={
   ['📦','<b>Reponer:</b> 1) coge del almacén la caja buena (hay parecidas); 2) retira del lineal lo <b>caducado</b> (mira la fecha contra la de hoy) o <b>roto</b>; 3) pon lo nuevo <b>detrás</b>, que lo viejo se vende antes; 4) pon la etiqueta con el precio de la PDA del producto correcto.'],
   ['🚚','<b>Camión:</b> compara el <b>albarán</b> con lo que ha bajado y marca cada línea (bien, falta o roto) antes de firmar: lo apuntado lo abona el proveedor y lo que no, lo pagas. Luego ubica cada caja en su zona, <b>lo de frío primero</b> o se echa a perder.'],
   ['🧴','<b>Derrame:</b> cartel → si es cristal, recoge los cristales antes de fregar (o te cortas) → friega → retira el producto roto → quita el cartel solo con el suelo seco.'],
+  ['📋','<b>Inventario:</b> cuenta las unidades de cada producto del pasillo en la góndola y apúntalo en la PDA. Lo que tenga 2 o menos se manda a pedidos. Si cuentas mal, el recuento no vale.'],
+  ['🧾','<b>Pedido:</b> en la hoja de pedido marca lo que se acaba (entre estantería, almacén y lo que ya viene, 2 o menos) sin pasarte del presupuesto. Lo que va sobrado es dinero parado; lo que no pides, mañana falta.'],
   ['📨','Las <b>reclamaciones por producto agotado</b> te llegan a ti: elige bien qué hacer.'],
   ['⭐','<b>Te valoran por</b> los avisos bien hechos. Tienes 60 s por aviso; cada fallo tiene su consecuencia (merma, reclamaciones, caídas).']]},
  back:{t:'💼 Backoffice',steps:[
@@ -3908,6 +3991,7 @@ const GUIDE={
  j_caja:{t:'🧾 Caja · jefe',steps:[
   ['🎯','Aquí cobras tú en la <b>Caja 3</b>. Si cambias de pestaña, un cajero de la casa se pone en tu caja y tú diriges.'],
   ['🛒','Toca cada producto para escanearlo, revisa el DNI del alcohol, la bolsa, y cobra con tarjeta o con el cambio exacto.'],
+  ['⌨️','En el ordenador, con teclado: <b>Espacio</b> escanea, <b>B</b> bolsa, <b>Intro</b> cobra o da el cambio, <b>S</b>/<b>N</b> en el DNI, <b>⌫</b> quita la última moneda y <b>1–5</b> deriva una reclamación.'],
   ['🔔','A la derecha (en el móvil, en la 🔔) salen los <b>avisos</b>: asigna a alguien de ese departamento (nadie hace trabajo de otro), mándale con «📢 Mandar a…» aunque esté ocupado, ve tú con «Voy yo» o usa <b>⚡ Asignar todo</b>.'],
   ['🧾','Si hay cajeros reales, abren la <b>Caja 1 y la Caja 2</b> y la tienda les reparte la cola.']]},
  j_alm:{t:'📦 Almacén · jefe',steps:[
@@ -4077,6 +4161,27 @@ function onClick(e){
   if(run&&run.over&&!run.dead&&meta.closed)saveGame(true);
 }
 const errMsg=err=>(err&&(err.code||err.message))||String(err);
+/* Atajos de teclado en la caja (solo con ratón y teclado): Espacio escanea, B bolsa, Intro cobra o da el cambio,
+   S/N en el DNI, Retroceso quita la última moneda, 1–5 deriva una reclamación y Esc cancela una ventana. */
+const KBD='<div class="kbd">⌨️ <b>Espacio</b> escanear · <b>B</b> bolsa · <b>Intro</b> cobrar / dar cambio · <b>S</b>/<b>N</b> DNI · <b>⌫</b> quitar moneda · <b>1–5</b> reclamación</div>';
+document.addEventListener('keydown',ev=>{
+  const tg=ev.target;if(tg&&(tg.tagName==='INPUT'||tg.tagName==='TEXTAREA'||tg.tagName==='SELECT'||tg.isContentEditable))return;
+  if(ev.ctrlKey||ev.metaKey||ev.altKey)return;
+  const k=ev.key.toLowerCase(),show=id=>{const x=$(id);return x&&x.classList.contains('show');};
+  if(k==='escape'){const x=document.querySelector('#mg.show [data-act=leavecancel],#guide.show [data-act=gclose]');if(x){ev.preventDefault();x.click();}return;}
+  if(!run||run.over||show('#overlay')||show('#mg')||show('#guide'))return;
+  if(!run.remote&&tab!=='caja')return;
+  const q=sel=>document.querySelector('#register '+sel+':not([disabled])');
+  let el=null;
+  if(k===' ')el=document.querySelector('#belt .item');
+  else if(k==='b')el=q('[data-act=bag]');
+  else if(k==='enter')el=q('[data-act=pay]')||q('[data-act=card]')||q('[data-act=deliver]')||q('[data-act=return]');
+  else if(k==='s')el=q('[data-act=idyes]');
+  else if(k==='n')el=q('[data-act=idno]');
+  else if(k==='backspace')el=q('[data-act=undo]');
+  else if(/^[1-5]$/.test(k))el=q('[data-act=route][data-d="'+['atc','back','rrpp','alm','no'][+k-1]+'"]');
+  if(el){ev.preventDefault();if(document.activeElement&&document.activeElement.blur)document.activeElement.blur();el.click();}
+});
 document.addEventListener('click',e=>{try{onClick(e);}catch(err){console.error(err);toast('⚠️ Error: '+errMsg(err),'bad');}});
 window.addEventListener('unhandledrejection',ev=>{console.error(ev.reason);toast('⚠️ Error: '+errMsg(ev.reason),'bad');});
 
