@@ -571,6 +571,68 @@ button.pdarow:hover{background:rgba(19,54,31,.15)}
 
 @media (max-width:420px){.floor{height:170px}.p3{left:170px}.p4{left:230px}.shard.s1{left:200px}.doors{grid-template-columns:repeat(2,1fr)}}
 @media (prefers-reduced-motion:reduce){.laser,.wetsign,.shard{animation:none}}
+/* Backoffice: mesa de oficina, ticket térmico, cajón de caja, datáfono y vale */
+.office{background:linear-gradient(90deg,rgba(0,0,0,.05) 1px,transparent 1px) 0 0/34px 100%,linear-gradient(#a7774b,#8f6239);border-radius:10px;padding:12px;box-shadow:inset 0 0 0 3px #6f4a29,0 4px 0 rgba(0,0,0,.3);display:flex;flex-direction:column;gap:10px}
+.desk-row{display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap}
+.desk-side{flex:1 1 140px;display:flex;flex-direction:column;gap:8px}
+.thermal{flex:1 1 220px;max-width:300px;background:#fbfbf7;font-family:var(--body);font-size:11px;color:#2d2d2d;padding:10px 10px 18px;display:flex;flex-direction:column;gap:1px;box-shadow:0 3px 8px rgba(0,0,0,.35);transform:rotate(-1.2deg);
+  -webkit-mask:conic-gradient(from -45deg at bottom,#0000,#000 1deg 89deg,#0000 90deg) 50%/10px 100%;mask:conic-gradient(from -45deg at bottom,#0000,#000 1deg 89deg,#0000 90deg) 50%/10px 100%}
+.th-logo{font-family:var(--display);text-align:center;font-size:14px;letter-spacing:1px}
+.th-sub{text-align:center;font-size:9px;color:#6b6b6b;border-bottom:1px dashed #999;padding-bottom:4px;margin-bottom:4px}
+.thermal .tl{display:flex;justify-content:space-between;gap:6px;padding:2px 4px;border-radius:40%;text-align:left;font-size:11px;color:#2d2d2d}
+.thermal .tl.circled{box-shadow:0 0 0 2px #c62828;background:rgba(198,40,40,.06)}
+.thermal .tt{display:flex;justify-content:space-between;border-top:1px dashed #999;margin-top:4px;padding-top:4px;font-weight:700}
+.thermal .tp{font-size:9px;color:#555}
+.th-bc{display:block;height:22px;margin:6px 8px 2px;background:repeating-linear-gradient(90deg,#222 0 2px,transparent 2px 3px,#222 3px 4px,transparent 4px 7px)}
+.th-thanks{text-align:center;font-size:9px;color:#777}
+.shelflabel{background:var(--tag);border-radius:4px;padding:6px 8px;box-shadow:0 3px 0 rgba(0,0,0,.3);display:flex;flex-direction:column;transform:rotate(1.5deg)}
+.shelflabel small{font-size:8px;letter-spacing:1px}.shelflabel b{font-family:var(--led);font-size:30px;line-height:1}.shelflabel span{font-size:10px}
+.note{background:#fff59d;padding:8px;font-size:11px;box-shadow:0 3px 0 rgba(0,0,0,.25);transform:rotate(-2deg);font-family:cursive}
+.drawer{background:linear-gradient(#3a3f44,#2a2e32);border-radius:8px;padding:8px;display:flex;flex-direction:column;gap:6px;box-shadow:inset 0 3px 8px rgba(0,0,0,.6)}
+.dr-bills{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.dr-coins{display:grid;grid-template-columns:repeat(8,1fr);gap:4px}
+.slot{position:relative;background:#1f2326;border-radius:5px;min-height:46px;display:flex;align-items:center;justify-content:center;box-shadow:inset 0 2px 4px rgba(0,0,0,.6);padding:4px}
+.slot:active .money{transform:translateY(-4px)}
+.money{font-style:normal;font-weight:700;display:flex;align-items:center;justify-content:center;color:#1b1f1d;transition:transform .08s}
+.money.bill{width:100%;height:32px;border-radius:3px;font-size:11px;box-shadow:inset 0 0 0 2px rgba(255,255,255,.35),0 1px 0 rgba(0,0,0,.4)}
+.money.under{position:absolute;inset:auto 6px 4px;height:28px;opacity:.55;z-index:-0;pointer-events:none}
+.slot .money:not(.under){position:relative;z-index:1}
+.money.b50{background:linear-gradient(90deg,#f6a65a,#ef8b33)}.money.b20{background:linear-gradient(90deg,#86aee9,#5b8fd9)}.money.b10{background:linear-gradient(90deg,#ec8f89,#e0645f)}.money.b5{background:linear-gradient(90deg,#a9d0a5,#7cb87a)}
+.money.coin{width:34px;height:34px;border-radius:50%;font-size:9px;box-shadow:inset 0 -2px 0 rgba(0,0,0,.25),0 1px 0 rgba(0,0,0,.5)}
+.money.coin.bi{background:radial-gradient(circle,#dfe3e6 0 52%,#d8b24a 54%);}
+.money.coin.au{background:radial-gradient(circle at 35% 35%,#f5dc7a,#c99a2e)}
+.money.coin.cu{background:radial-gradient(circle at 35% 35%,#e9a374,#b4602f);color:#fff}
+.money.tiny{display:inline-flex;width:auto;height:auto;min-width:22px;padding:1px 4px;font-size:8px;border-radius:3px}
+.money.coin.tiny{width:18px;height:18px;border-radius:50%;padding:0}
+.envelope{position:relative;background:#f2e5c9;border-radius:4px;padding:16px 12px 10px;box-shadow:0 3px 0 rgba(0,0,0,.3);overflow:hidden}
+.env-flap{position:absolute;left:0;right:0;top:0;height:22px;background:#e6d3ad;clip-path:polygon(0 0,100% 0,50% 100%)}
+.env-body{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px}
+.env-body small{font-size:9px;letter-spacing:2px;color:#7a6a48}.env-body b{font-family:var(--led);font-size:30px;line-height:1;color:#c62828}
+.env-in{display:flex;flex-wrap:wrap;gap:3px;justify-content:center;font-size:10px;align-items:center}
+.methods{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;align-items:stretch}
+.meth{display:flex;flex-direction:column;align-items:center;justify-content:space-between;gap:6px;background:rgba(255,255,255,.12);border-radius:10px;padding:10px 6px;color:#fff;font-size:11px;text-align:center}
+.meth:hover{background:rgba(255,255,255,.22)}
+.meth .ico{font-size:40px}
+.tpv-body{width:66px;background:linear-gradient(#2b2f33,#15181a);border-radius:10px 10px 14px 14px;padding:6px;display:flex;flex-direction:column;gap:5px}
+.tpv-scr{background:#9fd3ff;color:#0b2a44;font-family:var(--led);font-size:12px;line-height:1;border-radius:3px;padding:4px 2px}
+.tpv-keys{height:30px;background:radial-gradient(circle,#555 2px,transparent 2.5px) 0 0/11px 10px}
+.coupon{background:#fff;color:var(--ink);border:2px dashed #c62828;border-radius:6px;padding:6px 8px;font-size:10px;line-height:1.2;transform:rotate(-3deg)}
+.coupon b{font-family:var(--led);font-size:20px;color:#c62828}.coupon small{display:block;color:#999}
+.zrep{align-self:center;width:min(260px,100%);background:#fbfbf7;font-size:11px;padding:8px 10px 6px;box-shadow:0 3px 8px rgba(0,0,0,.35);display:flex;flex-direction:column;gap:2px;transform:rotate(1deg)}
+.zrep>b{text-align:center;font-family:var(--display);font-size:12px}.zrep>small{text-align:center;font-size:9px;color:#777}
+.zl{display:flex;justify-content:space-between}.zl.tot{border-top:1px dashed #999;padding-top:3px;font-weight:700}
+.drawer.open{display:grid;grid-template-columns:repeat(auto-fill,minmax(74px,1fr));gap:6px}
+.pile2{flex-direction:column;gap:4px;min-height:96px;justify-content:flex-end}
+.pile2 small{color:#cfd8d0;font-size:9px}.pile2.done small{color:var(--tag);font-weight:700}
+.stack{position:relative;width:100%;height:58px}
+.stack .money.st{position:absolute;left:50%;bottom:calc(var(--k)*5px);transform:translateX(-50%)}
+.stack .money.bill.st{width:86%;height:24px;font-size:10px}
+.stack .money.coin.st{width:30px;height:30px;bottom:calc(var(--k)*4px)}
+.stamp.big{flex:1 1 120px;padding:10px 0;font-size:13px;opacity:1;background:rgba(255,255,255,.88)}
+.drawer.open .slot{width:100%}
+.office .supd{color:#f6ead6}
+.stamp.big[disabled]{opacity:.3}
+@media (max-width:420px){.dr-coins{grid-template-columns:repeat(4,1fr)}.methods{grid-template-columns:1fr 1fr 1fr;gap:6px}.meth .ico{font-size:30px}.thermal{max-width:none}}
 </style>
 </head>
 <body>
@@ -1243,7 +1305,7 @@ async function fillRanking(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.15-4';
+const APPV='2026.11.15-5';
 const SHOP='VITCH',DURS=[[100,'100 s (clásico)'],[600,'10 min'],[1800,'30 min'],[3600,'1 hora'],[10800,'3 horas'],[43200,'12 horas']];
 const REAL_LIM=60,TAKEOVER=120000;
 const JOB_IC={jefe:'👑',atc:'🧾',alm:'📦',back:'💼',rrpp:'📣',rrhh:'🗂️'};
@@ -2325,7 +2387,7 @@ function startRefund(t){
   else if(sc==='change'){claim='«Me disteis mal el cambio, me falta dinero.»';}
   else claim=pick(['«Me habéis cobrado de más, seguro.»','«Esto me ha salido carísimo, revisadlo.»']);
   const total=lines.reduce((s,l)=>s+l.q*l.p,0),pay=sc==='change'?'cash':pick(['card','cash']);
-  if(pay==='cash'){const given=[500,1000,2000,5000].find(b=>b>=total)||Math.ceil(total/5000)*5000;cash={given,change:given-total-(sc==='change'?R:0)};}
+  if(pay==='cash'){const need=total+(sc==='change'?R:0),given=[500,1000,2000,5000,10000].find(b=>b>=need)||Math.ceil(need/5000)*5000;cash={given,change:given-total-(sc==='change'?R:0)};}
   return {kind:'refund',t,step:0,scen:sc,need:sc==='none'?0:R,lines,claim,shelf,cash,pay,mark:null,tray:[],method:null,mis:!!t.mis};
 }
 function startCash(t){
@@ -2339,35 +2401,49 @@ function startCash(t){
   return {kind:'cash',t,piles,sys,real,diff,counted:{},opts:shuffle(opts)};
 }
 const diffTxt=d=>d===0?'✅ Cuadra':d>0?'➕ Sobran '+fmt(d):'➖ Faltan '+fmt(-d);
+const moneyCls=v=>v>=500?'bill b'+(v/100):v>=100?'coin bi':v>=10?'coin au':'coin cu';
+const moneyLab=v=>v>=100?(v/100)+' €':String(v).padStart(2,'0')+' c';
+function drawerHtml(act,extra){
+  const bills=[5000,2000,1000,500],coins=[200,100,50,20,10,5,2,1];
+  return `<div class="drawer"><div class="dr-bills">${bills.map(v=>`<button class="slot" data-act="${act}" data-v="${v}" ${extra||''}><i class="money ${moneyCls(v)}">${moneyLab(v)}</i><i class="money ${moneyCls(v)} under"></i></button>`).join('')}</div>
+    <div class="dr-coins">${coins.map(v=>`<button class="slot" data-act="${act}" data-v="${v}" ${extra||''}><i class="money ${moneyCls(v)}">${moneyLab(v)}</i></button>`).join('')}</div></div>`;
+}
 function backBody(){
   const steps=(names,cur)=>'<div class="mgsteps">'+names.map((n,i)=>`<span class="${i===cur?'on':i<cur?'ok':''}">${i<cur?'✔':i+1} ${n}</span>`).join('')+'</div>';
   if(mg.kind==='refund'){
-    let h=steps(['Revisar','Reembolso','Devolver'],mg.step)+`<div class="bubble">🧑 ${mg.claim}</div>`;
-    const tk=`<div class="tick"><b>TICKET · VITCHMARKET</b>${mg.lines.map((l,i)=>`<button class="tl ${mg.mark===i?'on':''}" data-act="mgline" data-i="${i}" ${mg.step?'disabled':''}><span>${l.e} ${l.n}</span><span>${fmt(l.p)}</span></button>`).join('')}
-      <div class="tt"><span>TOTAL</span><b>${fmt(mg.lines.reduce((s,l)=>s+l.p,0))}</b></div>
-      <div class="tp">Pagado con ${mg.pay==='card'?'💳 tarjeta':'💶 efectivo'}${mg.cash?` · entregó ${fmt(mg.cash.given)} · cambio dado ${fmt(mg.cash.change)}`:''}</div></div>`;
+    const tot=mg.lines.reduce((s,l)=>s+l.p,0),now=new Date(TODAY);
+    const ticket=`<div class="thermal"><div class="th-logo">VITCHMARKET</div><div class="th-sub">C/ Mayor 3 · CIF B-00000000<br>${dShort(now)}/${now.getFullYear()} · ${String(9+((mg.t.id||3)%11)).padStart(2,'0')}:${String((mg.t.id||7)*13%60).padStart(2,'0')} · Caja ${1+((mg.t.id||1)%3)}</div>
+      ${mg.lines.map((l,i)=>`<button class="tl ${mg.mark===i?'circled':''}" data-act="mgline" data-i="${i}" ${mg.step?'disabled':''}><span>${l.n}</span><span>${fmt(l.p)}</span></button>`).join('')}
+      <div class="tt"><span>TOTAL</span><b>${fmt(tot)}</b></div>
+      <div class="tp">${mg.pay==='card'?'TARJETA ****'+String(1000+(mg.t.id||1)*271%9000).slice(-4):'EFECTIVO'}${mg.cash?`<br>ENTREGADO ${fmt(mg.cash.given)} · CAMBIO ${fmt(mg.cash.change)}`:''}</div>
+      <i class="th-bc"></i><div class="th-thanks">¡Gracias por su visita!</div></div>`;
+    let h=steps(['Revisar','Reembolso','Devolver'],mg.step)+`<div class="ccust"><span>🧑</span><div class="bubble">${mg.claim}</div></div>`;
     if(mg.step===0){
-      h+=(mg.shelf!=null?`<div class="supd">🏷️ Etiqueta de la estantería de ${mg.lines.find(l=>l.bad).n}: <b>${fmt(mg.shelf)}</b></div>`:'')
-        +`<div class="supd">Toca la línea mal cobrada${mg.cash?' (o «Cambio mal dado» si el error está en el cambio)':''}. Si todo está bien, dilo.</div>${tk}
+      h+=`<div class="office"><div class="desk-row">${ticket}<div class="desk-side">${mg.shelf!=null?`<div class="shelflabel"><small>ETIQUETA EN ESTANTERÍA</small><b>${fmt(mg.shelf)}</b><span>${mg.lines.find(l=>l.bad).n}</span></div>`:''}<div class="note">✍️ Rodea con el boli la línea mal cobrada${mg.cash?' o marca el cambio':''}.</div></div></div></div>
         <div class="row wrap">${mg.cash?'<button class="btn" data-act="mgline" data-i="chg">💶 Cambio mal dado</button>':''}<button class="btn" data-act="mgline" data-i="none">👌 No hay ningún error</button><button class="btn" data-act="mgline" data-i="mis">↩️ No es de Backoffice</button></div>`;
     }else if(mg.step===1){
-      const sum=mg.tray.reduce((s,v)=>s+v,0);
-      h+=`${tk}<div class="supd">Prepara el reembolso exacto con billetes y monedas. Ni un céntimo de más ni de menos.</div>
-        <div class="cashrow tray"><span>A devolver</span><b>${fmt(sum)}</b></div>
-        <div class="denoms">${DENOMS.map(([v,l,k])=>`<button class="dn ${k}" data-act="mgden" data-v="${v}">${l}</button>`).join('')}</div>
-        <div class="row"><button class="btn" data-act="mgclr">Vaciar</button><button class="btn go" data-act="mgrfok">Listo ▶</button></div>`;
+      const sum=mg.tray.reduce((s,v)=>s+v,0),cnt={};mg.tray.forEach(v=>{cnt[v]=(cnt[v]||0)+1;});
+      h+=`<div class="brief">💶 Saca del cajón el reembolso exacto y mételo en el sobre. Ni un céntimo de más ni de menos.</div>
+        <div class="office">${drawerHtml('mgden')}
+        <div class="envelope"><div class="env-flap"></div><div class="env-body"><small>REEMBOLSO</small><b>${fmt(sum)}</b><div class="env-in">${Object.keys(cnt).sort((a,b)=>b-a).map(v=>`<i class="money ${moneyCls(+v)} tiny">${moneyLab(+v)}</i>${cnt[v]>1?'×'+cnt[v]:''}`).join(' ')}</div></div></div></div>
+        <div class="row"><button class="btn" data-act="mgclr">Vaciar el sobre</button><button class="btn go" data-act="mgrfok">Listo ▶</button></div>`;
     }else{
-      h+=`<div class="supd">¿Cómo se lo devuelves? Pagó con ${mg.pay==='card'?'tarjeta':'efectivo'}.</div>
-        <div class="opts"><button class="btn" data-act="mgmeth" data-k="card">💳 Devolverlo a su tarjeta</button><button class="btn" data-act="mgmeth" data-k="cash">💶 En efectivo, de la caja</button><button class="btn" data-act="mgmeth" data-k="vale">🎟️ Un vale para la próxima compra</button></div>`;
+      h+=`<div class="brief">↩️ ¿Por dónde se lo devuelves? En el ticket pone cómo pagó.</div>
+        <div class="office methods">
+          <button class="meth tpv" data-act="mgmeth" data-k="card"><span class="tpv-body"><span class="tpv-scr">DEVOLUCIÓN<br>${fmt(mg.tray.reduce((s,v)=>s+v,0))}</span><span class="tpv-keys"></span></span><b>A su tarjeta</b></button>
+          <button class="meth" data-act="mgmeth" data-k="cash"><span class="ico">🗃️</span><b>En efectivo, del cajón</b></button>
+          <button class="meth vale" data-act="mgmeth" data-k="vale"><span class="coupon">VALE<br><b>${fmt(mg.tray.reduce((s,v)=>s+v,0))}</b><small>✂ - - - -</small></span><b>Un vale de compra</b></button></div>`;
     }
     return h;
   }
   /* arqueo */
   const all=mg.piles.every(p=>mg.counted[p.v]!=null);
-  return `<div class="supd">Según el sistema, en el cajón tiene que haber <b>${fmt(mg.sys)}</b>. Cuenta cada montón (tócalo) y di si cuadra.</div>
-    <div class="piles">${mg.piles.map(p=>`<button class="pile ${mg.counted[p.v]!=null?'done':''}" data-act="mgpile" data-v="${p.v}"><b>${p.l}</b><span>${'▮'.repeat(Math.min(p.n,9))}</span><small>${mg.counted[p.v]!=null?'× '+p.n+' = '+fmt(p.v*p.n):'sin contar'}</small></button>`).join('')}</div>
-    <div class="supd">${all?'Suma tú los montones y compáralo con el sistema.':'Te quedan montones sin contar.'}</div>
-    <div class="opts">${mg.opts.map((d,i)=>`<button class="btn" data-act="mgarq" data-i="${i}" ${all?'':'disabled'}>${diffTxt(d)}</button>`).join('')}</div>`;
+  return `<div class="office arq">
+    <div class="zrep"><b>INFORME Z · CAJA ${mg.t.n||1}</b><small>Cierre parcial · ${dShort(TODAY)}</small><div class="zl"><span>Ventas efectivo</span><span>${fmt(mg.sys)}</span></div><div class="zl tot"><span>DEBE HABER</span><b>${fmt(mg.sys)}</b></div><i class="th-bc"></i></div>
+    <div class="brief">🧮 Toca cada montón para contarlo, suma tú y compara con el informe.</div>
+    <div class="drawer open">${mg.piles.map(p=>{const c=mg.counted[p.v]!=null;return `<button class="slot pile2 ${c?'done':''}" data-act="mgpile" data-v="${p.v}"><span class="stack">${Array.from({length:Math.min(p.n,8)},(_,k)=>`<i class="money ${moneyCls(p.v)} st" style="--k:${k}">${k===Math.min(p.n,8)-1?moneyLab(p.v):''}</i>`).join('')}</span><small>${c?'× '+p.n+' = '+fmt(p.v*p.n):'contar'}</small></button>`;}).join('')}</div>
+    <div class="supd">${all?'Todo contado. ¿Cuadra con el informe Z?':'Te quedan montones sin contar.'}</div>
+    <div class="row wrap">${mg.opts.map((d,i)=>`<button class="stamp big ${d===0?'s-ok':d<0?'s-roto':'s-falta'}" data-act="mgarq" data-i="${i}" ${all?'':'disabled'}>${d===0?'✔ CUADRA':d<0?'FALTAN '+fmt(-d):'SOBRAN '+fmt(d)}</button>`).join('')}</div></div>`;
 }
 function backAct(a,b){
   if(mg.kind==='refund'){
@@ -2377,9 +2453,9 @@ function backAct(a,b){
       if(v==='none'){mg.mark='none';mg.x={paid:0,need:mg.need,said:'none',mis:mg.mis?1:0};return endMG(mg.mis?0:mg.need?0.2:1);}
       mg.mark=v==='chg'?'chg':+v;
       const right=mg.scen==='change'?mg.mark==='chg':mg.scen!=='none'&&mg.lines[mg.mark]&&mg.lines[mg.mark].bad;
-      mg.detOk=!!right&&!mg.mis;if(!mg.detOk){sBad();toast(mg.scen==='none'?'Ahí no hay ningún error':'Esa no es la línea mal cobrada','bad');}else sBeep();
+      mg.detOk=!!right&&!mg.mis;if(!mg.detOk){mg.fx={sel:'.ccust',k:'bad'};sBad();toast(mg.scen==='none'?'Ahí no hay ningún error':'Esa no es la línea mal cobrada','bad');}else sBeep();
       mg.step=1;
-    }else if(a==='mgden'){mg.tray.push(+b.dataset.v);sCoin();}
+    }else if(a==='mgden'){mg.tray.push(+b.dataset.v);sCoin();mg.fx={sel:'.envelope',k:'ok'};}
     else if(a==='mgclr')mg.tray=[];
     else if(a==='mgrfok'){mg.step=2;}
     else if(a==='mgmeth'){
@@ -2388,7 +2464,7 @@ function backAct(a,b){
       return endMG(clamp((mg.detOk?0.4:0)+(paid===mg.need?0.45:paid>mg.need?0.1:0)+(mOk?0.15:0),0,1));
     }
   }else{
-    if(a==='mgpile'){const p=mg.piles.find(x=>x.v===+b.dataset.v);if(p){mg.counted[p.v]=p.n;sCoin();}}
+    if(a==='mgpile'){const p=mg.piles.find(x=>x.v===+b.dataset.v);if(p){mg.counted[p.v]=p.n;sCoin();mg.fx={sel:`[data-act=mgpile][data-v="${p.v}"]`,k:'ok'};}}
     else if(a==='mgarq'){const d=mg.opts[+b.dataset.i];const ok=d===mg.diff;mg.x={said:d,diff:mg.diff};return endMG(ok?1:0);}
   }
   renderMG();
