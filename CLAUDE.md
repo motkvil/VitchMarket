@@ -34,7 +34,7 @@ Versión publicada como artifact de claude.ai (privado): https://claude.ai/artif
 
 ## Mecánicas implementadas
 - **Turno**: 100 s reales = 9:00–21:00; luego se cierra al vaciarse la cola. Cola máx. 5.
-- **Escaneo**: tocar cada producto. Código dañado (prob. 0.08 + 0.03·día) pide 3 toques (2 con escáner láser). Productos +18 (desde el día 2): DNI con fecha de nacimiento vs hoy; vender/negar. 45% de los compradores de alcohol son menores (multa 50 € y −1 rep).
+- **Escaneo**: tocar cada producto. Código dañado (prob. 0.08 + 0.03·día) pide 3 toques (2 con escáner láser). Productos +18 (desde el día 2): DNI con fecha de nacimiento vs hoy; vender/negar. El DNI se mira una vez por cliente (`c.idOk`): si se le negó, el resto de +18 se aparta solo; si se le vendió, se escanean sin volver a pedirlo. 45% de los compradores de alcohol son menores (multa 50 € y −1 rep).
 - **Bolsa**: 30% la pide; cobrarla sin pedirla o no darla = error (−0.3 rep).
 - **Pago**: tarjeta (55%, 8% rechazo → efectivo) o efectivo (12 denominaciones, se muestra "Cambio a dar"). Pasarse = pérdida; faltar = no se acepta.
 - **Paciencia**: `max = clamp(24 + items·3.2 − día·1.2, 20, 60)` s; frente 1×, cola 0.55×; ATC staff −8% c/u, ventilador −20%. A 0 se va enfadado (−0.5/−0.3 rep). Frases en `#chat`.

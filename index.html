@@ -1441,7 +1441,7 @@ async function fillRanking(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.15-12';
+const APPV='2026.11.15-13';
 /* Compara versiones por números («-9» < «-11»), no como texto. */
 const verCmp=(a,b)=>{const x=String(a).split(/[.-]/).map(Number),y=String(b).split(/[.-]/).map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
 try{const vt=document.createElement('div');vt.id='vtag';vt.textContent='v'+APPV;document.body.appendChild(vt);}catch(e){}
@@ -3260,7 +3260,8 @@ function scanItem(id){
   if(!it||it.scanned||it.denied)return;
   it.done++;sBeep();run.flash=id;
   if(it.done<it.hits){renderBelt();run.flash=0;return;}
-  if(it.age){run.pendingId=id;renderAll();run.flash=0;return;}
+  if(it.age&&c.idOk==='deny'){it.denied=true;ret(it);toast('Ya le viste el DNI: esto tampoco se le vende.');renderAll();run.flash=0;return;}
+  if(it.age&&!c.idOk){run.pendingId=id;renderAll();run.flash=0;return;}
   it.scanned=true;
   renderAll();run.flash=0;
 }
@@ -3268,6 +3269,7 @@ function idDecision(sell){
   const c=front();if(!c||!run.pendingId)return;
   const it=c.items.find(i=>i.id===run.pendingId);
   run.pendingId=null;
+  c.idOk=sell?'sell':'deny';
   if(sell){
     it.scanned=true;
     if(c.minor){run.fines+=5000;meta.money-=5000;meta.rep=clamp(meta.rep-1,0,5);run.errors++;c.err++;toast('Vendiste alcohol a un menor. Multa: 50 €','bad');sBad();}
