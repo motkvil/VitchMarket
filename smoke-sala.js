@@ -65,7 +65,7 @@ function client(){
 let html=fs.readFileSync('index.html','utf8');
 html=html.replace('COMPL_P=0.14','COMPL_P=0.3').replace("Math.random()<0.55?'card'","Math.random()<0.05?'card'").replace('next:1.5','next:0.5').replace('nextTask:6','nextTask:1')
   .replace('const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));','const clamp=(v,a,b)=>Math.max(b===5?1:a,Math.min(b,v));').replace('rnd(14,24)*','rnd(2,4)*')
-  .replace('Math.max(5.5,10.5-meta.day*0.7)','2').replace('<script src="productos.js"></script>','<script>'+fs.readFileSync('productos.js','utf8')+'</script>')
+  .replace('Math.max(5.5,9.5-meta.day*0.6)','2').replace('<script src="productos.js"></script>','<script>'+fs.readFileSync('productos.js','utf8')+'</script>')
   .replace('<script src="firebase-config.js"></script>','');
 const errs=[];
 function browser(name,url){

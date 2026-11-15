@@ -861,7 +861,7 @@ const TALK={
  pasota:['Bah, ya lo hará alguien.','Tranqui, que no corre prisa.'],
  servicial:['Si necesitas algo, me dices.','Te echo una mano con eso.']
 };
-const WAGE=1500,HIRE=4000;
+const WAGE=1300,HIRE=4000;
 const blankSt=()=>({ok:0,fail:0,late:0,abs:0,tasks:0,tfail:0,quej:0,fel:0,shifts:0,caught:0,cv:0,cvErr:0});
 /* Al cerrar una reunión, las estadísticas pasan al historial (e.tot), que sirve de prueba al despedir. */
 const sumSt=(a,b)=>{const o=blankSt();Object.keys(o).forEach(k=>{o[k]=((a||{})[k]||0)+((b||{})[k]||0);});return o;};
@@ -1105,7 +1105,7 @@ function startDay(){
   const rr=receiveDeliveries();
   hideOverlay();renderAll();
   const msg=[];
-  if(rr.arrived||rr.pending)msg.push((rr.arrived?'🚚 Han llegado '+rr.arrived+' uds al muelle':'🚚 Quedan '+rr.pending+' uds en el muelle')+(rr.short?', '+rr.short+' no llegaron':'')+'. Almacén las irá colocando');
+  if(rr.arrived||rr.pending||rr.shelved)msg.push('🚚 '+(rr.arrived?'Han llegado '+rr.arrived+' uds':'Mercancía en el muelle')+(rr.short?' ('+rr.short+' no llegaron)':'')+(rr.shelved?'; antes de abrir Almacén ha colocado '+rr.shelved:'')+(rr.pending?'; quedan '+rr.pending+' en el muelle':''));
   if(notes.length)msg.push(notes.join('. '));
   if(msg.length)toast(msg.join(' · '),(rr.pending||notes.length)?'bad':'good');
   if(tab!=='caja')autoTill();
@@ -1144,7 +1144,7 @@ function checkRep(){
 }
 let lastEnd=null;
 const SUPS=[
- {k:'hac',n:'Hacendado Directo',cf:0.62,lead:1,rel:0.93,d:'Barato. Llega el próximo turno, a veces incompleto.'},
+ {k:'hac',n:'Hacendado Directo',cf:0.55,lead:1,rel:0.93,d:'Barato. Llega el próximo turno, a veces incompleto.'},
  {k:'exp',n:'Reparto Exprés',cf:0.82,lead:1,rel:0.995,d:'Caro. Llega el próximo turno y siempre completo.'},
  {k:'cho',n:'Chollo Import',cf:0.5,lead:2,rel:0.7,d:'Muy barato. Tarda 2 turnos y llega a medias con frecuencia.'}
 ];
@@ -1179,8 +1179,9 @@ function receiveDeliveries(){
       meta.back[id]=(meta.back[id]||0)+got;
     });
   });
-  /* Lo que llega se queda en el muelle: Almacén lo coloca a la vista con el aviso 🚚 (almRoutine). */
-  let cap=0;
+  /* Antes de abrir, quien trabaja en Almacén sube a la estantería lo que puede (30 + 40·rapidez uds cada uno);
+     lo que no le da tiempo se queda en el muelle y lo van colocando durante el turno con el aviso 🚚 (almRoutine). */
+  let cap=staffOf('alm').filter(e=>working(e)&&!e.real).reduce((t,e)=>t+Math.round(30+40*e.rap),0);
   const ids=Object.keys(meta.back).filter(id=>meta.back[id]>0).sort((x,y)=>(meta.stock[x]||0)-(meta.stock[y]||0));
   for(const id of ids){
     if(cap<=0)break;
@@ -1221,10 +1222,10 @@ function almRoutine(){
 }
 function autoOrder(e,ok){
   if(meta.money<=0)return;
-  const low=lowList().sort((a,b)=>(meta.stock[a.id]||0)-(meta.stock[b.id]||0)).slice(0,8);
+  const low=lowList().sort((a,b)=>(meta.stock[a.id]||0)-(meta.stock[b.id]||0)).slice(0,12);
   if(!low.length)return;
-  /* Tope: el 35% del bote por pedido y, en todo el turno, la mitad de lo que había al abrir (mín. 30 €). */
-  const cap=Math.max(3000,Math.round((run.m0||meta.money)*0.5))-(run.autoBuy||0);
+  /* Tope: el 35% del bote por pedido y, en todo el turno, el 80% de lo que había al abrir (mín. 50 €). */
+  const cap=Math.max(5000,Math.round((run.m0||meta.money)*0.8))-(run.autoBuy||0);
   const budget=Math.min(Math.floor(meta.money*0.35),cap),items={};let cost=0,n=0;
   (ok?low:low.slice(0,Math.ceil(low.length/2))).forEach(x=>{const c=6*unitCost(x,'hac');if(cost+c<=budget){items[x.id]=6;cost+=c;n++;}});
   if(!n)return;
@@ -1276,10 +1277,11 @@ function endDay(){
   run.tasks.forEach(t=>{if(!t.who&&t.k!=='tk'){meta.rep=clamp(meta.rep-t.pen/2,0,5);run.tlost++;}});
   run.tasks=[];run.away=null;mg=null;pendingLeave=null;closeMG();
   const res=processTickets();
-  let payroll=0;
+  /* El sueldo es por cada 100 s de turno: en la tienda compartida, con turnos largos, se cobra en proporción. */
+  let payroll=0;const wf=Math.max(1,(run.dur||100)/100);
   meta.emp.forEach(e=>{
     const d=run.duty[e.id];
-    if(!(d&&(d.st==='abs'||d.st==='gone')))payroll+=e.wage;
+    if(!(d&&(d.st==='abs'||d.st==='gone')))payroll+=Math.round(e.wage*wf);
     if(working(e)){e.days++;if(e.trial>0)e.trial--;}
     if(e.focus>0)e.focus--;
     e.moral=clamp(e.moral+(meta.rep>=4?2:meta.rep<2?-3:0),0,100);
@@ -1290,8 +1292,8 @@ function endDay(){
      e impuesto de sociedades del 25% sobre el beneficio. Se pagan al cerrar. */
   const S=run.sales||0,T=run.tips||0,F=run.fines||0,B=run.buy||0,K=res.back.cost+res.rrpp.cost+res.alm.cost;
   const delta=meta.money-(run.m0==null?meta.money:run.m0),oth=delta-(S+T-F-B-payroll-K);
-  /* Lo comprado es stock (inversión), no gasto: el gasto es el coste de lo vendido (≈62% del precio, lo de Hacendado). */
-  const cogs=Math.round(S*0.62),iva=Math.max(0,Math.round(S-S/1.1)-Math.round(B-B/1.1));
+  /* Lo comprado es stock (inversión), no gasto: el gasto es el coste de lo vendido (al precio de Hacendado). */
+  const cogs=Math.round(S*SUPS[0].cf),iva=Math.max(0,Math.round(S-S/1.1)-Math.round(B-B/1.1));
   const bai=S+T-cogs-payroll-K-F+oth-iva,is=bai>0?Math.round(bai*0.25):0;
   meta.money-=iva+is;
   const fin={S,T,F,B,P:payroll,K,oth,cogs,iva,bai,is,net:bai-is,cash:delta-iva-is,m0:run.m0};
@@ -1358,7 +1360,7 @@ function finHtml(f){
       <span class="hd">INGRESOS</span><b></b>
       ${row('Ventas (IVA incluido)',f.S)}${row('Propinas',f.T)}${f.oth>0?row('Otros ingresos (abonos, arqueos)',f.oth):''}
       <span class="hd">GASTOS</span><b></b>
-      ${row('Coste de la mercancía vendida (≈62%)',-(f.cogs||0))}${row('Nómina del personal',-f.P)}${row('Reclamaciones al cierre',-f.K)}${row('Multas y pérdidas en caja',-f.F)}${f.oth<0?row('Reembolsos, compensaciones y otros',f.oth):''}
+      ${row('Coste de la mercancía vendida (≈'+Math.round(SUPS[0].cf*100)+'%)',-(f.cogs||0))}${row('Nómina del personal',-f.P)}${row('Reclamaciones al cierre',-f.K)}${row('Multas y pérdidas en caja',-f.F)}${f.oth<0?row('Reembolsos, compensaciones y otros',f.oth):''}
       ${row('Resultado antes de impuestos',f.bai+f.iva,'tot')}
       ${row('IVA a Hacienda (10% ventas − 10% compras)',-f.iva)}${row('Impuesto de sociedades (25%)',-f.is)}
       ${row('Beneficio neto del turno',f.net,'tot '+(f.net<0?'neg':'pos'))}
@@ -1527,7 +1529,7 @@ async function fillRanking(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.15-18';
+const APPV='2026.11.15-19';
 /* Compara versiones por números («-9» < «-11»), no como texto. */
 const verCmp=(a,b)=>{const x=String(a).split(/[.-]/).map(Number),y=String(b).split(/[.-]/).map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
 try{const vt=document.createElement('div');vt.id='vtag';vt.textContent='v'+APPV;document.body.appendChild(vt);}catch(e){}
@@ -2202,7 +2204,7 @@ function finishTask(t){
     toast((t.who==='me'?'Te ha salido regular en el pasillo '+t.n:nm+' lo ha dejado a medias en el pasillo '+t.n)+why,'bad');sBad();renderAll();checkRep();return;}
   run.tdone++;let extra='';
   if(t.k==='repo'||t.k==='call'){const mv=moveStock(t.pid,8);extra=mv?' (+'+mv+' uds en estantería)':' (en el almacén no quedaba)';}
-  else if(t.k==='truck'){let cap=30,tot=0;Object.keys(meta.back).sort((x,y)=>(meta.stock[x]||0)-(meta.stock[y]||0)).forEach(id=>{if(cap>0){const mv=moveStock(id,cap);cap-=mv;tot+=mv;}});extra=' (+'+tot+' uds)';}
+  else if(t.k==='truck'){let cap=40,tot=0;Object.keys(meta.back).sort((x,y)=>(meta.stock[x]||0)-(meta.stock[y]||0)).forEach(id=>{if(cap>0){const mv=moveStock(id,cap);cap-=mv;tot+=mv;}});extra=' (+'+tot+' uds)';}
   else if(t.k==='cv'){const c=t.cand,q=c?(c.rap+c.trato+c.punt+c.act)/4:0;extra=q>=0.55?' · '+hireFromCv(c,c.wage):' · no le ha convencido';}
   else if(t.k==='feud'&&t.fd)extra=' · '+applyFeud({a:t.fd.a.id,b:t.fd.b.id,truth:t.fd.truth},true);
   else meta.rep=clamp(meta.rep+0.05,0,5);
@@ -3966,7 +3968,7 @@ function tick(ts){
             run.queue.slice(2).forEach(q=>{q.p=Math.max(1,q.p-q.max*0.12);});
             toast('Alguien se ha colado. La cola murmura…','bad');
           }else run.queue.push(nc);
-          const ia=Math.max(5.5,10.5-meta.day*0.7);
+          const ia=Math.max(5.5,9.5-meta.day*0.6);
           run.next=rnd(ia*0.7,ia*1.3);
           renderAll();
         }else run.next=2;

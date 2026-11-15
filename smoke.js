@@ -1,7 +1,7 @@
 // Uso: npm i jsdom && node smoke.js  (en la carpeta del juego). Bot que juega varios turnos y reporta errores JS.
 const {JSDOM}=require('jsdom');const fs=require('fs');
 let html=fs.readFileSync('index.html','utf8');
-html=html.replace('dur:100','dur:12').replace('COMPL_P=0.14','COMPL_P=0.2').replace("Math.random()<0.55?'card'","Math.random()<0.05?'card'").replace('next:1.5','next:0.5').replace('nextTask:6','nextTask:1').replace('const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));','const clamp=(v,a,b)=>Math.max(b===5?1:a,Math.min(b,v));').replace('rnd(14,24)*','rnd(2,4)*').replace('Math.max(5.5,10.5-meta.day*0.7)','2').replace('<script src="productos.js"></script>','<script>'+fs.readFileSync('productos.js','utf8')+'</script>');
+html=html.replace('dur:100','dur:12').replace('COMPL_P=0.14','COMPL_P=0.2').replace("Math.random()<0.55?'card'","Math.random()<0.05?'card'").replace('next:1.5','next:0.5').replace('nextTask:6','nextTask:1').replace('const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));','const clamp=(v,a,b)=>Math.max(b===5?1:a,Math.min(b,v));').replace('rnd(14,24)*','rnd(2,4)*').replace('Math.max(5.5,9.5-meta.day*0.6)','2').replace('<script src="productos.js"></script>','<script>'+fs.readFileSync('productos.js','utf8')+'</script>');
 const errs=[];
 const dom=new JSDOM(html,{runScripts:'dangerously',pretendToBeVisual:true,beforeParse(w){w.addEventListener('error',e=>errs.push(e.message));w.AudioContext=undefined;}});
 const w=dom.window,d=w.document;
