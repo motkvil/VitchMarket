@@ -451,6 +451,126 @@ body:not([data-tab="caja"]) .queue-wrap{display:none}
 .denoms{grid-template-columns:repeat(6,1fr);gap:5px}
 .dn{padding:8px 0;font-size:12px}
 @media (max-height:760px) and (min-width:821px){.register{gap:5px;padding:10px}.cashrow b{font-size:20px}.led{padding:3px 10px}.led b{font-size:34px}.receipt{max-height:64px}.queue-wrap{padding:6px 10px;gap:4px}.cust.front .face{font-size:38px}.face{font-size:28px}.slot{height:54px}}
+/* ===== Minijuegos: escenas por departamento ===== */
+.mgc{position:relative;overflow:hidden}
+.mgc.th-alm{background:linear-gradient(#f3eee2,#efe8d6)}
+.mgc.th-back{background:linear-gradient(#f4efe6,#ece3d2)}
+.mgc.th-rrpp{background:linear-gradient(#eef3f8,#e2ebf3)}
+.mgc.th-rrhh{background:linear-gradient(#f5f1ea,#eae2d4)}
+.mgc[class*=th-]:before{content:'';position:absolute;left:0;right:0;top:0;height:6px;background:var(--thc,#999)}
+.th-alm{--thc:#f08a24}.th-back{--thc:#2f6db5}.th-rrpp{--thc:#d6336c}.th-rrhh{--thc:#7b4bb7}
+.mgc .dept-badge{display:inline-flex;align-items:center;gap:6px;font-size:10px;letter-spacing:1.5px;font-weight:700;color:#fff;background:var(--thc);border-radius:99px;padding:2px 10px;align-self:flex-start}
+.brief{background:rgba(255,255,255,.75);border-left:4px solid var(--thc,#999);border-radius:4px;padding:6px 10px;font-size:12px;line-height:1.45}
+.supd.bad{color:var(--sign);font-weight:700}
+.fx-ok{animation:fxok .45s ease-out}
+.fx-bad{animation:fxbad .35s ease-in-out;outline:3px solid var(--sign)!important}
+@keyframes fxok{0%{transform:scale(1)}40%{transform:scale(1.08);box-shadow:0 0 0 6px rgba(42,157,92,.4)}100%{transform:scale(1)}}
+@keyframes fxbad{20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+
+/* Almacén: estantería industrial con cajas de cartón */
+.wh{background:repeating-linear-gradient(90deg,#5d646b 0 18px,#666e75 18px 20px);border-radius:8px;padding:12px 10px 0;box-shadow:inset 0 -18px 0 #8a8d8f}
+.rack{position:relative;padding:0 14px}
+.rack .up{position:absolute;top:-6px;bottom:0;width:10px;background:repeating-linear-gradient(#1f5fa8 0 8px,#174a85 8px 10px);border-radius:2px}
+.rack .up.l{left:0}.rack .up.r{right:0}
+.lvl{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:6px 6px 0}
+.beam{display:block;height:9px;background:linear-gradient(#ff9d3c,#d96f12);border-radius:2px;box-shadow:0 3px 0 rgba(0,0,0,.35);margin-bottom:12px}
+.cbox{position:relative;min-height:74px;background:linear-gradient(160deg,#d7b07a,#c49358 70%,#b98549);border-radius:4px;box-shadow:inset 0 6px 0 rgba(255,255,255,.12),inset 0 -4px 0 rgba(0,0,0,.12),0 3px 0 rgba(0,0,0,.35);display:flex;align-items:flex-end;justify-content:center;padding:8px 6px 6px;color:var(--ink);transition:transform .1s}
+.cbox:hover:not([disabled]){transform:translateY(-2px)}
+.cbox .tape{position:absolute;left:50%;top:0;bottom:0;width:16px;margin-left:-8px;background:rgba(238,214,160,.75)}
+.cbox .lbl{position:relative;background:#fff;border-radius:2px;padding:4px 6px;font-size:10px;line-height:1.15;text-align:left;width:100%;box-shadow:0 1px 0 rgba(0,0,0,.2)}
+.cbox .lbl b{display:block;font-size:11px}.cbox .lbl small{color:#5b5646}
+.cbox .bc{display:block;height:8px;margin-top:3px;background:repeating-linear-gradient(90deg,#222 0 1px,transparent 1px 3px,#222 3px 5px,transparent 5px 6px)}
+.cbox.sm{min-height:58px}.cbox.sel{outline:3px solid var(--sign);transform:translateY(-3px)}
+.cbox.gone{visibility:hidden}
+.cbox.cold{background:linear-gradient(160deg,#cfe3f2,#9fc3df 70%,#86b0d1)}
+.cbox .frost{display:block;letter-spacing:1px}
+
+/* Góndola del súper y mural refrigerado */
+.gondola{background:radial-gradient(circle,#c9ced2 1.2px,transparent 1.5px) 0 0/10px 10px,#dfe3e6;border-radius:8px;padding:8px;border:3px solid #b9c0c5;display:flex;flex-direction:column;gap:2px}
+.gondola.fridge{background:linear-gradient(180deg,rgba(255,255,255,.55),rgba(255,255,255,0) 30%),linear-gradient(#cfe9fb,#a9d3f1);border-color:#7fa9c8;box-shadow:inset 0 0 18px rgba(255,255,255,.8)}
+.fridge-top{text-align:center;font-size:10px;letter-spacing:1px;color:#1d4f75;font-weight:700}
+.gshelf{display:grid;grid-template-columns:44px repeat(4,1fr);gap:6px;align-items:end}
+.gshelf em{font-style:normal;font-size:8px;letter-spacing:1px;color:#5b6670;align-self:center}
+.gshelf.back .fc{transform:scale(.88);filter:brightness(.93)}
+.rail{height:16px;background:#fff;border-top:2px solid #9aa3a9;border-bottom:3px solid #6f787e;display:flex;align-items:center;padding-left:52px;margin-bottom:6px}
+.ptag{display:flex;align-items:center;gap:6px;background:var(--tag);height:14px;padding:0 6px;font-size:10px;border-radius:2px}
+.ptag small{font-size:8px;max-width:110px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.fc{position:relative;min-height:58px;background:linear-gradient(#fff,#f1f1f1);border-radius:8px 8px 4px 4px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;box-shadow:0 2px 0 rgba(0,0,0,.25);padding:4px 2px}
+.fc .pk{font-size:26px;line-height:1}
+.fc .stk{font-style:normal;font-size:8px;font-weight:700;background:#ff8c42;color:#fff;border-radius:99px;padding:1px 5px}
+.fc .stk.new{background:var(--ok)}.fc .stk.lot{background:#8a9aa5}
+.fc.broken{background:linear-gradient(#fff,#efe4e4)}
+.fc .crack{position:absolute;inset:6px;background:linear-gradient(115deg,transparent 45%,#7a1f1f 46%,transparent 48%),linear-gradient(60deg,transparent 52%,#7a1f1f 53%,transparent 55%);opacity:.7;pointer-events:none}
+.fc.empty{background:rgba(255,255,255,.25);box-shadow:inset 0 0 0 2px dashed rgba(0,0,0,.15);border:2px dashed rgba(0,0,0,.18);color:#5b6670;font-size:20px}
+button.fc.empty:hover{background:rgba(42,157,92,.15)}
+.fc.gone{background:transparent;box-shadow:none;opacity:.6}
+.fc.isnew{box-shadow:0 0 0 2px var(--ok),0 2px 0 rgba(0,0,0,.25)}
+
+/* PDA de mano */
+.pdadev{background:linear-gradient(#2b2f33,#1b1e21);border-radius:16px;padding:8px 10px 10px;box-shadow:0 6px 0 #0d0f10,inset 0 1px 0 rgba(255,255,255,.12);max-width:420px;align-self:center;width:100%}
+.pdahead{display:flex;justify-content:space-between;color:#b7c2c9;font-size:10px;letter-spacing:1px;padding:0 4px 6px}
+.pdascr{position:relative;background:linear-gradient(#bfe8c9,#a5d8b3);border-radius:6px;padding:6px;font-family:var(--led);color:#13361f;display:flex;flex-direction:column;gap:3px;overflow:hidden;box-shadow:inset 0 2px 6px rgba(0,0,0,.35)}
+.pdat{font-size:16px;letter-spacing:1px;border-bottom:1px dashed #13361f;padding-bottom:2px}
+.pdarow{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;text-align:left;font-family:var(--led);font-size:17px;color:#13361f;padding:2px 4px;border-radius:3px}
+.pdarow small{font-size:13px;opacity:.75}
+button.pdarow:hover{background:rgba(19,54,31,.15)}
+.pdarow.ro{grid-template-columns:1fr auto}
+.laser{position:absolute;left:0;right:0;height:2px;background:rgba(229,56,59,.8);box-shadow:0 0 6px #e5383b;animation:laser 1.6s ease-in-out infinite alternate;pointer-events:none}
+@keyframes laser{from{top:26px}to{top:calc(100% - 4px)}}
+.pdakeys{display:flex;justify-content:center;gap:10px;padding-top:8px}.pdakeys i{width:26px;height:8px;border-radius:4px;background:#3c4247}
+
+/* Portapapeles con el albarán */
+.clip{position:relative;background:linear-gradient(135deg,#a77b4f,#8e6438);border-radius:10px;padding:16px 10px 10px;box-shadow:0 5px 0 rgba(0,0,0,.35)}
+.clamp{position:absolute;left:50%;top:-6px;width:90px;margin-left:-45px;height:22px;border-radius:6px;background:linear-gradient(#e2e6e9,#9aa3a9);box-shadow:0 2px 0 rgba(0,0,0,.35)}
+.paper{background:repeating-linear-gradient(#fffef9 0 23px,#e6eef6 23px 24px);border-radius:2px;padding:10px;display:flex;flex-direction:column;gap:6px;box-shadow:0 2px 6px rgba(0,0,0,.25)}
+.phd{display:flex;justify-content:space-between;align-items:baseline;border-bottom:2px solid var(--ink);padding-bottom:4px;font-size:12px}.phd small{font-size:10px;color:#5b5646}
+.pl{display:grid;grid-template-columns:1fr auto;gap:2px 8px;align-items:center;padding:4px 0;border-bottom:1px dashed #c9c1ad}
+.plt b{display:block;font-size:12px}.plt small{font-size:10px;color:#5b5646}
+.pgot{display:flex;align-items:center;gap:3px;flex-wrap:wrap;justify-content:flex-end}.pgot small{font-size:9px;color:#5b5646;width:100%;text-align:right}
+.mini{width:16px;height:13px;background:linear-gradient(#d7b07a,#b98549);border-radius:2px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.15)}
+.mini.rota{background:linear-gradient(135deg,#b98549 45%,#7a1f1f 46%,#7a1f1f 52%,#b98549 53%)}
+.stamps{grid-column:1/-1;display:flex;gap:6px}
+.stamp{flex:1;border:2px dashed currentColor;border-radius:6px;padding:4px 0;font-family:var(--display);font-size:11px;letter-spacing:1px;opacity:.45;transform:rotate(-2deg);background:transparent}
+.stamp.s-ok{color:#1d7a46}.stamp.s-falta{color:#b46b00}.stamp.s-roto{color:#b3261e}
+.stamp.on{opacity:1;border-style:solid;background:rgba(255,255,255,.6);transform:rotate(-5deg) scale(1.04)}
+.sign{text-align:center;font-family:cursive;font-size:13px;color:#5b5646;padding-top:4px}
+
+/* Muelle de carga */
+.dockfl{position:relative;background:linear-gradient(#4a4f53,#3b4044 30%,#8d9195 30%,#9a9ea2);border-radius:8px;padding:8px 8px 18px}
+.truck{color:#fff;font-size:10px;letter-spacing:2px;text-align:center;padding:4px 0 8px}
+.pallet{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:6px;background:repeating-linear-gradient(90deg,#c69c6d 0 14px,#a97f50 14px 16px);padding:8px;border-radius:4px}
+.hazard{position:absolute;left:0;right:0;bottom:0;height:10px;border-radius:0 0 8px 8px;background:repeating-linear-gradient(45deg,#f2c230 0 10px,#1b1f1d 10px 20px)}
+.doors{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.door{display:flex;flex-direction:column;align-items:center;gap:2px;border-radius:8px 8px 2px 2px;padding:10px 4px 8px;color:#fff;font-size:10px;line-height:1.1;text-align:center;box-shadow:inset 0 -6px 0 rgba(0,0,0,.25),0 3px 0 rgba(0,0,0,.35);background-image:repeating-linear-gradient(rgba(255,255,255,.08) 0 3px,transparent 3px 9px)}
+.door span{font-size:22px}
+.door.z-frio{background-color:#3d7fb8;box-shadow:inset 0 -6px 0 rgba(0,0,0,.25),0 3px 0 rgba(0,0,0,.35),inset 0 0 14px rgba(255,255,255,.55)}
+.door.z-fruta{background-color:#3f8f45}.door.z-drog{background-color:#7b4bb7}.door.z-seco{background-color:#8e6438}
+.door[disabled]{opacity:.55}
+
+/* Suelo del pasillo con el derrame */
+.floor{position:relative;height:190px;border-radius:8px;overflow:hidden;background:repeating-conic-gradient(#e9ecef 0 25%,#d6dbdf 0 50%) 0 0/36px 36px;box-shadow:inset 0 0 0 3px #c4cbd1}
+.wetsign{position:absolute;left:10px;top:12px;width:62px;height:76px;background:transparent;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:8px;z-index:2}
+.wetsign:before{content:'';position:absolute;inset:0;background:var(--tag);clip-path:polygon(50% 0,100% 100%,0 100%);opacity:.35;transition:.2s}
+.wetsign.on:before{opacity:1}
+.wetsign span{position:relative;font-size:18px}.wetsign small{position:relative;font-size:7px;font-weight:700;line-height:1;text-align:center}
+.wetsign:not(.on){animation:nudge 1.4s ease-in-out infinite}
+@keyframes nudge{50%{transform:translateY(-3px)}}
+.puddle{position:absolute;width:74px;height:40px;border-radius:50%;background:radial-gradient(ellipse at 40% 40%,rgba(255,255,255,.7),rgba(106,170,230,.75) 40%,rgba(64,124,190,.65));box-shadow:0 0 0 2px rgba(64,124,190,.25)}
+.puddle.w1{transform:scale(.6);opacity:.75}
+.puddle.dry{background:none;box-shadow:none;display:flex;align-items:center;justify-content:center;font-size:16px}
+.p0{left:90px;top:20px}.p1{left:180px;top:60px}.p2{left:100px;top:110px}.p3{left:200px;top:130px}.p4{left:260px;top:20px}
+.shard{position:absolute;width:20px;height:20px;background:linear-gradient(135deg,#fff,#a8d8ff);clip-path:polygon(50% 0,100% 70%,30% 100%,0 40%);box-shadow:0 0 6px #fff;z-index:2;animation:glint 1.2s ease-in-out infinite}
+.shard.s0{left:140px;top:70px}.shard.s1{left:230px;top:100px}.shard.s2{left:160px;top:150px}
+@keyframes glint{50%{filter:brightness(1.5)}}
+.mop{position:absolute;right:10px;bottom:6px;font-size:30px}
+.miniShelf{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;background:#dfe3e6;border-radius:8px;padding:8px;border-bottom:6px solid #9aa3a9}
+
+/* Mostrador de atención (reclamación de agotado) */
+.desk1{display:flex;flex-direction:column;gap:8px}
+.ccust{display:flex;align-items:flex-start;gap:8px}.ccust>span{font-size:34px;line-height:1}.ccust .bubble{flex:1;font-size:13px}
+
+@media (max-width:420px){.floor{height:170px}.p3{left:170px}.p4{left:230px}.shard.s1{left:200px}.doors{grid-template-columns:repeat(2,1fr)}}
+@media (prefers-reduced-motion:reduce){.laser,.wetsign,.shard{animation:none}}
 </style>
 </head>
 <body>
@@ -1123,7 +1243,7 @@ async function fillRanking(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.15-3';
+const APPV='2026.11.15-4';
 const SHOP='VITCH',DURS=[[100,'100 s (clásico)'],[600,'10 min'],[1800,'30 min'],[3600,'1 hora'],[10800,'3 horas'],[43200,'12 horas']];
 const REAL_LIM=60,TAKEOVER=120000;
 const JOB_IC={jefe:'👑',atc:'🧾',alm:'📦',back:'💼',rrpp:'📣',rrhh:'🗂️'};
@@ -2093,68 +2213,88 @@ function finishSpill(){
 function almBody(){
   const steps=(names,cur)=>'<div class="mgsteps">'+names.map((n,i)=>`<span class="${i===cur?'on':i<cur?'ok':''}">${i<cur?'✔':i+1} ${n}</span>`).join('')+'</div>';
   if(mg.kind==='rot'){
-    const p=mg.p,unitB=(u,row,i)=>{
-      if(!u)return mg.step===2?`<button class="unit empty" data-act="mgput" data-r="${row}" data-i="${i}">＋</button>`:'<span class="unit empty"></span>';
-      if(u.out)return '<span class="unit gone">🗑️</span>';
-      const lab=u.isNew?'<small class="nw">nuevo</small>':u.d!=null?`<small>cad. ${dShort(new Date(today0.getTime()+u.d*dayMs))}</small>`:'<small>lote ok</small>';
-      return mg.step===1&&!u.isNew?`<button class="unit ${u.bad==='roto'?'broken':''}" data-act="mgout" data-i="${i}">${p.e}${u.bad==='roto'?'<b>💥</b>':''}${lab}</button>`:`<span class="unit ${u.bad==='roto'?'broken':''}">${p.e}${u.bad==='roto'&&!u.out?'<b>💥</b>':''}${lab}</span>`;
+    const p=mg.p,cold=zoneOf(p.id)==='frio';
+    const unitB=(u,row,i)=>{
+      if(!u)return mg.step===2?`<button class="fc empty" data-act="mgput" data-r="${row}" data-i="${i}" aria-label="Colocar aquí"><span>＋</span></button>`:'<span class="fc empty"></span>';
+      if(u.out)return '<span class="fc gone"><span>🗑️</span></span>';
+      const date=u.d!=null?new Date(today0.getTime()+u.d*dayMs):null;
+      const tag=u.isNew?'<em class="stk new">NUEVO</em>':date?`<em class="stk">CAD ${dShort(date)}</em>`:'<em class="stk lot">LOTE OK</em>';
+      const inner=`<span class="pk">${p.e}</span>${u.bad==='roto'?'<i class="crack"></i>':''}${tag}`;
+      return mg.step===1&&!u.isNew?`<button class="fc ${u.bad==='roto'?'broken':''}" data-act="mgout" data-i="${i}">${inner}</button>`:`<span class="fc ${u.bad==='roto'?'broken':''} ${u.isNew?'isnew':''}">${inner}</span>`;
     };
-    const lin=`<div class="lineal"><div class="lrow"><em>DETRÁS</em>${mg.back.map((u,i)=>unitB(u,'b',i)).join('')}</div><div class="lrow front"><em>DELANTE</em>${mg.front.map((u,i)=>unitB(u,'f',i)).join('')}</div></div>`;
+    const rail=`<div class="rail"><span class="ptag"><b>${fmt(p.p)}</b><small>${p.n}</small></span></div>`;
+    const lin=`<div class="gondola ${cold?'fridge':''}">${cold?'<div class="fridge-top">❄️ MURAL REFRIGERADO · 2–4 °C</div>':''}
+      <div class="gshelf back"><em>FONDO</em>${mg.back.map((u,i)=>unitB(u,'b',i)).join('')}</div>${rail}
+      <div class="gshelf front"><em>FRENTE</em>${mg.front.map((u,i)=>unitB(u,'f',i)).join('')}</div>${rail}</div>`;
     let h=steps(['Coger','Retirar','Colocar','Etiqueta'],mg.step);
-    if(mg.step===0)h+=`<div class="supd">En el almacén, coge la caja de <b>${p.e} ${p.n}</b>${p.f?' ('+esc(p.f)+')':''}. Hay cajas parecidas.</div>
-      <div class="crates">${mg.crates.map((c,i)=>`<button class="crate" data-act="mgcrate" data-i="${i}">📦<b>${c.n}</b><small>${esc(c.f)}</small></button>`).join('')}</div>${mg.wrongBox?`<div class="supd">❌ Cajas equivocadas: ${mg.wrongBox}</div>`:''}`;
-    else if(mg.step===1)h+=`<div class="supd">Hoy es <b>${dShort(today0)}</b>. Toca lo que esté <b>caducado o roto</b> para retirarlo (va a merma). Lo bueno, déjalo.</div>${lin}<button class="btn go" data-act="mgnext">Lineal revisado ▶</button>`;
-    else if(mg.step===2)h+=`<div class="supd">Te quedan <b>${mg.newLeft}</b> unidades nuevas. Ponlas <b>detrás</b>: lo viejo se vende primero.</div>${lin}`;
-    else h+=`<div class="supd">Mira la PDA y pon la etiqueta con el precio de <b>${p.n}</b>${p.f?' ('+esc(p.f)+')':''}.</div>
-      <div class="pda">${mg.pda.map((x,i)=>`<button class="btn" data-act="mgprice" data-i="${i}">🏷️ ${x.n} <small>${esc(x.f)}</small> · <b>${fmt(x.p)}</b></button>`).join('')}</div>`;
+    if(mg.step===0)h+=`<div class="brief">📋 <b>Orden de reposición:</b> ${p.e} ${p.n}${p.f?' · '+esc(p.f):''} · pasillo ${aisleOf(p.id)}. Búscala en la estantería del almacén: hay cajas parecidas.</div>
+      <div class="wh"><div class="rack"><i class="up l"></i><i class="up r"></i>${[0,1].map(lv=>`<div class="lvl">${mg.crates.slice(lv*2,lv*2+2).map((c,j)=>{const i=lv*2+j;return `<button class="cbox" data-act="mgcrate" data-i="${i}"><i class="tape"></i><span class="lbl"><b>${c.n}</b><small>${esc(c.f)}</small><i class="bc"></i></span></button>`;}).join('')}</div><i class="beam"></i>`).join('')}</div></div>
+      ${mg.wrongBox?`<div class="supd bad">❌ Cajas equivocadas: ${mg.wrongBox}</div>`:''}`;
+    else if(mg.step===1)h+=`<div class="brief">📅 Hoy es <b>${dShort(today0)}</b>. Toca lo <b>caducado</b> (fecha anterior a hoy) o <b>roto</b> para retirarlo a merma. Lo bueno, ni lo toques.</div>${lin}<button class="btn go" data-act="mgnext">Lineal revisado ▶</button>`;
+    else if(mg.step===2)h+=`<div class="brief">📦 Te quedan <b>${mg.newLeft}</b> ${mg.newLeft===1?'unidad nueva':'unidades nuevas'} en la mano. Al <b>fondo</b>: lo viejo, al frente, que se venda antes.</div>${lin}`;
+    else h+=`<div class="brief">🏷️ Escanea la PDA y pon en el riel la etiqueta de <b>${p.n}</b>${p.f?' ('+esc(p.f)+')':''}.</div>
+      <div class="pdadev"><div class="pdahead"><span>PDA VM-3000</span><span>📶 🔋</span></div><div class="pdascr"><div class="pdat">CONSULTA DE PRECIOS · PASILLO ${aisleOf(p.id)}</div><i class="laser"></i>
+      ${mg.pda.map((x,i)=>`<button class="pdarow" data-act="mgprice" data-i="${i}"><span>${String(1000+x.id*7).slice(-4)}</span><span>${x.n} <small>${esc(x.f)}</small></span><b>${fmt(x.p)}</b></button>`).join('')}</div><div class="pdakeys"><i></i><i></i><i></i></div></div>`;
     return h;
   }
   if(mg.kind==='recv'){
     let h=steps(['Albarán','Ubicar'],mg.step);
     if(mg.step===0){
-      h+=`<div class="supd">Compara el <b>albarán</b> con lo que ha bajado del camión y marca cada línea. Si firmas sin apuntar una falta o una rotura, la pagas tú.</div>
-        <div class="alb">${mg.lines.map((l,i)=>`<div class="albl"><div><b>${l.e} ${l.n}</b><small>Albarán: ${l.q} ${l.q===1?'caja':'cajas'} · En el muelle: ${'📦'.repeat(l.got-l.roto)}${l.roto?'<span class="br">📦💥</span>':''}</small></div>
-          <div class="albm">${[['ok','✅'],['falta','➖ Falta'],['roto','💥 Roto']].map(([k,lb])=>`<button class="btn ${l.mark===k?'on':''}" data-act="mgmark" data-i="${i}" data-k="${k}">${lb}</button>`).join('')}</div></div>`).join('')}</div>
-        <button class="btn go" data-act="mgsignalb" ${mg.lines.every(l=>l.mark)?'':'disabled'}>✍️ Firmar el albarán</button>`;
+      h+=`<div class="brief">🚚 Compara el <b>albarán</b> con lo que ha bajado al muelle. Sella cada línea antes de firmar: lo que no apuntes, lo pagas.</div>
+        <div class="clip"><i class="clamp"></i><div class="paper"><div class="phd"><b>ALBARÁN Nº ${4800+((mg.t.id||7)*37)%200}</b><small>Hacendado Directo · Muelle 2</small></div>
+        ${mg.lines.map((l,i)=>`<div class="pl"><div class="plt"><b>${l.e} ${l.n}</b><small>Pedido: ${l.q} ${l.q===1?'caja':'cajas'}</small></div>
+          <div class="pgot">${Array.from({length:l.got},(_,k)=>`<i class="mini ${k>=l.got-l.roto?'rota':''}"></i>`).join('')}<small>en el muelle</small></div>
+          <div class="stamps">${[['ok','✔ OK'],['falta','FALTA'],['roto','ROTO']].map(([k,lb])=>`<button class="stamp s-${k} ${l.mark===k?'on':''}" data-act="mgmark" data-i="${i}" data-k="${k}">${lb}</button>`).join('')}</div></div>`).join('')}
+        <div class="sign">${mg.lines.every(l=>l.mark)?'<button class="btn go" data-act="mgsignalb">✍️ Firmar el albarán</button>':'<span>Firma del receptor: ____________</span>'}</div></div></div>`;
     }else{
-      const left=mg.dock.filter(b=>!b.done);
-      h+=`<div class="supd">Ubica cada caja: tócala y luego su zona. <b>Lo de frío primero</b>: cada caja que metas antes le quita frío (❄️).</div>
-        <div class="dock">${mg.dock.map((b,i)=>b.done?'':`<button class="crate ${mg.sel===i?'sel':''}" data-act="mgpick" data-i="${i}">${b.e}<b>${b.n}</b>${b.life!=null?`<small>${'❄️'.repeat(b.life)}</small>`:''}</button>`).join('')}</div>
-        <div class="zones">${ZONES.map(z=>`<button class="btn" data-act="mgzone2" data-z="${z[0]}" ${mg.sel<0?'disabled':''}>${z[1]}</button>`).join('')}</div>
-        <div class="supd">Bien ubicadas: ${mg.placedOk} · Mal: ${mg.placedBad}${mg.spoiled?' · Echadas a perder: '+mg.spoiled:''} · Quedan ${left.length}</div>`;
+      const left=mg.dock.filter(b=>!b.done).length;
+      h+=`<div class="brief">❄️ <b>Lo de frío primero</b>: cada caja que metas antes le quita frío. Toca una caja del palé y luego su puerta.</div>
+        <div class="dockfl"><div class="truck">🚚 MUELLE 2</div><div class="pallet">${mg.dock.map((b,i)=>b.done?'<span class="cbox sm gone"></span>':`<button class="cbox sm ${mg.sel===i?'sel':''} ${b.life!=null?'cold':''}" data-act="mgpick" data-i="${i}"><i class="tape"></i><span class="lbl"><b>${b.e} ${b.n}</b>${b.life!=null?`<small class="frost">${'❄️'.repeat(b.life)}${'·'.repeat(3-b.life)}</small>`:''}</span></button>`).join('')}</div><i class="hazard"></i></div>
+        <div class="doors">${ZONES.map(z=>`<button class="door z-${z[0]}" data-act="mgzone2" data-z="${z[0]}" ${mg.sel<0?'disabled':''}><span>${z[1].split(' ')[0]}</span><b>${z[1].split(' ').slice(1).join(' ')}</b></button>`).join('')}</div>
+        <div class="supd">✔ ${mg.placedOk} bien · ✖ ${mg.placedBad} mal${mg.spoiled?' · 🗑️ '+mg.spoiled+' sin frío':''} · quedan ${left}</div>`;
     }
     return h;
   }
+  if(mg.kind==='agot'){
+    return `<div class="desk1"><div class="ccust"><span>🙋</span><div class="bubble">«${esc(mg.t.txt||'No queda nada de lo que busco.')}»</div></div>
+      <div class="pdadev"><div class="pdahead"><span>PDA VM-3000</span><span>📶 🔋</span></div><div class="pdascr"><div class="pdat">STOCK · ${mg.p.n.toUpperCase()}</div>
+        <div class="pdarow ro"><span>Estantería</span><b>0</b></div><div class="pdarow ro"><span>Almacén</span><b>${mg.back}</b></div><div class="pdarow ro"><span>En camino</span><b>${mg.inc?'mañana':'—'}</b></div>
+        <div class="pdarow ro"><span>Parecido</span><b>${mg.alt?mg.alt.e+' '+mg.alt.n:'—'}</b></div></div><div class="pdakeys"><i></i><i></i><i></i></div></div>
+      <div class="brief">Mira la PDA y decide qué le ofreces.</div>
+      <div class="opts">${mg.opts.map((o,i)=>`<button class="btn" data-act="mgagot" data-i="${i}">${o[0]}</button>`).join('')}</div></div>`;
+  }
   /* derrame */
   const wet=mg.spots.filter(s=>s<2).length;
-  let h=`<div class="supd">Se ha roto ${mg.glass?'un bote de <b>cristal</b>':'un envase'} en el pasillo ${mg.t.n}. Hazlo en orden: <b>cartel</b> → ${mg.glass?'<b>cristales</b> (antes de fregar, o te cortas) → ':''}<b>fregar</b> → <b>retirar el producto roto</b> → quitar el cartel cuando esté seco.</div>
-    <div class="row"><button class="btn ${mg.sign?'on':''}" data-act="mgsign" ${mg.sign?'disabled':''}>⚠️ ${mg.sign?'Cartel puesto':'Poner el cartel'}</button></div>`;
-  if(mg.glass)h+=`<div class="boxes">${Array.from({length:3},(_,i)=>i<3-mg.shards?'<span class="box done">🧹</span>':`<button class="box" data-act="mgshard" aria-label="Recoger cristales">🔷</button>`).join('')}</div>`;
-  h+=`<div class="boxes">${mg.spots.map((s,i)=>s>=2?'<span class="box done">✨</span>':`<button class="box" data-act="mgmop2" data-i="${i}">${['💦','🫧'][s]}</button>`).join('')}</div>
-    <div class="supd">Entre los restos del suelo se ve ${mg.p.e}. ¿Qué producto se ha roto? Retíralo de la estantería (merma).</div>
-    <div class="row">${mg.cands.map((c,i)=>`<button class="btn ${mg.out&&c.id===mg.p.id?'on':''}" data-act="mgout2" data-i="${i}" ${mg.out?'disabled':''}>${c.e} ${c.n}</button>`).join('')}</div>
+  return `<div class="brief">🧴 ${mg.glass?'Bote de <b>cristal</b> roto':'Envase reventado'} en el pasillo ${mg.t.n}. Orden: <b>cartel</b> → ${mg.glass?'<b>cristales</b> → ':''}<b>fregar</b> → <b>retirar el roto</b> → quitar el cartel en seco.</div>
+    <div class="floor">
+      <button class="wetsign ${mg.sign?'on':''}" data-act="mgsign" ${mg.sign?'disabled':''} aria-label="Poner el cartel"><span>⚠️</span><small>SUELO<br>MOJADO</small></button>
+      ${mg.glass?Array.from({length:3},(_,i)=>i<3-mg.shards?'':`<button class="shard s${i}" data-act="mgshard" aria-label="Recoger cristal"></button>`).join(''):''}
+      ${mg.spots.map((s,i)=>s>=2?`<span class="puddle p${i} dry">✨</span>`:`<button class="puddle p${i} w${s}" data-act="mgmop2" data-i="${i}" aria-label="Fregar"></button>`).join('')}
+      <span class="mop">🧹</span>
+    </div>
+    <div class="brief">🔎 Entre los restos se ve ${mg.p.e}. ¿Cuál se ha roto? Retíralo del lineal a merma.</div>
+    <div class="miniShelf">${mg.cands.map((c,i)=>`<button class="fc ${mg.out&&c.id===mg.p.id?'gone':''}" data-act="mgout2" data-i="${i}" ${mg.out?'disabled':''}><span class="pk">${c.e}</span><em class="stk lot">${c.n}</em></button>`).join('')}</div>
     <button class="btn go" data-act="mgend2">🚧 Quitar el cartel y terminar${wet?' ('+wet+' charcos sin secar)':''}</button>`;
-  return h;
 }
 function almAct(a,b){
   if(mg.kind==='rot'){
-    if(a==='mgcrate'){const c=mg.crates[+b.dataset.i];if(!c)return;if(c.id===mg.p.id){mg.step=1;sBeep();}else{mg.wrongBox++;sBad();toast(c.n+' no es lo que hay que reponer','bad');}}
-    else if(a==='mgout'){const u=mg.front[+b.dataset.i];if(!u||u.out)return;u.out=true;if(u.bad){mg.badOut++;sCoin();}else{mg.goodOut++;sBad();toast('Eso estaba bien: lo has tirado','bad');}}
+    if(a==='mgcrate'){const c=mg.crates[+b.dataset.i];if(!c)return;if(c.id===mg.p.id){mg.step=1;sBeep();}else{mg.wrongBox++;sBad();mg.fx={sel:`[data-act=mgcrate][data-i="${b.dataset.i}"]`,k:'bad'};toast(c.n+' no es lo que hay que reponer','bad');}}
+    else if(a==='mgout'){const u=mg.front[+b.dataset.i];if(!u||u.out)return;u.out=true;if(u.bad){mg.badOut++;sCoin();}else{mg.goodOut++;sBad();mg.fx={sel:'.gondola',k:'bad'};toast('Eso estaba bien: lo has tirado','bad');}}
     else if(a==='mgnext'){mg.front=mg.front.map(u=>u&&u.out?null:u);mg.step=2;}
     else if(a==='mgput'){
       const row=b.dataset.r,i=+b.dataset.i,arr=row==='b'?mg.back:mg.front;if(arr[i]||mg.newLeft<=0)return;
       arr[i]={isNew:1};mg.newLeft--;
-      if(row==='f'&&mg.front.some(u=>u&&!u.isNew)){mg.rotErr++;sBad();toast('Nuevo delante de lo viejo: lo viejo acabará caducando','bad');}else sBeep();
+      if(row==='f'&&mg.front.some(u=>u&&!u.isNew)){mg.rotErr++;sBad();mg.fx={sel:'.gondola',k:'bad'};toast('Nuevo delante de lo viejo: lo viejo acabará caducando','bad');}else sBeep();
       if(mg.newLeft<=0||![...mg.back,...mg.front].some(u=>!u))mg.step=3;
     }
     else if(a==='mgprice'){const x=mg.pda[+b.dataset.i];if(!x)return;mg.priceErr=x.id!==mg.p.id;if(mg.priceErr)toast('Esa etiqueta es de otro producto: en caja se cobrará mal','bad');return finishRot();}
   }else if(mg.kind==='recv'){
-    if(a==='mgmark'){const l=mg.lines[+b.dataset.i];if(l)l.mark=b.dataset.k;}
+    if(a==='mgmark'){const l=mg.lines[+b.dataset.i];if(l){l.mark=b.dataset.k;sCoin();mg.fx={sel:`[data-act=mgmark][data-i="${b.dataset.i}"][data-k="${b.dataset.k}"]`,k:'ok'};}}
     else if(a==='mgsignalb'){if(!mg.lines.every(l=>l.mark))return;recvToDock();sCoin();if(!mg.dock.length)return finishRecv();}
     else if(a==='mgpick'){mg.sel=+b.dataset.i;}
     else if(a==='mgzone2'){
       const bx=mg.dock[mg.sel];if(!bx||bx.done)return;
-      bx.done=true;bx.ok=b.dataset.z===bx.z;if(bx.ok){mg.placedOk++;sBeep();}else{mg.placedBad++;sBad();toast(bx.n+' no va en esa zona','bad');}
+      bx.done=true;bx.ok=b.dataset.z===bx.z;mg.fx={sel:`[data-act=mgzone2][data-z="${b.dataset.z}"]`,k:bx.ok?'ok':'bad'};if(bx.ok){mg.placedOk++;sBeep();}else{mg.placedBad++;sBad();toast(bx.n+' no va en esa zona','bad');}
       mg.dock.forEach(o=>{if(!o.done&&o.life!=null&&bx.life==null){o.life--;if(o.life<=0){o.done=true;mg.spoiled++;toast('❄️ '+o.n+' ha perdido la cadena de frío: a la basura','bad');}}});
       mg.sel=-1;if(mg.dock.every(o=>o.done))return finishRecv();
     }
@@ -2162,7 +2302,7 @@ function almAct(a,b){
     if(a==='mgsign'){mg.sign=true;sCoin();}
     else if(a==='mgshard'){if(mg.shards>0){mg.shards--;sCoin();}}
     else if(a==='mgmop2'){const i=+b.dataset.i;if(!mg.sign)mg.early=true;if(mg.shards>0&&!mg.cut){mg.cut=true;sBad();toast('🩸 Has fregado con cristales en el suelo y te has cortado','bad');}mg.spots[i]++;sCoin();}
-    else if(a==='mgout2'){const c=mg.cands[+b.dataset.i];if(!c)return;if(c.id===mg.p.id){mg.out=true;sBeep();}else{mg.wrongOut++;sBad();toast(c.n+' estaba bien','bad');}}
+    else if(a==='mgout2'){const c=mg.cands[+b.dataset.i];if(!c)return;if(c.id===mg.p.id){mg.out=true;sBeep();}else{mg.wrongOut++;sBad();mg.fx={sel:`[data-act=mgout2][data-i="${b.dataset.i}"]`,k:'bad'};toast(c.n+' estaba bien','bad');}}
     else if(a==='mgend2')return finishSpill();
   }
   renderMG();
@@ -2425,12 +2565,24 @@ function applyFeud(x,ok){
   return wronged?'Le has quitado la razón a '+wronged.name+', que la tenía. Está que trina.':'Has dado la razón a uno cuando los dos tenían parte. Mal ambiente.';
 }
 
+/* Reclamación de producto agotado (Almacén): la PDA dice si queda en el almacén, si llega mañana y si hay
+   algo parecido. Apartárselo si queda; si no, ofrecer el parecido; si tampoco, que vuelva cuando llegue. */
+function startAgot(t){
+  const p=pick(CAT.filter(x=>!x.age)),back=Math.random()<0.55?ri(1,6):0,inc=Math.random()<0.5;
+  const alt=Math.random()<0.7?pick(CAT.filter(x=>!x.age&&x.id!==p.id&&aisleOf(x.id)===aisleOf(p.id))):null;
+  const best=back?'apart':alt?'alt':inc?'wait':'sorry';
+  const o=[['apart','📦 Ir al almacén y apartárselo'],['alt','🔁 Ofrecerle '+(alt?alt.e+' '+alt.n:'algo parecido')],['wait','📅 Que vuelva mañana, que llega en el camión'],['sorry','🙄 «No hay y punto»']]
+    .map(([k,lb])=>[lb,t.mis?0:k===best?1:(k==='wait'&&!back?0.5:0)]);
+  if(t.mis)o.push(['↩️ Esto no es de Almacén: devolverla',1]);
+  return {kind:'agot',t,p,back,inc,alt,opts:shuffle(o)};
+}
 function startMG(t){
   const p=CAT.find(x=>x.id===t.pid)||CAT[0];
   if(t.k==='repo'||t.k==='call')mg=startRot(t,p);
   else if(t.k==='spill')mg=startSpill(t);
   else if(t.k==='truck')mg=startRecv(t);
   else if(t.k==='tk'&&t.dept==='back')mg=startRefund(t);
+  else if(t.k==='tk'&&t.dept==='alm')mg=startAgot(t);
   else if(t.k==='cash')mg=startCash(t);
   else if(t.k==='tk'&&t.dept==='rrpp')mg=startSocial(t);
   else if(t.k==='help'||t.k==='tour')mg=startMap(t);
@@ -2458,7 +2610,7 @@ function renderMG(){
   if(!mg||mg.kind==='sup')return;
   const t=mg.t,cv=run&&run.away&&run.away.cover&&empById(run.away.cover);
   let body='';
-  if(mg.kind==='rot'||mg.kind==='recv'||mg.kind==='spill2')body=almBody();
+  if(mg.kind==='rot'||mg.kind==='recv'||mg.kind==='spill2'||mg.kind==='agot')body=almBody();
   else if(mg.kind==='refund'||mg.kind==='cash')body=backBody();
   else if(mg.kind==='social'||mg.kind==='map')body=rrppBody();
   else if(mg.kind==='cv'||mg.kind==='feud')body=rrhhBody();
@@ -2487,11 +2639,15 @@ function renderMG(){
       <div class="zones">${ZONES.map(z=>`<button class="btn" data-act="mgzone" data-z="${z[0]}">${z[1]}</button>`).join('')}</div>
       <div class="supd">Bien colocadas: ${mg.ok}</div>`;
   }
-  openMG(`<div class="card mgc"><h3>${t.ic} ${t.s}</h3>
+  const TH={rot:'alm',recv:'alm',spill2:'alm',agot:'alm',refund:'back',cash:'back',social:'rrpp',map:'rrpp',cv:'rrhh',feud:'rrhh'}[mg.kind];
+  const THN={alm:'📦 ALMACÉN',back:'💼 BACKOFFICE',rrpp:'📣 RELACIONES PÚBLICAS',rrhh:'🗂️ RECURSOS HUMANOS'}[TH];
+  openMG(`<div class="card mgc ${TH?'th-'+TH:''}">${TH?`<span class="dept-badge">${THN}</span>`:''}<h3>${t.ic} ${t.s}</h3>
     <div class="supd">${mg.remote?'Tienes '+REAL_LIM+' s desde que lo cogiste. El jefe lo ve todo.':cv?cv.face+' '+cv.name+' te cubre la caja.':'Tu caja está cerrada y la cola espera. Date prisa.'}</div>${body}</div>`);
+  if(mg&&mg.fx){const el=document.querySelector('#mg '+mg.fx.sel);if(el)el.classList.add('fx-'+mg.fx.k);mg.fx=null;}
 }
 function mgAct(a,b){
   if(!mg||mg.kind==='sup')return;
+  if(mg.kind==='agot'){if(a==='mgagot'){const o=mg.opts[+b.dataset.i];if(o)return endMG(o[1]);}return;}
   if(mg.kind==='rot'||mg.kind==='recv'||mg.kind==='spill2')return almAct(a,b);
   if(mg.kind==='refund'||mg.kind==='cash')return backAct(a,b);
   if(mg.kind==='social'||mg.kind==='map')return rrppAct(a,b);
