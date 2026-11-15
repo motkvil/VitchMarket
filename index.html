@@ -1441,7 +1441,9 @@ async function fillRanking(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.15-11';
+const APPV='2026.11.15-12';
+/* Compara versiones por números («-9» < «-11»), no como texto. */
+const verCmp=(a,b)=>{const x=String(a).split(/[.-]/).map(Number),y=String(b).split(/[.-]/).map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
 try{const vt=document.createElement('div');vt.id='vtag';vt.textContent='v'+APPV;document.body.appendChild(vt);}catch(e){}
 const SHOP='VITCH',DURS=[[100,'100 s (clásico)'],[600,'10 min'],[1800,'30 min'],[3600,'1 hora'],[10800,'3 horas'],[43200,'12 horas']];
 const REAL_LIM=60,TAKEOVER=120000;
@@ -1916,7 +1918,7 @@ function renderMember(){
     :`<span class="live"><i></i>EN DIRECTO</span> 👑 Jefe: <b>${bossName}</b> · turnos de ${durTxt(inf.dur)}`;
   const hud=st&&!stale?`<div class="mhud"><span>Turno <b>${st.day}</b></span><span>🕘 <b>${clockOf(st.t,st.dur)}</b></span><span>Bote <b>${fmt(st.money)}</b></span><span>★ <b>${(+st.rep).toFixed(1)}</b></span><span>Cola <b>${st.q}</b></span></div>`:'';
   scrRender=renderMember;
-  const verMsg=st&&!stale&&st.v!==APPV?`<div class="rerr">⚠️ ${!st.v||st.v<APPV?'El jefe tiene una versión antigua del juego: que recargue la página (en el ordenador, Cmd+Shift+R o Ctrl+F5).':'Tienes una versión antigua del juego: recarga la página.'}</div>`:'';
+  const verMsg=st&&!stale&&st.v!==APPV?`<div class="rerr">⚠️ ${!st.v||verCmp(st.v,APPV)<0?'El jefe tiene una versión antigua del juego: que recargue la página (en el ordenador, Cmd+Shift+R o Ctrl+F5).':'Tienes una versión antigua del juego: recarga la página.'} <small>(tú: v${APPV} · jefe: v${st.v||'?'})</small></div>`:'';
   const top=`<div class="supd">${status}</div>${verMsg}${hud}${room.msg?`<div class="${room.msg.bad?'rerr':'rok'}">${esc(room.msg.t)}</div>`:''}`;
   const nWho=Object.values(ms).filter(m=>m&&m.name).length,rankTab=['rank','🏆 Ranking'],whoTab=['who','👥 Quién hay',nWho];
   const bossBtn=role&&inf.host&&!bossOn?'<button class="btn" data-act="rboss" title="El jefe lleva más de 2 minutos sin aparecer">👑 Quedarme con el puesto de jefe</button>':'';
