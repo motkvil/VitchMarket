@@ -45,7 +45,7 @@
     "rooms": {
       "$code": {
         ".read": "auth != null",
-        ".validate": "$code.length === 5",
+        ".validate": "$code === 'VITCH'",
         "info": {
           ".write": "auth != null && ((!data.exists() && newData.child('host').val() === auth.uid) || data.child('host').val() === auth.uid)",
           ".validate": "newData.hasChildren(['host', 'name', 'dur', 'status'])",
@@ -77,7 +77,7 @@
         },
         "members": {
           "$uid": {
-            ".write": "auth != null && (auth.uid === $uid || root.child('rooms/'+$code+'/info/host').val() === auth.uid) && newData.parent().parent().child('info').exists()",
+            ".write": "auth != null && (auth.uid === $uid || root.child('rooms/'+$code+'/info/host').val() === auth.uid)",
             ".validate": "newData.hasChildren(['name'])",
             "name": {
               ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 20"

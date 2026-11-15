@@ -951,9 +951,12 @@ async function enterShared(){
     await f.update(f.ref(f.db,base+'/members/'+f.uid),{name:playerName()||'Jefe',role:'jefe',on:true});
     return enterRoom(SHOP,true);
   }
+  /* Si el registro falla (reglas, permisos…), no es falta de conexión: se entra igual y se avisa. */
   if(playerName()){
-    const ex=(await f.get(f.ref(f.db,base+'/members/'+f.uid))).val();
-    await f.update(f.ref(f.db,base+'/members/'+f.uid),{name:playerName(),on:true,role:ex&&ROLES[ex.role]?ex.role:null});
+    try{
+      const ex=(await f.get(f.ref(f.db,base+'/members/'+f.uid))).val();
+      await f.update(f.ref(f.db,base+'/members/'+f.uid),{name:playerName(),on:true,role:ex&&ROLES[ex.role]?ex.role:null});
+    }catch(e){console.warn('No se pudo registrar en la tienda:',e);setTimeout(()=>toast('⚠️ La tienda no ha aceptado tu registro ('+(e&&e.code||'error')+'). Avisa a quien lleva el juego.','bad'),600);}
   }
   enterRoom(SHOP,false);
 }
