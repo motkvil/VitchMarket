@@ -272,16 +272,61 @@ const ROLES={
  back:{n:'Backoffice',s:'Back',max:4,duties:['Reembolsos y cobros mal hechos','2 reclamaciones de dinero por turno (3 si es rápido)']},
  rrpp:{n:'Relaciones Públicas',s:'RR.PP.',max:4,duties:['Quejas por trato y amenazas en redes','Ayudar a clientes perdidos en sala']}
 };
-const NAMES=[['Rocío','👩'],['Javi','👨'],['Marta','👩‍🦰'],['Toni','🧔'],['Lucía','👱‍♀️'],['Dani','🧑'],['Pili','👵'],['Kevin','🧑‍🦱'],['Nerea','👩‍🦳'],['Paco','👨‍🦲'],['Yeray','👨'],['Sheila','👩‍🦰'],['Óscar','🧔'],['Vane','👱‍♀️'],['Rubén','🧑'],['Inma','👩‍🦳'],['Manolo','👴'],['Aitana','👩'],['Jonathan','🧑‍🦱'],['Loli','👵']];
+const wpick=a=>{let r=Math.random()*a.reduce((t,x)=>t+x.w,0);for(const x of a){r-=x.w;if(r<=0)return x;}return a[0];};
+const LANG={es:'español',en:'inglés',fr:'francés',de:'alemán',it:'italiano',pt:'portugués',ar:'árabe',ro:'rumano',uk:'ucraniano',zh:'chino',wo:'wolof',tl:'tagalo'};
+/* Nacionalidades: w = peso, l = idiomas, n = [nombre, cara], tic = frases suyas durante el turno. */
+const NATS=[
+ {c:'España',f:'🇪🇸',w:44,l:['es'],n:[['Rocío','👩'],['Javi','👨'],['Marta','👩‍🦰'],['Toni','🧔'],['Lucía','👱‍♀️'],['Dani','🧑'],['Pili','👵'],['Kevin','🧑‍🦱'],['Nerea','👩‍🦳'],['Paco','👨‍🦲'],['Yeray','👨'],['Sheila','👩‍🦰'],['Óscar','🧔'],['Vane','👱‍♀️'],['Rubén','🧑'],['Inma','👩‍🦳'],['Manolo','👴'],['Aitana','👩'],['Jonathan','🧑‍🦱'],['Loli','👵']],tic:['¡Venga, que esto sale!','Madre mía, qué día llevamos.']},
+ {c:'Colombia',f:'🇨🇴',w:6,l:['es'],n:[['Yesenia','👩'],['Camilo','👨'],['Valentina','👩‍🦱'],['Jhon Fredy','🧔']],tic:['¡Qué chévere, hoy vamos bien!','Tranquilos, que eso se arregla.']},
+ {c:'Venezuela',f:'🇻🇪',w:6,l:['es'],n:[['Oriana','👩'],['Yorman','👨'],['Génesis','👩‍🦱'],['Daniela','👱‍♀️']],tic:['¡Épale! Ánimo, que ya queda poco.','Esto está full hoy.']},
+ {c:'Argentina',f:'🇦🇷',w:5,l:['es','it'],n:[['Facundo','🧔'],['Agustina','👩'],['Lautaro','👨']],tic:['Che, ¿alguien vio el cúter?','Dale, que llegamos.']},
+ {c:'Marruecos',f:'🇲🇦',w:7,l:['es','ar','fr'],n:[['Youssef','👨'],['Fátima','🧕'],['Hamza','🧔'],['Salma','👩']],tic:['Inshallah hoy cerramos pronto.','Tranquilos, poco a poco.']},
+ {c:'Rumanía',f:'🇷🇴',w:6,l:['es','ro','it'],n:[['Andrei','👨'],['Ioana','👩'],['Florin','🧔']],tic:['Hai, que podemos.','Qué cola hay hoy, ¿eh?']},
+ {c:'Ucrania',f:'🇺🇦',w:4,l:['es','uk','en'],n:[['Oksana','👱‍♀️'],['Dmytro','👨']],tic:['Venga, un poco más.']},
+ {c:'China',f:'🇨🇳',w:4,l:['es','zh','en'],n:[['Mei','👩'],['Wei','👨'],['Lin','👩‍🦰']],tic:['Hoy hay mucho trabajo. ¡Mejor!']},
+ {c:'Senegal',f:'🇸🇳',w:4,l:['es','wo','fr'],n:[['Moussa','👨🏿'],['Awa','👩🏿'],['Ibrahima','🧔🏿']],tic:['Tranquilos, todo bien.','¡Vamos, equipo!']},
+ {c:'Italia',f:'🇮🇹',w:4,l:['es','it','en'],n:[['Giulia','👩'],['Matteo','👨']],tic:['Mamma mia, qué cola.']},
+ {c:'Perú',f:'🇵🇪',w:4,l:['es'],n:[['Milagros','👩'],['Renzo','👨']],tic:['¡Qué bacán, ya casi cerramos!']},
+ {c:'Brasil',f:'🇧🇷',w:4,l:['es','pt'],n:[['Thiago','👨🏽'],['Larissa','👩🏽']],tic:['Nossa, cuánta gente hoy.']},
+ {c:'Filipinas',f:'🇵🇭',w:3,l:['es','en','tl'],n:[['Jasmine','👩'],['Mark','👨']],tic:['¡Ánimo, equipo!']}
+];
+/* Carácter: se ve en la ficha a partir de su primer turno. */
+const TRAITS={
+ bromista:{n:'Bromista',ic:'😂',d:'Anima al resto de la plantilla (+ánimo a quien trabaje ese día).'},
+ quejica:{n:'Quejica',ic:'😩',d:'Contagia el mal rollo (−ánimo a quien trabaje ese día) y pide aumentos más a menudo.'},
+ currante:{n:'Currante',ic:'💪',d:'Más actitud. No se escaquea.'},
+ chismoso:{n:'Cotilla',ic:'👂',d:'En las reuniones te cuenta cosas de los demás. Casi siempre ciertas.'},
+ timido:{n:'Timidez',ic:'🙈',d:'Puntualísimo, pero le cuesta tratar con clientes.'},
+ lider:{n:'Liderazgo',ic:'⭐',d:'Los de su mismo puesto rinden más cuando está.'},
+ pasota:{n:'Pasota',ic:'😴',d:'Menos actitud. No se agobia por nada.'},
+ servicial:{n:'Servicial',ic:'🤝',d:'Hace tareas de otros puestos sin rendir peor.'}
+};
+const TALK={
+ bromista:['¿Sabéis por qué el tomate se puso rojo? ¡Porque vio la ensalada!','Hoy estoy que me salgo, ¿eh?'],
+ quejica:['Otra vez el muelle lleno… siempre me toca a mí.','Con lo que nos pagan…'],
+ currante:['Yo me encargo, tranquilidad.','¿Algo más que hacer? Me aburro.'],
+ chismoso:['¿Te has enterado de lo de ayer en el almacén?','Yo no digo nada, pero…'],
+ timido:['…','Eh… vale.'],
+ lider:['Venga, equipo, que hoy lo sacamos.','Cada uno a lo suyo y salimos antes.'],
+ pasota:['Bah, ya lo hará alguien.','Tranqui, que no corre prisa.'],
+ servicial:['Si necesitas algo, me dices.','Te echo una mano con eso.']
+};
 const WAGE=1500,HIRE=4000;
 const blankSt=()=>({ok:0,fail:0,late:0,abs:0,tasks:0,tfail:0,quej:0,fel:0,shifts:0});
 /* Rasgos ocultos 0–1: rap (rapidez), trato, punt (puntualidad), act (actitud). Moral 0–100. */
 function newEmp(role,m,opt,taken){
   const used=new Set(m.emp.map(e=>e.name).concat(taken||[]));
-  const pool=NAMES.filter(n=>!used.has(n[0]));const nm=pick(pool.length?pool:NAMES);
-  const sk=()=>Math.round(rnd(0.15,0.95)*100)/100;
+  let nat=wpick(NATS),pool=nat.n.filter(x=>!used.has(x[0]));
+  if(!pool.length){nat=NATS[0];pool=nat.n.filter(x=>!used.has(x[0]));if(!pool.length)pool=nat.n;}
+  const nm=pick(pool),sk=()=>Math.round(rnd(0.15,0.95)*100)/100,pers=pick(Object.keys(TRAITS));
   m.eid=(m.eid||0)+1;
-  return Object.assign({id:m.eid,name:nm[0],face:nm[1],role,rap:sk(),trato:sk(),punt:sk(),act:sk(),moral:ri(55,80),wage:WAGE,days:0,warn:0,trial:0,focus:0,off:0,st:blankSt()},opt||{});
+  const e={id:m.eid,name:nm[0],face:nm[1],role,rap:sk(),trato:sk(),punt:sk(),act:sk(),moral:ri(55,80),wage:WAGE,days:0,warn:0,trial:0,focus:0,off:0,st:blankSt(),
+    nat:NATS.indexOf(nat),langs:nat.l.concat(nat.c==='España'&&Math.random()<0.3?['en']:[]),pers};
+  const lim=v=>clamp(v,0.05,0.98);
+  if(pers==='currante')e.act=lim(e.act+0.15);
+  if(pers==='pasota')e.act=lim(e.act-0.15);
+  if(pers==='timido'){e.trato=lim(e.trato-0.15);e.punt=lim(e.punt+0.15);}
+  return Object.assign(e,opt||{});
 }
 const defMeta=best=>{const m={day:1,money:20000,rep:5,up:{scanner:0,fan:0,coffee:0},emp:[],eid:0,stock:{},back:{},orders:[],best:best||1};CAT.forEach(x=>{m.stock[x.id]=4;});['back','rrpp','alm'].forEach(r=>m.emp.push(newEmp(r,m)));return m;};
 let meta=defMeta();
@@ -337,10 +382,13 @@ function newCustomer(){
   if(!items.length)return complaintCustomer(true);
   const minor=hasAge&&Math.random()<0.45;
   const age=minor?ri(14,17):ri(18,75);
-  const max=clamp(24+n*3.2-day*1.2,20,60);
-  return{id:++cid,face:pick(FACES),items,minor,age,birth:birthFor(age),
-    wantsBag:Math.random()<0.3,bag:false,pay:Math.random()<0.55?'card':'cash',
-    phase:'scan',p:max,max,err:0,given:0,declined:false,talk:rnd(3,8)};
+  const ps=minor?{pk:'normal'}:pickPersona();
+  const P=PERS[ps.pk]||PERS.normal;
+  const max=clamp((24+n*3.2-day*1.2)*(P.pat||1)*(ps.memF||1),14,80);
+  return{id:++cid,face:ps.face||(P.faces?pick(P.faces):pick(FACES)),items,minor,age,birth:birthFor(age),
+    wantsBag:Math.random()<(P.bag!=null?P.bag:0.3),bag:false,pay:Math.random()<(P.card!=null?P.card:0.55)?'card':'cash',
+    phase:'scan',p:max,max,err:0,given:0,declined:false,talk:rnd(1.5,4),
+    pk:ps.pk,lab:ps.lab||P.lab||'',reg:ps.reg||null,mem:ps.mem||'',tour:ps.tour||null,cut:!!P.cut};
 }
 const SAY={
   frontAngry:['¡Que llego tarde!','¿Hoy cobras o qué?','Voy a pedir la hoja de reclamaciones.','Esto es una vergüenza.','Mi paciencia tiene un límite.'],
@@ -349,6 +397,69 @@ const SAY={
   queueAngry:['¿Va a tardar mucho?','Abre otra caja, por favor.','Llevo media hora aquí.','Yo solo quería una barra de pan…'],
   queueOk:['Menuda cola hoy.','Psst, ¿abres otra caja?','Esperaré lo que haga falta.','¿Dónde estaba el queso?','Qué lento va esto.']
 };
+/* ---------- personalidad de los clientes ---------- */
+/* w = peso al elegir; pat = multiplicador de paciencia; card/bag = probabilidad de tarjeta y de pedir bolsa;
+   tip = multiplicador de propina; exact = prob. de pagar con los céntimos justos; decl = prob. de tarjeta rechazada. */
+const PERS={
+ normal:{w:34},
+ abuela:{w:8,lab:'Señora de los céntimos',faces:['👵','👴'],pat:1.4,card:0.1,bag:0.7,tip:1.3,exact:0.6,
+   front:['Espera, cariño, que tengo los céntimos justos…','En mis tiempos esto costaba dos duros.','¿Tú de quién eres? Me suenas.','Ay, qué rica la fruta hoy.'],
+   queue:['Yo no tengo prisa, ¿eh?','¿Habéis cambiado los pasillos otra vez?'],
+   angry:['¡Qué juventud! ¡Qué poca paciencia!','Esto con la encargada de antes no pasaba.']},
+ prisas:{w:8,lab:'Con prisa',faces:['👨‍💼','👩‍💼','🏃'],pat:0.6,card:0.95,tip:1.8,
+   front:['Rápido, que tengo una reunión.','Venga, venga, venga.','¿No tenéis caja rápida?'],
+   queue:['¿En serio hay solo una caja abierta?','Llego tarde, llego tarde…'],
+   angry:['Increíble. Una estrella en Google.','Nunca más vuelvo.']},
+ borde:{w:6,lab:'Borde',faces:['😒','🧔','👩'],pat:0.85,tip:0,
+   front:['Cobra y calla.','¿Es tu primer día o qué?','No me mires así.'],
+   queue:['Vaya tela con esta caja.','Siempre igual aquí.'],
+   angry:['¡Vaya servicio de pena!','Hoja de reclamaciones. Ya.']},
+ majo:{w:10,lab:'Un encanto',pat:1.3,tip:1.6,
+   front:['¡Buenos días! Qué bien te veo.','Tómate tu tiempo, de verdad.','Siempre vengo a tu caja.'],
+   queue:['Sin prisa, que hoy hace un día precioso.','Qué majos sois todos aquí.'],
+   angry:['Bueno… otro día será.']},
+ influencer:{w:4,lab:'Grabando para redes 🔴',faces:['🤳'],pat:0.9,card:0.95,influ:true,
+   front:['¡Hola, familia! Hoy os enseño mi súper.','Sonríe, que estás en directo.','Esto va a ser viral.'],
+   queue:['Chicos, mirad qué cola, ¡qué fuerte!'],
+   angry:['Esto lo va a ver todo el mundo.']},
+ turista:{w:7,lab:'Turista',faces:['🧑','👱‍♀️','🧔','👩'],card:0.9},
+ colon:{w:5,lab:'Se ha colado',pat:0.9,cut:true,
+   front:['Solo llevo esto, ¿vale?','Yo estaba antes, ¿eh?'],
+   queue:['Es que tengo prisa…'],
+   angry:['¡Pues me voy a otro súper!']},
+ despistado:{w:5,lab:'Despistado',pat:1.15,decl:0.35,
+   front:['Uy, ¿dónde he dejado la cartera?','¿Esto era lo que quería? Bueno, da igual.','Perdona, estaba en las nubes.'],
+   queue:['¿Esta es la cola? Ah, sí.'],
+   angry:['Uy, ¿ya me voy? Vale.']}
+};
+const TOUR=[
+ {l:'en',f:'🇬🇧',front:['Hi! Can I pay by card?','Sorry, I don\'t speak Spanish.','Is this the queue?'],bag:'A bag, please!',queue:['Wow, busy day!']},
+ {l:'fr',f:'🇫🇷',front:['Bonjour ! Je peux payer par carte ?','Excusez-moi, je ne parle pas espagnol.'],bag:'Un sac, s\'il vous plaît !',queue:['Il y a du monde aujourd\'hui !']},
+ {l:'de',f:'🇩🇪',front:['Hallo! Kann ich mit Karte zahlen?','Entschuldigung, ich spreche kein Spanisch.'],bag:'Eine Tüte, bitte!',queue:['Viele Leute heute!']},
+ {l:'it',f:'🇮🇹',front:['Ciao! Posso pagare con la carta?','Scusi, non parlo spagnolo.'],bag:'Una busta, per favore!',queue:['Quanta gente oggi!']}
+];
+/* Habituales: vuelven, tienen sus frases y se acuerdan de cómo les fue la última vez (meta.regs). */
+const REGS=[
+ {k:'encarna',name:'Doña Encarna',face:'👵',p:'abuela',say:['¡Mi cajera favorita! O cajero, que sin gafas no veo.','Mi nieto ya está en la universidad, ¿sabes?']},
+ {k:'manolo',name:'Manolo, el del bar',face:'👨‍🦲',p:'majo',say:['Lo de siempre, que esta noche hay fútbol.','Pásate un día por el bar, que invito yo.']},
+ {k:'ahmed',name:'Ahmed, el del kebab',face:'🧔',p:'majo',say:['¡Hola, amigo! ¿Qué tal la familia?','Hoy cierro tarde, vengo a por pan.']},
+ {k:'puri',name:'Doña Puri, la cotilla',face:'👵',p:'borde',say:['¿Has visto a la del quinto? Qué escándalo.','Esto antes estaba más limpio.']},
+ {k:'wang',name:'Señor Wang',face:'👴',p:'prisas',say:['Rápido, por favor, que tengo la tienda sola.','Buenos días. Lo mismo que ayer.']},
+ {k:'yoli',name:'La Yoli',face:'👩‍🦰',p:'majo',say:['¡Qué pasa! ¿Me cuentas el chisme de hoy?','Vengo de la pelu, ¿a que estoy guapa?']},
+ {k:'ernesto',name:'Don Ernesto',face:'👴',p:'despistado',say:['Che, ¿dónde dejé los anteojos?','Mi señora me mandó a por leche… o era pan.']}
+];
+function pickPersona(){
+  const busy=new Set(run?run.queue.map(q=>q.reg).filter(Boolean):[]);
+  const regs=REGS.filter(r=>!busy.has(r.k));
+  if(regs.length&&Math.random()<0.18){
+    const r=pick(regs),m=meta.regs[r.k]||{visits:0,good:0,last:null};
+    const mem=m.visits?(m.last?'¡La última vez fue rapidísimo! Así da gusto.':'A ver si hoy no me haces esperar como la otra vez…'):'';
+    return{pk:r.p,reg:r.k,face:r.face,lab:r.name+' · habitual'+(m.visits?' ('+(m.visits+1)+'ª visita)':''),mem,memF:m.visits?(m.last?1.2:0.8):1};
+  }
+  const pk=wpick(Object.keys(PERS).map(k=>({k,w:PERS[k].w}))).k;
+  return{pk,tour:pk==='turista'?pick(TOUR):null};
+}
+function regVisit(c,ok){if(!c.reg)return;const m=meta.regs[c.reg]||(meta.regs[c.reg]={visits:0,good:0,last:null});m.visits++;m.last=ok;if(ok)m.good++;}
 const COMPL_P=0.14;
 const COMPL=[
  {title:'Producto en mal estado',t:'Compré «%i%» y estaba pasado de fecha.',dept:'back',refund:true},
@@ -391,11 +502,15 @@ function route(d){
 }
 function say(c,idx){
   const f=c.p/c.max;
+  const P=PERS[c.pk]||{},R=c.reg&&REGS.find(r=>r.k===c.reg);
   let pool;
   if(c.complaint&&idx===0)pool=['Quiero hablar con el encargado.','Esto no se puede quedar así.','Tengo todo el día, ¿eh?'];
-  else if(idx===0)pool=f<0.3?SAY.frontAngry:f>0.7?SAY.frontGood.concat(SAY.frontOk):SAY.frontOk;
-  else pool=f<0.4?SAY.queueAngry:SAY.queueOk;
-  run.chat={face:c.face,text:pick(pool),angry:f<0.3,until:run.t+3.6};
+  else if(c.tour)pool=idx===0?c.tour.front:c.tour.queue;
+  else if(idx===0&&f>=0.3&&c.mem&&!c.memSaid){c.memSaid=1;pool=[c.mem];}
+  else if(idx===0&&f>=0.3&&R)pool=R.say;
+  else if(idx===0)pool=f<0.3?(P.angry||SAY.frontAngry):(P.front||(f>0.7?SAY.frontGood.concat(SAY.frontOk):SAY.frontOk));
+  else pool=f<0.4?(P.angry||SAY.queueAngry):(P.queue||SAY.queueOk);
+  run.chat={face:c.face,text:(R?R.name.split(',')[0]+': ':'')+pick(pool),angry:f<0.3,until:run.t+3.6};
   renderChat();
 }
 function renderChat(){
@@ -436,6 +551,8 @@ function removeFront(){run.queue.shift();frontChanged();}
 function leaveAngry(idx){
   const c=run.queue[idx];
   c.items.forEach(ret);
+  regVisit(c,false);
+  if((PERS[c.pk]||{}).influ)meta.rep=clamp(meta.rep-0.3,0,5);
   run.queue.splice(idx,1);
   if(idx===0)frontChanged();
   run.angry++;
@@ -468,7 +585,13 @@ function ensureMeta(){
     meta.emp=[];const s=Object.assign({atc:0,back:1,rrpp:1,alm:1},meta.staff);
     Object.keys(ROLES).forEach(r=>{for(let i=0;i<(s[r]||0);i++)meta.emp.push(newEmp(r,meta));});
   }
-  meta.emp.forEach(e=>{e.st=Object.assign(blankSt(),e.st);});
+  meta.emp.forEach(e=>{
+    e.st=Object.assign(blankSt(),e.st);
+    if(e.nat==null){const i=NATS.findIndex(n=>n.n.some(x=>x[0]===e.name));e.nat=i<0?0:i;}
+    if(!e.langs)e.langs=NATS[e.nat].l.slice();
+    if(!e.pers)e.pers=pick(Object.keys(TRAITS));
+  });
+  meta.regs=meta.regs||{};
   meta.back=meta.back||{};meta.orders=meta.orders||[];
 }
 function receiveDeliveries(){
@@ -554,7 +677,7 @@ function showShop(){
   }).join('');
   const DST={ok:'Trabajó',late:'Llegó tarde',abs:'Faltó sin avisar',off:'Libró'};
   const dep=meta.emp.map(e=>{const d=run.duty[e.id];
-    return `<div class="up"><div class="t"><b>${e.face} ${e.name} · ${ROLES[e.role].n}</b>${d?DST[d.st]:'—'}${e.trial?' · en prueba':''}</div><span class="mood" title="Ánimo">${mood(e)}</span></div>`;
+    return `<div class="up"><div class="t"><b>${e.face} ${flag(e)} ${e.name} · ${ROLES[e.role].n}</b>${d?DST[d.st]:'—'}${e.trial?' · en prueba':''}</div><span class="mood" title="Ánimo">${mood(e)}</span></div>`;
   }).join('')||'<div class="supd">No tienes a nadie contratado.</div>';
   const meetDay=meta.day%3===1;
   let nm=meta.day+1;while(nm%3!==1)nm++;
@@ -622,7 +745,14 @@ const empById=id=>meta.emp.find(e=>e.id===id);
 const working=e=>{const d=run&&run.duty&&run.duty[e.id];return !!d&&(d.st==='ok'||d.st==='late');};
 const inStore=e=>working(e)&&run.t>=run.duty[e.id].at;
 const isFree=e=>inStore(e)&&!run.duty[e.id].busy;
-function perf(e,match){return clamp(0.5+0.35*(e.rap+e.act)/2+(e.moral-50)/300+(e.focus>0?0.08:0)+Math.min(e.days,15)*0.004-(match?0:0.15),0.15,0.97);}
+function perf(e,match,lang){
+  let b=0.5+0.35*(e.rap+e.act)/2+(e.moral-50)/300+(e.focus>0?0.08:0)+Math.min(e.days,15)*0.004;
+  if(!match&&e.pers!=='servicial')b-=0.15;
+  if(lang)b+=e.langs.includes(lang)?0.15:-0.15;
+  if(run&&run.duty&&meta.emp.some(x=>x!==e&&x.pers==='lider'&&x.role===e.role&&working(x)))b+=0.05;
+  return clamp(b,0.15,0.97);
+}
+const flag=e=>(NATS[e.nat]||NATS[0]).f;
 const mood=e=>e.moral>=70?'😄':e.moral>=45?'🙂':e.moral>=25?'😒':'😠';
 function score(e){const s=e.st,g=s.ok+s.tasks+s.fel*2,b=s.fail+s.tfail+s.quej*2+s.late+s.abs*2;return (g+1)/(g+b+2);}
 const verdict=e=>{const v=score(e);return v>=0.7?'✅ Cumple de sobra':v>=0.5?'👍 Cumple':v>=0.35?'😬 Flojea':'🚩 Da problemas';};
@@ -643,6 +773,9 @@ function prepShift(){
     }
     run.duty[e.id]=d;
   });
+  const wk=meta.emp.filter(working);
+  wk.forEach(e=>{if(e.pers==='bromista'||e.pers==='quejica')wk.forEach(o=>{if(o!==e)o.moral=clamp(o.moral+(e.pers==='bromista'?2:-2),0,100);});});
+  run.nextTalk=rnd(10,20);
   return notes;
 }
 
@@ -652,6 +785,7 @@ const TASKS=[
  {k:'spill',ic:'🧴',roles:['alm','atc'],dur:6,pen:0.4,t:'Se ha roto un bote en el pasillo %n%. Suelo resbaladizo.'},
  {k:'help',ic:'🙋',roles:['rrpp','atc'],dur:8,pen:0.2,t:'Un cliente pide ayuda en el pasillo %n%.'},
  {k:'call',ic:'📢',roles:['atc','alm'],dur:8,pen:0.3,t:'Megafonía: «Caja 3, al pasillo %n% a reponer «%p%», por favor».'},
+ {k:'tour',ic:'🧭',roles:['rrpp','atc'],dur:8,pen:0.25,t:'Un turista %l% está perdido en el pasillo %n% y no habla español.'},
  {k:'truck',ic:'🚚',roles:['alm'],dur:14,pen:0.3,t:'Ha llegado un camión al muelle. Hay que descargarlo.'}
 ];
 const TLIFE=30;
@@ -659,7 +793,9 @@ function spawnTask(){
   const pend=Object.values(meta.back).reduce((t,v)=>t+v,0);
   const T=pick(TASKS.filter(x=>x.k!=='truck'||pend>0));
   const p=pick(CAT.filter(x=>!x.age).sort((a,b)=>(meta.stock[a.id]||0)-(meta.stock[b.id]||0)).slice(0,6)),n=ri(1,9);
-  const t={id:++uid,k:T.k,ic:T.ic,roles:T.roles,dur:T.dur,pen:T.pen,pid:p.id,n,txt:T.t.replace('%p%',p.n).replace('%n%',n),dl:run.t+TLIFE,who:null,until:0,span:1,match:true};
+  const lg=T.k==='tour'?pick([['en','🇬🇧'],['fr','🇫🇷'],['de','🇩🇪'],['it','🇮🇹'],['pt','🇵🇹'],['zh','🇨🇳'],['ar','🇲🇦'],['ro','🇷🇴']]):null;
+  const t={id:++uid,k:T.k,ic:T.ic,roles:T.roles,dur:T.dur,pen:T.pen,pid:p.id,n,lang:lg?lg[0]:null,
+    txt:T.t.replace('%p%',p.n).replace('%n%',n).replace('%l%',lg?lg[1]+' (habla '+LANG[lg[0]]+')':''),dl:run.t+TLIFE,who:null,until:0,span:1,match:true};
   run.tasks.push(t);
   toast(t.ic+' '+t.txt);beep(660,.12,'triangle',.05);
   renderTasks();
@@ -674,7 +810,7 @@ function assignTask(tid,who){
   }
   const e=empById(+who);if(!e||!isFree(e))return;
   t.match=t.roles.includes(e.role);
-  t.who=e.id;t.span=t.dur*(1.35-0.6*e.rap)*(t.match?1:1.4);t.until=run.t+t.span;
+  t.who=e.id;t.span=t.dur*(1.35-0.6*e.rap)*(t.match||e.pers==='servicial'?1:1.4)*(t.lang&&e.langs.includes(t.lang)?0.8:1);t.until=run.t+t.span;
   run.duty[e.id].busy=1;run.duty[e.id].task=t.id;
   sOk();renderAll();
 }
@@ -682,9 +818,11 @@ function moveStock(id,max){const mv=Math.min(max,meta.back[id]||0);if(mv>0){meta
 function finishTask(t){
   run.tasks=run.tasks.filter(x=>x!==t);
   let ok=true,nm='Tú';
-  if(t.who==='me')run.away=null;
-  else{const e=empById(t.who);if(e){nm=e.name;const d=run.duty[e.id];if(d){d.busy=0;d.task=null;}ok=Math.random()<perf(e,t.match);if(ok)e.st.tasks++;else e.st.tfail++;}}
-  if(!ok){meta.rep=clamp(meta.rep-t.pen/2,0,5);run.tlost++;toast(nm+' lo ha dejado a medias en el pasillo '+t.n+(t.match?'':'. No es su puesto'),'bad');sBad();renderAll();checkRep();return;}
+  if(t.who==='me'){run.away=null;if(t.lang&&t.lang!=='en'&&Math.random()<0.5)ok=false;}
+  else{const e=empById(t.who);if(e){nm=e.name;const d=run.duty[e.id];if(d){d.busy=0;d.task=null;}ok=Math.random()<perf(e,t.match,t.lang);if(ok)e.st.tasks++;else e.st.tfail++;}}
+  if(!ok){meta.rep=clamp(meta.rep-t.pen/2,0,5);run.tlost++;
+    const why=t.lang?'. No se han entendido':(t.match?'':'. No es su puesto');
+    toast((t.who==='me'?'Te ha salido regular en el pasillo '+t.n:nm+' lo ha dejado a medias en el pasillo '+t.n)+why,'bad');sBad();renderAll();checkRep();return;}
   run.tdone++;let extra='';
   if(t.k==='repo'||t.k==='call'){const mv=moveStock(t.pid,8);extra=mv?' (+'+mv+' uds en estantería)':' (en el almacén no quedaba)';}
   else if(t.k==='truck'){let cap=20,tot=0;Object.keys(meta.back).forEach(id=>{if(cap>0){const mv=moveStock(id,cap);cap-=mv;tot+=mv;}});extra=' (+'+tot+' uds)';}
@@ -703,6 +841,16 @@ function tickStaff(dt){
   if(!run.closing){
     run.nextTask-=dt;
     if(run.nextTask<=0){if(run.tasks.filter(t=>!t.who).length<3)spawnTask();run.nextTask=rnd(14,24)*Math.max(0.6,1-meta.day*0.04);}
+  }
+  run.nextTalk-=dt;
+  if(run.nextTalk<=0){
+    run.nextTalk=rnd(14,26);
+    const ws=meta.emp.filter(inStore);
+    if(ws.length&&!(run.chat&&run.t<run.chat.until)){
+      const e=pick(ws),N=NATS[e.nat]||NATS[0];
+      const line=Math.random()<0.35?pick(N.tic):pick(TALK[e.pers]||['…']);
+      run.chat={face:e.face,text:e.name+' '+N.f+': «'+line+'»',angry:false,until:run.t+3.6};renderChat();
+    }
   }
   let dirty=false;
   meta.emp.forEach(e=>{const d=run.duty[e.id];if(d&&d.st==='late'&&!d.ann&&run.t>=d.at){d.ann=1;dirty=true;toast(e.face+' '+e.name+' llega tarde. «Perdón, el bus…»','bad');}});
@@ -740,9 +888,10 @@ function renderTasks(){
     let who;
     if(t.who){const e=t.who==='me'?null:empById(t.who);who=`<div class="supd">${e?e.face+' '+e.name+' está en ello…':'Vas tú. La caja está cerrada.'}</div>`;}
     else{
-      const opts=free.slice().sort((a,b)=>t.roles.includes(b.role)-t.roles.includes(a.role)).slice(0,3).map(e=>{
-        const m=t.roles.includes(e.role);
-        return `<button class="btn ${m?'':'off'}" data-act="assign" data-t="${t.id}" data-e="${e.id}" title="${m?'Es de su puesto':'No es su puesto: tardará más y puede salir mal'}">${e.face} ${e.name} <small>${ROLES[e.role].s}</small></button>`;
+      const sc=e=>(t.roles.includes(e.role)||e.pers==='servicial'?1:0)+(t.lang&&e.langs.includes(t.lang)?2:0);
+      const opts=free.slice().sort((a,b)=>sc(b)-sc(a)).slice(0,3).map(e=>{
+        const m=t.roles.includes(e.role),sp=t.lang&&e.langs.includes(t.lang);
+        return `<button class="btn ${m?'':'off'}" data-act="assign" data-t="${t.id}" data-e="${e.id}" title="${m?'Es de su puesto':'No es su puesto: tardará más y puede salir mal'}${sp?'. Habla su idioma':''}">${e.face} ${e.name}${sp?' 🗣️':''} <small>${ROLES[e.role].s}</small></button>`;
       }).join('');
       who=`<div class="who">${opts}<button class="btn" data-act="assign" data-t="${t.id}" data-e="me" ${run.away?'disabled':''}>🚶 Voy yo</button></div>`;
     }
@@ -752,7 +901,7 @@ function renderTasks(){
     const d=run.duty[e.id];let s;
     if(!d)s='—';else if(d.st==='abs')s='falta hoy';else if(d.st==='off')s='libra hoy';else if(run.t<d.at)s='no ha llegado';
     else if(d.busy)s='en un aviso';else s=e.role==='atc'?'en caja de apoyo':'en su puesto';
-    return `<div>${e.face} ${e.name} · ${ROLES[e.role].s} · ${s}</div>`;
+    return `<div>${e.face} ${flag(e)} ${e.name} · ${ROLES[e.role].s} · ${s}</div>`;
   }).join('');
   el.innerHTML=`<div class="zone-title">AVISOS</div>${tk||'<div class="supd">Todo tranquilo. Por ahora.</div>'}
     <div class="zone-title">PERSONAL EN TIENDA</div><div class="crew">${crew||'Nadie. Tú contra el mundo.'}</div>`;
@@ -783,14 +932,23 @@ function genReqs(){
   const r=[],used=new Set(),n=Math.min(meta.emp.length,ri(1,2));
   for(let i=0;i<n;i++){
     const a=pick(meta.emp.filter(e=>!used.has(e.id)));if(!a)break;used.add(a.id);
-    const types=['raise','off','extra'];const others=meta.emp.filter(e=>!used.has(e.id));if(others.length)types.push('feud');
+    const types=['raise','off','extra'].concat(a.pers==='quejica'?['raise','raise']:[]);const others=meta.emp.filter(e=>!used.has(e.id));if(others.length)types.push('feud');
     const k=pick(types);
     if(k==='feud'){const b=pick(others);used.add(b.id);r.push({k,a:a.id,b:b.id,done:null});}
     else r.push({k,a:a.id,done:null});
   }
   return r;
 }
-function startMeeting(){meet={acted:{},gone:[],reqs:genReqs(),cands:genCands()};showMeeting();}
+const RUMOR={punt:'llega tarde a todo y ficha como si nada',trato:'contesta fatal a los clientes cuando no miras',rap:'va a cámara lenta cuando no hay nadie',act:'se escaquea en cuanto puede'};
+/* Los cotillas cuentan el punto débil real de un compañero (80%) o se lo inventan (20%). */
+function genRumors(){
+  return meta.emp.filter(e=>e.pers==='chismoso'&&e.days>=1).map(s=>{
+    const o=pick(meta.emp.filter(x=>x!==s));if(!o)return null;
+    const ks=['punt','trato','rap','act'],low=ks.slice().sort((a,b)=>o[a]-o[b])[0];
+    return `${s.face} <b>${s.name}</b> te dice en voz baja: «Que sepas que ${o.name} ${RUMOR[Math.random()<0.8?low:pick(ks)]}.»`;
+  }).filter(Boolean);
+}
+function startMeeting(){meet={acted:{},gone:[],reqs:genReqs(),cands:genCands(),rumors:genRumors()};showMeeting();}
 function empAct(id,k){
   const e=empById(id);if(!meet||!e||meet.acted[id])return;
   let msg='';
@@ -839,7 +997,7 @@ function endMeeting(){
 function showMeeting(){
   const emps=meta.emp.map(e=>{
     const s=e.st,a=meet.acted[e.id];
-    const tag=[ROLES[e.role].n,e.days+(e.days===1?' turno':' turnos'),fmt(e.wage)+'/día'].concat(e.trial?['en prueba ('+e.trial+')']:[]).concat(e.warn?['⚠️×'+e.warn]:[]).join(' · ');
+    const tag=[flag(e)+' '+ROLES[e.role].n,e.days+(e.days===1?' turno':' turnos'),fmt(e.wage)+'/día'].concat(e.trial?['en prueba ('+e.trial+')']:[]).concat(e.warn?['⚠️×'+e.warn]:[]).join(' · ');
     const btns=a?`<div class="supd">${a}</div>`:`<div class="row ea">
       <button class="btn" data-act="emp" data-e="${e.id}" data-k="praise">👏 Felicitar</button>
       <button class="btn" data-act="emp" data-e="${e.id}" data-k="warn">⚠️ Toque</button>
@@ -847,6 +1005,7 @@ function showMeeting(){
       <button class="btn no" data-act="emp" data-e="${e.id}" data-k="fire">Despedir</button></div>`;
     return `<div class="emp"><div class="eh"><span class="ef">${e.face}</span><div class="t"><b>${e.name}</b>${tag}</div><span class="mood" title="Ánimo">${mood(e)}</span></div>
       <div class="es">Turnos ${s.shifts} · Avisos ${s.tasks}✓ ${s.tfail}✗ · Reclamaciones ${s.ok}✓ ${s.fail}✗ · Retrasos ${s.late} · Faltas ${s.abs} · Quejas ${s.quej} · Felicitaciones ${s.fel}</div>
+      <div class="es">${e.days>=1?TRAITS[e.pers].ic+' <b>'+TRAITS[e.pers].n+'</b>: '+TRAITS[e.pers].d:'❔ Carácter: aún no le conoces.'} · Habla ${e.langs.map(l=>LANG[l]).join(', ')}.</div>
       <div class="ev">${s.shifts?verdict(e):'Sin datos todavía'}</div>${btns}</div>`;
   }).join('')||'<div class="supd">Plantilla vacía. Tú contra el mundo.</div>';
   const reqs=meet.reqs.map((r,i)=>{
@@ -864,12 +1023,13 @@ function showMeeting(){
     const qa=c.qa.map(x=>`<div class="qa">${x.q}<i>«${x.a}»</i></div>`).join('');
     const btn=c.hired?'<div class="supd">Fichado. Empieza el próximo turno, en periodo de prueba.</div>'
       :`<button class="btn go" data-act="hirec" data-c="${i}" ${full||meta.money<HIRE?'disabled':''}>${full?'Puesto completo':'Contratar · '+fmt(HIRE)}</button>`;
-    return `<div class="emp"><div class="eh"><span class="ef">${c.face}</span><div class="t"><b>${c.name}</b>Para ${ROLES[c.role].n} · ${c.exp?c.exp+(c.exp===1?' año':' años')+' de experiencia':'sin experiencia'} · pide ${fmt(c.wage)}/día</div></div>${qa}${btn}</div>`;
+    return `<div class="emp"><div class="eh"><span class="ef">${c.face}</span><div class="t"><b>${c.name}</b>${flag(c)} ${(NATS[c.nat]||NATS[0]).c} · para ${ROLES[c.role].n} · habla ${c.langs.map(l=>LANG[l]).join(', ')} ·${c.exp?c.exp+(c.exp===1?' año':' años')+' de experiencia':'sin experiencia'} · pide ${fmt(c.wage)}/día</div></div>${qa}${btn}</div>`;
   }).join('');
   const duties=Object.keys(ROLES).map(k=>`<div class="up"><div class="t"><b>${ROLES[k].n} · ${staffOf(k).length}/${ROLES[k].max}</b>${ROLES[k].duties.join(' · ')}</div></div>`).join('');
   showOverlay(`<div class="card"><h2>Reunión de personal</h2>
     <div class="supd">Datos desde la última reunión. Una decisión por persona. Despedir sin avisos previos puede acabar en denuncia. Bote: <b>${fmt(meta.money)}</b></div>
     ${meet.gone.map(g=>`<div class="supd">${g}</div>`).join('')}
+    ${meet.rumors.length?'<div class="zone-title">RUMORES</div><div class="shop">'+meet.rumors.map(r=>'<div class="emp">'+r+'</div>').join('')+'</div>':''}
     <div class="zone-title">PLANTILLA</div><div class="shop">${emps}</div>
     <div class="zone-title">PETICIONES</div><div class="shop">${reqs}</div>
     <div class="zone-title">CANDIDATOS</div><div class="shop">${cands}</div>
@@ -911,7 +1071,11 @@ function goPay(){
   const t=totalOf(c);
   if(t===0){finish(c,true);return;}
   c.phase='pay';
-  if(c.pay==='cash')c.given=cashGiven(t);
+  if(c.pay==='cash'){
+    const P=PERS[c.pk]||{};
+    if(P.exact&&Math.random()<P.exact){c.given=t;toast('Te paga con los céntimos justos 🪙. No hay cambio: pulsa «Dar cambio».');}
+    else c.given=cashGiven(t);
+  }
   renderAll();
 }
 function payCard(){
@@ -920,7 +1084,7 @@ function payCard(){
   const mine=c.id;
   setTimeout(()=>{
     if(!run||run.over||!front()||front().id!==mine)return;
-    if(!c.declined&&Math.random()<0.08){
+    if(!c.declined&&Math.random()<((PERS[c.pk]||{}).decl||0.08)){
       c.declined=true;c.pay='cash';c.given=cashGiven(totalOf(c));run.card=false;
       toast('Tarjeta rechazada. Pagará en efectivo.','bad');sBad();renderAll();
     }else{sOk();finish(c,false);}
@@ -944,12 +1108,17 @@ function finish(c,noTip){
     c.err++;run.errors++;meta.rep=clamp(meta.rep-0.3,0,5);
     toast(c.bag?'No pidió bolsa y se la cobraste':'Pidió bolsa y no se la diste','bad');sBad();
   }
-  const frac=c.p/c.max;
+  const frac=c.p/c.max,P=PERS[c.pk]||{},rm=c.reg&&meta.regs[c.reg];
   if(!noTip&&c.err===0){
-    let tip=Math.round(frac*250*(meta.up.coffee?1.5:1)/5)*5;
+    let tip=Math.round(frac*250*(meta.up.coffee?1.5:1)*(P.tip!=null?P.tip:1)*(rm&&rm.good>=3?1.3:1)/5)*5;
     if(tip>0){run.tips+=tip;meta.money+=tip;toast('Propina: '+fmt(tip),'good');}
     if(frac>0.5)meta.rep=clamp(meta.rep+0.08,0,5);
   }
+  if(P.influ){
+    if(c.err===0){meta.rep=clamp(meta.rep+0.3,0,5);toast('Te ha sacado en su directo. +reputación 📈','good');}
+    else{meta.rep=clamp(meta.rep-0.5,0,5);toast('Tu error ya circula por las redes 📉','bad');}
+  }
+  regVisit(c,c.err===0&&frac>0.3);
   if(c.err>0&&Math.random()<0.4)addTicket('back','Error en su compra',ri(100,600),2,false);
   run.served++;
   removeFront();
@@ -979,7 +1148,8 @@ function renderQueue(){
   if(!c){b.className='bubble muted';b.textContent=run&&run.closing?'Cerrando. Atiende a los que quedan.':'Nadie en caja. Respira.';}
   else{
     b.className='bubble';
-    b.innerHTML=c.complaint?'📣 '+c.complaint.t:(c.wantsBag?'🛍️ ¿Me pones una bolsa? ':'')+(c.pay==='card'?'💳 Pago con tarjeta.':'💶 Pago en efectivo.');
+    const lab=c.lab?`<b>${c.lab}${c.tour?' '+c.tour.f:''}</b> · `:'';
+    b.innerHTML=c.complaint?'📣 '+c.complaint.t:lab+(c.wantsBag?(c.tour?'🛍️ «'+c.tour.bag+'» ':'🛍️ ¿Me pones una bolsa? '):'')+(c.pay==='card'?'💳 Pago con tarjeta.':'💶 Pago en efectivo.');
   }
   updatePatience();
 }
@@ -1071,7 +1241,12 @@ function tick(ts){
       run.next-=dt;
       if(run.next<=0){
         if(run.queue.length<5){
-          run.queue.push(newCustomer());
+          const nc=newCustomer();
+          if(nc.cut&&run.queue.length>=2){
+            run.queue.splice(1,0,nc);
+            run.queue.slice(2).forEach(q=>{q.p=Math.max(1,q.p-q.max*0.12);});
+            toast('Alguien se ha colado. La cola murmura…','bad');
+          }else run.queue.push(nc);
           const ia=Math.max(5.5,10.5-meta.day*0.7);
           run.next=rnd(ia*0.7,ia*1.3);
           renderAll();
