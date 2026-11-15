@@ -180,6 +180,12 @@ button:focus-visible{outline:3px solid var(--tag);outline-offset:2px}
 .pname{display:block;width:100%;margin-top:4px;padding:8px 10px;border-radius:6px;border:2px solid #cfc7b4;background:#fff;color:var(--ink);font:inherit;font-size:14px;-webkit-user-select:text;user-select:text}
 .rank{margin:0;padding-left:24px;font-size:12px;display:flex;flex-direction:column;gap:2px}
 .rank li.me{background:var(--tag);border-radius:4px}
+.roomcode{font-family:var(--led);font-size:56px;letter-spacing:8px;text-align:center;color:var(--sign);line-height:1}
+.sel{-webkit-user-select:all;user-select:all;word-break:break-all}
+.rerr{background:#fde2e1;color:#8a1c1f;border-radius:6px;padding:6px 10px;font-size:13px}
+.mhud{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12px;background:var(--ink);color:#fff;border-radius:6px;padding:6px 10px}
+.mhud b{color:var(--tag)}
+.btn.mini{padding:2px 8px;font-size:11px}
 .alerts{display:flex;flex-direction:column;gap:6px}
 .alerts:empty{display:none}
 .alert{background:var(--tag);border-radius:6px;padding:6px 8px;display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;font-size:12px;color:var(--ink);box-shadow:0 3px 0 rgba(0,0,0,.3)}
@@ -521,7 +527,12 @@ function complaintCustomer(forceStock){
     wantsBag:false,bag:false,pay:'card',phase:'complaint',p:30,max:30,err:0,given:0,declined:false,talk:rnd(3,6),
     complaint:{title:q.title,t:q.t.replace('%i%',it.n),dept:q.dept,refund:q.refund?ri(200,1500):0,sev:q.dept==='atc'?1:ri(1,3)}};
 }
-function addTicket(dept,text,refund,sev,mis){run.tickets.push({id:++uid,dept,t:text,refund,sev,mis});}
+function addTicket(dept,text,refund,sev,mis){
+  const tk={id:++uid,dept,t:text,refund,sev,mis};run.tickets.push(tk);
+  /* Si hay alguien real de ese departamento conectado, le llega como aviso para resolverla en directo. */
+  if(isHost()&&!run.over&&meta.emp.some(e=>e.real&&e.role===dept&&inStore(e)))
+    run.tasks.push({id:++uid,k:'tk',ic:'📨',roles:[dept],dur:0,pen:0,tkid:tk.id,dept,mis:!!mis,refund:refund||0,txt:text,s:'Reclamación: '+text,n:0,pid:0,lang:null,dl:run.t+REAL_LIM,who:null,until:0,span:1,match:true});
+}
 function route(d){
   const c=front();if(!c||c.phase!=='complaint')return;
   const q=c.complaint;
@@ -575,8 +586,10 @@ function cashGiven(t){
 
 /* ---------- ciclo del turno ---------- */
 function startDay(){
+  if(isHost()){room.view=null;syncRealEmps();}
   run={t:0,dur:100,queue:[],next:1.5,served:0,angry:0,errors:0,tips:0,fines:0,closing:false,over:false,tray:[],card:false,pendingId:null,flash:0,tickets:[],sales:0,
     tasks:[],nextTask:6,away:null,tdone:0,tlost:0,duty:{},ev:[]};
+  if(isHost())run.dur=room.info.dur||100;
   ensureMeta();
   saveGame(false);
   const notes=prepShift();
@@ -586,6 +599,7 @@ function startDay(){
   if(rr.arrived||rr.pending)msg.push('Reposición: '+rr.shelved+' uds colocadas'+(rr.short?', '+rr.short+' no llegaron':'')+(rr.pending?', '+rr.pending+' esperan en el almacén':''));
   if(notes.length)msg.push(notes.join('. '));
   if(msg.length)toast(msg.join(' · '),(rr.pending||notes.length)?'bad':'good');
+  pubState(true);
 }
 function frontChanged(){run.tray=[];run.card=false;run.pendingId=null;}
 function removeFront(){run.queue.shift();frontChanged();}
@@ -633,7 +647,7 @@ function ensureMeta(){
     e.st=Object.assign(blankSt(),e.st);
     if(e.nat==null){const i=NATS.findIndex(n=>n.n.some(x=>x[0]===e.name));e.nat=i<0?0:i;}
     if(!e.langs)e.langs=NATS[e.nat].l.slice();
-    if(!e.pers)e.pers=pick(Object.keys(TRAITS));
+    if(!e.pers&&!e.real)e.pers=pick(Object.keys(TRAITS));
   });
   meta.regs=meta.regs||{};
   meta.runId=meta.runId||Math.random().toString(36).slice(2,10)+Date.now().toString(36);
@@ -696,13 +710,13 @@ function processTickets(){
 }
 function endDay(){
   run.over=true;
-  run.tasks.forEach(t=>{if(!t.who){meta.rep=clamp(meta.rep-t.pen/2,0,5);run.tlost++;}});
+  run.tasks.forEach(t=>{if(!t.who&&t.k!=='tk'){meta.rep=clamp(meta.rep-t.pen/2,0,5);run.tlost++;}});
   run.tasks=[];run.away=null;mg=null;pendingLeave=null;closeMG();
   const res=processTickets();
   let payroll=0;
   meta.emp.forEach(e=>{
     const d=run.duty[e.id];
-    if(!(d&&d.st==='abs'))payroll+=e.wage;
+    if(!(d&&(d.st==='abs'||d.st==='gone')))payroll+=e.wage;
     if(working(e)){e.days++;if(e.trial>0)e.trial--;}
     if(e.focus>0)e.focus--;
     e.moral=clamp(e.moral+(meta.rep>=4?2:meta.rep<2?-3:0),0,100);
@@ -715,6 +729,7 @@ function endDay(){
   saveGame(true);
   submitScore(false);
   showShop();
+  pubState(true);
 }
 function showShop(){
   const e=lastEnd,r=e.res;
@@ -775,9 +790,9 @@ function showShop(){
    desde su inicio. Si se recarga tras el cierre, se pasa al turno siguiente. */
 const SAVE_KEY='vitchmarket.partida.v1';
 let hasSave=false;
-function saveGame(closed){try{meta.closed=!!closed;localStorage.setItem(SAVE_KEY,JSON.stringify(meta));}catch(e){}}
+function saveGame(closed){if(room){meta.closed=!!closed;if(isHost())fb.set(rRef('meta'),plain(meta)).catch(e=>console.warn('No se pudo guardar en la sala:',e));return;}try{meta.closed=!!closed;localStorage.setItem(SAVE_KEY,JSON.stringify(meta));}catch(e){}}
 function loadGame(){try{const s=localStorage.getItem(SAVE_KEY);if(!s)return null;const m=JSON.parse(s);return m&&typeof m.day==='number'&&Array.isArray(m.emp)?m:null;}catch(e){return null;}}
-function wipeGame(){try{localStorage.removeItem(SAVE_KEY);}catch(e){}hasSave=false;}
+function wipeGame(){if(room){if(isHost())fb.remove(rRef('meta')).catch(()=>{});return;}try{localStorage.removeItem(SAVE_KEY);}catch(e){}hasSave=false;}
 
 function showStart(confirmWipe){
   run=null;
@@ -795,6 +810,7 @@ function showStart(confirmWipe){
     </ul>
     ${online()?`<div class="zone-title">🏆 RANKING</div><div id="rank"></div>
       <label class="supd">Tu nombre en el ranking (no pongas datos personales)<input id="pname" class="pname" maxlength="20" value="${esc(playerName())}" placeholder="Tu nombre o mote"></label>`:''}
+    ${online()?`<button class="btn" data-act="rmenu">👥 Jugar con amigos (salas)</button>${savedRoom()?`<button class="btn" data-act="rback2">↩️ Volver a la sala ${esc(savedRoom())}</button>`:''}`:''}
     ${!cont?'<button class="btn go big" data-act="start">Abrir caja</button>'
       :confirmWipe?`<div class="supd">Se borra la partida guardada (turno ${meta.day}, ${fmt(meta.money)}). No se puede deshacer.</div>
         <button class="btn no big" data-act="restart">Sí, borrar y empezar de cero</button>
@@ -817,6 +833,7 @@ function setPlayerName(n){try{localStorage.setItem(NAME_KEY,String(n).trim().sli
 async function fbInit(){
   if(fb!==null)return fb;
   if(!online()){fb=false;return fb;}
+  if(window.FB_MOCK){fb=await window.FB_MOCK();return fb;}
   try{
     const B='https://www.gstatic.com/firebasejs/'+FB_V+'/';
     const [A,D,U]=await Promise.all([import(B+'firebase-app.js'),import(B+'firebase-database.js'),import(B+'firebase-auth.js')]);
@@ -848,6 +865,292 @@ async function fillRanking(){
       :'<div class="supd">Aún no hay nadie. Estrénalo tú.</div>';
   }catch(e){console.warn('No se pudo cargar el ranking:',e);if(box())box().innerHTML='<div class="supd">No se pudo cargar el ranking.</div>';}
 }
+/* ---------- salas multijugador (Firebase Realtime Database, sin servidor) ----------
+   Quien crea la sala es el jefe: lleva la Caja 3 y su navegador mueve la tienda (clientes, avisos, reloj).
+   Publica el estado en /rooms/{código}/state cada segundo y guarda la partida en /rooms/{código}/meta.
+   Los empleados reales eligen puesto, cogen avisos y hacen el minijuego en su navegador; mandan el
+   resultado a /acts y el jefe lo aplica. Si el jefe cierra el juego, la tienda se congela. Si lleva
+   más de 2 min sin aparecer, cualquiera de la sala puede tomar el mando. */
+const ROOM_KEY='vitchmarket.sala',DURS=[[100,'100 s (clásico)'],[600,'10 min'],[1800,'30 min'],[3600,'1 hora'],[10800,'3 horas'],[43200,'12 horas']];
+const REAL_LIM=60,TAKEOVER=120000;
+let room=null;
+const rRef=p=>fb.ref(fb.db,'rooms/'+room.code+(p?'/'+p:''));
+const isHost=()=>!!(room&&room.host);
+const isMember=()=>!!(room&&!room.host);
+const plain=o=>JSON.parse(JSON.stringify(o));
+const toObj=v=>{if(!Array.isArray(v))return v||{};const o={};v.forEach((x,i)=>{if(x!=null)o[i]=x;});return o;};
+const toArr=v=>(Array.isArray(v)?v:Object.values(v||{})).filter(x=>x!=null);
+const cleanName=s=>String(s||'').replace(/[<>&"'`]/g,'').trim().slice(0,20)||'Anónimo';
+const durTxt=s=>(DURS.find(d=>d[0]===s)||[0,(s||100)<120?(s||100)+' s':Math.round(s/60)+' min'])[1];
+const clockOf=(t,dur)=>{const m=540+Math.min(1,(t||0)/(dur||100))*720;return String(Math.floor(m/60)).padStart(2,'0')+':'+String(Math.floor(m%60)).padStart(2,'0');};
+const srvNow=()=>Date.now()+((room&&room.off)||0);
+function savedRoom(){try{return localStorage.getItem(ROOM_KEY)||'';}catch(e){return '';}}
+function setSavedRoom(c){try{if(c)localStorage.setItem(ROOM_KEY,c);else localStorage.removeItem(ROOM_KEY);}catch(e){}}
+function newCode(){const A='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';let s='';for(let i=0;i<5;i++)s+=A[Math.floor(Math.random()*A.length)];return s;}
+function nameOk(){const i=$('#pname'),n=i?cleanName(i.value):'';if(!i||!i.value.trim()){toast('Pon un nombre o un mote','bad');return false;}setPlayerName(n);return true;}
+
+function showRoomMenu(err){
+  room=null;run=null;
+  const code=(new URLSearchParams(location.search).get('sala')||savedRoom()||'').toUpperCase();
+  showOverlay(`<div class="card"><h2>👥 Jugar con amigos</h2>
+    <div class="supd">Quien crea la sala es el jefe y lleva la Caja 3. Los demás entran con el código, eligen puesto y hacen los avisos de verdad. La tienda solo avanza mientras el jefe tiene el juego abierto.</div>
+    <label class="supd">Tu nombre (no pongas datos personales)<input id="pname" class="pname" maxlength="20" value="${esc(playerName())}" placeholder="Tu nombre o mote"></label>
+    ${err?`<div class="rerr">⚠️ ${esc(err)}</div>`:''}
+    <div class="zone-title">ENTRAR EN UNA SALA</div>
+    <input id="rcode" class="pname" maxlength="5" value="${esc(code)}" placeholder="Código de 5 letras" autocapitalize="characters" autocomplete="off">
+    <button class="btn go" data-act="rjoin">Entrar</button>
+    <div class="zone-title">CREAR UNA SALA</div>
+    <label class="supd">Duración de cada turno (de 9:00 a 21:00)<select id="rdur" class="pname">${DURS.map(d=>`<option value="${d[0]}" ${d[0]===600?'selected':''}>${d[1]}</option>`).join('')}</select></label>
+    <button class="btn go" data-act="rcreate">Crear sala</button>
+    <button class="btn" data-act="rback">Volver</button></div>`);
+}
+async function createRoom(dur){
+  showOverlay('<div class="card"><div class="supd">Creando la sala…</div></div>');
+  const f=await fbInit();if(!f)return showRoomMenu('No hay conexión con la base de datos.');
+  try{
+    let code='';
+    for(let i=0;i<5&&!code;i++){const c=newCode();if(!(await f.get(f.ref(f.db,'rooms/'+c+'/info'))).exists())code=c;}
+    if(!code)return showRoomMenu('No se pudo crear la sala. Prueba otra vez.');
+    const name=playerName();
+    await f.update(f.ref(f.db),{['rooms/'+code+'/info']:{host:f.uid,name,dur,status:'lobby',day:1,created:f.serverTimestamp(),hb:f.serverTimestamp()},
+      ['rooms/'+code+'/members/'+f.uid]:{name,role:'jefe',on:true}});
+    meta=defMeta(meta.best);
+    enterRoom(code,true);
+  }catch(e){console.warn(e);showRoomMenu('No se pudo crear la sala.');}
+}
+async function joinRoom(code){
+  code=String(code||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+  if(code.length!==5)return showRoomMenu('El código tiene 5 letras o números.');
+  showOverlay('<div class="card"><div class="supd">Entrando en la sala '+code+'…</div></div>');
+  const f=await fbInit();if(!f)return showRoomMenu('No hay conexión con la base de datos.');
+  try{
+    const s=await f.get(f.ref(f.db,'rooms/'+code+'/info'));
+    if(!s.exists()){setSavedRoom('');return showRoomMenu('No existe ninguna sala '+code+'.');}
+    if(s.val().host===f.uid){
+      const ms=await f.get(f.ref(f.db,'rooms/'+code+'/meta'));
+      meta=ms.exists()?loadRoomMeta(ms.val()):defMeta(meta.best);
+      await f.update(f.ref(f.db,'rooms/'+code+'/members/'+f.uid),{name:playerName(),role:'jefe',on:true});
+      return enterRoom(code,true);
+    }
+    const ex=(await f.get(f.ref(f.db,'rooms/'+code+'/members/'+f.uid))).val(),role=ex&&ROLES[ex.role]?ex.role:null;
+    await f.update(f.ref(f.db,'rooms/'+code+'/members/'+f.uid),{name:playerName(),on:true,role});
+    enterRoom(code,false);
+  }catch(e){console.warn(e);showRoomMenu('No se pudo entrar en la sala '+code+'.');}
+}
+/* Firebase convierte los objetos con claves numéricas en arrays y se come los vacíos: se deshace aquí. */
+function loadRoomMeta(raw){
+  const m=Object.assign(defMeta(),raw);
+  m.emp=toArr(raw.emp);m.stock=toObj(raw.stock);m.back=toObj(raw.back);m.regs=raw.regs||{};
+  m.up=Object.assign({scanner:0,fan:0,coffee:0},raw.up);
+  m.orders=toArr(raw.orders).map(o=>Object.assign(o,{items:toObj(o.items)}));
+  m.emp.forEach(e=>{e.langs=toArr(e.langs);if(e.langs.length===0)e.langs=['es'];e.log=toArr(e.log);});
+  if(m.closed){if(m.day%3===1)m.emp.forEach(e=>{e.st=blankSt();});m.day++;m.closed=false;}
+  return m;
+}
+function enterRoom(code,host){
+  const f=fb;
+  room={code,host:false,uid:f.uid,info:{},members:{},state:null,note:null,off:0,lastPub:0,lastHb:0,done:{},view:null,subbed:false,lastHtml:''};
+  setSavedRoom(code);
+  const on=f.ref(f.db,'rooms/'+code+'/members/'+f.uid+'/on');
+  f.onDisconnect(on).set(false);f.set(on,true).catch(()=>{});
+  f.onValue(f.ref(f.db,'.info/serverTimeOffset'),s=>{room&&(room.off=s.val()||0);});
+  f.onValue(rRef('info'),s=>{if(!room)return;room.info=s.val()||{};roomChanged();});
+  f.onValue(rRef('members'),s=>{if(!room)return;room.members=s.val()||{};roomChanged();});
+  if(host)becomeHost();else{memberSubs();renderMember();}
+}
+function memberSubs(){
+  if(room.subbed)return;room.subbed=true;
+  fb.onValue(rRef('state'),s=>{if(!room)return;room.state=s.val();if(isMember())renderMember();});
+  fb.onValue(rRef('notes/'+room.uid),s=>{
+    const v=s.val();if(!room||!v||(room.note&&v.ts===room.note.ts))return;
+    const first=!room.note;room.note=v;
+    if(!first&&isMember()){toast('📣 '+v.m,v.bad?'bad':'good');v.bad?sBad():sOk();}
+    if(isMember())renderMember();
+  });
+}
+function becomeHost(){
+  room.host=true;ensureMeta();
+  room.actsOff=fb.onChildAdded(rRef('acts'),s=>{const a=s.val();fb.remove(s.ref).catch(()=>{});onAct(a);});
+  showLobby();pubState(true);
+}
+function demote(){
+  if(room.actsOff){room.actsOff();room.actsOff=null;}
+  room.host=false;run=null;mg=null;pendingLeave=null;closeMG();
+  fb.update(rRef('members/'+room.uid),{role:null}).catch(()=>{});
+  memberSubs();renderAll();room.lastHtml='';renderMember();
+  toast('Otra persona ha tomado el mando de la tienda.','bad');
+}
+function roomChanged(){
+  if(!room)return;
+  if(room.host){
+    if(room.info.host&&room.info.host!==room.uid)return demote();
+    syncRealEmps();
+    if(room.view==='lobby')showLobby();
+  }else renderMember();
+}
+function membersHtml(){
+  const ms=Object.entries(room.members||{});
+  return '<div class="crew">'+(ms.map(([u,m])=>`<div>${m.on?'🟢':'⚪'} <b>${esc(cleanName(m.name))}</b> · ${u===(room.info&&room.info.host)?'👑 Jefe · Caja 3':ROLES[m.role]?ROLES[m.role].n:'eligiendo puesto…'}${u===room.uid?' (tú)':''}</div>`).join('')||'Nadie.')+'</div>';
+}
+function showLobby(){
+  room.view='lobby';
+  const url=location.origin+location.pathname+'?sala='+room.code,dur=room.info.dur||100;
+  const h=`<div class="card"><h2>Sala</h2>
+    <div class="roomcode">${room.code}</div>
+    <div class="supd">Pasa el código o este enlace: <b class="sel">${esc(url)}</b></div>
+    <label class="supd">Duración de cada turno (de 9:00 a 21:00)<select id="rdur" class="pname">${DURS.concat(DURS.some(d=>d[0]===dur)?[]:[[dur,durTxt(dur)]]).map(d=>`<option value="${d[0]}" ${d[0]===dur?'selected':''}>${d[1]}</option>`).join('')}</select></label>
+    <div class="zone-title">QUIÉN HAY</div>${membersHtml()}
+    <div class="supd">Turno ${meta.day} · Bote ${fmt(meta.money)}. Los puestos que no cubre nadie los hace el personal de la casa. Quien entre con el turno ya abierto se pone a trabajar al momento.</div>
+    <button class="btn go big" data-act="ropen">Abrir tienda · turno ${meta.day}</button>
+    <button class="btn" data-act="rexit">Salir de la sala</button></div>`;
+  if(h!==room.lastHtml||!$('#overlay').classList.contains('show')){room.lastHtml=h;showOverlay(h);}
+}
+function openStore(){if(!isHost())return;room.view=null;fb.update(rRef('info'),{status:'open'}).catch(()=>{});startDay();}
+async function exitRoom(){
+  if(room&&fb){
+    try{const on=rRef('members/'+room.uid+'/on');await fb.onDisconnect(on).cancel();
+      if(room.host)await fb.set(on,false);else await fb.remove(rRef('members/'+room.uid));}catch(e){}
+  }
+  setSavedRoom('');location.href=location.pathname;
+}
+async function takeOver(){
+  if(!isMember())return;
+  try{await fb.set(rRef('info/host'),room.uid);}catch(e){toast('No se puede: el jefe sigue activo.','bad');return;}
+  try{
+    await fb.update(rRef('info'),{hb:fb.serverTimestamp(),name:playerName()||'Jefe'});
+    await fb.update(rRef('members/'+room.uid),{role:'jefe'});
+    const ms=await fb.get(rRef('meta'));
+    meta=ms.exists()?loadRoomMeta(ms.val()):defMeta(meta.best);
+  }catch(e){console.warn(e);}
+  mg=null;closeMG();
+  becomeHost();
+  toast('👑 Ahora mandas tú. Abre la tienda cuando quieras.','good');
+}
+function roomAct(a){if(isMember())fb.push(rRef('acts'),plain(Object.assign({uid:room.uid,ts:fb.serverTimestamp()},a))).catch(e=>{console.warn(e);toast('No se pudo enviar. ¿Sin conexión?','bad');});}
+function note(u,m,bad){if(isHost()&&u)fb.set(rRef('notes/'+u),{m:String(m).slice(0,200),bad:!!bad,ts:fb.serverTimestamp()}).catch(()=>{});}
+
+/* --- lado del jefe: empleados reales dentro de meta.emp (e.real = uid) --- */
+function syncRealEmps(){
+  if(!isHost())return;
+  const ms=room.members||{};let ch=false;
+  meta.emp.filter(e=>e.real).forEach(e=>{const m=ms[e.real];if(!m||!ROLES[m.role]||e.real===room.uid){dropReal(e);ch=true;}});
+  Object.entries(ms).forEach(([u,m])=>{
+    if(u===room.uid||!ROLES[m.role])return;
+    let e=meta.emp.find(x=>x.real===u);
+    const nm=cleanName(m.name);
+    if(!e){
+      e=newEmp(m.role,meta,{real:u,name:nm,face:'🧑‍💼',rap:0.6,trato:0.6,punt:1,act:0.7,moral:70,pers:null,nat:0,langs:['es']});
+      meta.emp.push(e);ch=true;
+      toast('🎮 '+nm+' entra en '+ROLES[m.role].n,'good');
+    }
+    if(e.role!==m.role||e.name!==nm){e.role=m.role;e.name=nm;ch=true;}
+    if(run&&!run.over&&run.duty){
+      const d=run.duty[e.id];
+      if(m.on&&(!d||d.st==='gone')){
+        run.duty[e.id]={st:'ok',at:run.t,busy:0,task:null,slack:null,slackT:0,seen:0,cnt:1};
+        if(!d||!d.cnt)e.st.shifts++;
+        ch=true;toast('🎮 '+nm+' se pone a trabajar','good');
+      }else if(!m.on&&d&&d.st!=='gone'){releaseReal(e);d.st='gone';ch=true;toast('📴 '+nm+' se ha desconectado','bad');}
+    }
+  });
+  if(ch&&run&&!run.over){renderAll();pubState(true);}
+}
+function releaseReal(e){
+  if(!run)return;
+  run.tasks.forEach(t=>{if(t.who===e.id){t.who=null;t.real=0;t.dl=Math.max(t.dl,run.t+10);}});
+  const d=run.duty&&run.duty[e.id];if(d){d.busy=0;d.task=null;}
+}
+function dropReal(e){releaseReal(e);meta.emp=meta.emp.filter(x=>x!==e);if(run&&run.duty)delete run.duty[e.id];}
+function giveReal(t,e,byBoss){
+  t.who=e.id;t.real=1;t.match=true;t.span=REAL_LIM;t.until=run.t+REAL_LIM;
+  const d=run.duty[e.id];d.busy=1;d.task=t.id;d.slack=null;
+  if(byBoss)note(e.real,'El jefe te manda: '+t.ic+' '+t.s);
+}
+function onAct(a){
+  if(!a||!isHost()||!run||run.over)return;
+  const e=meta.emp.find(x=>x.real===a.uid);if(!e)return;
+  const t=run.tasks.find(x=>x.id===a.t);
+  if(a.k==='take'){
+    if(!t||t.who||!isFree(e)){note(e.real,'Llegas tarde: eso ya lo tiene otra persona.',true);return;}
+    giveReal(t,e,false);
+  }else if(a.k==='done'){
+    if(!t||t.who!==e.id)return;
+    doneReal(t,e,clamp(+a.sc||0,0,1),!!a.early);
+  }else if(a.k==='drop'){if(t&&t.who===e.id)releaseReal(e);}
+  if(run&&!run.over)renderAll();
+  pubState(true);
+}
+function doneReal(t,e,sc,early){
+  run.tasks=run.tasks.filter(x=>x!==t);
+  const d=run.duty[e.id];if(d){d.busy=0;d.task=null;}
+  const r=applyMG(t,sc,early,e);
+  if(t.k!=='tk'){if(r.good){e.st.tasks++;run.tdone++;}else{e.st.tfail++;run.tlost++;}}
+  logE(e,(r.good?'Resolvió':'Hizo mal')+' un aviso: '+t.s);
+  toast('🎮 '+e.name+': '+r.msg,r.good?'good':'bad');
+  note(e.real,r.msg,!r.good);
+  checkRep();
+}
+function realFail(t){
+  const e=empById(t.who);run.tasks=run.tasks.filter(x=>x!==t);
+  if(e){const d=run.duty[e.id];if(d){d.busy=0;d.task=null;}}
+  if(t.k==='tk'){if(e)note(e.real,'Se te pasó el tiempo con la reclamación. Se queda en la bandeja.',true);renderAll();return;}
+  meta.rep=clamp(meta.rep-t.pen/2,0,5);run.tlost++;
+  if(e){e.st.tfail++;logE(e,'Dejó a medias un aviso: '+t.s);note(e.real,'Se te pasó el tiempo: '+t.s,true);toast('🎮 '+e.name+' no ha terminado a tiempo: '+t.s,'bad');}
+  sBad();renderAll();checkRep();
+}
+/* Lo que ven los demás: cada segundo mientras el juego del jefe está abierto (si no, se congela). */
+function pubState(force){
+  if(!isHost()||!fb)return;
+  const now=performance.now();
+  if(!force&&now-room.lastPub<1000)return;
+  room.lastPub=now;
+  const tasks=run&&!run.over?run.tasks.map(t=>{
+    const e=typeof t.who==='number'?empById(t.who):null,left=(t.who?t.until:t.dl)-run.t;
+    return {id:t.id,k:t.k,ic:t.ic,s:t.s,txt:t.txt,n:t.n||0,pid:t.pid||0,lang:t.lang||'',roles:t.roles,left:isFinite(left)?Math.max(0,Math.round(left)):-1,
+      who:t.who==='me'?'jefe':e?(e.real||e.name):'',bk:t.k==='truck'?Object.keys(meta.back).filter(id=>meta.back[id]>0).map(Number).slice(0,12):[],
+      dept:t.dept||'',mis:!!t.mis,refund:t.refund||0};
+  }):[];
+  const phase=!run?'lobby':run.over?(run.dead?'dead':meet?'meeting':'shop'):run.closing?'closing':'open';
+  fb.set(rRef('state'),plain({day:meta.day,t:run?Math.round(run.t):0,dur:run?run.dur:(room.info.dur||100),money:Math.round(meta.money),rep:Math.round(meta.rep*10)/10,
+    q:run?run.queue.length:0,phase,away:!!(run&&run.away),tasks,ts:fb.serverTimestamp()})).catch(()=>{});
+  if(force||now-room.lastHb>10000){room.lastHb=now;fb.update(rRef('info'),{hb:fb.serverTimestamp(),day:meta.day,status:run&&!run.over?'open':run?'closed':'lobby'}).catch(()=>{});}
+}
+
+/* --- lado del empleado real --- */
+const PHASE={lobby:'⏳ Esperando a que el jefe abra la tienda…',shop:'🧾 Turno cerrado. El jefe está con las cuentas y los pedidos.',meeting:'🗣️ Reunión de personal. El jefe está decidiendo sobre cada uno.',dead:'🪦 La tienda ha cerrado. Esperando a ver si el jefe vuelve a empezar.'};
+function renderMember(){
+  if(!isMember())return;
+  const st=room.state,ms=room.members||{},me=ms[room.uid]||{},inf=room.info||{};
+  const role=ROLES[me.role]?me.role:null,stale=!st||!st.ts||srvNow()-st.ts>6000,hbOld=!inf.hb||srvNow()-inf.hb>TAKEOVER;
+  const whoName=w=>w==='jefe'?'el jefe':ms[w]?'🎮 '+esc(cleanName(ms[w].name)):esc(w);
+  const tasks=st&&!stale?toArr(st.tasks):[],mine=tasks.find(t=>t.who===room.uid);
+  let h=`<div class="card"><h2>Sala ${esc(room.code)}</h2>
+    <div class="supd">👑 Jefe: <b>${esc(cleanName((ms[inf.host]||{}).name||inf.name))}</b> · turnos de ${durTxt(inf.dur)}</div>`;
+  if(!role){
+    h+=`<div class="zone-title">ELIGE TU PUESTO</div><div class="opts">`+Object.keys(ROLES).map(r=>`<button class="btn" data-act="rrole" data-r="${r}"><b>${ROLES[r].n}</b> <small>${ROLES[r].duties.slice(0,3).join(' · ')}</small></button>`).join('')+'</div>';
+  }else{
+    h+=`<div class="supd">Tu puesto: <b>${ROLES[role].n}</b>${mine?'':' <button class="btn mini" data-act="rrole" data-r="">Cambiar</button>'}</div>`;
+    if(st)h+=`<div class="mhud"><span>Turno <b>${st.day}</b></span><span>🕘 <b>${clockOf(st.t,st.dur)}</b></span><span>Bote <b>${fmt(st.money)}</b></span><span>★ <b>${(+st.rep).toFixed(1)}</b></span><span>Cola <b>${st.q}</b></span></div>`;
+    if(stale)h+='<div class="supd">⏸️ La tienda está en pausa: el jefe no tiene el juego abierto.</div>';
+    else if(PHASE[st.phase])h+='<div class="supd">'+PHASE[st.phase]+'</div>';
+    else{
+      if(mine)h+=`<div class="task"><div>${mine.ic} ${esc(mine.s)}</div><div class="supd">Es tuyo. Te quedan ${mine.left} s.</div></div>`;
+      const open=tasks.filter(t=>!t.who&&(t.k!=='tk'||t.dept===role)).sort((a,b)=>toArr(b.roles).includes(role)-toArr(a.roles).includes(role));
+      h+='<div class="zone-title">AVISOS SIN DUEÑO</div>'+(open.map(t=>{const m=toArr(t.roles).includes(role);
+        return `<div class="alert"><span class="at">${t.ic} ${esc(t.s)}</span><span class="who"><button class="btn ${m?'':'off'}" data-act="rtake" data-t="${t.id}" ${mine?'disabled':''} title="${m?'Es de tu puesto':'No es de tu puesto, pero puedes'}">Me encargo</button> <small>${t.left} s</small></span></div>`;}).join('')
+        ||'<div class="supd">Nada pendiente. Disimula, que te ve el jefe.</div>');
+      const busy=tasks.filter(t=>t.who&&t.who!==room.uid);
+      if(busy.length)h+='<div class="zone-title">EN CURSO</div><div class="crew">'+busy.map(t=>`<div>${t.ic} ${esc(t.s)} · ${whoName(t.who)}</div>`).join('')+'</div>';
+    }
+  }
+  if(room.note)h+=`<div class="supd">📣 Último aviso del jefe: ${esc(room.note.m)}</div>`;
+  if(hbOld)h+='<div class="supd">El jefe lleva más de 2 minutos sin aparecer.</div><button class="btn" data-act="rboss">👑 Tomar el mando de la tienda</button>';
+  h+=`<div class="zone-title">QUIÉN HAY</div>${membersHtml()}<button class="btn" data-act="rexit">Salir de la sala</button></div>`;
+  if(h!==room.lastHtml){room.lastHtml=h;showOverlay(h);}
+  if(mg&&mg.remote&&st&&!stale&&!tasks.some(t=>t.id===mg.t.id&&t.who===room.uid)){mg=null;closeMG();toast('Se acabó el tiempo para ese aviso.','bad');}
+  if(mine&&!mg&&!room.done[mine.id])startMG(Object.assign({remote:1},mine,{roles:toArr(mine.roles),bk:toArr(mine.bk)}));
+}
+setInterval(()=>{if(isMember())renderMember();},2000);
 function showOverlay(html){const o=$('#overlay');const st=o.scrollTop,ol=o.querySelector('.ordlist'),ost=ol?ol.scrollTop:0;o.innerHTML=html;o.classList.add('show');o.scrollTop=st;const nl=o.querySelector('.ordlist');if(nl)nl.scrollTop=ost;}
 function hideOverlay(){$('#overlay').classList.remove('show');}
 
@@ -873,6 +1176,7 @@ const verdict=e=>{const v=score(e);return v>=0.7?'✅ Cumple de sobra':v>=0.5?'�
 function prepShift(){
   const notes=[];
   meta.emp.slice().forEach(e=>{
+    if(e.real){const m=room&&room.members[e.real],on=!!(m&&m.on);run.duty[e.id]={st:on?'ok':'gone',at:0,busy:0,task:null,slack:null,slackT:0,seen:0,cnt:on?1:0};if(on)e.st.shifts++;return;}
     if(e.moral<15&&Math.random()<0.4){meta.emp=meta.emp.filter(x=>x!==e);notes.push(e.name+' ha dejado el trabajo');return;}
     const d={st:'ok',at:0,busy:0,task:null,slack:null,slackT:0,seen:0};
     if(e.off===meta.day)d.st='off';
@@ -928,6 +1232,7 @@ function assignTask(tid,who){
     return;
   }
   const e=empById(+who);if(!e||!isFree(e))return;
+  if(e.real){giveReal(t,e,true);sOk();renderAll();pubState(true);return;}
   t.match=t.roles.includes(e.role);
   run.duty[e.id].slack=null;
   t.who=e.id;t.span=t.dur*(1.35-0.6*e.rap)*(t.match||e.pers==='servicial'?1:1.4)*(t.lang&&e.langs.includes(t.lang)?0.8:1);t.until=run.t+t.span;
@@ -951,7 +1256,8 @@ function finishTask(t){
   renderAll();
 }
 function expireTask(t){
-  run.tasks=run.tasks.filter(x=>x!==t);run.tlost++;
+  run.tasks=run.tasks.filter(x=>x!==t);
+  if(t.k==='tk'){renderAll();return;}run.tlost++;
   meta.rep=clamp(meta.rep-t.pen,0,5);
   if(t.k==='spill'&&Math.random()<0.3){addTicket('back','Un cliente se resbaló en el pasillo '+t.n,ri(1000,3000),3,false);toast('Nadie limpió el pasillo '+t.n+' y alguien se ha caído','bad');}
   else toast('Nadie atendió: '+t.ic+' pasillo '+t.n,'bad');
@@ -960,11 +1266,11 @@ function expireTask(t){
 function tickStaff(dt){
   if(!run.closing){
     run.nextTask-=dt;
-    if(run.nextTask<=0){if(run.tasks.filter(t=>!t.who).length<3)spawnTask();run.nextTask=rnd(14,24)*Math.max(0.6,1-meta.day*0.04);}
+    if(run.nextTask<=0){if(run.tasks.filter(t=>!t.who&&t.k!=='tk').length<3)spawnTask();run.nextTask=rnd(14,24)*Math.max(0.6,1-meta.day*0.04);}
   }
   /* Escaqueos: quien está libre a veces se pone a otra cosa. Menos si tiene actitud o le has visto pasar. */
   meta.emp.forEach(e=>{
-    const d=run.duty[e.id];if(!d||!inStore(e)||d.busy)return;
+    const d=run.duty[e.id];if(!d||!inStore(e)||d.busy||e.real)return;
     if(d.slack){d.slackT=(d.slackT||0)+dt;if(Math.random()<dt*0.06)d.slack=null;}
     else if(Math.random()<dt*0.012*(1.3-e.act)*(e.moral<40?1.6:1)*(d.seen?0.5:1))d.slack=pick(SLACK);
   });
@@ -982,7 +1288,7 @@ function tickStaff(dt){
   run.nextTalk-=dt;
   if(run.nextTalk<=0){
     run.nextTalk=rnd(14,26);
-    const ws=meta.emp.filter(inStore);
+    const ws=meta.emp.filter(e=>inStore(e)&&!e.real);
     if(ws.length&&!(run.chat&&run.t<run.chat.until)){
       const e=pick(ws),N=NATS[e.nat]||NATS[0];
       const line=Math.random()<0.35?pick(N.tic):pick(TALK[e.pers]||['…']);
@@ -1001,7 +1307,7 @@ function tickStaff(dt){
   });
   run.tasks.slice().forEach(t=>{
     if(run.over)return;
-    if(t.who&&run.t>=t.until)finishTask(t);
+    if(t.who&&run.t>=t.until)(t.real?realFail(t):finishTask(t));
     else if(!t.who&&run.t>=t.dl)expireTask(t);
   });
   if(dirty&&!run.over)renderAll();
@@ -1020,11 +1326,11 @@ function renderTasks(){
   if(!run){el.innerHTML='';al.innerHTML='';return;}
   const free=meta.emp.filter(isFree);
   /* Avisos sin asignar: arriba, en la cabecera fija, para que se vean siempre. */
-  al.innerHTML=run.tasks.filter(t=>!t.who).map(t=>{
+  al.innerHTML=run.tasks.filter(t=>!t.who&&t.k!=='tk').map(t=>{
     const sc=e=>(t.roles.includes(e.role)||e.pers==='servicial'?1:0)+(t.lang&&e.langs.includes(t.lang)?2:0);
     const opts=free.slice().sort((a,b)=>sc(b)-sc(a)).slice(0,3).map(e=>{
       const m=t.roles.includes(e.role),sp=t.lang&&e.langs.includes(t.lang);
-      return `<button class="btn ${m?'':'off'}" data-act="assign" data-t="${t.id}" data-e="${e.id}" title="${m?'Es de su puesto':'No es su puesto: tardará más y puede salir mal'}${sp?'. Habla su idioma':''}">${e.face} ${e.name}${sp?' 🗣️':''} <small>${ROLES[e.role].s}</small></button>`;
+      return `<button class="btn ${m?'':'off'}" data-act="assign" data-t="${t.id}" data-e="${e.id}" title="${m?'Es de su puesto':'No es su puesto: tardará más y puede salir mal'}${sp?'. Habla su idioma':''}">${e.face} ${e.name}${e.real?' 🎮':''}${sp?' 🗣️':''} <small>${ROLES[e.role].s}</small></button>`;
     }).join('');
     return `<div class="alert" title="${t.txt.replace(/"/g,'&quot;')}"><span class="at">${t.ic} ${t.s}</span>
       <span class="who">${opts}<button class="btn" data-act="assign" data-t="${t.id}" data-e="me" ${run.away?'disabled':''}>🚶 Voy yo</button></span>
@@ -1033,13 +1339,13 @@ function renderTasks(){
   /* Avisos ya asignados: abajo, junto al estado del personal. */
   const tk=run.tasks.filter(t=>t.who).map(t=>{
     const e=t.who==='me'?null:empById(t.who);
-    return `<div class="task"><div>${t.ic} ${t.s}</div><div class="tb"><i data-tid="${t.id}"></i></div><div class="supd">${e?e.face+' '+e.name+' está en ello…':'Vas tú. La caja está cerrada.'}</div></div>`;
+    return `<div class="task"><div>${t.ic} ${t.s}</div><div class="tb"><i data-tid="${t.id}"></i></div><div class="supd">${e?e.face+' '+e.name+(e.real?' 🎮':'')+' está en ello…':'Vas tú. La caja está cerrada.'}</div></div>`;
   }).join('');
   const crew=meta.emp.map(e=>{
     const d=run.duty[e.id];let s;
-    if(!d)s='—';else if(d.st==='abs')s='falta hoy';else if(d.st==='off')s='libra hoy';else if(run.t<d.at)s='no ha llegado';
+    if(!d)s='—';else if(d.st==='gone')s='desconectado/a';else if(d.st==='abs')s='falta hoy';else if(d.st==='off')s='libra hoy';else if(run.t<d.at)s='no ha llegado';
     else if(d.busy)s='en un aviso';else s=e.role==='atc'?'en caja de apoyo':'en su puesto';
-    return `<div>${e.face} ${flag(e)} ${e.name} · ${ROLES[e.role].s} · ${s}</div>`;
+    return `<div>${e.face} ${e.real?'🎮':flag(e)} ${e.name} · ${ROLES[e.role].s} · ${s}</div>`;
   }).join('');
   el.innerHTML=`<div class="zone-title">AVISOS EN CURSO</div>${tk||'<div class="supd">Nadie está con ningún aviso.</div>'}
     <div class="zone-title">PERSONAL EN TIENDA</div><div class="crew">${crew||'Nadie. Tú contra el mundo.'}</div>`;
@@ -1086,7 +1392,7 @@ function askLeave(go,what){
   if(!run||run.over||run.away||mg)return;
   pendingLeave=go;
   const c=front();
-  const cov=meta.emp.filter(isFree).sort((a,b)=>(b.role==='atc')-(a.role==='atc')).slice(0,3)
+  const cov=meta.emp.filter(e=>isFree(e)&&!e.real).sort((a,b)=>(b.role==='atc')-(a.role==='atc')).slice(0,3)
     .map(e=>`<button class="btn" data-act="leave" data-o="cover" data-e="${e.id}">👤 Dejar a ${e.face} ${e.name} en caja <small>${ROLES[e.role].s}${e.role==='atc'?'':' · no es cajero/a'}</small></button>`).join('');
   const ph=c?Object.keys(LEAVE).map(k=>`<button class="btn" data-act="leave" data-o="${k}">${LEAVE[k].t}</button>`).join('')
     :'<button class="btn" data-act="leave" data-o="silent">🚶 No hay nadie en caja: me voy</button>';
@@ -1160,18 +1466,20 @@ function startMG(t){
     for(let i=0;i<3;i++){const d=pick(dec);boxes.push({e:d.e,n:d.n,ok:0});}
     boxes.sort(()=>Math.random()-0.5);
     mg={kind:'shelf',t,p,boxes,placed:0,miss:0};
-  }else if(t.k==='spill')mg={kind:'mop',t,spots:[0,0,0,0,0,0],sign:false,early:false};
+  }else if(t.k==='tk')mg={kind:'tk',t,opts:tkOpts(t)};
+  else if(t.k==='spill')mg={kind:'mop',t,spots:[0,0,0,0,0,0],sign:false,early:false};
   else if(t.k==='help'||t.k==='tour')mg={kind:'ask',t,p:pick(CAT.filter(x=>!x.age)),tries:0};
   else{
-    const ids=Object.keys(meta.back).filter(id=>meta.back[id]>0).map(Number),list=[];
+    const ids=t.remote?(t.bk||[]):Object.keys(meta.back).filter(id=>meta.back[id]>0).map(Number),list=[];
     for(let i=0;i<8;i++)list.push(CAT.find(x=>x.id===(ids.length?pick(ids):pick(CAT).id))||CAT[0]);
     mg={kind:'truck',t,list,i:0,ok:0};
   }
+  mg.remote=!!t.remote;
   renderMG();
 }
 function renderMG(){
   if(!mg||mg.kind==='sup')return;
-  const t=mg.t,cv=run.away&&run.away.cover&&empById(run.away.cover);
+  const t=mg.t,cv=run&&run.away&&run.away.cover&&empById(run.away.cover);
   let body='';
   if(mg.kind==='shelf'){
     const slots=Array.from({length:6},(_,i)=>`<span class="slot2">${i<mg.placed?mg.p.e:''}</span>`).join('');
@@ -1188,6 +1496,9 @@ function renderMG(){
     body=`<div class="bubble">${t.lang?'🧳':'🙋'} ${q}</div><div class="supd">Mándale al pasillo correcto.</div>
       <div class="aisles">${AISLES.map(a=>`<button class="btn" data-act="mgaisle" data-a="${a[0]}">${a[0]} · ${a[1]}</button>`).join('')}</div>
       ${mg.tries?'<div class="supd">«Ahí no estaba…» Prueba otra vez.</div>':''}`;
+  }else if(mg.kind==='tk'){
+    body=`<div class="bubble">📨 ${esc(t.txt)}${t.refund?' · '+fmt(t.refund):''}</div><div class="supd">¿Qué haces? Solo hay una oportunidad.</div>
+      <div class="opts">${mg.opts.map((o,i)=>`<button class="btn" data-act="mgtk" data-i="${i}">${o[0]}</button>`).join('')}</div>`;
   }else{
     const p=mg.list[mg.i];
     body=`<div class="supd">Caja ${mg.i+1} de ${mg.list.length}. ¿A qué zona del almacén va?</div>
@@ -1196,7 +1507,7 @@ function renderMG(){
       <div class="supd">Bien colocadas: ${mg.ok}</div>`;
   }
   openMG(`<div class="card mgc"><h3>${t.ic} ${t.s}</h3>
-    <div class="supd">${cv?cv.face+' '+cv.name+' te cubre la caja.':'Tu caja está cerrada y la cola espera. Date prisa.'}</div>${body}</div>`);
+    <div class="supd">${mg.remote?'Tienes '+REAL_LIM+' s desde que lo cogiste. El jefe lo ve todo.':cv?cv.face+' '+cv.name+' te cubre la caja.':'Tu caja está cerrada y la cola espera. Date prisa.'}</div>${body}</div>`);
 }
 function mgAct(a,b){
   if(!mg||mg.kind==='sup')return;
@@ -1209,6 +1520,7 @@ function mgAct(a,b){
   else if(a==='mgaisle'){
     if(+b.dataset.a===aisleOf(mg.p.id))return endMG(mg.tries===0?1:mg.tries===1?0.5:0.2);
     mg.tries++;sBad();if(mg.tries>=3)return endMG(0);
+  }else if(a==='mgtk'){const o=mg.opts[+b.dataset.i];if(o)return endMG(o[1]?1:0);
   }else if(a==='mgzone'){
     const p=mg.list[mg.i];
     if(b.dataset.z===zoneOf(p.id)){mg.ok++;sBeep();}else{sBad();toast(p.n+' no iba ahí','bad');}
@@ -1216,9 +1528,24 @@ function mgAct(a,b){
   }
   renderMG();
 }
+const MGK={repo:'shelf',call:'shelf',spill:'mop',help:'ask',tour:'ask',truck:'truck',tk:'tk'};
+const TKO={back:[['💶 Comprobar el ticket y devolver lo que toca',1],['💸 Devolverle el doble para que se calle',0],['🙅 Decirle que sin ticket regalo no hay nada',0]],
+ rrpp:[['🙏 Pedir perdón y ofrecerle un vale de 5 €',1],['😏 Contestarle en redes con ironía',0],['🙈 Ignorarlo, ya se cansará',0]],
+ alm:[['📦 Mirar en el almacén y apartárselo',1],['🤷 Que vuelva otro día, a ver si hay suerte',0],['🙄 Decirle que ese producto no existe',0]]};
+function tkOpts(t){const o=(TKO[t.dept]||TKO.back).map(x=>x.slice());if(t.mis){o.forEach(x=>{x[1]=0;});o.push(['↩️ Esto no es de mi departamento: devolverla',1]);}return o.sort(()=>Math.random()-0.5);}
 function endMG(sc){
-  const t=mg.t,kind=mg.kind,early=mg.early;mg=null;closeMG();
+  const t=mg.t,early=mg.early,remote=mg.remote;mg=null;closeMG();
+  if(remote){room.done[t.id]=1;roomAct({k:'done',t:t.id,sc,early:!!early});toast(sc>=0.6?'Hecho. Se lo cuentas al jefe…':'Regular… Se lo cuentas al jefe.',sc>=0.6?'good':'bad');sc>=0.6?sOk():sBad();room.lastHtml='';renderMember();return;}
   run.tasks=run.tasks.filter(x=>x!==t);
+  const r=applyMG(t,sc,early);
+  if(r.good)run.tdone++;else run.tlost++;
+  returnTill();
+  toast(r.msg,r.good?'good':'bad');if(r.good)sOk();else sBad();
+  checkRep();
+}
+/* Efectos de un minijuego terminado (lo hagas tú o un empleado real desde su navegador). */
+function applyMG(t,sc,early,e){
+  const kind=MGK[t.k]||'truck';
   let msg='',good=sc>=0.6;
   if(kind==='shelf'){const mv=moveStock(t.pid,Math.round(8*sc));msg=mv?'Lineal repuesto: +'+mv+' uds en estantería.':'Has colocado lo que había, pero en el almacén no quedaba más.';}
   else if(kind==='mop'){
@@ -1227,16 +1554,22 @@ function endMG(sc){
   }else if(kind==='ask'){
     meta.rep=clamp(meta.rep+(sc>=1?0.1:sc>=0.5?0:-0.15),0,5);
     msg=sc>=1?'«¡Muchas gracias!» Cliente feliz.':sc>=0.5?'Al final lo encontró. A la segunda.':'Se ha ido sin encontrarlo.';
+  }else if(kind==='tk'){
+    const tk=run.tickets.find(x=>x.id===t.tkid),d=t.dept;
+    if(!tk)msg='Esa reclamación ya estaba resuelta.';
+    else{
+      run.tickets=run.tickets.filter(x=>x!==tk);
+      if(good){const cost=tk.mis?0:d==='back'?tk.refund:d==='rrpp'?500:0;meta.money-=cost;meta.rep=clamp(meta.rep+0.1,0,5);if(e)e.st.ok++;
+        msg=tk.mis?'Bien visto: no era de su departamento y la ha devuelto.':'Reclamación resuelta'+(cost?' ('+fmt(cost)+')':'')+'.';}
+      else{const cost=d==='back'&&!tk.mis?tk.refund*2:0;meta.money-=cost;meta.rep=clamp(meta.rep-(d==='rrpp'?0.5:0.3),0,5);if(e)e.st.fail++;msg='La reclamación ha salido mal'+(cost?': −'+fmt(cost):'')+'.';}
+    }
   }else{
     let cap=Math.round(20*sc),tot=0;
     Object.keys(meta.back).forEach(id=>{if(cap>0){const mv=moveStock(id,cap);cap-=mv;tot+=mv;}});
     msg='Camión descargado: '+Math.round(sc*100)+'% bien colocado'+(tot?', +'+tot+' uds a estantería.':'.');
     if(sc<0.6)meta.rep=clamp(meta.rep-0.1,0,5);
   }
-  if(good)run.tdone++;else run.tlost++;
-  returnTill();
-  toast(msg,good?'good':'bad');if(good)sOk();else sBad();
-  checkRep();
+  return {msg,good};
 }
 
 /* ---------- supervisar la tienda ---------- */
@@ -1255,7 +1588,7 @@ function renderSup(){
     const ps=staffOf(r);if(!ps.length)return '';
     return `<div class="zone-title">${ROLES[r].n.toUpperCase()}</div>`+ps.map(e=>{
       const d=run.duty[e.id];let s,sl=false;
-      if(!d||d.st==='abs')s='❌ No ha venido hoy';else if(d.st==='off')s='🏖️ Libra hoy';else if(run.t<d.at)s='⏰ Aún no ha llegado';
+      if(d&&d.st==='gone')s='📴 Desconectado/a';else if(!d||d.st==='abs')s='❌ No ha venido hoy';else if(d.st==='off')s='🏖️ Libra hoy';else if(run.t<d.at)s='⏰ Aún no ha llegado';
       else if(run.away&&run.away.cover===e.id)s='🧾 Te está cubriendo la caja';
       else if(d.busy){const t=run.tasks.find(x=>x.id===d.task);s='🏃 Con un aviso'+(t?' en el pasillo '+t.n:'');}
       else if(d.slack){s=d.slack;sl=true;}else s='✅ '+DOING[r];
@@ -1273,6 +1606,7 @@ function renderSup(){
 }
 function supAct(id,k){
   const e=empById(id),d=e&&run.duty[e.id];if(!e||!d||!mg||mg.kind!=='sup'||mg.acted[id])return;
+  if(e.real)note(e.real,k==='cheer'?'👍 El jefe ha pasado por tu puesto y te ha animado.':'📢 El jefe ha pasado y te ha soltado: «¡Espabila!»',k!=='cheer');
   if(k==='cheer'){e.moral=clamp(e.moral+6,0,100);mg.acted[id]='👍 Le has animado.';logE(e,'Le animaste mientras trabajaba');}
   else if(d.slack){d.slack=null;d.slackT=0;e.st.caught++;e.moral=clamp(e.moral-6,0,100);e.focus=Math.max(e.focus,1);mg.acted[id]='📢 Pillado. Vuelve al tajo.';logE(e,'Le pillaste sin hacer nada');}
   else{e.moral=clamp(e.moral-10,0,100);mg.acted[id]='😠 «¡Pero si estaba trabajando!»';logE(e,'Le echaste la bronca sin motivo');}
@@ -1317,10 +1651,10 @@ function genCands(){
   return out;
 }
 function genReqs(){
-  const r=[],used=new Set(),n=Math.min(meta.emp.length,ri(1,2));
+  const npc=meta.emp.filter(e=>!e.real),r=[],used=new Set(),n=Math.min(npc.length,ri(1,2));
   for(let i=0;i<n;i++){
-    const a=pick(meta.emp.filter(e=>!used.has(e.id)));if(!a)break;used.add(a.id);
-    const types=['raise','off','extra'].concat(a.pers==='quejica'?['raise','raise']:[]);const others=meta.emp.filter(e=>!used.has(e.id));if(others.length)types.push('feud');
+    const a=pick(npc.filter(e=>!used.has(e.id)));if(!a)break;used.add(a.id);
+    const types=['raise','off','extra'].concat(a.pers==='quejica'?['raise','raise']:[]);const others=npc.filter(e=>!used.has(e.id));if(others.length)types.push('feud');
     const k=pick(types);
     if(k==='feud'){const b=pick(others);used.add(b.id);r.push({k,a:a.id,b:b.id,done:null});}
     else r.push({k,a:a.id,done:null});
@@ -1331,7 +1665,7 @@ const RUMOR={punt:'llega tarde a todo y ficha como si nada',trato:'contesta fata
 /* Los cotillas cuentan el punto débil real de un compañero (80%) o se lo inventan (20%). */
 function genRumors(){
   return meta.emp.filter(e=>e.pers==='chismoso'&&e.days>=1).map(s=>{
-    const o=pick(meta.emp.filter(x=>x!==s));if(!o)return null;
+    const o=pick(meta.emp.filter(x=>x!==s&&!x.real));if(!o)return null;
     const ks=['punt','trato','rap','act'],low=ks.slice().sort((a,b)=>o[a]-o[b])[0];
     return `${s.face} <b>${s.name}</b> te dice en voz baja: «Que sepas que ${o.name} ${RUMOR[Math.random()<0.8?low:pick(ks)]}.»`;
   }).filter(Boolean);
@@ -1343,7 +1677,7 @@ function empAct(id,k){
   if(k==='praise'){e.moral=clamp(e.moral+12,0,100);msg='👏 Felicitado. Se le nota en la cara.';}
   else if(k==='warn'){
     e.warn++;e.moral=clamp(e.moral-12,0,100);e.focus=3;msg='⚠️ Toque dado (lleva '+e.warn+'). Va a espabilar… o no.';
-    if(e.moral<20&&Math.random()<0.3){meta.emp=meta.emp.filter(x=>x!==e);meet.gone.push(e.face+' '+e.name+' se lo tomó fatal y se fue dando un portazo.');sBad();renderHud();showMeeting();return;}
+    if(!e.real&&e.moral<20&&Math.random()<0.3){meta.emp=meta.emp.filter(x=>x!==e);meet.gone.push(e.face+' '+e.name+' se lo tomó fatal y se fue dando un portazo.');sBad();renderHud();showMeeting();return;}
   }
   else if(k==='raise'){e.wage+=300;e.moral=clamp(e.moral+20,0,100);msg='💶 +3 €/día. Ahora te quiere un poquito más.';}
   else if(k==='fire'){
@@ -1352,9 +1686,11 @@ function empAct(id,k){
     if(!e.trial&&e.warn===0&&Math.random()<0.5){const den=ri(3000,8000);cost+=den;meta.rep=clamp(meta.rep-0.3,0,5);txt+=' Te denuncia por despedir sin ningún aviso previo: −'+fmt(den)+'.';}
     meta.money-=cost;meta.emp=meta.emp.filter(x=>x!==e);
     meta.emp.forEach(x=>{x.moral=clamp(x.moral+(bad?3:-8),0,100);});
+    if(e.real&&isHost()){note(e.real,'Estás despedido/a. Si quieres volver, pide otro puesto… y reza.',true);fb.update(rRef('members/'+e.real),{role:null}).catch(()=>{});}
     meet.gone.push('Fuera '+e.face+' '+e.name+'. '+txt+(bad?' El resto respira aliviado.':' El resto se ha quedado tenso.'));
     sBad();renderHud();showMeeting();return;
   }
+  if(e.real)note(e.real,{praise:'👏 El jefe te ha felicitado en la reunión.',warn:'⚠️ El jefe te ha dado un toque en la reunión.',raise:'💶 ¡Aumento! +3 €/día.'}[k],k==='warn');
   meet.acted[id]=msg;sOk();renderHud();showMeeting();
 }
 function applyReq(i,o){
@@ -1395,7 +1731,7 @@ function showMeeting(){
       <div class="duty"><b>Su trabajo:</b> ${ROLES[e.role].duties.join(' · ')}.</div>
       <ul class="did">${didList(e)}</ul>
       ${e.log&&e.log.length?'<div class="es">📒 Lo último: '+e.log.slice(-3).join(' · ')+'</div>':''}
-      <div class="es">${e.days>=1?TRAITS[e.pers].ic+' <b>'+TRAITS[e.pers].n+'</b>: '+TRAITS[e.pers].d:'❔ Carácter: aún no le conoces.'} · Habla ${e.langs.map(l=>LANG[l]).join(', ')}.</div>
+      <div class="es">${e.real?'🎮 <b>Persona real.</b> Su carácter lo conoces tú mejor que nadie':e.days>=1&&TRAITS[e.pers]?TRAITS[e.pers].ic+' <b>'+TRAITS[e.pers].n+'</b>: '+TRAITS[e.pers].d:'❔ Carácter: aún no le conoces.'} · Habla ${e.langs.map(l=>LANG[l]).join(', ')}.</div>
       <div class="ev">${s.shifts?verdict(e):'Sin datos todavía'}</div>${btns}</div>`;
   }).join('')||'<div class="supd">Plantilla vacía. Tú contra el mundo.</div>';
   const reqs=meet.reqs.map((r,i)=>{
@@ -1663,10 +1999,12 @@ function tick(ts){
     renderChat();
   }
   renderHud();
+  if(isHost())pubState(false);
   requestAnimationFrame(tick);
 }
 
 /* ---------- eventos ---------- */
+document.addEventListener('change',e=>{if(e.target&&e.target.id==='rdur'&&isHost())fb.update(rRef('info'),{dur:+e.target.value}).catch(()=>{});});
 document.addEventListener('click',e=>{
   const b=e.target.closest('[data-act]');if(!b||b.disabled)return;
   const a=b.dataset.act;
@@ -1707,6 +2045,16 @@ document.addEventListener('click',e=>{
   else if(a==='deliver')deliver();
   else if(a==='mute'){muted=!muted;b.textContent=muted?'🔇':'🔊';}
   else if(a==='wipe')showStart(true);
+  else if(a==='rmenu')showRoomMenu();
+  else if(a==='rback')showStart();
+  else if(a==='rback2'){if(playerName())joinRoom(savedRoom());else showRoomMenu();}
+  else if(a==='rcreate'){if(nameOk())createRoom(+$('#rdur').value||600);}
+  else if(a==='rjoin'){if(nameOk())joinRoom($('#rcode').value);}
+  else if(a==='ropen')openStore();
+  else if(a==='rexit')exitRoom();
+  else if(a==='rtake')roomAct({k:'take',t:+b.dataset.t});
+  else if(a==='rrole'&&isMember())fb.update(rRef('members/'+room.uid),{role:b.dataset.r||null}).catch(()=>{});
+  else if(a==='rboss')takeOver();
   if(run&&run.over&&!run.dead&&meta.closed)saveGame(true);
 });
 
@@ -1723,6 +2071,7 @@ function boot(d){
     }
   }
   ensureMeta();renderAll();showStart();requestAnimationFrame(tick);
+  if(online()&&new URLSearchParams(location.search).get('sala'))showRoomMenu();
 }
 if(window.claude&&window.claude.hot&&window.claude.hot.ready)window.claude.hot.ready(boot);
 else boot((window.claude&&window.claude.hot&&window.claude.hot.data)||{});
