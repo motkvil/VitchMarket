@@ -726,6 +726,7 @@ button.pdarow:hover{background:rgba(19,54,31,.15)}
 .verdict{display:grid;grid-template-columns:1fr auto 1fr;gap:6px}
 @media (max-width:420px){.cvdesk{flex-direction:column}.postits{flex:none;flex-direction:row;flex-wrap:wrap}.postit{flex:1 1 120px}.verdict{grid-template-columns:1fr 1fr}.verdict .go{grid-column:1/-1;order:3}}
 @media (max-height:760px){.cq,.ca>div{padding:3px 7px;font-size:10px}.ca>span{font-size:18px}.chatlog{gap:2px}.postit{padding:4px;font-size:9px}.cvsec{padding:1px 6px}.cvband{padding:2px 8px}.fface{font-size:30px}.br-wall{display:none}.folder{padding:12px 6px 4px;font-size:10px}.cvtop{padding:4px 6px}.cvphoto{flex-basis:38px;height:44px;font-size:24px}}
+#vtag{position:fixed;left:4px;bottom:2px;z-index:9999;font:10px monospace;color:#fff;background:rgba(0,0,0,.45);padding:1px 5px;border-radius:4px;pointer-events:none}
 </style>
 </head>
 <body>
@@ -1398,7 +1399,8 @@ async function fillRanking(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.15-7';
+const APPV='2026.11.15-8';
+try{const vt=document.createElement('div');vt.id='vtag';vt.textContent='v'+APPV;document.body.appendChild(vt);}catch(e){}
 const SHOP='VITCH',DURS=[[100,'100 s (clásico)'],[600,'10 min'],[1800,'30 min'],[3600,'1 hora'],[10800,'3 horas'],[43200,'12 horas']];
 const REAL_LIM=60,TAKEOVER=120000;
 const JOB_IC={jefe:'👑',atc:'🧾',alm:'📦',back:'💼',rrpp:'📣',rrhh:'🗂️'};
