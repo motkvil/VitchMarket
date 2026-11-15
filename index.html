@@ -1045,6 +1045,23 @@ body::before{background-image:radial-gradient(rgba(229,56,59,.18) 1.2px,transpar
 .logo{color:#e5383b;text-shadow:3px 3px 0 #6b0b0f}
 .ibt{background:linear-gradient(180deg,#3a3a3a,#1f1f1f)}
 .gs-feed{background:#2b2b2b}
+
+/* Todos los cargos con los colores corporativos (el departamento se distingue por su icono y su sala) */
+.th-alm,.th-back,.th-rrpp,.th-rrhh,.th-atc{--thc:#e5383b}
+.gs-hud{background:linear-gradient(180deg,#ef4447,#c41d24);border:3px solid #7a0d12;box-shadow:0 5px 0 #7a0d12}
+.gs-ic{background:#fff;box-shadow:inset 0 -3px 0 #ffd0d0}
+.gs-stats span{background:#fff}.gs-stats small{color:#7a0d12;opacity:1}.gs-stats .gled{color:#c41d24;text-shadow:none}
+.gs-clock .gled{color:#fff;text-shadow:0 2px 0 #7a0d12}.gs-bar i{background:#fff}
+.gs-scene{border-color:#7a1418}
+.gs-wall{background:repeating-linear-gradient(90deg,#fff 0 60px,#f4eeee 60px 62px);border-bottom-color:#e5383b}
+.gs-wall span{background:#e5383b;color:#fff}
+.sc-rrpp .gs-objs{background:repeating-conic-gradient(#f4efef 0 25%,#ffffff 0 50%) 0 0/40px 40px}
+.sc-atc .gs-objs{background:repeating-conic-gradient(#efe9e9 0 25%,#ffffff 0 50%) 0 0/46px 46px}
+.obj{border-color:#fff}.obj.hot{border-color:#e5383b}
+.hk{background:linear-gradient(#ef4447,#b3141c)}
+.wtool{background:#e5383b}
+.gf.al{border-left-color:#ffd23f}
+.mgc .dept-badge{background:#e5383b}
 </style>
 </head>
 <body>
@@ -1849,7 +1866,7 @@ async function fillRanking(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.15-25';
+const APPV='2026.11.15-26';
 /* Compara versiones por números («-9» < «-11»), no como texto. */
 const verCmp=(a,b)=>{const x=String(a).split(/[.-]/).map(Number),y=String(b).split(/[.-]/).map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
 try{const vt=document.createElement('div');vt.id='vtag';vt.textContent='v'+APPV;document.body.appendChild(vt);}catch(e){}
