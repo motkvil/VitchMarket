@@ -11,7 +11,7 @@ Juego de simulación de supermercado en el navegador. Eres cajera o cajero de la
 - **Personal:** cada trabajador tiene nombre, nacionalidad, idiomas, carácter, puesto, obligaciones, ánimo y rasgos ocultos. Llegan tarde, faltan, hablan durante el turno, discuten con clientes o los clientes los felicitan.
 - **Reunión de personal** cada 3 turnos: valoras a cada persona, das toques, subes sueldos, despides, atiendes peticiones y entrevistas a candidatos.
 - **Tienda:** stock por producto, pedidos a distribuidores y mejoras.
-- **Salas con amigos:** quien crea la sala es el jefe y lleva la caja; el resto entra con un código, elige puesto (Caja, Almacén, Backoffice, RR.PP.) y hace los avisos y las reclamaciones de su departamento con los minijuegos. El turno dura lo que diga el jefe (de 100 s a 12 h). Necesita Firebase (ver `firebase-config.js` y `database.rules.json`).
+- **Tienda compartida:** una sola VitchMarket para todo el mundo, siempre online. Pones tu nombre y solicitas un cargo: el primero que pide ser jefe con el puesto libre lleva la caja y contrata al resto (Caja, Almacén, Backoffice, RR.PP.), que hace los avisos y las reclamaciones con los minijuegos. Sin conexión, se juega en solitario. Necesita Firebase (ver `firebase-config.js` y `database.rules.json`).
 
 ## Jugar
 
@@ -33,4 +33,4 @@ npm i jsdom && node smoke.js
 
 Un bot juega varios turnos y debe imprimir `errors: []`.
 
-`node smoke-sala.js` prueba las salas sin red: un jefe y una empleada en dos navegadores jsdom con una Firebase falsa en memoria. También debe imprimir `errors: []` (con `ROLE=back` la empleada va a Backoffice y prueba las reclamaciones en directo).
+`node smoke-sala.js` prueba la tienda compartida sin red: un jefe y una empleada en dos navegadores jsdom con una Firebase falsa en memoria. También debe imprimir `errors: []` (con `ROLE=back` la empleada va a Backoffice y prueba las reclamaciones en directo).

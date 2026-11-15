@@ -170,6 +170,9 @@ button:focus-visible{outline:3px solid var(--tag);outline-offset:2px}
   .card.wide .emp,.card.wide .up,.card.wide .sum,.card.wide .ord,.card.wide .alert,.card.wide label,.card.wide .ordlist,.card.wide .rank,.card.wide .mhud{break-inside:avoid}
   .card.wide .emp{font-size:13px}
   .mgc{max-width:640px}
+  .card.wide.hub{display:flex;columns:auto;max-width:min(1100px,94vw)}
+  .card.wide.hub>*{margin:0}
+  .jobs{grid-template-columns:repeat(5,1fr)}
 }
 .mgc h3{margin:0;font-family:var(--display);font-weight:400;font-size:18px;line-height:1.15}
 .opts{display:flex;flex-direction:column;gap:6px}
@@ -191,7 +194,23 @@ button:focus-visible{outline:3px solid var(--tag);outline-offset:2px}
 .pname{display:block;width:100%;margin-top:4px;padding:8px 10px;border-radius:6px;border:2px solid #cfc7b4;background:#fff;color:var(--ink);font:inherit;font-size:14px;-webkit-user-select:text;user-select:text}
 .rank{margin:0;padding-left:24px;font-size:12px;display:flex;flex-direction:column;gap:2px}
 .rank li.me{background:var(--tag);border-radius:4px}
-.roomcode{font-family:var(--led);font-size:56px;letter-spacing:8px;text-align:center;color:var(--sign);line-height:1}
+.hub h1{font-size:56px;text-shadow:3px 3px 0 var(--ink);letter-spacing:1px}
+.live{display:inline-flex;align-items:center;gap:6px;background:var(--ink);color:#d8ffe6;border-radius:99px;padding:2px 10px 2px 8px;font-size:10px;font-weight:700;letter-spacing:1px;margin-right:4px;vertical-align:middle}
+.live i{width:8px;height:8px;border-radius:50%;background:#3ddc84;box-shadow:0 0 6px #3ddc84;animation:livep 1.2s infinite}
+.live.off i{background:#ff6b5b;box-shadow:0 0 6px #ff6b5b;animation:none}
+@keyframes livep{50%{opacity:.25}}
+.jobs{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
+.job{display:flex;flex-direction:column;align-items:center;gap:4px;background:#fff;border:3px solid var(--ink);border-radius:12px;padding:12px 8px 10px;box-shadow:0 5px 0 var(--ink);cursor:pointer;font:inherit;color:var(--ink);transition:transform .08s,box-shadow .08s;text-align:center}
+.job:hover:not([disabled]){transform:translateY(-3px);box-shadow:0 8px 0 var(--ink)}
+.job:active:not([disabled]){transform:translateY(3px);box-shadow:0 2px 0 var(--ink)}
+.job[disabled]{opacity:.55;cursor:not-allowed}
+.job .ic{font-size:40px;line-height:1.1}
+.job b{font-family:var(--display);font-weight:400;font-size:17px}
+.job small{font-size:10px;color:#5c5a50;line-height:1.3}
+.job em{color:var(--sign);font-style:normal;font-weight:700}
+.job.boss{background:var(--tag)}
+.slots{display:flex;gap:3px}.slots i{width:14px;height:7px;border-radius:2px;background:#d9d2bf}.slots i.on{background:var(--ok)}
+@media (prefers-reduced-motion:reduce){.live i{animation:none}.job{transition:none}}
 .sel{-webkit-user-select:all;user-select:all;word-break:break-all}
 .rerr{background:#fde2e1;color:#8a1c1f;border-radius:6px;padding:6px 10px;font-size:13px}
 .mhud{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12px;background:var(--ink);color:#fff;border-radius:6px;padding:6px 10px}
@@ -780,7 +799,7 @@ function showShop(){
   const sups=SUPS.map(z=>`<button class="btn ${ordSup===z.k?'on':''}" data-act="sup" data-k="${z.k}">${z.n}</button>`).join('');
   const sp=SUPS.find(z=>z.k===ordSup),cost=cartCost();
   const out=CAT.filter(x=>(meta.stock[x.id]||0)<=0).length;
-  showOverlay(`<div class="card"><h2>Cierre · turno ${meta.day}</h2>
+  showOverlay(`<div class="card"><h2>Cierre · turno ${meta.day}</h2>${isHost()?appsHtml():''}
     <div class="sum">
       <span>Clientes atendidos</span><b>${run.served}</b>
       <span>Se fueron enfadados</span><b>${run.angry}</b>
@@ -834,7 +853,7 @@ function showStart(confirmWipe){
     </ul>
     ${online()?`<div class="zone-title">🏆 RANKING</div><div id="rank"></div>
       ${nameField('Tu nombre en el ranking (no pongas datos personales)')}`:''}
-    ${online()?`<button class="btn" data-act="rmenu">👥 Jugar con amigos (salas)</button>${savedRoom()?`<button class="btn" data-act="rback2">↩️ Volver a la sala ${esc(savedRoom())}</button>`:''}`:''}
+    ${offline?'<div class="rerr">📴 Sin conexión con la tienda compartida: juegas en solitario. Recarga cuando vuelva internet.</div>':''}
     ${!cont?'<button class="btn go big" data-act="start">Abrir caja</button>'
       :confirmWipe?`<div class="supd">Se borra la partida guardada (turno ${meta.day}, ${fmt(meta.money)}). No se puede deshacer.</div>
         <button class="btn no big" data-act="restart">Sí, borrar y empezar de cero</button>
@@ -889,15 +908,17 @@ async function fillRanking(){
       :'<div class="supd">Aún no hay nadie. Estrénalo tú.</div>';
   }catch(e){console.warn('No se pudo cargar el ranking:',e);if(box())box().innerHTML='<div class="supd">No se pudo cargar el ranking.</div>';}
 }
-/* ---------- salas multijugador (Firebase Realtime Database, sin servidor) ----------
-   Quien crea la sala es el jefe: lleva la Caja 3 y su navegador mueve la tienda (clientes, avisos, reloj).
-   Publica el estado en /rooms/{código}/state cada segundo y guarda la partida en /rooms/{código}/meta.
-   Los empleados reales eligen puesto, cogen avisos y hacen el minijuego en su navegador; mandan el
-   resultado a /acts y el jefe lo aplica. Si el jefe cierra el juego, la tienda se congela. Si lleva
-   más de 2 min sin aparecer, cualquiera de la sala puede tomar el mando. */
-const ROOM_KEY='vitchmarket.sala',DURS=[[100,'100 s (clásico)'],[600,'10 min'],[1800,'30 min'],[3600,'1 hora'],[10800,'3 horas'],[43200,'12 horas']];
+/* ---------- tienda compartida (Firebase Realtime Database, sin servidor) ----------
+   Hay UNA sola tienda para todo el mundo: /rooms/VITCH. Al entrar, cada persona pone su nombre y solicita
+   un cargo. El jefe (el primero que lo pide con el puesto libre) lleva la Caja 3, contrata a quien solicita
+   y su navegador mueve la tienda: publica el estado en /state cada segundo y guarda la partida en /meta.
+   Los empleados cogen avisos y hacen el minijuego en su navegador; el resultado va a /acts y el jefe lo aplica.
+   Sin jefe conectado la tienda se congela; si lleva más de 2 min fuera, otro puede quedarse el puesto.
+   Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
+const SHOP='VITCH',DURS=[[100,'100 s (clásico)'],[600,'10 min'],[1800,'30 min'],[3600,'1 hora'],[10800,'3 horas'],[43200,'12 horas']];
 const REAL_LIM=60,TAKEOVER=120000;
-let room=null;
+const JOB_IC={jefe:'👑',atc:'🧾',alm:'📦',back:'💼',rrpp:'📣'};
+let room=null,offline=false,rankCache='',rankAt=0;
 const rRef=p=>fb.ref(fb.db,'rooms/'+room.code+(p?'/'+p:''));
 const isHost=()=>!!(room&&room.host);
 const isMember=()=>!!(room&&!room.host);
@@ -908,61 +929,33 @@ const cleanName=s=>String(s||'').replace(/[<>&"'`]/g,'').trim().slice(0,20)||'An
 const durTxt=s=>(DURS.find(d=>d[0]===s)||[0,(s||100)<120?(s||100)+' s':Math.round(s/60)+' min'])[1];
 const clockOf=(t,dur)=>{const m=540+Math.min(1,(t||0)/(dur||100))*720;return String(Math.floor(m/60)).padStart(2,'0')+':'+String(Math.floor(m%60)).padStart(2,'0');};
 const srvNow=()=>Date.now()+((room&&room.off)||0);
-function savedRoom(){try{return localStorage.getItem(ROOM_KEY)||'';}catch(e){return '';}}
-function setSavedRoom(c){try{if(c)localStorage.setItem(ROOM_KEY,c);else localStorage.removeItem(ROOM_KEY);}catch(e){}}
-function newCode(){const A='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';let s='';for(let i=0;i<5;i++)s+=A[Math.floor(Math.random()*A.length)];return s;}
 /* El nombre se pide una vez: si ya hay uno guardado, se muestra con un botón para cambiarlo. */
 const nameInput=label=>`<label class="supd">${label}<input id="pname" class="pname" maxlength="20" value="${esc(playerName())}" placeholder="Tu nombre o mote"></label>`;
 const nameField=label=>playerName()?`<div class="supd" data-label="${esc(label)}">Juegas como <b>${esc(playerName())}</b> <button class="btn mini" data-act="rename">Cambiar</button></div>`:nameInput(label);
 function nameOk(){const i=$('#pname');if(!i&&playerName())return true;const n=i?cleanName(i.value):'';if(!i||!i.value.trim()){toast('Pon un nombre o un mote','bad');return false;}setPlayerName(n);return true;}
 
-function showRoomMenu(err){
-  room=null;run=null;
-  const code=(new URLSearchParams(location.search).get('sala')||savedRoom()||'').toUpperCase();
-  showOverlay(`<div class="card"><h2>👥 Jugar con amigos</h2>
-    <div class="supd">Quien crea la sala es el jefe y lleva la Caja 3. Los demás entran con el código, eligen puesto y hacen los avisos de verdad. La tienda solo avanza mientras el jefe tiene el juego abierto.</div>
-    ${nameField('Tu nombre (no pongas datos personales)')}
-    ${err?`<div class="rerr">⚠️ ${esc(err)}</div>`:''}
-    <div class="zone-title">ENTRAR EN UNA SALA</div>
-    <input id="rcode" class="pname" maxlength="5" value="${esc(code)}" placeholder="Código de 5 letras" autocapitalize="characters" autocomplete="off">
-    <button class="btn go" data-act="rjoin">Entrar</button>
-    <div class="zone-title">CREAR UNA SALA</div>
-    <label class="supd">Duración de cada turno (de 9:00 a 21:00)<select id="rdur" class="pname">${DURS.map(d=>`<option value="${d[0]}" ${d[0]===600?'selected':''}>${d[1]}</option>`).join('')}</select></label>
-    <button class="btn go" data-act="rcreate">Crear sala</button>
-    <button class="btn" data-act="rback">Volver</button></div>`);
+/* Arranque: siempre online; si no hay conexión en 9 s, modo sin conexión. */
+async function bootOnline(){
+  showOverlay('<div class="card hub"><h1>VITCHMARKET</h1><div class="supd">📡 Conectando con la tienda…</div></div>');
+  const f=await Promise.race([fbInit(),new Promise(r=>setTimeout(()=>r(false),9000))]);
+  if(!f){goOffline();return;}
+  try{await enterShared();}catch(e){console.warn(e);goOffline();}
 }
-async function createRoom(dur){
-  showOverlay('<div class="card"><div class="supd">Creando la sala…</div></div>');
-  const f=await fbInit();if(!f)return showRoomMenu('No hay conexión con la base de datos.');
-  try{
-    let code='';
-    for(let i=0;i<5&&!code;i++){const c=newCode();if(!(await f.get(f.ref(f.db,'rooms/'+c+'/info'))).exists())code=c;}
-    if(!code)return showRoomMenu('No se pudo crear la sala. Prueba otra vez.');
-    const name=playerName();
-    await f.update(f.ref(f.db),{['rooms/'+code+'/info']:{host:f.uid,name,dur,status:'lobby',day:1,created:f.serverTimestamp(),hb:f.serverTimestamp()},
-      ['rooms/'+code+'/members/'+f.uid]:{name,role:'jefe',on:true}});
-    meta=defMeta(meta.best);
-    enterRoom(code,true);
-  }catch(e){console.warn(e);showRoomMenu('No se pudo crear la sala.');}
-}
-async function joinRoom(code){
-  code=String(code||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
-  if(code.length!==5)return showRoomMenu('El código tiene 5 letras o números.');
-  showOverlay('<div class="card"><div class="supd">Entrando en la sala '+code+'…</div></div>');
-  const f=await fbInit();if(!f)return showRoomMenu('No hay conexión con la base de datos.');
-  try{
-    const s=await f.get(f.ref(f.db,'rooms/'+code+'/info'));
-    if(!s.exists()){setSavedRoom('');return showRoomMenu('No existe ninguna sala '+code+'.');}
-    if(s.val().host===f.uid){
-      const ms=await f.get(f.ref(f.db,'rooms/'+code+'/meta'));
-      meta=ms.exists()?loadRoomMeta(ms.val()):defMeta(meta.best);
-      await f.update(f.ref(f.db,'rooms/'+code+'/members/'+f.uid),{name:playerName(),role:'jefe',on:true});
-      return enterRoom(code,true);
-    }
-    const ex=(await f.get(f.ref(f.db,'rooms/'+code+'/members/'+f.uid))).val(),role=ex&&ROLES[ex.role]?ex.role:null;
-    await f.update(f.ref(f.db,'rooms/'+code+'/members/'+f.uid),{name:playerName(),on:true,role});
-    enterRoom(code,false);
-  }catch(e){console.warn(e);showRoomMenu('No se pudo entrar en la sala '+code+'.');}
+function goOffline(){offline=true;room=null;showStart();toast('📴 Sin conexión con la tienda: juegas en solitario. Recarga para volver a intentarlo.','bad');}
+async function enterShared(){
+  const f=fb,base='rooms/'+SHOP;
+  const info=(await f.get(f.ref(f.db,base+'/info'))).val();
+  if(info&&info.host===f.uid&&srvNow()-(info.hb||0)<TAKEOVER*15){
+    const ms=await f.get(f.ref(f.db,base+'/meta'));
+    meta=ms.exists()?loadRoomMeta(ms.val()):defMeta(meta.best);
+    await f.update(f.ref(f.db,base+'/members/'+f.uid),{name:playerName()||'Jefe',role:'jefe',on:true});
+    return enterRoom(SHOP,true);
+  }
+  if(playerName()){
+    const ex=(await f.get(f.ref(f.db,base+'/members/'+f.uid))).val();
+    await f.update(f.ref(f.db,base+'/members/'+f.uid),{name:playerName(),on:true,role:ex&&ROLES[ex.role]?ex.role:null});
+  }
+  enterRoom(SHOP,false);
 }
 /* Firebase convierte los objetos con claves numéricas en arrays y se come los vacíos: se deshace aquí. */
 function loadRoomMeta(raw){
@@ -974,12 +967,15 @@ function loadRoomMeta(raw){
   if(m.closed){if(m.day%3===1)m.emp.forEach(closeSt);m.day++;m.closed=false;}
   return m;
 }
+function presence(){
+  if(!room||!playerName())return;
+  const on=fb.ref(fb.db,'rooms/'+room.code+'/members/'+room.uid+'/on');
+  fb.onDisconnect(on).set(false);fb.set(on,true).catch(()=>{});
+}
 function enterRoom(code,host){
   const f=fb;
-  room={code,host:false,uid:f.uid,info:{},members:{},state:null,note:null,off:0,lastPub:0,lastHb:0,done:{},view:null,subbed:false,lastHtml:''};
-  setSavedRoom(code);
-  const on=f.ref(f.db,'rooms/'+code+'/members/'+f.uid+'/on');
-  f.onDisconnect(on).set(false);f.set(on,true).catch(()=>{});
+  room={code,host:false,uid:f.uid,info:{},members:{},state:null,note:null,off:0,lastPub:0,lastHb:0,done:{},view:null,subbed:false,lastHtml:'',appsKey:''};
+  presence();
   f.onValue(f.ref(f.db,'.info/serverTimeOffset'),s=>{room&&(room.off=s.val()||0);});
   f.onValue(rRef('info'),s=>{if(!room)return;room.info=s.val()||{};roomChanged();});
   f.onValue(rRef('members'),s=>{if(!room)return;room.members=s.val()||{};roomChanged();});
@@ -996,56 +992,115 @@ function memberSubs(){
   });
 }
 function becomeHost(){
-  room.host=true;ensureMeta();
+  room.host=true;ensureMeta();if(cam.on)$('#camwin').classList.add('show');
   room.actsOff=fb.onChildAdded(rRef('acts'),s=>{const a=s.val();fb.remove(s.ref).catch(()=>{});onAct(a);});
   showLobby();pubState(true);
 }
-function demote(){
+function demote(msg){
   if(room.actsOff){room.actsOff();room.actsOff=null;}
   room.host=false;run=null;mg=null;pendingLeave=null;closeMG();
   fb.update(rRef('members/'+room.uid),{role:null}).catch(()=>{});
   memberSubs();renderAll();room.lastHtml='';renderMember();
-  toast('Otra persona ha tomado el mando de la tienda.','bad');
+  toast(msg||'Otra persona se ha quedado el puesto de jefe.','bad');
 }
+const appsList=()=>Object.entries(room&&room.members||{}).filter(([u,m])=>m&&m.apply&&ROLES[m.apply]&&!ROLES[m.role]&&u!==room.uid);
 function roomChanged(){
   if(!room)return;
   if(room.host){
     if(room.info.host&&room.info.host!==room.uid)return demote();
     syncRealEmps();
+    const k=appsList().map(([u,m])=>u+m.apply+(m.on?1:0)).join();
+    const appsCh=k!==room.appsKey;room.appsKey=k;
     if(room.view==='lobby')showLobby();
+    else if(appsCh){
+      if(run&&!run.over)renderTasks();
+      else if(run&&run.over&&!run.dead){if(meet)showMeeting();else showShop();}
+      if(k&&appsCh)beep(990,.1,'triangle',.05);
+    }
   }else renderMember();
 }
+/* Solicitudes de empleo (las ve el jefe en la sala de espera, el cierre, la reunión y como aviso en el turno). */
+function appsHtml(){
+  const ap=appsList();if(!ap.length)return '';
+  return '<div class="zone-title">📝 SOLICITUDES DE EMPLEO</div><div class="shop">'+ap.map(([u,m])=>{
+    const r=m.apply,full=staffOf(r).length>=ROLES[r].max;
+    return `<div class="up"><div class="t"><b>${m.on?'🟢':'⚪'} 🎮 ${esc(cleanName(m.name))}</b>Solicita ${JOB_IC[r]} ${ROLES[r].n}${full?' · el puesto está completo: despide a alguien antes':''}</div>
+      <button class="btn go" data-act="rhire" data-u="${esc(u)}" ${full?'disabled':''}>Contratar</button><button class="btn no" data-act="rreject" data-u="${esc(u)}">No</button></div>`;
+  }).join('')+'</div>';
+}
+function appsAlerts(){
+  return appsList().map(([u,m])=>{const r=m.apply,full=staffOf(r).length>=ROLES[r].max;
+    return `<div class="alert"><span class="at">📝 ${esc(cleanName(m.name))} solicita ${ROLES[r].n}</span><span class="who"><button class="btn" data-act="rhire" data-u="${esc(u)}" ${full?'disabled title="Puesto completo"':''}>Contratar</button><button class="btn off" data-act="rreject" data-u="${esc(u)}">No</button></span></div>`;}).join('');
+}
+function hireReal(u){
+  const m=room.members[u];if(!isHost()||!m||!ROLES[m.apply])return;
+  if(staffOf(m.apply).length>=ROLES[m.apply].max){toast('Ese puesto está completo.','bad');return;}
+  fb.update(rRef('members/'+u),{role:m.apply,apply:null}).catch(e=>console.warn(e));
+  note(u,'¡Contratado/a en '+ROLES[m.apply].n+'! Empiezas ya, en periodo de prueba.');
+  sOk();toast('🎮 '+cleanName(m.name)+' contratado/a en '+ROLES[m.apply].n,'good');
+}
+function rejectReal(u){
+  const m=room.members[u];if(!isHost()||!m)return;
+  fb.update(rRef('members/'+u),{apply:null}).catch(()=>{});
+  note(u,'Tu solicitud para '+(ROLES[m.apply]?ROLES[m.apply].n:'el puesto')+' no ha salido. Prueba con otro puesto o más tarde.',true);
+}
 function membersHtml(){
-  const ms=Object.entries(room.members||{});
-  return '<div class="crew">'+(ms.map(([u,m])=>`<div>${m.on?'🟢':'⚪'} <b>${esc(cleanName(m.name))}</b> · ${u===(room.info&&room.info.host)?'👑 Jefe · Caja 3':ROLES[m.role]?ROLES[m.role].n:'eligiendo puesto…'}${u===room.uid?' (tú)':''}</div>`).join('')||'Nadie.')+'</div>';
+  const ms=Object.entries(room.members||{}).filter(([u,m])=>m&&m.name);
+  return '<div class="crew">'+(ms.map(([u,m])=>`<div>${m.on?'🟢':'⚪'} <b>${esc(cleanName(m.name))}</b> · ${u===(room.info&&room.info.host)?'👑 Jefe · Caja 3':ROLES[m.role]?JOB_IC[m.role]+' '+ROLES[m.role].n:m.apply&&ROLES[m.apply]?'📝 solicita '+ROLES[m.apply].n:'de visita'}${u===room.uid?' (tú)':''}</div>`).join('')||'Nadie.')+'</div>';
 }
 function showLobby(){
   room.view='lobby';
-  const url=location.origin+location.pathname+'?sala='+room.code,dur=room.info.dur||100;
-  const h=`<div class="card"><h2>Sala</h2>
-    <div class="roomcode">${room.code}</div>
-    <div class="supd">Pasa el código o este enlace: <b class="sel">${esc(url)}</b></div>
+  const dur=room.info.dur||600;
+  const h=`<div class="card hub"><h1>VITCHMARKET</h1>
+    <div class="supd"><span class="live"><i></i>TIENDA COMPARTIDA</span> Eres el jefe: llevas la Caja 3, contratas y decides. La tienda solo avanza mientras tienes el juego abierto.</div>
+    ${appsHtml()}
     <label class="supd">Duración de cada turno (de 9:00 a 21:00)<select id="rdur" class="pname">${DURS.concat(DURS.some(d=>d[0]===dur)?[]:[[dur,durTxt(dur)]]).map(d=>`<option value="${d[0]}" ${d[0]===dur?'selected':''}>${d[1]}</option>`).join('')}</select></label>
     <div class="zone-title">QUIÉN HAY</div>${membersHtml()}
-    <div class="supd">Turno ${meta.day} · Bote ${fmt(meta.money)}. Los puestos que no cubre nadie los hace el personal de la casa. Quien entre con el turno ya abierto se pone a trabajar al momento.</div>
+    <div class="supd">Turno ${meta.day} · Bote ${fmt(meta.money)}. Los puestos que no cubre nadie los hace el personal de la casa.</div>
     <button class="btn go big" data-act="ropen">Abrir tienda · turno ${meta.day}</button>
-    <button class="btn" data-act="rexit">Salir de la sala</button></div>`;
+    <button class="btn" data-act="rresign">Dejar de ser jefe</button></div>`;
   if(h!==room.lastHtml||!$('#overlay').classList.contains('show')){room.lastHtml=h;showOverlay(h);}
 }
 function openStore(){if(!isHost())return;room.view=null;fb.update(rRef('info'),{status:'open'}).catch(()=>{});startDay();}
-async function exitRoom(){
-  if(room&&fb){
-    try{const on=rRef('members/'+room.uid+'/on');await fb.onDisconnect(on).cancel();
-      if(room.host)await fb.set(on,false);else await fb.remove(rRef('members/'+room.uid));}catch(e){}
+/* Dejar el puesto: el jefe deja el puesto libre al momento (latido a 0); el empleado vuelve a la portada. */
+async function resign(){
+  if(!room)return;
+  try{
+    if(isHost()){saveGame(!!(run&&run.over));await fb.update(rRef('info'),{hb:0,status:'lobby'});await fb.update(rRef('members/'+room.uid),{role:null});demote('Has dejado el puesto de jefe. La tienda queda libre.');}
+    else await fb.update(rRef('members/'+room.uid),{role:null,apply:null});
+  }catch(e){console.warn(e);}
+}
+async function register(){
+  if(!nameOk()||!room)return;
+  try{await fb.update(rRef('members/'+room.uid),{name:playerName()});presence();}catch(e){console.warn(e);toast('No se pudo registrar el nombre.','bad');}
+  room.lastHtml='';renderMember();
+}
+async function applyJob(r){
+  if(!isMember())return;
+  if(!playerName()||!(room.members[room.uid]||{}).name){await register();if(!playerName())return;}
+  if(r==='jefe'){
+    const inf=room.info||{};
+    if(!inf.host){
+      try{
+        meta=defMeta(meta.best);
+        await fb.update(fb.ref(fb.db),{['rooms/'+SHOP+'/info']:{host:room.uid,name:playerName(),dur:600,status:'lobby',day:1,created:fb.serverTimestamp(),hb:fb.serverTimestamp()},
+          ['rooms/'+SHOP+'/members/'+room.uid]:{name:playerName(),role:'jefe',on:true}});
+        mg=null;closeMG();becomeHost();toast('👑 Has abierto VitchMarket. Ahora mandas tú.','good');
+      }catch(e){console.warn(e);toast('No se pudo: alguien se te ha adelantado.','bad');}
+      return;
+    }
+    return takeOver();
   }
-  setSavedRoom('');location.href=location.pathname;
+  if(!ROLES[r])return;
+  fb.update(rRef('members/'+room.uid),{apply:r}).catch(e=>{console.warn(e);toast('No se pudo enviar la solicitud.','bad');});
+  toast('📝 Solicitud enviada. Ahora toca esperar a que el jefe la vea.','good');
 }
 async function takeOver(){
   if(!isMember())return;
   try{await fb.set(rRef('info/host'),room.uid);}catch(e){toast('No se puede: el jefe sigue activo.','bad');return;}
   try{
     await fb.update(rRef('info'),{hb:fb.serverTimestamp(),name:playerName()||'Jefe'});
-    await fb.update(rRef('members/'+room.uid),{role:'jefe'});
+    await fb.update(rRef('members/'+room.uid),{role:'jefe',apply:null});
     const ms=await fb.get(rRef('meta'));
     meta=ms.exists()?loadRoomMeta(ms.val()):defMeta(meta.best);
   }catch(e){console.warn(e);}
@@ -1055,6 +1110,15 @@ async function takeOver(){
 }
 function roomAct(a){if(isMember())fb.push(rRef('acts'),plain(Object.assign({uid:room.uid,ts:fb.serverTimestamp()},a))).catch(e=>{console.warn(e);toast('No se pudo enviar. ¿Sin conexión?','bad');});}
 function note(u,m,bad){if(isHost()&&u)fb.set(rRef('notes/'+u),{m:String(m).slice(0,200),bad:!!bad,ts:fb.serverTimestamp()}).catch(()=>{});}
+async function loadRank(){
+  if(Date.now()-rankAt<60000||!fb)return;rankAt=Date.now();
+  try{
+    const s=await fb.get(fb.query(fb.ref(fb.db,'ranking'),fb.orderByChild('score'),fb.limitToLast(10)));
+    const rows=[];s.forEach(c=>{rows.push(Object.assign({id:c.key},c.val()));});rows.reverse();
+    rankCache=rows.length?'<ol class="rank">'+rows.map(r=>`<li><b>${esc(r.name)}</b> · ${r.days} ${r.days===1?'turno':'turnos'} · ${fmt(r.money)}${r.final?' 🪦':''}</li>`).join('')+'</ol>':'<div class="supd">Aún no hay nadie. Estrénalo tú.</div>';
+  }catch(e){rankCache='<div class="supd">No se pudo cargar el ranking.</div>';}
+  if(isMember())renderMember();
+}
 
 /* --- lado del jefe: empleados reales dentro de meta.emp (e.real = uid) --- */
 function syncRealEmps(){
@@ -1066,7 +1130,7 @@ function syncRealEmps(){
     let e=meta.emp.find(x=>x.real===u);
     const nm=cleanName(m.name);
     if(!e){
-      e=newEmp(m.role,meta,{real:u,name:nm,face:'🧑‍💼',rap:0.6,trato:0.6,punt:1,act:0.7,moral:70,pers:null,nat:0,langs:['es']});
+      e=newEmp(m.role,meta,{real:u,name:nm,face:'🧑‍💼',rap:0.6,trato:0.6,punt:1,act:0.7,moral:70,pers:null,nat:0,langs:['es'],trial:3});
       meta.emp.push(e);ch=true;
       toast('🎮 '+nm+' entra en '+ROLES[m.role].n,'good');
     }
@@ -1139,7 +1203,7 @@ function pubState(force){
   }):[];
   const phase=!run?'lobby':run.over?(run.dead?'dead':meet?'meeting':'shop'):run.closing?'closing':'open';
   fb.set(rRef('state'),plain({day:meta.day,t:run?Math.round(run.t):0,dur:run?run.dur:(room.info.dur||100),money:Math.round(meta.money),rep:Math.round(meta.rep*10)/10,
-    q:run?run.queue.length:0,phase,away:!!(run&&run.away),tasks,rpt:run&&run.over&&room.rpt||null,ts:fb.serverTimestamp()})).catch(()=>{});
+    q:run?run.queue.length:0,cnt:Object.fromEntries(Object.keys(ROLES).map(r=>[r,staffOf(r).length])),phase,away:!!(run&&run.away),tasks,rpt:run&&run.over&&room.rpt||null,ts:fb.serverTimestamp()})).catch(()=>{});
   if(force||now-room.lastHb>10000){room.lastHb=now;fb.update(rRef('info'),{hb:fb.serverTimestamp(),day:meta.day,status:run&&!run.over?'open':run?'closed':'lobby'}).catch(()=>{});}
 }
 
@@ -1165,19 +1229,35 @@ function reportHtml(rp,role){
 }
 /* --- lado del empleado real --- */
 const PHASE={lobby:'⏳ Esperando a que el jefe abra la tienda…',shop:'🧾 Turno cerrado. El jefe está con las cuentas y los pedidos.',meeting:'🗣️ Reunión de personal. El jefe está decidiendo sobre cada uno.',dead:'🪦 La tienda ha cerrado. Esperando a ver si el jefe vuelve a empezar.'};
+/* Portada online (registrarse y solicitar cargo) y pantalla de trabajo del empleado real. */
 function renderMember(){
   if(!isMember())return;
+  $('#camwin').classList.remove('show');
+  if(document.activeElement&&document.activeElement.id==='pname')return;
+  loadRank();
   const st=room.state,ms=room.members||{},me=ms[room.uid]||{},inf=room.info||{};
-  const role=ROLES[me.role]?me.role:null,stale=!st||!st.ts||srvNow()-st.ts>6000,hbOld=!inf.hb||srvNow()-inf.hb>TAKEOVER;
+  const role=ROLES[me.role]?me.role:null,stale=!st||!st.ts||srvNow()-st.ts>6000;
+  const bossOn=!!inf.host&&srvNow()-(inf.hb||0)<TAKEOVER,bossName=inf.host?esc(cleanName((ms[inf.host]||{}).name||inf.name)):'';
   const whoName=w=>w==='jefe'?'el jefe':ms[w]?'🎮 '+esc(cleanName(ms[w].name)):esc(w);
   const tasks=st&&!stale?toArr(st.tasks):[],mine=tasks.find(t=>t.who===room.uid);
-  let h=`<div class="card"><h2>Sala ${esc(room.code)}</h2>
-    <div class="supd">👑 Jefe: <b>${esc(cleanName((ms[inf.host]||{}).name||inf.name))}</b> · turnos de ${durTxt(inf.dur)}</div>`;
-  if(!role){
-    h+=`<div class="zone-title">ELIGE TU PUESTO</div><div class="opts">`+Object.keys(ROLES).map(r=>`<button class="btn" data-act="rrole" data-r="${r}"><b>${ROLES[r].n}</b> <small>${ROLES[r].duties.slice(0,3).join(' · ')}</small></button>`).join('')+'</div>';
+  const status=!inf.host?'<span class="live off"><i></i>SIN JEFE</span> Nadie lleva la tienda todavía.'
+    :stale?`<span class="live off"><i></i>EN PAUSA</span> 👑 ${bossName} no tiene el juego abierto.`
+    :`<span class="live"><i></i>EN DIRECTO</span> 👑 Jefe: <b>${bossName}</b> · turnos de ${durTxt(inf.dur)}`;
+  const hud=st&&!stale?`<div class="mhud"><span>Turno <b>${st.day}</b></span><span>🕘 <b>${clockOf(st.t,st.dur)}</b></span><span>Bote <b>${fmt(st.money)}</b></span><span>★ <b>${(+st.rep).toFixed(1)}</b></span><span>Cola <b>${st.q}</b></span></div>`:'';
+  let h=`<div class="card hub"><h1>VITCHMARKET</h1><div class="supd">${status}</div>${hud}`;
+  if(!me.name||!playerName()){
+    h+=`<div class="zone-title">FICHA DE EMPLEO</div><div class="supd">Pon tu nombre de usuario. Luego eliges a qué cargo aplicar.</div>${nameInput('Tu nombre (no pongas datos personales)')}<button class="btn go big" data-act="rreg">Entrar en VitchMarket</button>`;
+  }else if(!role){
+    const cnt=(st&&st.cnt)||{},pend=me.apply&&ROLES[me.apply]?me.apply:null;
+    h+=room.renaming?nameInput('Tu nombre nuevo (se guarda al solicitar un cargo)'):nameField('Tu nombre (no pongas datos personales)');
+    if(pend)h+=`<div class="task"><div>📝 Solicitud enviada: <b>${JOB_IC[pend]} ${ROLES[pend].n}</b></div><div class="supd">${bossOn?'El jefe la verá en cuanto pueda. Si te contrata, entras a trabajar al momento.':'No hay jefe conectado ahora mismo. Tu solicitud espera.'}</div><button class="btn" data-act="rcancel">Retirar la solicitud</button></div>`;
+    const slots=(n,mx)=>'<span class="slots">'+Array.from({length:mx},(_,i)=>`<i class="${i<n?'on':''}"></i>`).join('')+'</span>';
+    h+='<div class="zone-title">ELIGE A QUÉ CARGO APLICAR</div><div class="jobs">'
+      +`<button class="job boss" data-act="rapply" data-r="jefe" ${bossOn?'disabled':''}><span class="ic">👑</span><b>Jefe</b><small>${bossOn?'Ocupado por '+bossName:'¡Vacante! Llevas la Caja 3, contratas y despides'}</small></button>`
+      +Object.keys(ROLES).map(r=>{const n=cnt[r]||0,full=n>=ROLES[r].max;
+        return `<button class="job" data-act="rapply" data-r="${r}" ${pend===r?'disabled':''}><span class="ic">${JOB_IC[r]}</span><b>${ROLES[r].n}</b>${st&&st.cnt?slots(n,ROLES[r].max):''}<small>${ROLES[r].duties.slice(0,2).join(' · ')}${full?'<br><em>Completo: solo si despiden a alguien</em>':''}</small></button>`;}).join('')+'</div>';
   }else{
-    h+=`<div class="supd">Tu puesto: <b>${ROLES[role].n}</b>${mine?'':' <button class="btn mini" data-act="rrole" data-r="">Cambiar</button>'}</div>`;
-    if(st)h+=`<div class="mhud"><span>Turno <b>${st.day}</b></span><span>🕘 <b>${clockOf(st.t,st.dur)}</b></span><span>Bote <b>${fmt(st.money)}</b></span><span>★ <b>${(+st.rep).toFixed(1)}</b></span><span>Cola <b>${st.q}</b></span></div>`;
+    h+=`<div class="supd">${JOB_IC[role]} Trabajas en <b>${ROLES[role].n}</b> como <b>${esc(playerName())}</b>.</div>`;
     if(stale)h+='<div class="supd">⏸️ La tienda está en pausa: el jefe no tiene el juego abierto.</div>';
     else if(PHASE[st.phase])h+='<div class="supd">'+PHASE[st.phase]+'</div>'+reportHtml(st.rpt,role);
     else{
@@ -1189,11 +1269,12 @@ function renderMember(){
       const busy=tasks.filter(t=>t.who&&t.who!==room.uid);
       if(busy.length)h+='<div class="zone-title">EN CURSO</div><div class="crew">'+busy.map(t=>`<div>${t.ic} ${esc(t.s)} · ${whoName(t.who)}</div>`).join('')+'</div>';
     }
+    if(room.note)h+=`<div class="supd">📣 Último aviso del jefe: ${esc(room.note.m)}</div>`;
+    if(!mine)h+='<button class="btn" data-act="rquit">Dejar el trabajo</button>';
   }
-  if(room.note)h+=`<div class="supd">📣 Último aviso del jefe: ${esc(room.note.m)}</div>`;
-  if(hbOld)h+='<div class="supd">El jefe lleva más de 2 minutos sin aparecer.</div><button class="btn" data-act="rboss">👑 Tomar el mando de la tienda</button>';
-  h+=`<div class="zone-title">QUIÉN HAY</div>${membersHtml()}<button class="btn" data-act="rexit">Salir de la sala</button></div>`;
-  if(h!==room.lastHtml){room.lastHtml=h;showOverlay(h);}
+  if(role&&inf.host&&!bossOn)h+='<div class="supd">👑 El jefe lleva más de 2 minutos sin aparecer.</div><button class="btn" data-act="rboss">👑 Quedarme con el puesto de jefe</button>';
+  h+=`<div class="zone-title">QUIÉN HAY</div>${membersHtml()}<div class="zone-title">🏆 RANKING</div>${rankCache||'<div class="supd">Cargando…</div>'}</div>`;
+  if(h!==room.lastHtml){const pv=$('#pname')?$('#pname').value:null;room.lastHtml=h;showOverlay(h);if(pv!=null&&$('#pname'))$('#pname').value=pv;}
   if(mg&&mg.remote&&st&&!stale&&!tasks.some(t=>t.id===mg.t.id&&t.who===room.uid)){mg=null;closeMG();toast('Se acabó el tiempo para ese aviso.','bad');}
   if(mine&&!mg&&!room.done[mine.id])startMG(Object.assign({remote:1},mine,{roles:toArr(mine.roles),bk:toArr(mine.bk)}));
 }
@@ -1373,7 +1454,7 @@ function renderTasks(){
   if(!run){el.innerHTML='';al.innerHTML='';return;}
   const free=meta.emp.filter(isFree);
   /* Avisos sin asignar: arriba, en la cabecera fija, para que se vean siempre. */
-  al.innerHTML=run.tasks.filter(t=>!t.who&&t.k!=='tk').map(t=>{
+  al.innerHTML=(isHost()?appsAlerts():'')+run.tasks.filter(t=>!t.who&&t.k!=='tk').map(t=>{
     const sc=e=>(t.roles.includes(e.role)||e.pers==='servicial'?1:0)+(t.lang&&e.langs.includes(t.lang)?2:0);
     const opts=free.slice().sort((a,b)=>sc(b)-sc(a)).slice(0,3).map(e=>{
       const m=t.roles.includes(e.role),sp=t.lang&&e.langs.includes(t.lang);
@@ -1835,7 +1916,7 @@ function showMeeting(){
     return `<div class="emp"><div class="eh"><span class="ef">${c.face}</span><div class="t"><b>${c.name}</b>${flag(c)} ${(NATS[c.nat]||NATS[0]).c} · para ${ROLES[c.role].n} · habla ${c.langs.map(l=>LANG[l]).join(', ')} ·${c.exp?c.exp+(c.exp===1?' año':' años')+' de experiencia':'sin experiencia'} · pide ${fmt(c.wage)}/día</div></div>${qa}${btn}</div>`;
   }).join('');
   const duties=Object.keys(ROLES).map(k=>`<div class="up"><div class="t"><b>${ROLES[k].n} · ${staffOf(k).length}/${ROLES[k].max}</b>${ROLES[k].duties.join(' · ')}</div></div>`).join('');
-  showOverlay(`<div class="card"><h2>Reunión de personal</h2>
+  showOverlay(`<div class="card"><h2>Reunión de personal</h2>${isHost()?appsHtml():''}
     <div class="supd">Datos desde la última reunión. Una decisión por persona. Para despedir hay que dar un motivo que se pueda demostrar con lo registrado; si no, denuncia. Bote: <b>${fmt(meta.money)}</b></div>
     ${meet.gone.map(g=>`<div class="supd">${g}</div>`).join('')}
     ${meet.rumors.length?'<div class="zone-title">RUMORES</div><div class="shop">'+meet.rumors.map(r=>'<div class="emp"><div>'+r+'</div></div>').join('')+'</div>':''}
@@ -2265,6 +2346,7 @@ document.addEventListener('click',e=>{
   const a=b.dataset.act;
   if(run&&run.away&&['scan','idyes','idno','bag','pay','card','den','clear','deliver','route'].includes(a)){toast('Estás en el pasillo. Termina y vuelve a la caja.','bad');return;}
   if((a==='start'||a==='restart')&&$('#pname'))setPlayerName($('#pname').value);
+  if(a==='rapply'&&$('#pname')&&isMember()){if(!nameOk())return;room.renaming=false;fb.update(rRef('members/'+room.uid),{name:playerName()}).catch(()=>{});}
   if(a==='start'){beep(1200,.05);startDay();}
   else if(a==='restart'){meta=defMeta(meta.best);meet=null;startDay();}
   else if(a==='next'){meta.day++;startDay();}
@@ -2303,16 +2385,15 @@ document.addEventListener('click',e=>{
   else if(a==='cams')toggleCams();
   else if(a==='mute'){muted=!muted;b.textContent=muted?'🔇':'🔊';}
   else if(a==='wipe')showStart(true);
-  else if(a==='rename'){const w=b.closest('[data-label]');if(w){w.outerHTML=nameInput(w.dataset.label);const i=$('#pname');if(i){i.focus();i.select();}}}
-  else if(a==='rmenu')showRoomMenu();
-  else if(a==='rback')showStart();
-  else if(a==='rback2'){if(playerName())joinRoom(savedRoom());else showRoomMenu();}
-  else if(a==='rcreate'){if(nameOk())createRoom(+$('#rdur').value||600);}
-  else if(a==='rjoin'){if(nameOk())joinRoom($('#rcode').value);}
+  else if(a==='rename'){if(isMember())room.renaming=true;const w=b.closest('[data-label]');if(w){w.outerHTML=nameInput(w.dataset.label);const i=$('#pname');if(i){i.focus();i.select();}}}
   else if(a==='ropen')openStore();
-  else if(a==='rexit')exitRoom();
+  else if(a==='rreg')register();
+  else if(a==='rapply')applyJob(b.dataset.r);
+  else if(a==='rcancel'&&isMember())fb.update(rRef('members/'+room.uid),{apply:null}).catch(()=>{});
+  else if(a==='rquit'||a==='rresign')resign();
+  else if(a==='rhire')hireReal(b.dataset.u);
+  else if(a==='rreject')rejectReal(b.dataset.u);
   else if(a==='rtake')roomAct({k:'take',t:+b.dataset.t});
-  else if(a==='rrole'&&isMember())fb.update(rRef('members/'+room.uid),{role:b.dataset.r||null}).catch(()=>{});
   else if(a==='rboss')takeOver();
   if(run&&run.over&&!run.dead&&meta.closed)saveGame(true);
 });
@@ -2329,9 +2410,9 @@ function boot(d){
       meta=Object.assign(defMeta(),m);hasSave=true;
     }
   }
-  ensureMeta();renderAll();showStart();requestAnimationFrame(tick);
+  ensureMeta();renderAll();requestAnimationFrame(tick);
   if(cam.on)$('#camwin').classList.add('show');
-  if(online()&&new URLSearchParams(location.search).get('sala'))showRoomMenu();
+  if(online())bootOnline();else showStart();
 }
 if(window.claude&&window.claude.hot&&window.claude.hot.ready)window.claude.hot.ready(boot);
 else boot((window.claude&&window.claude.hot&&window.claude.hot.data)||{});

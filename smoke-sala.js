@@ -83,6 +83,7 @@ const D=[5000,2000,1000,500,200,100,50,20,10,5,2,1];
 const st={hostDays:0,takes:0,mgB:0,assignReal:0};
 
 function hostBot(d){
+  const hire=d.querySelector('[data-act=rhire]:not([disabled])');if(hire){st.hired=(st.hired||0)+1;cl(hire);return;}
   const ov=d.querySelector('#overlay.show');
   if(ov){
     const ro=ov.querySelector('[data-act=ropen]');if(ro){cl(ro);return;}
@@ -111,24 +112,25 @@ function memberBot(d){
   if(d.querySelector('[data-act=mgtk]'))tkSeen++;
   const mgel=d.querySelector('#mg.show');
   if(mgel){const x=any(mgel,'button:not([disabled])');if(x){st.mgB++;cl(x);}return;}
-  const r=d.querySelector('[data-act=rrole][data-r='+(process.env.ROLE||'alm')+']');if(r){cl(r);return;}
+  const r=d.querySelector('[data-act=rapply][data-r='+(process.env.ROLE||'alm')+']:not([disabled])');if(r){st.applied=(st.applied||0)+1;cl(r);return;}
   const t=any(d,'[data-act=rtake]:not([disabled])');if(t&&Math.random()<.5){st.takes++;cl(t);}
 }
 
 (async()=>{
   try{
-    const A=browser('jefe','http://localhost/');await sleep(300);
+    const code='VITCH';
+    const A=browser('jefe','http://localhost/');await sleep(400);
     const da=A.document;
-    cl(da.querySelector('[data-act=rmenu]'));await sleep(50);
     da.querySelector('#pname').value='Jefa Test';
-    cl(da.querySelector('[data-act=rcreate]'));await sleep(400);
-    const code=Object.keys((store.v||{}).rooms||{})[0];
-    if(!code)throw new Error('No se creó la sala');
+    cl(da.querySelector('[data-act=rreg]'));await sleep(200);
+    cl(da.querySelector('[data-act=rapply][data-r=jefe]'));await sleep(400);
+    st.hostLobby=!!da.querySelector('[data-act=ropen]');
     setAt('rooms/'+code+'/info/dur',25);notify('rooms/'+code+'/info');
-    const B=browser('empleada','http://localhost/?sala='+code);await sleep(300);
+    const B=browser('empleada','http://localhost/');await sleep(400);
     const db=B.document;
     db.querySelector('#pname').value='Empleada <b>Test</b>';
-    cl(db.querySelector('[data-act=rjoin]'));await sleep(400);
+    cl(db.querySelector('[data-act=rreg]'));await sleep(300);
+    st.bossCardDisabled=!!db.querySelector('[data-act=rapply][data-r=jefe][disabled]');
     const hA=setInterval(()=>{try{hostBot(da);}catch(e){errs.push('BOT jefe '+e.message);}},40);
     const hB=setInterval(()=>{try{memberBot(db);}catch(e){errs.push('BOT empleada '+e.message);}},60);
     await sleep(45000);
@@ -142,9 +144,10 @@ function memberBot(d){
     // toma de mando: el latido del jefe se queda viejo
     A.close();await sleep(200);
     setAt('rooms/'+code+'/info/hb',Date.now()-200000);notify('rooms/'+code+'/info');await sleep(2500);
+    st.empRole=(getAt('rooms/'+code+'/members')||{}).uid2;
     const boss=db.querySelector('[data-act=rboss]');st.bossBtn=!!boss;cl(boss);await sleep(500);
     st.newHost=getAt('rooms/'+code+'/info/host');
-    st.afterTake=(db.querySelector('#overlay .card .roomcode')||{}).textContent;
+    st.afterTake=!!db.querySelector('[data-act=ropen]');
     cl(db.querySelector('[data-act=ropen]'));await sleep(1500);
     st.bRunning=!!db.querySelector('#register');
     st.realLeftInB=JSON.stringify((getAt('rooms/'+code+'/members')||{}));
