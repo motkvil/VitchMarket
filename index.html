@@ -1333,7 +1333,7 @@ function newEmp(role,m,opt,taken){
 }
 const defMeta=best=>{const m={day:1,money:3000000,eco2:1,rep:5,up:{scanner:0,fan:0,coffee:0},emp:[],eid:0,stock:{},back:{},orders:[],vac:{atc:1,alm:1},best:best||1};CAT.forEach(x=>{m.stock[x.id]=4;});['atc','back','rrpp','alm'].forEach(r=>m.emp.push(newEmp(r,m)));return m;};
 let meta=defMeta();
-let run=null,last=0,muted=false,uid=0,cid=0,toastT=0;
+let run=null,last=0,muted=false,uid=0,cid=Date.now()%1e9,toastT=0;
 
 /* ---------- audio ---------- */
 let ac=null;
@@ -1563,7 +1563,7 @@ function startDay(){
   if(msg.length)toast(msg.join(' · '),(rr.pending||notes.length)?'bad':'good');
   if(tab!=='caja')autoTill();
   pubState(true);
-  openGuide('j_'+tab,true);
+  if(!(room&&room.sim))openGuide('j_'+tab,true);
 }
 function frontChanged(){run.tray=[];run.card=false;run.pendingId=null;}
 function removeFront(){const c=run.queue.shift();if(run.remote&&c)run.done.push(c.id);frontChanged();}
@@ -1585,6 +1585,8 @@ function leaveAngry(idx){
 }
 function checkRep(){
   if(run&&run.remote)return;
+  /* El encargado no despide ni declara el concurso: eso lo decide la partida del jefe. Aguanta con lo mínimo. */
+  if(room&&room.sim){if(meta.rep<0.5)meta.rep=0.5;return;}
   if((meta.rep<=0||meta.money<-CREDIT)&&run&&!run.over){
     run.over=true;run.dead=true;mg=null;pendingLeave=null;closeMG();wipeGame();
     const days=meta.day,q=meta.money<-CREDIT;
@@ -1751,7 +1753,7 @@ function endDay(){
     [...new Set(need)].forEach(k=>{if(!vacOpen(k)&&staffOf(k).length<ROLES[k].max){const m=setVac(k,1,hr);if(m)run.vacNote=(run.vacNote||[]).concat(hr.name+': '+m);}});}}
   /* El sueldo es por cada 100 s de turno: en la tienda compartida, con turnos largos, se cobra en proporción. */
   /* Nómina: salario bruto del día + Seguridad Social a cargo de la empresa. Quien falta sin avisar no cobra ese día. */
-  let payroll=0,payB=0;const wf=Math.max(1,(run.dur||100)/100);
+  let payroll=0,payB=0;const wf=1;
   meta.emp.forEach(e=>{
     const d=run.duty[e.id];
     if(!(d&&(d.st==='abs'||d.st==='gone'))){const b=Math.round(e.wage*wf);payB+=b;payroll+=empCost(b);}
@@ -1785,9 +1787,9 @@ function endDay(){
   cart={};
   lastEnd={payroll,res,fin};scrTab.shop='sum';pg=0;tipsPer=0;
   if(isHost())room.rpt=deptReport();
-  if(meta.rep<=0||meta.money<-CREDIT){run.over=false;checkRep();return;}
+  if(!(room&&room.sim)&&(meta.rep<=0||meta.money<-CREDIT)){run.over=false;checkRep();return;}
   meta.liveT=0;saveGame(true);
-  if(room&&room.sim){pubState(true);setTimeout(relayNextDay,8000);return;}
+  if(room&&room.sim){pubState(true);clearTimeout(room.nextT);room.nextT=setTimeout(relayNextDay,8000);return;}
   submitScore(false);
   showShop();
   pubState(true);
@@ -1939,7 +1941,7 @@ const SAVE_KEY='vitchmarket.partida.v1';
 let hasSave=false;
 function saveGame(closed){if(room){meta.closed=!!closed;if(isHost())fb.set(rRef('meta'),plain(meta)).catch(e=>console.warn('No se pudo guardar en la sala:',e));return;}try{meta.closed=!!closed;localStorage.setItem(SAVE_KEY,JSON.stringify(meta));}catch(e){}}
 function loadGame(){try{const s=localStorage.getItem(SAVE_KEY);if(!s)return null;const m=JSON.parse(s);return m&&typeof m.day==='number'&&Array.isArray(m.emp)?m:null;}catch(e){return null;}}
-function wipeGame(){if(room){if(isHost())fb.remove(rRef('meta')).catch(()=>{});return;}try{localStorage.removeItem(SAVE_KEY);}catch(e){}hasSave=false;}
+function wipeGame(){if(room){if(room.host&&!room.sim)fb.remove(rRef('meta')).catch(()=>{});return;}try{localStorage.removeItem(SAVE_KEY);}catch(e){}hasSave=false;}
 
 function showStart(confirmWipe){
   run=null;scrRender=()=>showStart(confirmWipe);
@@ -2015,7 +2017,7 @@ async function fillRanking(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.16-49';
+const APPV='2026.11.16-50';
 /* Compara versiones por números («-9» < «-11»), no como texto. */
 const verCmp=(a,b)=>{const x=String(a).split(/[.-]/).map(Number),y=String(b).split(/[.-]/).map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
 try{const vt=document.createElement('div');vt.id='vtag';vt.textContent='v'+APPV;document.body.appendChild(vt);}catch(e){}
@@ -2112,6 +2114,8 @@ const bossAway=()=>{const inf=room&&room.info||{};return !!inf.host&&srvNow()-(i
 function relayCheck(){
   if(!room||!fb||offline)return;
   if(room.sim){
+    /* Si el nodo ya no es mío (otro encargado, o el jefe lo ha borrado), suelto sin guardar. */
+    if(!room.relay||room.relay.uid!==room.uid){dropSim('👔 Otra persona lleva ahora la tienda.');return;}
     fb.update(rRef('relay'),{hb:fb.serverTimestamp()}).catch(()=>{});
     const inf=room.info||{},r=room.relay||{};
     if((inf.ret&&r.since&&inf.ret>r.since)||!bossAway())stopRelay('👑 Ha vuelto el jefe: te devuelve la tienda y sigues en tu puesto.');
@@ -2137,11 +2141,24 @@ async function startRelay(){
   }catch(e){console.warn('Relevo:',e);room.sim=false;}
   room.relayBusy=false;
 }
-async function stopRelay(msg){
-  if(!room.sim||room.relayBusy)return;room.relayBusy=true;
-  try{if(run&&!run.over)meta.liveT=run.t;meta.closed=!!(run&&run.over);await fb.set(rRef('meta'),plain(meta));}catch(e){console.warn('Relevo: no se pudo guardar',e);}
+/* Copia de la partida para guardar a mitad de turno: lo que llevan los clientes en cola vuelve a la estantería
+   (si se retoma en otro navegador, esa cola no existe). */
+function liveMeta(){
+  const m=plain(meta);
+  if(run&&!run.over){m.liveT=run.t;m.closed=false;run.queue.forEach(c=>c.items.forEach(i=>{if(!i.scanned&&!i.denied)m.stock[i.pid]=(m.stock[i.pid]||0)+1;}));}
+  return m;
+}
+function dropSim(msg){
   if(room.actsOff){room.actsOff();room.actsOff=null;}
-  room.sim=false;run=null;mg=null;pendingLeave=null;
+  clearTimeout(room.nextT);room.sim=false;room.stopping=false;run=null;mg=null;pendingLeave=null;
+  room.lastHtml='';renderAll();renderMember();if(msg)toast(msg,'bad');
+}
+async function stopRelay(msg){
+  if(!room.sim||room.relayBusy)return;room.relayBusy=true;room.stopping=true;clearTimeout(room.nextT);
+  if(run&&run.tills)Object.keys(run.tills).forEach(u=>closeTill(u,'cambio de encargado'));
+  try{if(run&&run.over)meta.closed=true;await fb.set(rRef('meta'),run&&!run.over?liveMeta():plain(meta));}catch(e){console.warn('Relevo: no se pudo guardar',e);}
+  if(room.actsOff){room.actsOff();room.actsOff=null;}
+  room.sim=false;room.stopping=false;run=null;mg=null;pendingLeave=null;
   try{await fb.remove(rRef('relay'));}catch(e){}
   room.relayBusy=false;room.lastHtml='';renderAll();renderMember();if(msg)toast(msg,'good');
 }
@@ -2159,12 +2176,12 @@ function waitRelay(){
   if(room.waitRelay)return;room.waitRelay=true;
   fb.update(rRef('info'),{ret:fb.serverTimestamp()}).catch(()=>{});
   showOverlay(`<div class="card"><h2>👔 Recuperando la tienda…</h2><p>${esc(cleanName((room.relay||{}).name))} la ha llevado mientras no estabas. Te la devuelve en unos segundos.</p></div>`);
-  clearTimeout(room.waitT);room.waitT=setTimeout(()=>{if(room&&room.waitRelay){room.relay=null;relayChanged(true);}},30000);
+  clearTimeout(room.waitT);room.waitT=setTimeout(()=>{if(room&&room.waitRelay){fb.remove(rRef('relay')).catch(()=>{});room.relay=null;relayChanged(true);}},30000);
 }
 async function relayChanged(force){
   if(!room)return;
   if(room.host&&!room.sim){
-    if(relayActive()&&!room.waitRelay){run=null;mg=null;pendingLeave=null;closeMG();
+    if(relayActive()&&!room.waitRelay){if(run&&run.tills)Object.keys(run.tills).forEach(u=>closeTill(u,'cambio de encargado'));run=null;mg=null;pendingLeave=null;closeMG();
       /* con la pestaña oculta no le quita la tienda al encargado: espera dormido hasta que el jefe vuelva a mirar */
       if(document.hidden){room.yieldR=true;return;}
       room.yieldR=false;waitRelay();return;}
@@ -2418,9 +2435,10 @@ function checkRemoteTill(){
 function syncRealEmps(){
   if(!isHost())return;
   const ms=room.members||{};let ch=false;
-  meta.emp.filter(e=>e.real).forEach(e=>{const m=ms[e.real];if(!m||!ROLES[m.role]||e.real===room.uid){dropReal(e);ch=true;}});
+  const hostU=room.sim?room.info.host:room.uid;
+  meta.emp.filter(e=>e.real).forEach(e=>{const m=ms[e.real];if(!m||!ROLES[m.role]||e.real===hostU){dropReal(e);ch=true;}});
   Object.entries(ms).forEach(([u,m])=>{
-    if(u===room.uid||!ROLES[m.role])return;
+    if(u===hostU||!ROLES[m.role])return;
     let e=meta.emp.find(x=>x.real===u);
     const nm=cleanName(m.name);
     if(!e){
@@ -4088,7 +4106,7 @@ function hireCand(i){
 }
 function endMeeting(){
   meta.emp.forEach(closeSt);meet=null;
-  if(meta.rep<=0||meta.money<-CREDIT){run.over=false;checkRep();return;}
+  if(!(room&&room.sim)&&(meta.rep<=0||meta.money<-CREDIT)){run.over=false;checkRep();return;}
   meta.day++;startDay();
 }
 function showMeeting(){
@@ -5112,9 +5130,9 @@ function offTick(dt){
   while(run.offAcc>=1){run.offAcc--;const v=Math.round(OFF.ticket*rnd(0.4,1.6)),c=Math.round(v*(SUPS[0].cf+OFF.merma));
     run.offS+=v;run.offC+=c;run.offN++;meta.money+=v-c;}
 }
-function tick(ts){step(ts,false);requestAnimationFrame(tick);}
+function tick(ts){try{step(ts,false);}catch(e){console.warn('tick',e);quiet=false;}requestAnimationFrame(tick);}
 function step(ts,hid){
-  if(room&&(room.waitRelay||room.yieldR))return;
+  if(room&&(room.waitRelay||room.yieldR||room.stopping))return;
   quiet=!!(room&&room.sim);
   const dt=Math.min(0.1,(ts-last)/1000||0);last=ts;
   if(run&&!run.over&&!guide){
@@ -5160,7 +5178,7 @@ function step(ts,hid){
     renderChat();
   }
   renderHud();
-  if(isHost()&&run&&!run.over&&!run.remote&&run.t-(run.saveT||0)>15){run.saveT=run.t;meta.liveT=run.t;saveGame(false);}
+  if(isHost()&&run&&!run.over&&!run.remote&&run.t-(run.saveT||0)>15){run.saveT=run.t;meta.liveT=run.t;if(room)fb.set(rRef('meta'),liveMeta()).catch(e=>console.warn('No se pudo guardar en la sala:',e));}
   quiet=false;
   if(isHost())pubState(false);
   if(hid)return;
@@ -5171,8 +5189,9 @@ function step(ts,hid){
 /* El reloj de fondo va en un Worker: los temporizadores de la pestaña se congelan (Chrome los baja a uno por minuto
    tras 5 min oculta), los mensajes de un Worker no. Si no se puede crear, setInterval de siempre. */
 function bgStep(){
-  if(!document.hidden||!room||!isHost()||offline)return;
-  let n=Math.min(600,Math.floor((performance.now()-last)/100));while(n-->0)step(last+100,true);
+  if(room&&!offline&&(performance.now()-(room.rcT||0))>3000){room.rcT=performance.now();try{relayCheck();}catch(e){}}
+  if(!room||!isHost()||offline||performance.now()-last<1000)return;
+  let n=Math.min(600,Math.floor((performance.now()-last)/100));try{while(n-->0)step(last+100,true);}catch(e){console.warn('bgStep',e);quiet=false;}
 }
 try{const w=new Worker(URL.createObjectURL(new Blob(['setInterval(function(){postMessage(0)},1000)'],{type:'text/javascript'})));w.onmessage=bgStep;w.onerror=()=>setInterval(bgStep,1000);}
 catch(e){setInterval(bgStep,1000);}
