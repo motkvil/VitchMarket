@@ -2008,7 +2008,7 @@ async function fillRanking(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.16-46';
+const APPV='2026.11.16-47';
 /* Compara versiones por números («-9» < «-11»), no como texto. */
 const verCmp=(a,b)=>{const x=String(a).split(/[.-]/).map(Number),y=String(b).split(/[.-]/).map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
 try{const vt=document.createElement('div');vt.id='vtag';vt.textContent='v'+APPV;document.body.appendChild(vt);}catch(e){}
@@ -2651,7 +2651,7 @@ function workScreen(o){
     <div class="gs-clock">${st&&!stale?`<b class="gled">${clockOf(st.t,st.dur)}</b><span class="gs-bar"><i style="width:${prog}%"></i></span><small>TURNO ${st.day}</small>`:''}</div>
     <div class="gs-stats">${st&&!stale?`<span><small>BOTE</small><b class="gled">${fmt(st.money)}</b></span><span><small>FAMA</small><b class="gled">★${(+st.rep).toFixed(1)}</b></span><span><small>COLA</small><b class="gled">${st.q}</b></span>`:''}
      <button class="gs-mini" data-act="guide" title="Cómo se trabaja">📘</button><button class="gs-mini" data-act="rquit" title="Dejar el trabajo" ${mine?'disabled':''}>🚪</button></div></div>
-   <div class="gs-status ${rl?'relay':''}">${status}</div>${verMsg}${room.msg?`<div class="${room.msg.bad?'rerr':'rok'}">${esc(room.msg.t)}</div>`:''}
+   <div class="gs-status ${relayActive()?'relay':''}">${status}</div>${verMsg}${room.msg?`<div class="${room.msg.bad?'rerr':'rok'}">${esc(room.msg.t)}</div>`:''}
    <div class="gs-main"><div class="gs-scene sc-${role} ${why&&!mine?'shut':''}"><div class="gs-wall"><span>${S.bg.toUpperCase()}</span></div><div class="gs-iso" id="isoslotw"><span class="gs-zone">📍 Tu zona de la tienda, en directo</span></div><div class="gs-objs ${S.objs.length===4?'g4':''}">`;
   S.objs.forEach(ob=>{
     const t=ob.kinds?open.find(x=>ob.kinds.includes(x.k)):null,ok=usable(ob,t),b=badge(ob.k),busy=tasks.find(x=>x.who&&ob.kinds&&ob.kinds.includes(x.k)&&toArr(x.roles).includes(role));
