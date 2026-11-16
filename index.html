@@ -1954,7 +1954,7 @@ async function fillRanking(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.16-39';
+const APPV='2026.11.16-40';
 /* Compara versiones por números («-9» < «-11»), no como texto. */
 const verCmp=(a,b)=>{const x=String(a).split(/[.-]/).map(Number),y=String(b).split(/[.-]/).map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
 try{const vt=document.createElement('div');vt.id='vtag';vt.textContent='v'+APPV;document.body.appendChild(vt);}catch(e){}
@@ -2678,14 +2678,16 @@ const TLIFE=30;
 const TSHORT={repo:'Reponer «%p%» · pasillo %n%',spill:'Derrame · pasillo %n%',help:'Un cliente pide ayuda · pasillo %n%',call:'Te llaman al pasillo %n% (megafonía)',tour:'Turista %l% perdido · pasillo %n%',truck:'Camión en el muelle',cash:'Arqueo de la caja %n%',cv:'Entrevista a un candidato',feud:'Bronca entre compañeros'};
 function spawnTask(){
   const hasRR=staffOf('rrhh').some(e=>inStore(e)),fd=hasRR?makeFeud():null;
-  const T=pick(TASKS.filter(x=>x.k!=='truck'&&(x.k!=='cv'||hasRR&&vacRoles().length)&&(x.k!=='feud'||fd)));
+  /* con vacantes publicadas llegan candidatos aunque no haya nadie en RR.HH. (entonces entrevistas tú) */
+  const vac=vacRoles().length&&!run.tasks.some(x=>x.k==='cv');
+  const T=vac&&Math.random()<.4?TASKS.find(x=>x.k==='cv'):pick(TASKS.filter(x=>x.k!=='truck'&&(x.k!=='cv'||vac)&&(x.k!=='feud'||fd)));
   const p=pick(CAT.filter(x=>!x.age).sort((a,b)=>(meta.stock[a.id]||0)-(meta.stock[b.id]||0)).slice(0,6));
   const n=(T.k==='repo'||T.k==='call')?aisleOf(p.id):T.k==='cash'?ri(1,3):ri(1,9);
   const lg=T.k==='tour'?pick([['en','🇬🇧'],['fr','🇫🇷'],['de','🇩🇪'],['it','🇮🇹'],['pt','🇵🇹'],['zh','🇨🇳'],['ar','🇲🇦'],['ro','🇷🇴']]):null;
   const t={id:++uid,k:T.k,ic:T.ic,roles:T.roles,dur:T.dur,pen:T.pen,pid:p.id,n,lang:lg?lg[0]:null,
     s:TSHORT[T.k].replace('%p%',p.n).replace('%n%',n).replace('%l%',lg?lg[1]:''),
     txt:T.t.replace('%p%',p.n).replace('%n%',n).replace('%l%',lg?lg[1]+' (habla '+LANG[lg[0]]+')':''),dl:run.t+TLIFE,who:null,until:0,span:1,match:true};
-  if(T.k==='cv')t.cand=makeCand();
+  if(T.k==='cv'){t.cand=makeCand();if(!hasRR){t.pen=0;t.dl=run.t+45;t.txt+=' Nadie de RR.HH. en tienda: «Voy yo» para entrevistarle.';}}
   if(T.k==='feud'){t.fd=fd;t.s='Bronca: '+fd.a.name+' y '+fd.b.name;t.txt=fd.a.name+' y '+fd.b.name+' están discutiendo en el almacén.';}
   run.tasks.push(t);
   toast(t.ic+' '+t.txt);beep(660,.12,'triangle',.05);
@@ -4781,7 +4783,7 @@ function rrhhHtml(){
   const rows=meta.emp.map(e=>`<div class="up"><div class="t"><b>${e.face} ${e.real?'🎮':flag(e)} ${e.name} · ${ROLES[e.role].n}</b>${e.days} ${e.days===1?'turno':'turnos'} · ${fmt(e.wage)}/día${e.trial?' · en prueba ('+e.trial+')':''}${e.warn?' · ⚠️×'+e.warn:''}</div><span class="mood">${mood(e)}</span></div>`).join('')||'<div class="supd">Plantilla vacía.</div>';
   return `<div class="dgrid"><div class="dpanel"><h2>🗂️ Recursos Humanos</h2>${staffBlock('rrhh')}
     ${isHost()?(appsHtml()||'<div class="zone-title">📝 SOLICITUDES DE EMPLEO</div><div class="supd">No hay solicitudes pendientes.</div>')+(realRR?`<div class="supd">${realRR.name} (RR.HH.) también puede tramitarlas desde su pantalla.</div>`:''):'<div class="supd">En solitario no llegan solicitudes de personas reales: contratas en la reunión de personal.</div>'}
-    <div class="zone-title">📢 VACANTES</div><div class="supd">${rr.some(e=>!e.real)&&!realRR?'Tu gente de RR.HH. las publica sola cuando falta personal; tú también puedes.':realRR?realRR.name+' (RR.HH.) también las publica desde su puesto.':'Sin nadie en RR.HH., las publicas tú.'} Solo se presentan candidatos a puestos con vacante.</div>
+    <div class="zone-title">📢 VACANTES</div><div class="supd">${rr.some(e=>!e.real)&&!realRR?'Tu gente de RR.HH. las publica sola cuando falta personal; tú también puedes.':realRR?realRR.name+' (RR.HH.) también las publica desde su puesto.':'Sin nadie en RR.HH., las publicas tú y entrevistas tú: cuando llega un candidato sale el aviso 🧑‍💼 «Entrevista» y vas con «Voy yo».'} Solo se presentan candidatos a puestos con vacante.</div>
     <div class="vacs">${Object.keys(ROLES).map(k=>{const v=vacOpen(k),n=staffOf(k).length,mx=ROLES[k].max;return `<div class="vac ${v?'on':''}"><span class="vn"><i>${JOB_IC[k]}</i><b>${ROLES[k].n}</b><small>${n}/${mx} en plantilla${v?' · se busca'+(v>1?' ('+v+')':''):''}</small></span><span class="vbtn"><button class="btn mini" data-act="vac" data-r="${k}" data-d="-1" ${v?'':'disabled'}>−</button><b>${v}</b><button class="btn mini go" data-act="vac" data-r="${k}" data-d="1" ${n+v<mx?'':'disabled'}>＋</button></span></div>`;}).join('')}</div>
     <div class="supd">Próxima reunión de personal (valorar, aumentos, contratar y despedir): al cerrar el turno ${meta.day%3===1&&!(run&&!run.over)?meta.day:nm}.</div></div>
     <div class="dpanel"><div class="zone-title">PLANTILLA Y CONTRATOS</div><div class="shop">${rows}</div></div></div>`;
