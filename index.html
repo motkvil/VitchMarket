@@ -1201,7 +1201,7 @@ body.rem .isostore{display:none!important}
 (function(){
 'use strict';
 const $=s=>document.querySelector(s);
-const fmt=c=>(c/100).toFixed(2).replace('.',',')+' €';
+const fmt=c=>{const n=(Math.abs(c)/100).toFixed(2).split('.');return (c<0&&Math.round(Math.abs(c))>0?'-':'')+n[0].replace(/\B(?=(\d{3})+(?!\d))/g,'.')+','+n[1]+' €';};
 const rnd=(a,b)=>a+Math.random()*(b-a);
 const ri=(a,b)=>Math.floor(rnd(a,b+1));
 const pick=a=>a[Math.floor(Math.random()*a.length)];
@@ -1214,9 +1214,9 @@ const FACES=['🧑','👩','👨','🧔','👵','👴','👱‍♀️','👩‍�
 const DENOMS=[[5000,'50 €','bill'],[2000,'20 €','bill'],[1000,'10 €','bill'],[500,'5 €','bill'],
  [200,'2 €','coin'],[100,'1 €','coin'],[50,'0,50','coin'],[20,'0,20','coin'],[10,'0,10','coin'],[5,'0,05','coin'],[2,'0,02','coin'],[1,'0,01','coin']];
 const UPS=[
- {k:'scanner',n:'Escáner láser',d:'Los códigos dañados se leen con 2 toques en vez de 3.',c:4000},
- {k:'fan',n:'Ventilador',d:'Los clientes se impacientan un 20% más despacio.',c:5000},
- {k:'coffee',n:'Termo de café',d:'Propinas ×1,5. Estás de mejor humor.',c:6000}
+ {k:'scanner',n:'Escáner láser',d:'Los códigos dañados se leen con 2 toques en vez de 3.',c:18000},
+ {k:'fan',n:'Climatización en cajas',d:'Los clientes se impacientan un 20% más despacio.',c:90000},
+ {k:'coffee',n:'Cafetera para la plantilla',d:'Propinas ×1,5. Estás de mejor humor.',c:12000}
 ];
 const TODAY=new Date();
 const dmy=d=>String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear();
@@ -1269,7 +1269,25 @@ const TALK={
  pasota:['Bah, ya lo hará alguien.','Tranqui, que no corre prisa.'],
  servicial:['Si necesitas algo, me dices.','Te echo una mano con eso.']
 };
-const WAGE=1300,HIRE=4000;
+/* ===== Economía de una pyme real (España, 2026) =====
+   Sueldos: SMI 2026 (RD 126/2026) = 1.221 €/mes × 14 pagas = 17.094 €/año; los convenios de comercio de alimentación
+   ponen Caja y Almacén en el SMI o poco más, y a administración algo por encima. Un turno = un día natural (salario anual / 365).
+   Seguridad Social a cargo de la empresa (Orden PJC/297/2026): contingencias comunes 23,60 % + desempleo 5,50 % + FOGASA 0,20 %
+   + formación profesional 0,60 % + MEI 0,75 % + accidentes de trabajo (comercio al por menor de alimentación) 1,50 % = 32,15 %. */
+const SMI_Y=1709400,SS_EMP=0.3215,WAGE_Y={atc:1709400,alm:1740000,back:1920000,rrpp:1980000,rrhh:2100000};
+const dayW=y=>Math.round(y/365),SMI_D=dayW(SMI_Y),wageOf=r=>dayW(WAGE_Y[r]||SMI_Y),WAGE=SMI_D;
+const HIRE=10000; /* contratar: anuncio en un portal de empleo y reconocimiento médico (≈100 €) */
+const monthTxt=w=>fmt(Math.round(w*365/14))+'/mes';
+const empCost=w=>Math.round(w*(1+SS_EMP));
+/* Gastos fijos de un súper de barrio de ~400 m² por día (alquiler ~4.800 €/mes, luz con neveras ~2.000 €/mes…). [nombre, €/día en céntimos, IVA soportado %] */
+const FIXED=[['Alquiler del local',16000,21],['Luz y frío de las neveras',6500,21],['Agua, basuras y limpieza',2000,10],['Seguros (local y responsabilidad civil)',900,0],['Gestoría, TPV y software',1100,21],['Mantenimiento',1500,21]];
+const FIXED_D=FIXED.reduce((a,x)=>a+x[1],0);
+/* Póliza de crédito con el banco: el bote puede bajar hasta −15.000 € pagando un 8,5 % anual de interés; pasado eso, concurso de acreedores. */
+const CREDIT=1500000,CREDIT_I=0.085;
+/* Las otras cajas: cada cajero/a de la casa que está libre abre una caja y despacha clientes que no ves.
+   La demanda de la tienda es limitada: ~240 clientes al día con reputación 5 (menos con mala fama o con agotados, algo más con los días);
+   cada caja despacha como mucho ~150. Ticket medio 18 €, IVA medio de la cesta ~7,5 % y mermas del 1,5 % de lo vendido. */
+const OFF={dem:240,cap:150,ticket:1800,iva:0.075,merma:0.015};
 const blankSt=()=>({ok:0,fail:0,late:0,abs:0,tasks:0,tfail:0,quej:0,fel:0,shifts:0,caught:0,cv:0,cvErr:0});
 /* Al cerrar una reunión, las estadísticas pasan al historial (e.tot), que sirve de prueba al despedir. */
 const sumSt=(a,b)=>{const o=blankSt();Object.keys(o).forEach(k=>{o[k]=((a||{})[k]||0)+((b||{})[k]||0);});return o;};
@@ -1281,7 +1299,7 @@ function newEmp(role,m,opt,taken){
   if(!pool.length){nat=NATS[0];pool=nat.n.filter(x=>!used.has(x[0]));if(!pool.length)pool=nat.n;}
   const nm=pick(pool),sk=()=>Math.round(rnd(0.15,0.95)*100)/100,pers=pick(Object.keys(TRAITS));
   m.eid=(m.eid||0)+1;
-  const e={id:m.eid,name:nm[0],face:nm[1],role,rap:sk(),trato:sk(),punt:sk(),act:sk(),moral:ri(55,80),wage:WAGE,days:0,warn:0,trial:0,focus:0,off:0,st:blankSt(),
+  const e={id:m.eid,name:nm[0],face:nm[1],role,rap:sk(),trato:sk(),punt:sk(),act:sk(),moral:ri(55,80),wage:wageOf(role),days:0,warn:0,trial:0,focus:0,off:0,st:blankSt(),
     nat:NATS.indexOf(nat),langs:nat.l.concat(nat.c==='España'&&Math.random()<0.3?['en']:[]),pers};
   const lim=v=>clamp(v,0.05,0.98);
   if(pers==='currante')e.act=lim(e.act+0.15);
@@ -1289,7 +1307,7 @@ function newEmp(role,m,opt,taken){
   if(pers==='timido'){e.trato=lim(e.trato-0.15);e.punt=lim(e.punt+0.15);}
   return Object.assign(e,opt||{});
 }
-const defMeta=best=>{const m={day:1,money:20000,rep:5,up:{scanner:0,fan:0,coffee:0},emp:[],eid:0,stock:{},back:{},orders:[],vac:{atc:1,alm:1},best:best||1};CAT.forEach(x=>{m.stock[x.id]=4;});['atc','back','rrpp','alm'].forEach(r=>m.emp.push(newEmp(r,m)));return m;};
+const defMeta=best=>{const m={day:1,money:3000000,rep:5,up:{scanner:0,fan:0,coffee:0},emp:[],eid:0,stock:{},back:{},orders:[],vac:{atc:1,alm:1},best:best||1};CAT.forEach(x=>{m.stock[x.id]=4;});['atc','back','rrpp','alm'].forEach(r=>m.emp.push(newEmp(r,m)));return m;};
 let meta=defMeta();
 let run=null,last=0,muted=false,uid=0,cid=0,toastT=0;
 
@@ -1505,7 +1523,7 @@ function cashGiven(t){
 function startDay(){
   if(isHost()){room.view=null;room.rpt=null;syncRealEmps();}
   run={t:0,dur:100,queue:[],next:1.5,served:0,angry:0,errors:0,tips:0,fines:0,closing:false,over:false,tray:[],card:false,pendingId:null,flash:0,tickets:[],sales:0,
-    tasks:[],nextTask:6,away:null,tdone:0,tlost:0,duty:{},ev:[]};
+    tasks:[],nextTask:6,away:null,tdone:0,tlost:0,duty:{},ev:[],ivaR:0,offS:0,offC:0,offN:0};
   if(isHost())run.dur=room.info.dur||100;
   ensureMeta();
   run.buy=meta.buyNext||0;meta.buyNext=0;run.m0=meta.money+run.buy;
@@ -1541,11 +1559,11 @@ function leaveAngry(idx){
 }
 function checkRep(){
   if(run&&run.remote)return;
-  if((meta.rep<=0||meta.money<-30000)&&run&&!run.over){
+  if((meta.rep<=0||meta.money<-CREDIT)&&run&&!run.over){
     run.over=true;run.dead=true;mg=null;pendingLeave=null;closeMG();wipeGame();
-    const days=meta.day;
-    showOverlay(`<div class="card"><h2>${meta.money<-30000?'Quiebra':'Te han despedido'}</h2>
-      <p>${meta.money<-30000?'La tienda se quedó sin dinero.':'La reputación llegó a cero.'} Sobreviviste ${days} ${days===1?'turno':'turnos'}.</p>
+    const days=meta.day,q=meta.money<-CREDIT;
+    showOverlay(`<div class="card"><h2>${q?'Concurso de acreedores':'Te han despedido'}</h2>
+      <p>${q?'Has agotado la póliza de crédito ('+fmt(CREDIT)+') y no puedes pagar a proveedores, nóminas ni a Hacienda: la empresa entra en concurso de acreedores y cierra.':'La reputación llegó a cero.'} Sobreviviste ${days} ${days===1?'turno':'turnos'}.</p>
       ${online()?'<div class="zone-title">🏆 RANKING</div><div id="rank"></div>':''}
       <button class="btn go big" data-act="restart">Volver a empezar</button></div>`);
     submitScore(true).then(fillRanking);
@@ -1553,9 +1571,9 @@ function checkRep(){
 }
 let lastEnd=null;
 const SUPS=[
- {k:'hac',n:'Hacendado Directo',cf:0.55,lead:1,rel:0.93,d:'Barato. Llega el próximo turno, a veces incompleto.'},
- {k:'exp',n:'Reparto Exprés',cf:0.82,lead:1,rel:0.995,d:'Caro. Llega el próximo turno y siempre completo.'},
- {k:'cho',n:'Chollo Import',cf:0.5,lead:2,rel:0.7,d:'Muy barato. Tarda 2 turnos y llega a medias con frecuencia.'}
+ {k:'hac',n:'Hacendado Directo',cf:0.74,lead:1,rel:0.93,d:'Barato. Llega el próximo turno, a veces incompleto.'},
+ {k:'exp',n:'Reparto Exprés',cf:0.84,lead:1,rel:0.995,d:'Caro. Llega el próximo turno y siempre completo.'},
+ {k:'cho',n:'Chollo Import',cf:0.68,lead:2,rel:0.7,d:'Muy barato. Tarda 2 turnos y llega a medias con frecuencia.'}
 ];
 let cart={},ordSup='hac';
 const unitCost=(x,k)=>Math.max(1,Math.round(x.p*SUPS.find(z=>z.k===k).cf));
@@ -1630,7 +1648,7 @@ function almRoutine(){
   if(!open('order').length&&run.t-(run.ordAt||-20)>20&&lowList().length&&meta.money>0){run.ordAt=run.t;almTask('order','🧾',8,'Pedido a Hacendado de lo que se acaba','Hacer el pedido de lo que se acaba al distribuidor.');}
 }
 /* Presupuesto de un pedido: el 35% del bote y, en todo el turno, el 80% de lo que había al abrir (mín. 50 €). */
-const orderBudget=()=>Math.max(0,Math.min(Math.floor(meta.money*0.35),Math.max(5000,Math.round((run.m0||meta.money)*0.8))-(run.autoBuy||0)));
+const orderBudget=()=>Math.max(0,Math.min(Math.floor(meta.money*0.35),60000-(run.autoBuy||0)));
 function autoOrder(e,ok){
   if(meta.money<=0)return;
   const pr=run.prio||[],low=lowList().sort((a,b)=>(pr.includes(b.id)-pr.includes(a.id))||(meta.stock[a.id]||0)-(meta.stock[b.id]||0)).slice(0,12);
@@ -1672,7 +1690,10 @@ function processTickets(){
     run.tickets.filter(t=>t.dept===d).sort((x,y)=>y.sev-x.sev).forEach((t,i)=>{
       r.in++;
       const e=slots[i];
-      if(!e){r.late++;meta.rep=clamp(meta.rep-0.15,0,5);return;}
+      if(!e){r.late++;meta.rep=clamp(meta.rep-0.15,0,5);
+        /* Hoja de reclamaciones sin contestar: Consumo puede sancionar (infracción leve, hasta 10.000 €). */
+        if(Math.random()<0.08){const f=ri(300,1500)*100;run.fines+=f;meta.money-=f;run.consumo=(run.consumo||0)+f;}
+        return;}
       const dd=run.duty[e.id]||{};
       const p=t.mis?0.3:clamp(perf(e,true)+(dd.seen?0.05:0)-((dd.slackT||0)>15?0.1:0),0.1,0.97);
       if(Math.random()<p){
@@ -1701,31 +1722,42 @@ function endDay(){
     if(run.angry>=3)need.push('atc');if(CAT.filter(x=>(meta.stock[x.id]||0)<=0).length>=4&&staffOf('alm').length<2)need.push('alm');
     [...new Set(need)].forEach(k=>{if(!vacOpen(k)&&staffOf(k).length<ROLES[k].max){const m=setVac(k,1,hr);if(m)run.vacNote=(run.vacNote||[]).concat(hr.name+': '+m);}});}}
   /* El sueldo es por cada 100 s de turno: en la tienda compartida, con turnos largos, se cobra en proporción. */
-  let payroll=0;const wf=Math.max(1,(run.dur||100)/100);
+  /* Nómina: salario bruto del día + Seguridad Social a cargo de la empresa. Quien falta sin avisar no cobra ese día. */
+  let payroll=0,payB=0;const wf=Math.max(1,(run.dur||100)/100);
   meta.emp.forEach(e=>{
     const d=run.duty[e.id];
-    if(!(d&&(d.st==='abs'||d.st==='gone')))payroll+=Math.round(e.wage*wf);
+    if(!(d&&(d.st==='abs'||d.st==='gone'))){const b=Math.round(e.wage*wf);payB+=b;payroll+=empCost(b);}
     if(working(e)){e.days++;if(e.trial>0)e.trial--;}
     if(e.focus>0)e.focus--;
     e.moral=clamp(e.moral+(meta.rep>=4?2:meta.rep<2?-3:0),0,100);
   });
   meta.money-=payroll;
-  /* Cuentas del turno: lo que no está apuntado aparte (reembolsos en directo, compensaciones, abonos,
-     despidos, contratos…) sale como «otros». IVA del 10% incluido en precios (repercutido − soportado)
-     e impuesto de sociedades del 25% sobre el beneficio. Se pagan al cerrar. */
-  const S=run.sales||0,T=run.tips||0,F=run.fines||0,B=run.buy||0,K=res.back.cost+res.rrpp.cost+res.alm.cost;
-  const delta=meta.money-(run.m0==null?meta.money:run.m0),oth=delta-(S+T-F-B-payroll-K);
+  const FX=Math.round(FIXED_D*wf);meta.money-=FX;
+  /* Intereses de la póliza de crédito si el bote estaba en negativo. */
+  const INT=meta.money<0?Math.round(-meta.money*CREDIT_I/365):0;meta.money-=INT;
+  /* Cuentas del turno. S = ventas de las cajas que ves (la tuya y las de jugadores), O = las otras cajas (ya cobradas con su coste).
+     Lo que no está apuntado aparte (reembolsos en directo, compensaciones, abonos, despidos, contratos…) sale como «otros».
+     IVA real de cada producto (4/10/21 %) repercutido − soportado (compras, mercancía de las otras cajas y gastos fijos); si sale a devolver,
+     se compensa en los turnos siguientes. Impuesto de sociedades de microempresa (19 %; 21 % pasados 50.000 € de base en el año),
+     compensando pérdidas de turnos anteriores. */
+  const S=run.sales||0,O=run.offS||0,OC=run.offC||0,F=run.fines||0,B=run.buy||0,K=res.back.cost+res.rrpp.cost+res.alm.cost;
+  const delta=meta.money-(run.m0==null?meta.money:run.m0),oth=delta-(S+O-OC-F-B-payroll-FX-INT-K);
   /* Lo comprado es stock (inversión), no gasto: el gasto es el coste de lo vendido (al precio de Hacendado). */
-  const cogs=Math.round(S*SUPS[0].cf),iva=Math.max(0,Math.round(S-S/1.1)-Math.round(B-B/1.1));
-  const bai=S+T-cogs-payroll-K-F+oth-iva,is=bai>0?Math.round(bai*0.25):0;
+  const cogs=Math.round(S*SUPS[0].cf)+OC;
+  const ivaR=Math.round(run.ivaR||0)+Math.round(O*OFF.iva/(1+OFF.iva));
+  const ivaS=Math.round((B+OC)*OFF.iva/(1+OFF.iva))+Math.round(FIXED.reduce((a,x)=>a+x[1]*x[2]/(100+x[2]),0)*wf);
+  let ivaL=ivaR-ivaS-(meta.ivaCred||0),iva=0;if(ivaL>=0){iva=ivaL;meta.ivaCred=0;}else{meta.ivaCred=-ivaL;}
+  const bai=S+O-cogs-payroll-FX-INT-K-F+oth-ivaR+ivaS;
+  let base=bai,is=0;if(base>0&&meta.bin>0){const u=Math.min(base,meta.bin);base-=u;meta.bin-=u;}if(bai<0)meta.bin=(meta.bin||0)-bai;
+  if(base>0){const y=meta.isY||0,lo=Math.max(0,Math.min(base,5000000-y));is=Math.round(lo*0.19+(base-lo)*0.21);meta.isY=y+base;}
   meta.money-=iva+is;
-  const fin={S,T,F,B,P:payroll,K,oth,cogs,iva,bai,is,net:bai-is,cash:delta-iva-is,m0:run.m0};
+  const fin={S,O,ON:run.offN||0,F,B,P:payroll,PB:payB,FX,INT,K,oth,cogs,iva,ivaR,ivaS,cred:meta.ivaCred||0,bai,is,net:bai-is,cash:delta-iva-is,m0:run.m0};
   meta.hist=(meta.hist||[]).concat([{d:meta.day,s:S,n:fin.net}]).slice(-6);
   meta.best=Math.max(meta.best,meta.day);
   cart={};
   lastEnd={payroll,res,fin};scrTab.shop='sum';pg=0;tipsPer=0;
   if(isHost())room.rpt=deptReport();
-  if(meta.rep<=0||meta.money<-30000){run.over=false;checkRep();return;}
+  if(meta.rep<=0||meta.money<-CREDIT){run.over=false;checkRep();return;}
   saveGame(true);
   submitScore(false);
   showShop();
@@ -1778,19 +1810,19 @@ function orderHtml(per){
 function finHtml(f){
   if(!f)return '<div class="supd">Sin datos de este turno.</div>';
   const row=(n,v,cls)=>`<span class="${cls||''}">${n}</span><b class="${cls||''}">${v<0?'−'+fmt(-v):fmt(v)}</b>`;
-  const mg=f.S?Math.round(f.net/f.S*100):0,h=meta.hist||[],mx=Math.max(1,...h.map(x=>Math.abs(x.n)));
+  const mg=f.S+(f.O||0)?Math.round(f.net/(f.S+(f.O||0))*100):0,h=meta.hist||[],mx=Math.max(1,...h.map(x=>Math.abs(x.n)));
   return `<div class="fin"><div class="sum">
       <span class="hd">INGRESOS</span><b></b>
-      ${row('Ventas (IVA incluido)',f.S)}${row('Propinas',f.T)}${f.oth>0?row('Otros ingresos (abonos, arqueos)',f.oth):''}
+      ${row('Ventas de las cajas en juego (IVA incl.)',f.S)}${f.O!=null?row('Ventas de las otras cajas ('+(f.ON||0)+' tickets)',f.O):''}${f.oth>0?row('Otros ingresos (abonos, arqueos)',f.oth):''}
       <span class="hd">GASTOS</span><b></b>
-      ${row('Coste de la mercancía vendida (≈'+Math.round(SUPS[0].cf*100)+'%)',-(f.cogs||0))}${row('Nómina del personal',-f.P)}${row('Reclamaciones al cierre',-f.K)}${row('Multas y pérdidas en caja',-f.F)}${f.oth<0?row('Reembolsos, compensaciones y otros',f.oth):''}
-      ${row('Resultado antes de impuestos',f.bai+f.iva,'tot')}
-      ${row('IVA a Hacienda (10% ventas − 10% compras)',-f.iva)}${row('Impuesto de sociedades (25%)',-f.is)}
+      ${row('Coste de la mercancía vendida (≈'+Math.round(SUPS[0].cf*100)+'%)',-(f.cogs||0))}${f.PB!=null?row('Sueldos brutos',-f.PB)+row('Seguridad Social de la empresa (32,15%)',-(f.P-f.PB)):row('Nómina del personal',-f.P)}${f.FX!=null?row('Alquiler, luz, seguros y gestoría',-f.FX):''}${f.INT?row('Intereses de la póliza de crédito',-f.INT):''}${row('Reclamaciones al cierre',-f.K)}${row('Multas y pérdidas en caja',-f.F)}${f.oth<0?row('Reembolsos, compensaciones y otros',f.oth):''}
+      ${row('Resultado antes de impuestos',f.bai+(f.ivaR!=null?f.ivaR-f.ivaS:f.iva),'tot')}
+      ${f.ivaR!=null?row('IVA repercutido − soportado (4/10/21%)'+(f.cred?' · a compensar '+fmt(f.cred):''),-f.iva):row('IVA a Hacienda',-f.iva)}${row('Impuesto de sociedades (microempresa 19%)',-f.is)}
       ${row('Beneficio neto del turno',f.net,'tot '+(f.net<0?'neg':'pos'))}
       <span class="hd">CAJA (EL BOTE)</span><b></b>
       ${row('Compras de mercancía (inversión en stock)',-f.B)}${row('Variación del bote',f.cash,f.cash<0?'neg':'pos')}
     </div>
-    <div class="supd">${f.S?`Margen neto <b>${mg}%</b> · la nómina se come el <b>${Math.round(f.P/f.S*100)}%</b> de las ventas · a Hacienda <b>${fmt(f.iva+f.is)}</b>.`:'Hoy no se ha vendido nada.'}</div>
+    <div class="supd">${f.S+(f.O||0)?`Margen neto <b>${mg}%</b> · la nómina se come el <b>${Math.round(f.P/(f.S+(f.O||0))*100)}%</b> de las ventas · a Hacienda <b>${fmt(f.iva+f.is)}</b>.`:'Hoy no se ha vendido nada.'} Las propinas no son de la empresa: van al bote del personal.</div>
     ${h.length>1?`<div class="zone-title">ÚLTIMOS TURNOS (BENEFICIO NETO)</div><div class="trend">${h.map(x=>`<div class="tb ${x.n<0?'neg':''}" title="Turno ${x.d}: ${fmt(x.n)}"><i style="height:${Math.max(4,Math.round(Math.abs(x.n)/mx*100))}%"></i><small>T${x.d}</small></div>`).join('')}</div>`:''}</div>`;
 }
 /* Consejos para el jefe: a quién contratar o echar, qué mejoras compensan, qué falta y cómo va el dinero. */
@@ -1798,10 +1830,10 @@ function adviceList(le){
   const A=[],f=le&&le.fin,r=le&&le.res,hot=(ic,t,d)=>A.push(`<div class="adv hot"><b>${ic} ${t}</b><span>${d}</span></div>`),tip=(ic,t,d)=>A.push(`<div class="adv"><b>${ic} ${t}</b><span>${d}</span></div>`);
   const cnt=k=>staffOf(k).length,room0=k=>ROLES[k].max-cnt(k);
   let nm=meta.day+1;while(nm%3!==1)nm++;const meetTxt=meta.day%3===1?'en la reunión de ahora':'en la reunión del turno '+nm;
-  if(f&&f.net<0)hot('📉','Pierdes dinero','Este turno has perdido '+fmt(-f.net)+'.'+(f.S&&f.P/f.S>0.5?' La nómina se come el '+Math.round(f.P/f.S*100)+'% de lo que vendes: sobra gente o falta venta.':''));
-  else if(f&&f.net>0)tip('📈','Ganas dinero','Beneficio neto '+fmt(f.net)+' (margen '+(f.S?Math.round(f.net/f.S*100):0)+'%).');
-  if(f&&f.B>f.S&&f.B>3000)tip('📦','Mucho dinero en stock','Has comprado '+fmt(f.B)+' en mercancía y vendido '+fmt(f.S)+'. No es pérdida (está en el almacén), pero ese dinero no lo tienes en el bote.');
-  if(meta.money<5000)hot('🏦','Bote muy justo','Con '+fmt(meta.money)+' cualquier susto te deja en números rojos. A −300 € cierras.');
+  if(f&&f.net<0)hot('📉','Pierdes dinero','Este turno has perdido '+fmt(-f.net)+'.'+(f.S+(f.O||0)&&f.P/(f.S+(f.O||0))>0.2?' La nómina se come el '+Math.round(f.P/(f.S+(f.O||0))*100)+'% de lo que vendes (en un súper sano ronda el 10–14%): sobra gente o falta venta.':''));
+  else if(f&&f.net>0)tip('📈','Ganas dinero','Beneficio neto '+fmt(f.net)+' (margen '+(f.S+(f.O||0)?Math.round(f.net/(f.S+(f.O||0))*100):0)+'%).');
+  if(f&&f.B>f.S+(f.O||0)&&f.B>30000)tip('📦','Mucho dinero en stock','Has comprado '+fmt(f.B)+' en mercancía y vendido '+fmt(f.S)+'. No es pérdida (está en el almacén), pero ese dinero no lo tienes en el bote.');
+  if(meta.money<300000)hot('🏦','Bote muy justo','Con '+fmt(meta.money)+' cualquier susto te deja en números rojos. Por debajo de 0 tiras de la póliza de crédito (con intereses); a −15.000 €, concurso de acreedores.');
   /* Contratar */
   if(r){[['back','Backoffice'],['rrpp','RR.PP.'],['alm','Almacén']].forEach(([k,n])=>{if(r[k].late>0)(room0(k)>0?hot:tip)('➕','Contrata en '+n,r[k].late+(r[k].late===1?' reclamación se quedó':' reclamaciones se quedaron')+' sin atender por falta de gente'+(room0(k)>0?' (quedan '+room0(k)+' plazas).':', pero ya está lleno: mejora a los que hay.'));});}
   if(run.angry>=3&&room0('atc')>0)hot('➕','Contrata en Caja',run.angry+' clientes se fueron hartos de esperar. Cada cajero libre baja la impaciencia un 8%.');
@@ -1834,7 +1866,7 @@ function showShop(noFit){
   const e=lastEnd,r=e.res;
   const DST={ok:'Trabajó',late:'Llegó tarde',abs:'Faltó sin avisar',off:'Libró',gone:'Desconectado/a'};
   const dep=meta.emp.map(e=>{const d=run.duty[e.id];
-    return `<div class="up"><div class="t"><b>${e.face} ${e.real?'🎮':flag(e)} ${e.name} · ${ROLES[e.role].n}</b>${d?DST[d.st]||'—':'—'}${e.trial?' · en prueba':''} · ${fmt(e.wage)}/turno · ${verdict(e)}</div><span class="mood" title="Ánimo">${mood(e)}</span></div>`;
+    return `<div class="up"><div class="t"><b>${e.face} ${e.real?'🎮':flag(e)} ${e.name} · ${ROLES[e.role].n}</b>${d?DST[d.st]||'—':'—'}${e.trial?' · en prueba':''} · ${monthTxt(e.wage)} · ${verdict(e)}</div><span class="mood" title="Ánimo">${mood(e)}</span></div>`;
   });
   const meetDay=meta.day%3===1;
   let nm=meta.day+1;while(nm%3!==1)nm++;
@@ -1885,7 +1917,7 @@ function showStart(confirmWipe){
   const cont=hasSave||meta.day>1;
   if(scrTab.start==='rank'&&!online())scrTab.start='how';
   const k=scrTab.start;
-  const HOW=['🛒 Toca cada producto de la cinta para escanearlo. Los de código dañado piden varios toques.','🪪 Productos <b>18+</b>: mira la fecha de nacimiento del DNI y decide si vendes.','🛍️ Si el cliente pide bolsa, añádela. Si no la pide, no la cobres.','💶 Con tarjeta, cobra. En efectivo, da el cambio exacto con billetes y monedas.','📨 <b>Reclamaciones</b>: las dudas, tú. Dinero, a Backoffice. Trato y redes, a RR.PP. Agotados, a Almacén.','📦 Lo que vendes sale de la estantería: pide a los distribuidores y ten gente en Almacén. Con −300 €, quiebra.','⭐ La paciencia se agota. Con la reputación a cero, te despiden.'].map(x=>'<li>'+x+'</li>');
+  const HOW=['🛒 Toca cada producto de la cinta para escanearlo. Los de código dañado piden varios toques.','🪪 Productos <b>18+</b>: mira la fecha de nacimiento del DNI y decide si vendes.','🛍️ Si el cliente pide bolsa, añádela. Si no la pide, no la cobres.','💶 Con tarjeta, cobra. En efectivo, da el cambio exacto con billetes y monedas.','📨 <b>Reclamaciones</b>: las dudas, tú. Dinero, a Backoffice. Trato y redes, a RR.PP. Agotados, a Almacén.','📦 Lo que vendes sale de la estantería: pide a los distribuidores y ten gente en Almacén. Empiezas con 30.000 € y una póliza de crédito de 15.000 €: si la agotas, concurso de acreedores.','⭐ La paciencia se agota. Con la reputación a cero, te despiden.'].map(x=>'<li>'+x+'</li>');
   const P=k==='rank'?{html:'',nav:''}:paged(HOW,innerHeight<700&&innerWidth<900?3:innerHeight<860&&innerWidth<900?5:7);
   const body=k==='rank'?'<div id="rank"></div>':`${offline?'<div class="rerr">📴 Sin conexión: juegas en solitario.</div>':''}
     <div class="hero" id="herobox"><span class="htag">🛒 Tu súper, tu historia</span></div>
@@ -1928,7 +1960,7 @@ async function submitScore(final){
   const f=await fbInit();if(!f)return;
   try{
     await f.set(f.ref(f.db,'ranking/'+meta.runId),{uid:f.uid,name,days,money:Math.round(meta.money),rep:Math.round(meta.rep*10)/10,
-      staff:meta.emp.length,score:days*10000+clamp(Math.round(meta.money/100),0,9999),final:!!final,ts:f.serverTimestamp()});
+      staff:meta.emp.length,score:days*100000+clamp(Math.round(meta.money/100),0,99999),final:!!final,ts:f.serverTimestamp()});
   }catch(e){console.warn('No se pudo subir la puntuación:',e);}
 }
 async function fillRanking(){
@@ -1954,7 +1986,7 @@ async function fillRanking(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.16-40';
+const APPV='2026.11.16-41';
 /* Compara versiones por números («-9» < «-11»), no como texto. */
 const verCmp=(a,b)=>{const x=String(a).split(/[.-]/).map(Number),y=String(b).split(/[.-]/).map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
 try{const vt=document.createElement('div');vt.id='vtag';vt.textContent='v'+APPV;document.body.appendChild(vt);}catch(e){}
@@ -2221,6 +2253,7 @@ function applyTill(e,a){
   const t=run.tills&&run.tills[e.real],d=a.d||{};
   meta.money+=Math.round(+d.money||0);meta.rep=clamp(meta.rep+(+d.rep||0),0,5);
   ['served','angry','errors','tips','sales','fines'].forEach(k=>{run[k]=(run[k]||0)+Math.round(+d[k]||0);});
+  run.ivaR=(run.ivaR||0)+Math.round(+d.sales||0)*OFF.iva/(1+OFF.iva);
   e.st.cv+=Math.round(+d.served||0);e.st.cvErr+=Math.round(+d.errors||0);
   toArr(a.ret).forEach(pid=>{meta.stock[pid]=(meta.stock[pid]||0)+1;});
   toArr(a.tk).forEach(x=>{if(x&&ROLES[x.dept])addTicket(x.dept,String(x.t||'Reclamación').slice(0,120),+x.refund||0,+x.sev||1,!!x.mis);});
@@ -2453,7 +2486,7 @@ function wsData(live){
   return {
     stock:CAT.slice().sort((x,y)=>((meta.stock[x.id]||0)+(meta.back[x.id]||0))-((meta.stock[y.id]||0)+(meta.back[y.id]||0))).slice(0,10).map(x=>[x.id,meta.stock[x.id]||0,meta.back[x.id]||0,inc[x.id]||0]),
     ords:meta.orders.length,tips:live?run.tips:0,fines:live?run.fines:0,served:live?run.served:0,angry:live?run.angry:0,
-    pay:meta.emp.reduce((a,e)=>a+Math.round(e.wage*Math.max(1,((run&&run.dur)||100)/100)),0),
+    pay:meta.emp.reduce((a,e)=>a+empCost(Math.round(e.wage*Math.max(1,((run&&run.dur)||100)/100))),0),
     revs:live&&run.reviews?run.reviews.slice(0,6).map(r=>[r.id,r.st,r.t,r.ans?1:0,r.f]):[],
     crew:meta.emp.map(e=>[e.face,cleanName(e.name),e.role,mood(e),verdict(e),e.real||'',live?(doing[e.id]||(working(e)?'aún no ha llegado':'no viene hoy')):'',e.id]),
     you:Object.fromEntries(meta.emp.filter(e=>e.real).map(e=>[e.real,[e.st.tasks,e.st.tfail,e.st.ok,e.st.fail,e.st.cv,e.trial||0,e.wage]]))
@@ -2993,7 +3026,7 @@ function coverServe(c,e){
     if(i.scanned||i.denied)return;
     if(i.age&&c.minor&&Math.random()<p){i.denied=true;ret(i);return;}
     i.scanned=true;
-    if(i.age&&c.minor){c.err++;run.fines+=5000;meta.money-=5000;meta.rep=clamp(meta.rep-1,0,5);toast(e.name+' ha vendido alcohol a un menor. Multa: 50 €','bad');}
+    if(i.age&&c.minor){c.err++;toast(minorSale(e.name+' ha vendido'),'bad');}
   });
   c.bag=Math.random()<p?c.wantsBag:!c.wantsBag;
   if(c.pay==='cash'&&Math.random()<(1-p)*0.6){const loss=ri(50,500);run.fines+=loss;meta.money-=loss;c.err++;toast(e.name+' se ha equivocado con el cambio: −'+fmt(loss),'bad');}
@@ -3433,7 +3466,7 @@ function makeCand(any){
   let vr=vacRoles();if(!vr.length&&any)vr=Object.keys(ROLES).filter(r=>staffOf(r).length<ROLES[r].max);if(!vr.length&&any)vr=Object.keys(ROLES);if(!vr.length)return null;
   const role=pick(vr),c=newEmp(role,meta,{},[]);
   return {name:c.name,face:c.face,role,rap:c.rap,trato:c.trato,punt:c.punt,act:c.act,nat:c.nat,langs:c.langs,pers:c.pers,
-    exp:ri(0,8),prev:pick(PREV),wage:WAGE+ri(-2,4)*100};
+    exp:ri(0,8),prev:pick(PREV),wage:Math.round(wageOf(role)*(1+ri(0,4)*0.02))};
 }
 function makeFeud(){
   const ws=meta.emp.filter(e=>!e.real&&inStore(e));if(ws.length<2)return null;
@@ -3457,9 +3490,9 @@ function rrhhBody(){
   const steps=(names,cur)=>'<div class="mgsteps">'+names.map((n,i)=>`<span class="${i===cur?'on':i<cur?'ok':''}">${i<cur?'✔':i+1} ${n}</span>`).join('')+'</div>';
   if(mg.kind==='cv'){
     const c=mg.c,R=ROLES[c.role],N=NATS[c.nat]||NATS[0];
-    let h=steps(['Entrevista','Decisión'],mg.step)+(mg.step?`<div class="cvmini"><span class="cvphoto">${c.face}</span><div><b>${c.name}</b> · ${R.n} · pide ${fmt(c.wage)}/día<br><small>${mg.notes.length?mg.notes.map(n=>'📎 '+n).join(' '):'Sin notas en el currículum.'}</small></div></div>`:'')+(mg.step?'':`<div class="office cvdesk">
+    let h=steps(['Entrevista','Decisión'],mg.step)+(mg.step?`<div class="cvmini"><span class="cvphoto">${c.face}</span><div><b>${c.name}</b> · ${R.n} · pide ${monthTxt(c.wage)}<br><small>${mg.notes.length?mg.notes.map(n=>'📎 '+n).join(' '):'Sin notas en el currículum.'}</small></div></div>`:'')+(mg.step?'':`<div class="office cvdesk">
       <div class="cvpaper"><div class="cvband">CURRÍCULUM VITAE</div>
-        <div class="cvtop"><span class="cvphoto">${c.face}</span><div><b>${c.name}</b><small>${N.f} ${N.c}</small><small>Solicita: <b>${R.n}</b></small><small>Pide: <b>${fmt(c.wage)}/día</b></small></div></div>
+        <div class="cvtop"><span class="cvphoto">${c.face}</span><div><b>${c.name}</b><small>${N.f} ${N.c}</small><small>Solicita: <b>${R.n}</b></small><small>Pide: <b>${monthTxt(c.wage)}</b> bruto</small></div></div>
         <div class="cvsec"><b>Experiencia</b><span>${c.exp?c.exp+(c.exp===1?' año':' años'):'Ninguna'} · ${c.prev}</span></div>
         <div class="cvsec"><b>Idiomas</b><span>${c.langs.map(l=>LANG[l]).join(', ')}</span></div></div>
       ${mg.notes.length?`<div class="postits">${mg.notes.map((n,i)=>`<div class="postit" style="--r:${i%2?2:-3}deg">📎 ${n}</div>`).join('')}</div>`:''}</div>`);
@@ -3470,7 +3503,7 @@ function rrhhBody(){
         :'<div class="brief">🚩 Marca lo que no te creas y pasa a decidir.</div><button class="btn go" data-act="mgcvnext">Decidir ▶</button>';
     }else{
       h+=`<div class="contract"><b>CONTRATO DE TRABAJO</b><small>${c.name} · ${R.n} · periodo de prueba: 3 turnos</small>
-        <div class="wage">${[-200,0,200].map(d=>`<button class="wpill ${mg.offer===d?'on':''}" data-act="mgoffer" data-d="${d}">${fmt(c.wage+d)}<small>/día${d<0?' · menos':d>0?' · más':' · lo que pide'}</small></button>`).join('')}</div>
+        <div class="wage">${[-1,0,1].map(k=>{const d=k<0?Math.max(SMI_D,Math.round(c.wage*0.95))-c.wage:k>0?Math.round(c.wage*0.05):0;return `<button class="wpill ${mg.offer===d?'on':''}" data-act="mgoffer" data-d="${d}" ${k<0&&d===0?'disabled':''}>${monthTxt(c.wage+d)}<small>${k<0?(d===0?' · ya es el SMI':' · −5%'):k>0?' · +5%':' · lo que pide'}</small></button>`;}).join('')}</div>
         <div class="stamps2"><button class="stamp big s-ok" data-act="mghire" data-k="1">✔ CONTRATADO</button><button class="stamp big s-roto" data-act="mghire" data-k="0">✖ NO APTO</button></div>
         ${meta.money<HIRE&&!mg.t.remote?`<small class="bad">Ojo: contratar cuesta ${fmt(HIRE)} y no llega el bote.</small>`:''}</div>`;
     }
@@ -3511,10 +3544,10 @@ function hireFromCv(c,wage){
   if(staffOf(c.role).length>=ROLES[c.role].max)return 'Iba a entrar en '+ROLES[c.role].n+', pero el puesto está completo.';
   if(meta.money<HIRE)return 'No hay bote para contratar ('+fmt(HIRE)+').';
   meta.money-=HIRE;
-  const e=newEmp(c.role,meta,{name:cleanName(c.name),face:c.face,rap:c.rap,trato:c.trato,punt:c.punt,act:c.act,nat:c.nat,langs:toArr(c.langs),pers:c.pers,wage:Math.max(1000,Math.round(wage||c.wage)),trial:3});
+  const e=newEmp(c.role,meta,{name:cleanName(c.name),face:c.face,rap:c.rap,trato:c.trato,punt:c.punt,act:c.act,nat:c.nat,langs:toArr(c.langs),pers:c.pers,wage:Math.max(SMI_D,Math.round(wage||c.wage)),trial:3});
   e.moral=clamp(e.moral+(wage<c.wage?-10:wage>c.wage?8:0),0,100);
   meta.emp.push(e);fillVac(e.role);logE(e,'Contratado/a tras la entrevista');
-  return 'Contratado/a: '+e.face+' '+e.name+' entra en '+ROLES[e.role].n+' a '+fmt(e.wage)+'/día (en prueba).';
+  return 'Contratado/a: '+e.face+' '+e.name+' entra en '+ROLES[e.role].n+' a '+monthTxt(e.wage)+' bruto (en prueba).';
 }
 function applyFeud(x,ok){
   const A=empById(+x.a),B=empById(+x.b);if(!A||!B)return 'Ya no trabajan juntos.';
@@ -3814,7 +3847,7 @@ function genCands(){
   const out=[],vr=vacRoles();if(!vr.length)return out;
   for(let i=0;i<3;i++){
     const c=newEmp(vr[i%vr.length],meta,{},out.map(x=>x.name));
-    c.wage=WAGE+ri(-2,4)*100;c.exp=ri(0,8);
+    c.wage=Math.round(wageOf(c.role)*(1+ri(0,4)*0.02));c.exp=ri(0,8);
     c.qa=['rap','trato','punt','act'].sort(()=>Math.random()-0.5).slice(0,2).map(k=>interview(k,c[k]));
     out.push(c);
   }
@@ -3849,9 +3882,9 @@ function empAct(id,k){
     e.warn++;e.moral=clamp(e.moral-12,0,100);e.focus=3;msg='⚠️ Toque dado (lleva '+e.warn+'). Va a espabilar… o no.';
     if(!e.real&&e.moral<20&&Math.random()<0.3){meta.emp=meta.emp.filter(x=>x!==e);meet.gone.push(e.face+' '+e.name+' se lo tomó fatal y se fue dando un portazo.');scrTab.meet='gone';pg=0;sBad();renderHud();showMeeting();return;}
   }
-  else if(k==='raise'){e.wage+=300;e.moral=clamp(e.moral+20,0,100);msg='💶 +3 €/día. Ahora te quiere un poquito más.';}
+  else if(k==='raise'){e.wage=Math.round(e.wage*1.05);e.moral=clamp(e.moral+20,0,100);msg='💶 +5% de sueldo: '+monthTxt(e.wage)+'. Ahora te quiere un poquito más.';}
   else if(k==='fire'){meet.firing=id;showMeeting();return;}
-  if(e.real)note(e.real,{praise:'👏 El jefe te ha felicitado en la reunión.',warn:'⚠️ El jefe te ha dado un toque en la reunión.',raise:'💶 ¡Aumento! +3 €/día.'}[k],k==='warn');
+  if(e.real)note(e.real,{praise:'👏 El jefe te ha felicitado en la reunión.',warn:'⚠️ El jefe te ha dado un toque en la reunión.',raise:'💶 ¡Aumento! +5% de sueldo.'}[k],k==='warn');
   meet.acted[id]=msg;sOk();renderHud();showMeeting();
 }
 /* ---------- despidos: motivo, pruebas, finiquito e indemnización ----------
@@ -3868,8 +3901,19 @@ const FIRE={
  perf:{t:'📉 Bajo rendimiento',ok:(e,h)=>h.fail+h.tfail+h.cvErr>=2&&score(e)<0.5,ev:(e,h)=>(h.fail+h.tfail+h.cvErr)+' fallos registrados · valoración: '+verdict(e).replace(/^\S+ /,'')},
  none:{t:'🤷 Sin motivo: despido improcedente reconocido',ok:()=>false,ev:()=>''}
 };
-const finiquito=e=>Math.round(e.wage*e.days/30);
-const indProc=e=>Math.max(500,100*e.days),indImp=e=>2000+300*e.days;
+/* Liquidación (Estatuto de los Trabajadores): vacaciones no disfrutadas (30 días naturales al año, prorrateados);
+   despido objetivo procedente: 20 días de salario por año trabajado; improcedente: 33 días por año (art. 56). Un turno = un día. */
+const finiquito=e=>Math.round(e.wage*30*e.days/365);
+const indProc=e=>Math.round(e.wage*20*e.days/365),indImp=e=>Math.round(e.wage*33*e.days/365);
+/* Vender alcohol a un menor: infracción de la ley autonómica de drogodependencias. Solo se multa si hay inspección o denuncia (12 %):
+   la primera, grave (3.001–6.000 €); la segunda, grave en su tramo alto (9.000–30.000 €); desde la tercera, muy grave (30.001–60.000 €). */
+function minorSale(who){
+  meta.rep=clamp(meta.rep-0.3,0,5);
+  if(Math.random()<0.12){const n=meta.minorFine=(meta.minorFine||0)+1,f=(n>=3?ri(30001,60000):n===2?ri(9000,30000):ri(3001,6000))*100;
+    run.fines+=f;meta.money-=f;meta.rep=clamp(meta.rep-1,0,5);
+    return '🚔 Inspección: '+who+' alcohol a un menor. Multa '+(n>=3?'muy grave':'grave')+' de '+fmt(f)+(n>1?' (reincidencia)':'')+'.';}
+  return '⚠️ '+who.replace(/^h/,'H')+' alcohol a un menor. Nadie lo ha denunciado… esta vez (multa grave: desde 3.001 €).';
+}
 function fireEmp(id,r){
   const e=empById(id),F=FIRE[r];if(!meet||!e||!F||meet.acted[id])return;
   if(r==='trial'&&!(e.trial>0))return;
@@ -3881,7 +3925,7 @@ function fireEmp(id,r){
     (r==='trial'?'Sin indemnización: estaba en periodo de prueba.':r==='none'?'Indemnización por despido improcedente: '+fmt(ind)+'.':just?'Indemnización por despido procedente: '+fmt(ind)+'.':'Le pagas la indemnización de un despido procedente ('+fmt(ind)+'), aunque no tienes pruebas.')];
   const risk=r==='trial'||r==='none'?0:just?(e.warn>0?0:0.15):0.7;
   if(Math.random()<risk){
-    extra=Math.max(0,indImp(e)-ind)+ri(3000,8000);cost+=extra;meta.rep=clamp(meta.rep-0.3,0,5);
+    extra=Math.max(0,indImp(e)-ind)+ri(600,1500)*100;cost+=extra;meta.rep=clamp(meta.rep-0.3,0,5);
     L.push(just?'⚖️ Te denuncia: nunca le diste un toque antes de despedirle. El juez lo declara improcedente: −'+fmt(extra)+' y −0,3 de reputación.'
       :'⚖️ Te denuncia: el motivo no se sostiene con lo que hay registrado. Despido improcedente: −'+fmt(extra)+' y −0,3 de reputación.');
   }else if(!just&&r!=='none')L.push('😅 El motivo no se sostenía, pero no te ha denunciado. Esta vez.');
@@ -3898,7 +3942,7 @@ function applyReq(i,o){
   const a=empById(r.a),b=r.b&&empById(r.b);
   let msg='';
   if(!a||(r.k==='feud'&&!b))msg='Ya no trabaja aquí.';
-  else if(r.k==='raise'){if(o===0){a.wage+=300;a.moral=clamp(a.moral+20,0,100);msg='Contento. Te sale 3 € más caro al día.';}else{a.moral=clamp(a.moral-25,0,100);msg=a.moral<25?'Se va murmurando. Huele a dimisión.':'No le ha hecho ninguna gracia.';}}
+  else if(r.k==='raise'){if(o===0){a.wage=Math.round(a.wage*1.05);a.moral=clamp(a.moral+20,0,100);msg='Contento. +5%: ahora cobra '+monthTxt(a.wage)+'.';}else{a.moral=clamp(a.moral-25,0,100);msg=a.moral<25?'Se va murmurando. Huele a dimisión.':'No le ha hecho ninguna gracia.';}}
   else if(r.k==='off'){if(o===0){a.off=meta.day+1;a.moral=clamp(a.moral+15,0,100);msg='Librará el próximo turno.';}else{a.moral=clamp(a.moral-12,0,100);msg='Lo acepta. De mala gana.';}}
   else if(r.k==='extra'){if(o===0){if(meta.money<1000)msg='No hay bote ni para eso.';else{meta.money-=1000;a.focus=Math.max(a.focus,1);a.moral=clamp(a.moral+5,0,100);msg='El próximo turno rinde más.';}}else msg='Vale, otra vez será.';}
   else if(o===0){const ok=Math.random()<0.6;[a,b].forEach(e=>{e.moral=clamp(e.moral+(ok?6:-4),0,100);});msg=ok?'Se dan la mano. Por ahora.':'Ha salido regular. Siguen sin hablarse.';}
@@ -3915,14 +3959,14 @@ function hireCand(i){
 }
 function endMeeting(){
   meta.emp.forEach(closeSt);meet=null;
-  if(meta.rep<=0||meta.money<-30000){run.over=false;checkRep();return;}
+  if(meta.rep<=0||meta.money<-CREDIT){run.over=false;checkRep();return;}
   meta.day++;startDay();
 }
 function showMeeting(){
   scrRender=showMeeting;
   const emps=meta.emp.map(e=>{
     const s=e.st,a=meet.acted[e.id];
-    const tag=[flag(e)+' '+ROLES[e.role].n,e.days+(e.days===1?' turno':' turnos'),fmt(e.wage)+'/día'].concat(e.trial?['en prueba ('+e.trial+')']:[]).concat(e.warn?['⚠️×'+e.warn]:[]).join(' · ');
+    const tag=[flag(e)+' '+ROLES[e.role].n,e.days+(e.days===1?' turno':' turnos'),monthTxt(e.wage)].concat(e.trial?['en prueba ('+e.trial+')']:[]).concat(e.warn?['⚠️×'+e.warn]:[]).join(' · ');
     const h=hist(e),fin=finiquito(e);
     const btns=a?`<div class="supd">${a}</div>`:meet.firing===e.id?`<div class="supd"><b>¿Por qué le despides?</b> Si el motivo no se puede demostrar con lo registrado, te puede denunciar. Finiquito: ${fmt(fin)} · indemnización: ${e.trial?'nada si es por no superar la prueba':fmt(indProc(e))+' si es procedente, '+fmt(indImp(e))+' si es improcedente'}.${e.warn?'':' Ojo: nunca le has dado un toque.'}</div>
       <div class="opts">${Object.keys(FIRE).filter(k=>k!=='trial'||e.trial>0).map(k=>{const ok=k==='trial'||FIRE[k].ok(e,h),ev=FIRE[k].ev(e,h);
@@ -3930,7 +3974,7 @@ function showMeeting(){
       <button class="btn" data-act="firex">Mejor no le despido</button></div>`:`<div class="row ea">
       <button class="btn" data-act="emp" data-e="${e.id}" data-k="praise">👏 Felicitar</button>
       <button class="btn" data-act="emp" data-e="${e.id}" data-k="warn">⚠️ Toque</button>
-      <button class="btn" data-act="emp" data-e="${e.id}" data-k="raise">💶 +3 €</button>
+      <button class="btn" data-act="emp" data-e="${e.id}" data-k="raise">💶 +5%</button>
       <button class="btn no" data-act="emp" data-e="${e.id}" data-k="fire">Despedir</button></div>`;
     return `<div class="emp ${meet.firing===e.id&&!a?'firing':''}"><div class="eh"><span class="ef">${e.face}</span><div class="t"><b>${e.name}</b>${tag}</div><span class="mood" title="Ánimo">${mood(e)}</span></div>
       <div class="duty"><b>Su trabajo:</b> ${ROLES[e.role].duties.join(' · ')}.</div>
@@ -3993,7 +4037,7 @@ function idDecision(sell){
   c.idOk=sell?'sell':'deny';
   if(sell){
     it.scanned=true;
-    if(c.minor){run.fines+=5000;meta.money-=5000;meta.rep=clamp(meta.rep-1,0,5);run.errors++;c.err++;toast('Vendiste alcohol a un menor. Multa: 50 €','bad');sBad();}
+    if(c.minor){run.errors++;c.err++;toast(minorSale('has vendido'),'bad');sBad();}
     else sOk();
   }else{
     it.denied=true;ret(it);
@@ -4047,6 +4091,8 @@ function deliver(){
 }
 function finish(c,noTip){
   const tot=totalOf(c);if(tot>0){meta.money+=tot;run.sales+=tot;}
+  /* IVA de cada producto según su tipo legal (la bolsa, 21 %). */
+  run.ivaR=(run.ivaR||0)+c.items.filter(i=>i.scanned).reduce((a,i)=>{const v=(CAT.find(x=>x.id===i.pid)||{}).iva||10;return a+i.p*v/(100+v);},0)+(c.bag?BAG*21/121:0);
   if(c.bag!==c.wantsBag){
     c.err++;run.errors++;meta.rep=clamp(meta.rep-0.3,0,5);
     toast(c.bag?'No pidió bolsa y se la cobraste':'Pidió bolsa y no se la diste','bad');sBad();
@@ -4054,7 +4100,7 @@ function finish(c,noTip){
   const frac=c.p/c.max,P=PERS[c.pk]||{},rm=c.reg&&meta.regs[c.reg];
   if(!noTip&&c.err===0){
     let tip=Math.round(frac*250*(meta.up.coffee?1.5:1)*(P.tip!=null?P.tip:1)*(rm&&rm.good>=3?1.3:1)/5)*5;
-    if(tip>0){run.tips+=tip;meta.money+=tip;toast('Propina: '+fmt(tip),'good');}
+    if(tip>0){run.tips+=tip;toast('Propina para el bote del personal: '+fmt(tip),'good');}
     if(frac>0.5)meta.rep=clamp(meta.rep+0.08,0,5);
   }
   if(P.influ){
@@ -4763,10 +4809,10 @@ function almHtml(){
     <div class="dpanel">${orderHtml()}</div></div>`;
 }
 function backHtml(){
-  const nom=meta.emp.reduce((t,e)=>t+e.wage,0),r=run||{};
+  const nom=meta.emp.reduce((t,e)=>t+empCost(e.wage),0),r=run||{};
   return `<div class="dgrid"><div class="dpanel"><h2>💼 Backoffice</h2>${staffBlock('back')}
     <div class="zone-title">CUENTAS ${run&&!run.over?'DEL TURNO':'DEL ÚLTIMO TURNO'}</div>
-    <div class="sum"><span>Bote</span><b>${fmt(meta.money)}</b><span>Ventas</span><b>${fmt(r.sales||0)}</b><span>Propinas</span><b>${fmt(r.tips||0)}</b><span>Multas y pérdidas en caja</span><b>${r.fines?'−':''}${fmt(r.fines||0)}</b><span>Nómina por turno</span><b>−${fmt(nom)}</b><span>Quiebra si el bote baja de</span><b>−300,00 €</b></div></div>
+    <div class="sum"><span>Bote</span><b>${fmt(meta.money)}</b><span>Ventas</span><b>${fmt(r.sales||0)}</b><span>Otras cajas</span><b>${fmt(r.offS||0)}</b><span>Multas y pérdidas en caja</span><b>${r.fines?'−':''}${fmt(r.fines||0)}</b><span>Nómina por día (con Seg. Social)</span><b>−${fmt(nom)}</b><span>Alquiler, luz y demás por día</span><b>−${fmt(FIXED_D)}</b><span>Concurso de acreedores si el bote baja de</span><b>−${fmt(CREDIT)}</b></div></div>
     <div class="dpanel"><div class="zone-title">BANDEJA · RECLAMACIONES DE DINERO</div>${tkList('back')}<div class="supd">Las que nadie resuelva se reparten al cerrar entre el personal de Backoffice.</div></div></div>`;
 }
 function rrppHtml(){
@@ -4780,7 +4826,7 @@ function rrppHtml(){
 function rrhhHtml(){
   let nm=meta.day+1;while(nm%3!==1)nm++;
   const rr=staffOf('rrhh'),realRR=rr.find(e=>e.real&&run&&run.duty&&working(e));
-  const rows=meta.emp.map(e=>`<div class="up"><div class="t"><b>${e.face} ${e.real?'🎮':flag(e)} ${e.name} · ${ROLES[e.role].n}</b>${e.days} ${e.days===1?'turno':'turnos'} · ${fmt(e.wage)}/día${e.trial?' · en prueba ('+e.trial+')':''}${e.warn?' · ⚠️×'+e.warn:''}</div><span class="mood">${mood(e)}</span></div>`).join('')||'<div class="supd">Plantilla vacía.</div>';
+  const rows=meta.emp.map(e=>`<div class="up"><div class="t"><b>${e.face} ${e.real?'🎮':flag(e)} ${e.name} · ${ROLES[e.role].n}</b>${e.days} ${e.days===1?'turno':'turnos'} · ${monthTxt(e.wage)}${e.trial?' · en prueba ('+e.trial+')':''}${e.warn?' · ⚠️×'+e.warn:''}</div><span class="mood">${mood(e)}</span></div>`).join('')||'<div class="supd">Plantilla vacía.</div>';
   return `<div class="dgrid"><div class="dpanel"><h2>🗂️ Recursos Humanos</h2>${staffBlock('rrhh')}
     ${isHost()?(appsHtml()||'<div class="zone-title">📝 SOLICITUDES DE EMPLEO</div><div class="supd">No hay solicitudes pendientes.</div>')+(realRR?`<div class="supd">${realRR.name} (RR.HH.) también puede tramitarlas desde su pantalla.</div>`:''):'<div class="supd">En solitario no llegan solicitudes de personas reales: contratas en la reunión de personal.</div>'}
     <div class="zone-title">📢 VACANTES</div><div class="supd">${rr.some(e=>!e.real)&&!realRR?'Tu gente de RR.HH. las publica sola cuando falta personal; tú también puedes.':realRR?realRR.name+' (RR.HH.) también las publica desde su puesto.':'Sin nadie en RR.HH., las publicas tú y entrevistas tú: cuando llega un candidato sale el aviso 🧑‍💼 «Entrevista» y vas con «Voy yo».'} Solo se presentan candidatos a puestos con vacante.</div>
@@ -4840,7 +4886,7 @@ const GUIDE={
  atc:{t:'🧾 Caja',steps:[
   ['🎯','<b>Tu misión:</b> cobrar rápido y sin fallos a los clientes que te manda la tienda a tu caja.'],
   ['🛒','Toca cada producto de la cinta para pasarlo por el escáner. Los de <b>código dañado</b> (borde rojo) piden 3 toques.'],
-  ['🪪','Si lleva <b>alcohol (18+)</b>, mira la fecha de nacimiento del DNI. Vender a un menor = 50 € de multa y reputación por los suelos.'],
+  ['🪪','Si lleva <b>alcohol (18+)</b>, mira la fecha de nacimiento del DNI. Vender a un menor resta reputación y, si hay inspección, multa grave desde 3.001 € (hasta 60.000 € si reincides).'],
   ['⌨️','Con teclado va más rápido: <b>Espacio</b> escanea, <b>B</b> bolsa, <b>Intro</b> cobra o da el cambio, <b>S</b>/<b>N</b> en el DNI, <b>⌫</b> quita la última moneda.'],
   ['🛍️','<b>Bolsa:</b> si la pide, añádela. Si no la pide, ni se te ocurra cobrarla.'],
   ['💶','<b>Tarjeta:</b> cobra y espera. <b>Efectivo:</b> pon en la bandeja el cambio exacto y dale a «Dar cambio». De más, lo pierde la tienda; de menos, no te lo aceptan.'],
@@ -4888,7 +4934,7 @@ const GUIDE={
   ['🙋','Todos <b>cogen solos</b> los avisos de su departamento si están libres. Tú decides si quieres mandar a alguien en concreto antes.'],
   ['👷','Sin gente en Almacén, la mercancía se queda en el muelle y no llega a la estantería.']]},
  j_back:{t:'💼 Backoffice · jefe',steps:[
-  ['💶','Las <b>cuentas</b> del turno: ventas, propinas, multas y nómina. Si el bote baja de −300 €, quiebra.'],
+  ['💶','Las <b>cuentas</b> del turno: ventas de todas las cajas, mercancía, nóminas con Seguridad Social, alquiler y luz, IVA e impuesto de sociedades. Con el bote en negativo pagas intereses de la póliza; a −15.000 €, concurso de acreedores.'],
   ['📨','La <b>bandeja de reclamaciones de dinero</b>: «Resolver yo» si quieres hacerlo tú. Las que nadie resuelva se reparten al cerrar.']]},
  j_rrpp:{t:'📣 RR.PP. · jefe',steps:[
   ['⭐','La <b>reputación</b> y las <b>reseñas</b> de los clientes. Responder a una mala suaviza el golpe.'],
@@ -4924,6 +4970,17 @@ function renderGuide(){
 }
 
 /* ---------- bucle ---------- */
+/* Las otras cajas: cada cajero/a de la casa libre (máx. 3) despacha clientes que no ves. Entra más gente con buena reputación
+   y se vende menos si hay productos agotados. Cada venta trae su coste de mercancía (la repone el proveedor habitual). */
+function offTick(dt){
+  const n=Math.min(3,staffOf('atc').filter(e=>!e.real&&isFree(e)&&!run.duty[e.id].slack).length);if(!n)return;
+  const out=CAT.filter(x=>(meta.stock[x.id]||0)<=0).length/CAT.length;
+  const dem=OFF.dem*(0.4+0.12*meta.rep)*(1-0.6*out)*(1+0.03*Math.min(meta.day,10));
+  const rate=Math.min(dem,n*OFF.cap)/(run.dur||100);
+  run.offAcc=(run.offAcc||0)+dt*rate;
+  while(run.offAcc>=1){run.offAcc--;const v=Math.round(OFF.ticket*rnd(0.4,1.6)),c=Math.round(v*(SUPS[0].cf+OFF.merma));
+    run.offS+=v;run.offC+=c;run.offN++;meta.money+=v-c;}
+}
 function tick(ts){
   const dt=Math.min(0.1,(ts-last)/1000||0);last=ts;
   if(run&&!run.over&&!guide){
@@ -4957,6 +5014,7 @@ function tick(ts){
       if(c.talk<=0){c.talk=rnd(7,13);if(c.p>0)say(c,i);}
       if(c.p<=0){leaveAngry(i);if(run.over)break;}
     }
+    if(run&&!run.remote&&!run.closing&&!run.over)offTick(dt);
     if(run&&run.remote){run.syncT+=dt;if(run.syncT>1){run.syncT=0;tillSync();}}
     else{
     if(run&&!run.over)tickStaff(dt);

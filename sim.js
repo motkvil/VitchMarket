@@ -21,8 +21,8 @@ setInterval(()=>{try{
   const ov=d.querySelector('#overlay.show');
   if(ov){
     if(g&&g.lastEnd&&g.lastEnd.fin&&g.run&&g.run.over&&lastDay!==g.meta.day){lastDay=g.meta.day;const f=g.lastEnd.fin,r=g.run;
-      rows.push([g.meta.day,r.served,r.angry,r.errors,fmt(f.S),fmt(f.T),fmt(f.cogs),fmt(f.P),fmt(f.K),fmt(f.F),fmt(f.oth),fmt(f.iva+f.is),fmt(f.net),fmt(f.B),fmt(g.meta.money),g.meta.rep.toFixed(1),g.meta.emp.length,Object.values(g.meta.stock).filter(v=>v<=0).length,Object.values(g.meta.back).reduce((a,b)=>a+b,0),g.meta.emp.filter(e=>e.role==='alm').map(e=>(r.duty[e.id]||{}).st+':'+Math.round(e.moral)).join(','),g.meta.emp.map(e=>e.role+':'+((r.duty[e.id]||{}).st)).join(' ')]);}
-    const h=ov.querySelector('h2');if(h&&/Quiebra|despedido/.test(h.textContent)){over=h.textContent;finish();return;}
+      rows.push([g.meta.day,r.served,r.angry,r.errors,fmt(f.S),fmt(f.O||0),fmt(f.cogs),fmt(f.P),fmt(f.FX||0),fmt(f.K),fmt(f.F),fmt(f.oth),fmt(f.iva+f.is),fmt(f.net),fmt(f.B),fmt(g.meta.money),g.meta.rep.toFixed(1),g.meta.emp.length,Object.values(g.meta.stock).filter(v=>v<=0).length,Object.values(g.meta.back).reduce((a,b)=>a+b,0),g.meta.emp.filter(e=>e.role==='alm').map(e=>(r.duty[e.id]||{}).st+':'+Math.round(e.moral)).join(','),g.meta.emp.map(e=>e.role+':'+((r.duty[e.id]||{}).st)).join(' ')]);}
+    const h=ov.querySelector('h2');if(h&&/Quiebra|Concurso|despedido/.test(h.textContent)){over=h.textContent;finish();return;}
     if(rows.length>=DAYS){finish();return;}
     const b=ov.querySelector('[data-act=start],[data-act=next],[data-act=meeting],[data-act=endmeet]');cl(b);return;}
   if(!g||!g.run||g.run.over)return;
@@ -42,7 +42,7 @@ setInterval(()=>{try{
 }catch(e){errs.push('BOT '+e.message)}},40);
 function finish(){
   console.log('ERR='+ERR+(over?' FIN: '+over:''));
-  console.log(['T','atend','enf','err','ventas','prop','coste','nómina','recl','multas','otros','imp','NETO','compras','BOTE','rep','plant','agot','muelle','alm','turno'].join('\t'));
+  console.log(['T','atend','enf','err','ventas','otras','coste','nómina','fijos','recl','multas','otros','imp','NETO','compras','BOTE','rep','plant','agot','muelle','alm','turno'].join('\t'));
   rows.forEach(r=>console.log(r.join('\t')));
   console.log('errors',errs.slice(0,5));process.exit(0);}
 setTimeout(finish,+process.env.TMAX||420000);
