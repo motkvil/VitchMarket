@@ -1015,6 +1015,21 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;opacity:.35;b
 .gs-zone{position:absolute;left:8px;top:6px;z-index:2;background:rgba(42,30,72,.8);color:#fff;font-size:11px;border-radius:99px;padding:2px 10px;font-weight:700}
 .gs-scene .gs-objs{flex:1 1 0}
 @media (max-width:560px){.gs-iso{flex:0 0 130px;min-height:130px}}
+/* Puesto del empleado: con la tienda cerrada, cartel arriba (no tapa la sala) y sin el plano en directo */
+.gs-scene>*{order:2}.gs-scene>.gs-wall{order:0}
+.gs-closed{order:1;position:relative;left:auto;top:auto;transform:none;max-width:none;margin:10px 12px 0;flex-direction:row;align-items:center;justify-content:center;flex-wrap:wrap;gap:4px 10px;padding:8px 12px;z-index:2}
+.gs-scene.shut .gs-iso{display:none}
+.gs-objs.g4{grid-template-columns:repeat(2,1fr)}
+.gs-feed .rpt-t{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:6px 10px}
+@media (max-width:1000px){
+  /* en vertical la pantalla se desplaza antes que aplastar la sala: los objetos no se pisan */
+  .ws-screen .scr-body{overflow-y:auto}
+  .ws-screen .gs,.ws-screen .gs-main{flex:none;min-height:auto}
+  .ws-screen .gs-main{grid-template-rows:auto auto}
+  .ws-screen .gs-scene{min-height:auto}
+  .ws-screen .gs-objs{flex:none;grid-auto-rows:minmax(96px,auto)}
+  .ws-screen .gs-feed{max-height:none;overflow:visible}
+}
 
 .card.screen{padding:0 18px 14px;border-radius:20px}
 .card.screen>.scr-head{margin:0 -18px;padding:10px 18px;background:linear-gradient(180deg,#ff5a5c,var(--pk2));border-radius:17px 17px 0 0;border-bottom:3px solid var(--line)}
@@ -1992,7 +2007,7 @@ async function fillRanking(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.16-44';
+const APPV='2026.11.16-45';
 /* Compara versiones por números («-9» < «-11»), no como texto. */
 const verCmp=(a,b)=>{const x=String(a).split(/[.-]/).map(Number),y=String(b).split(/[.-]/).map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
 try{const vt=document.createElement('div');vt.id='vtag';vt.textContent='v'+APPV;document.body.appendChild(vt);}catch(e){}
@@ -2549,7 +2564,7 @@ function deptReport(){
 function reportHtml(rp,role){
   if(!rp||!rp[role])return '';
   const rows=toArr(rp[role]).concat(toArr((rp.you||{})[room.uid]));
-  return `<div class="zone-title">INFORME DE ${ROLES[role].n.toUpperCase()} · TURNO ${rp.day}</div><div class="sum">${rows.map(x=>`<span>${esc(x[0])}</span><b>${esc(x[1])}</b>`).join('')}</div>`
+  return `<div class="zone-title rpt-t">📋 INFORME${rp.day?' · TURNO '+rp.day:''}</div><div class="sum">${rows.map(x=>`<span>${esc(x[0])}</span><b>${esc(x[1])}</b>`).join('')}</div>`
     +(role==='alm'&&rp.low?'<div class="supd">Lo que menos queda:<br>'+toArr(rp.low).map(esc).join('<br>')+'</div>':'');
 }
 /* Lo que ve cada empleado real de su departamento (lo publica el jefe en state.dep). */
@@ -2636,7 +2651,7 @@ function workScreen(o){
     <div class="gs-stats">${st&&!stale?`<span><small>BOTE</small><b class="gled">${fmt(st.money)}</b></span><span><small>FAMA</small><b class="gled">★${(+st.rep).toFixed(1)}</b></span><span><small>COLA</small><b class="gled">${st.q}</b></span>`:''}
      <button class="gs-mini" data-act="guide" title="Cómo se trabaja">📘</button><button class="gs-mini" data-act="rquit" title="Dejar el trabajo" ${mine?'disabled':''}>🚪</button></div></div>
    <div class="gs-status">${status}</div>${verMsg}${room.msg?`<div class="${room.msg.bad?'rerr':'rok'}">${esc(room.msg.t)}</div>`:''}
-   <div class="gs-main"><div class="gs-scene sc-${role}"><div class="gs-wall"><span>${S.bg.toUpperCase()}</span></div><div class="gs-iso" id="isoslotw"><span class="gs-zone">📍 Tu zona de la tienda, en directo</span></div><div class="gs-objs">`;
+   <div class="gs-main"><div class="gs-scene sc-${role} ${why&&!mine?'shut':''}"><div class="gs-wall"><span>${S.bg.toUpperCase()}</span></div><div class="gs-iso" id="isoslotw"><span class="gs-zone">📍 Tu zona de la tienda, en directo</span></div><div class="gs-objs ${S.objs.length===4?'g4':''}">`;
   S.objs.forEach(ob=>{
     const t=ob.kinds?open.find(x=>ob.kinds.includes(x.k)):null,ok=usable(ob,t),b=badge(ob.k),busy=tasks.find(x=>x.who&&ob.kinds&&ob.kinds.includes(x.k)&&toArr(x.roles).includes(role));
     h+=`<button class="obj o-${ob.k} ${t?'hot':''} ${ok?'':'off'}" ${ok?objAct(ob,t):'disabled'} title="${esc(t?t.txt||t.s:ob.sub)}">
@@ -2685,6 +2700,7 @@ function renderMember(){
   loadRank();
   const st=room.state,ms=room.members||{},me=ms[room.uid]||{},inf=room.info||{};
   const role=ROLES[me.role]?me.role:null,stale=!st||!st.ts||srvNow()-st.ts>6000;
+  if(role&&room.msg&&!room.msg.bad&&/^📝 Solicitud/.test(room.msg.t))room.msg=null;
   const bossOn=!!inf.host&&srvNow()-(inf.hb||0)<TAKEOVER,bossName=inf.host?esc(cleanName((ms[inf.host]||{}).name||inf.name)):'';
   const whoName=w=>w==='jefe'?'el jefe':ms[w]?'🎮 '+esc(cleanName(ms[w].name)):esc(w);
   const tasks=st&&!stale?toArr(st.tasks):[],mine=tasks.find(t=>t.who===room.uid);
