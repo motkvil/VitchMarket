@@ -188,8 +188,9 @@ async function buildTill(){
 /* Cámara: la cinta llena la parte izquierda (hasta el ~60% del ancho) y abajo; el cliente queda detrás, de frente. */
 function tillCamera(w,h){
   const a=w/h,cam=till.cam,vf=a<.9?52:40;cam.fov=vf;cam.aspect=a;
-  const k=Math.tan(THREE.MathUtils.degToRad(vf/2))*a,Dk=2.75/1.15,cx=.9-.2*Dk,D=Dk/k;
-  cam.position.set(cx,2.0+D*.08,.2+D);cam.lookAt(cx,.95,-.45);cam.updateProjectionMatrix();cam.updateMatrixWorld(true);
+  const k=Math.tan(THREE.MathUtils.degToRad(vf/2))*a,Dk=2.45/1.15,cx=.9-.2*Dk,D=Dk/k;
+  /* desde arriba, para ver la superficie de la cinta y los productos grandes */
+  cam.position.set(cx,.85+D*.62,.2+D*.82);cam.lookAt(cx,.8,-.25);cam.updateProjectionMatrix();cam.updateMatrixWorld(true);
   /* cesta: centrada a la derecha, ≈70% del alto y como mucho ≈39% del ancho */
   const bk=till.basket,dist=Math.max(1.6,D*.55),vh=2*dist*Math.tan(THREE.MathUtils.degToRad(vf/2)),vw=vh*a;
   const s=Math.min(vh*.7/till.bkSize.y,vw*.39/Math.max(till.bkSize.x,till.bkSize.z));bk.scale.setScalar(s);
@@ -199,7 +200,7 @@ function tillCamera(w,h){
   till.bkTop=p.clone().add(new THREE.Vector3(0,till.bkSize.y*s*.15,0));till.bkR=Math.min(till.bkSize.x,till.bkSize.z)*s*.28;
 }
 async function tillPerson(id){
-  const g=await load((hash(id)%2?MALE:FEM)[hash(id)%6]),o=SkeletonUtils.clone(g.scene);o.scale.setScalar(2.7);
+  const g=await load((hash(id)%2?MALE:FEM)[hash(id)%6]),o=SkeletonUtils.clone(g.scene);o.scale.setScalar(2.1);
   const mixer=new THREE.AnimationMixer(o),A={};g.animations.forEach(c=>{A[c.name]=mixer.clipAction(c);});
   return {o,mixer,A,cur:null};
 }
@@ -216,7 +217,7 @@ function tillFrame(slot,data){
   q.forEach((c,i)=>{
     const id=c.id;seen.add(id);let e=till.ppl.get(id);
     if(!e){if(till.ppl.has(id+':l'))return;till.ppl.set(id+':l',1);tillPerson(id).then(n=>{till.ppl.delete(id+':l');n.o.position.set(-3.6,0,-1.4);S.add(n.o);till.ppl.set(id,n);});return;}
-    const tx=i===0?-.75:-.1+(i%2?.5:-.5)-i*.05,tz=i===0?-.55:-1.9-i*.85;
+    const tx=i===0?-.75:-.1+(i%2?.5:-.5)-i*.05,tz=i===0?-1.35:-2.5-i*.85;
     const dx=tx-e.o.position.x,dz=tz-e.o.position.z,d=Math.hypot(dx,dz);
     if(d>.03){e.o.position.x+=dx/d*Math.min(d,dt*1.8);e.o.position.z+=dz/d*Math.min(d,dt*1.8);e.o.rotation.y=Math.atan2(dx,dz);pplPlay(e,'walk');}
     else{e.o.rotation.y+=(0-e.o.rotation.y)*Math.min(1,dt*6);pplPlay(e,i===0&&c.mood<.25?'emote-no':'idle');}
@@ -236,13 +237,15 @@ function tillFrame(slot,data){
   onBelt.forEach((it,k)=>{
     let m=till.items.get(it.id);
     if(!m){m={g:new THREE.Group(),it};m.g.position.set(-3.3,.82,.2);m.g.userData.id=it.id;till.items.set(it.id,m);S.add(m.g);
-      inst('food/'+foodFor(it.n)+'.glb').then(o=>{const b=new THREE.Box3().setFromObject(o),sz=b.getSize(new THREE.Vector3()),s=.38/Math.max(sz.x,sz.y,sz.z);o.scale.setScalar(s);o.traverse(c=>{c.userData.id=it.id;});m.g.add(o);}).catch(()=>{});
-      if(it.age){m.age=textSprite('18+','#e5383b','#fff',48);m.age.scale.set(.3,.3/m.age.userData.aspect,1);m.age.position.y=.55;m.g.add(m.age);}
+      inst('food/'+foodFor(it.n)+'.glb').then(o=>{const b=new THREE.Box3().setFromObject(o),sz=b.getSize(new THREE.Vector3()),s=.6/Math.max(sz.x,sz.y,sz.z);o.scale.setScalar(s);o.traverse(c=>{c.userData.id=it.id;});m.g.add(o);}).catch(()=>{});
+      /* zona de toque invisible, más grande que el producto */
+      const hb=new THREE.Mesh(new THREE.BoxGeometry(.66,.8,.8),new THREE.MeshBasicMaterial({visible:false}));hb.position.y=.35;hb.userData.id=it.id;m.g.add(hb);
+      if(it.age){m.age=textSprite('18+','#e5383b','#fff',48);m.age.scale.set(.38,.38/m.age.userData.aspect,1);m.age.position.y=.78;m.g.add(m.age);}
     }
     m.it=it;
-    const tx=.3-k*.48,tz=.2+(k%2?.13:-.11);
+    const tx=.35-k*.66,tz=.2+(k%2?.06:-.06);
     m.g.position.x+=(tx-m.g.position.x)*Math.min(1,dt*3);m.g.position.z+=(tz-m.g.position.z)*Math.min(1,dt*3);
-    if(it.damaged){const lab='▮'.repeat(it.done)+'▯'.repeat(it.hits-it.done);if(m.ringT!==lab){if(m.ring)m.g.remove(m.ring);m.ring=textSprite(lab,'#fff','#e5383b',44);m.ring.scale.set(.3,.3/m.ring.userData.aspect,1);m.ring.position.y=.42;m.g.add(m.ring);m.ringT=lab;}}
+    if(it.damaged){const lab='▮'.repeat(it.done)+'▯'.repeat(it.hits-it.done);if(m.ringT!==lab){if(m.ring)m.g.remove(m.ring);m.ring=textSprite(lab,'#fff','#e5383b',44);m.ring.scale.set(.4,.4/m.ring.userData.aspect,1);m.ring.position.y=.72;m.g.add(m.ring);m.ringT=lab;}}
   });
   /* vuelo a la cesta (parábola) */
   till.fly=till.fly.filter(f=>{f.t=Math.min(1,f.t+dt*2.2);const p=f.from.clone().lerp(f.to,f.t);p.y+=Math.sin(f.t*Math.PI)*.8;f.g.position.copy(p);f.g.rotation.z+=dt*8;f.g.scale.setScalar(f.s0+(f.s1-f.s0)*f.t);
@@ -257,7 +260,7 @@ function tillClick(ev){
   const objs=[];till.items.forEach(m=>objs.push(m.g));
   const hit=ray.intersectObjects(objs,true)[0];
   let id=hit?hit.object.userData.id:null;
-  if(id==null){let best=null,bd=.3;till.items.forEach(m=>{const d=ray.ray.distanceToPoint(m.g.position.clone().setY(1));if(d<bd){bd=d;best=m;}});if(best)id=best.it.id;}
+  if(id==null){let best=null,bd=.55;till.items.forEach(m=>{const d=ray.ray.distanceToPoint(m.g.position.clone().setY(1.1));if(d<bd){bd=d;best=m;}});if(best)id=best.it.id;}
   if(id!=null&&till.onScan)till.onScan(id);
 }
 
