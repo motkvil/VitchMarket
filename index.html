@@ -1307,7 +1307,7 @@ function newEmp(role,m,opt,taken){
   if(pers==='timido'){e.trato=lim(e.trato-0.15);e.punt=lim(e.punt+0.15);}
   return Object.assign(e,opt||{});
 }
-const defMeta=best=>{const m={day:1,money:3000000,rep:5,up:{scanner:0,fan:0,coffee:0},emp:[],eid:0,stock:{},back:{},orders:[],vac:{atc:1,alm:1},best:best||1};CAT.forEach(x=>{m.stock[x.id]=4;});['atc','back','rrpp','alm'].forEach(r=>m.emp.push(newEmp(r,m)));return m;};
+const defMeta=best=>{const m={day:1,money:3000000,eco2:1,rep:5,up:{scanner:0,fan:0,coffee:0},emp:[],eid:0,stock:{},back:{},orders:[],vac:{atc:1,alm:1},best:best||1};CAT.forEach(x=>{m.stock[x.id]=4;});['atc','back','rrpp','alm'].forEach(r=>m.emp.push(newEmp(r,m)));return m;};
 let meta=defMeta();
 let run=null,last=0,muted=false,uid=0,cid=0,toastT=0;
 
@@ -1580,6 +1580,8 @@ const unitCost=(x,k)=>Math.max(1,Math.round(x.p*SUPS.find(z=>z.k===k).cf));
 const cartCost=()=>Object.entries(cart).reduce((t,[id,q])=>{const x=CAT.find(y=>String(y.id)===id);return t+(x?q*unitCost(x,ordSup):0);},0);
 function ensureMeta(){
   CAT.forEach(x=>{if(meta.stock[x.id]===undefined)meta.stock[x.id]=4;});
+  /* Partidas de antes de la economía real: sueldos al convenio (nunca por debajo del SMI) y ampliación de capital hasta 30.000 €. */
+  if(!meta.eco2){meta.eco2=1;(meta.emp||[]).forEach(e=>{e.wage=Math.max(e.wage||0,wageOf(e.role));});if(meta.money<3000000)meta.money=3000000;}
   if(!Array.isArray(meta.emp)){
     meta.emp=[];const s=Object.assign({atc:0,back:1,rrpp:1,alm:1},meta.staff);
     Object.keys(ROLES).forEach(r=>{for(let i=0;i<(s[r]||0);i++)meta.emp.push(newEmp(r,meta));});
@@ -1986,7 +1988,7 @@ async function fillRanking(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.16-41';
+const APPV='2026.11.16-42';
 /* Compara versiones por números («-9» < «-11»), no como texto. */
 const verCmp=(a,b)=>{const x=String(a).split(/[.-]/).map(Number),y=String(b).split(/[.-]/).map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
 try{const vt=document.createElement('div');vt.id='vtag';vt.textContent='v'+APPV;document.body.appendChild(vt);}catch(e){}
