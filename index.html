@@ -358,6 +358,7 @@ button:focus-visible{outline:3px solid var(--tag);outline-offset:2px}
 .bigbox{font-size:64px;line-height:1;display:flex;flex-direction:column;align-items:center;gap:4px}
 .bigbox small{font-size:13px}
 .btn.sup{flex:none;background:#efe7d0}
+.btn.sup.call{background:#ffe8a3;border-color:#e0a800}
 .duty{font-size:11px;color:#2a5a75}
 .did{margin:0;padding-left:18px;font-size:12px;display:flex;flex-direction:column;gap:1px}
 .pname{display:block;width:100%;margin-top:4px;padding:8px 10px;border-radius:6px;border:2px solid #cfc7b4;background:#fff;color:var(--ink);font:inherit;font-size:14px;-webkit-user-select:text;user-select:text}
@@ -1988,7 +1989,7 @@ async function fillRanking(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.16-42';
+const APPV='2026.11.16-43';
 /* Compara versiones por números («-9» < «-11»), no como texto. */
 const verCmp=(a,b)=>{const x=String(a).split(/[.-]/).map(Number),y=String(b).split(/[.-]/).map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
 try{const vt=document.createElement('div');vt.id='vtag';vt.textContent='v'+APPV;document.body.appendChild(vt);}catch(e){}
@@ -3035,7 +3036,24 @@ function coverServe(c,e){
   if(c.err||c.bag!==c.wantsBag)e.st.cvErr++;
   finish(c,false);
 }
-function supBtn(){return run&&!run.over&&!run.remote?'<button class="btn sup" data-act="supervise">👀 Supervisar la tienda</button>':'';}
+function supBtn(){if(!(run&&!run.over&&!run.remote))return '';const e=freeTill();
+  return (e&&run.queue.length>=2?`<button class="btn sup call" data-act="callq">📢 «¡Pasen a la otra caja!» · ${e.face} ${e.name}</button>`:'')+'<button class="btn sup" data-act="supervise">👀 Supervisar la tienda</button>';}
+/* Repartir la cola: un cajero/a de la casa libre abre otra caja y se lleva a los últimos de tu cola (las reclamaciones se quedan contigo).
+   Lo hace solo cada cierto tiempo si ve tu cola larga (según su actitud y su ánimo), o cuando el jefe lo dice. */
+const freeTill=()=>run&&!run.remote?staffOf('atc').find(e=>!e.real&&isFree(e)&&!run.duty[e.id].slack&&!(run.away&&run.away.cover===e.id)):null;
+function sendQueue(e,n,boss){
+  if(!run||run.remote||!e)return 0;let k=0;
+  for(let i=run.queue.length-1;i>=1&&k<n;i--){const c=run.queue[i];if(c.phase==='complaint'||c.complaint)continue;
+    const v=c.items.filter(x=>!x.age||!c.minor).reduce((a,x)=>a+x.p,0),cost=Math.round(v*(SUPS[0].cf+OFF.merma));
+    c.items.filter(x=>x.age&&c.minor).forEach(ret);
+    run.offS+=v;run.offC+=cost;run.offN++;meta.money+=v-cost;
+    const p=ptl.ppl.get(c.id);if(p){ptl.gone.push({x:p.x,y:p.y,ch:pChar(c.id)});ptl.ppl.delete(c.id);}
+    run.queue.splice(i,1);k++;}
+  if(k){run.callT=run.t;toast((boss?'📢 Tú: «¡Pasen a la otra caja, por favor!» ':'📢 ')+e.face+' '+e.name+(boss?' les atiende: ':' abre otra caja: «¡Pasen por aquí!» ')+k+(k===1?' cliente se cambia de cola.':' clientes se cambian de cola.'),'good');
+    if(boss)e.moral=clamp(e.moral+1,0,100);renderAll();}
+  else if(boss)toast('No hay nadie en tu cola que se pueda cambiar.','bad');
+  return k;
+}
 
 /* ---------- minijuegos cuando vas tú ---------- */
 const AISLES=[[1,'Lácteos y huevos',1,8],[2,'Panadería y desayuno',9,13],[3,'Despensa',14,23],[4,'Aperitivos y conservas',24,29],[5,'Carne y pescado',30,37],[6,'Fruta y verdura',38,48],[7,'Bebidas',49,55],[8,'Droguería',56,64],[9,'Congelados',65,66]];
@@ -4658,7 +4676,7 @@ function pixWall(BW){
 }
 /* ===== la caja vista desde arriba: cliente al otro lado del mostrador, cola, cinta, lector y cesta ===== */
 let TILLV='A';try{TILLV=new URLSearchParams(location.search).get('tv')||'A'}catch(e){}
-const ptl={buf:null,items:new Map(),fly:[],bask:[],cid:null,hits:[],view:null,belt:0,ppl:new Map(),bw:0,bh:0};
+const ptl={buf:null,items:new Map(),fly:[],bask:[],cid:null,hits:[],view:null,belt:0,ppl:new Map(),gone:[],bw:0,bh:0};
 function pixTill(slot){
   const cv=pixCanvas(slot,'till');if(!cv._click){cv._click=1;cv.addEventListener('click',pixTillClick);}
   const V=TILLV;
@@ -4686,6 +4704,8 @@ function pixTill(slot){
     pPerson(c,p.x,p.y,{ch:pChar(cu.id),dir:mv?(dx>0?'r':'l'):'d',mv,t:now,s:qs});
     const f=clamp(cu.p/cu.max,0,1);c.fillStyle='#3a1012';c.fillRect(Math.round(p.x-9),Math.round(p.y-34),18,3);c.fillStyle=f>.5?'#2a9d5c':f>.25?'#ffd23f':'#e5383b';c.fillRect(Math.round(p.x-9),Math.round(p.y-34),Math.round(18*f),3);});
   ptl.ppl.forEach((p,id)=>{if(!seen.has(id))ptl.ppl.delete(id);});
+  /* los que se cambian a otra caja se van andando hacia la izquierda */
+  ptl.gone=ptl.gone.filter(g=>{g.x-=dt*45;pPerson(c,g.x,g.y,{ch:g.ch,dir:'l',mv:true,t:now,s:2});return g.x>-20;});
   /* cesta normal */
   c.fillStyle='#1f7a45';c.fillRect(bxx,byy+4,bw,bh-4);c.fillStyle='#2a9d5c';c.fillRect(bxx+2,byy+6,bw-4,bh-8);
   c.fillStyle='#1f7a45';for(let x=bxx+5;x<bxx+bw-3;x+=6)c.fillRect(x,byy+6,1,bh-8);for(let y=byy+10;y<byy+bh-3;y+=6)c.fillRect(bxx+2,y,bw-4,1);
@@ -5017,6 +5037,7 @@ function tick(ts){
       if(c.p<=0){leaveAngry(i);if(run.over)break;}
     }
     if(run&&!run.remote&&!run.closing&&!run.over)offTick(dt);
+    if(run&&!run.remote&&!run.over&&run.queue.length>=3&&run.t-(run.callT||0)>12){run.callT=run.t-6;const e=freeTill();if(e&&Math.random()<0.25+0.5*e.act+(e.moral-50)/200)sendQueue(e,run.queue.length>=4?2:1,false);}
     if(run&&run.remote){run.syncT+=dt;if(run.syncT>1){run.syncT=0;tillSync();}}
     else{
     if(run&&!run.over)tickStaff(dt);
@@ -5081,6 +5102,7 @@ function onClick(e){
   else if(a==='leave')doLeave(b.dataset.o,b.dataset.e);
   else if(a==='leavecancel'){pendingLeave=null;closeMG();}
   else if(a==='supervise')openSup();
+  else if(a==='callq'){const e=freeTill();if(e)sendQueue(e,2,true);else toast('No hay ningún cajero libre ahora mismo.','bad');}
   else if(a==='return')returnTill();
   else if(a==='supact')supAct(+b.dataset.e,b.dataset.k);
   else if(a.startsWith('mg'))mgAct(a,b);  else if(a==='scan')scanItem(+b.dataset.id);
