@@ -1314,8 +1314,9 @@ let run=null,last=0,muted=false,uid=0,cid=0,toastT=0;
 
 /* ---------- audio ---------- */
 let ac=null;
+let quiet=false;
 function beep(f,d,type,v){
-  if(muted)return;
+  if(muted||quiet)return;
   try{
     ac=ac||new (window.AudioContext||window.webkitAudioContext)();
     if(ac.state==='suspended')ac.resume();
@@ -1332,6 +1333,7 @@ const sCoin=()=>beep(2400,.04,'square',.03);
 /* ---------- toast ---------- */
 function toast(msg,kind){
   try{if(run&&!run.remote&&msg&&kind){run.lastMsg={m:String(msg),k:kind,t:run.t};}}catch(e){}
+  if(quiet)return;
   const t=$('#toast');t.textContent=msg;t.className='show '+(kind||'');
   clearTimeout(toastT);toastT=setTimeout(()=>{t.className=''},2400);
 }
@@ -1528,10 +1530,10 @@ function startDay(){
   if(isHost())run.dur=room.info.dur||100;
   ensureMeta();
   run.buy=meta.buyNext||0;meta.buyNext=0;run.m0=meta.money+run.buy;
-  saveGame(false);
+  meta.liveT=0;saveGame(false);
   const notes=prepShift();
   const rr=receiveDeliveries();
-  hideOverlay();renderAll();
+  if(!(room&&room.sim))hideOverlay();renderAll();
   const msg=[];
   if(rr.arrived||rr.pending||rr.shelved)msg.push('🚚 '+(rr.arrived?'Han llegado '+rr.arrived+' uds':'Mercancía en el muelle')+(rr.short?' ('+rr.short+' no llegaron)':'')+(rr.shelved?'; antes de abrir Almacén ha colocado '+rr.shelved:'')+(rr.pending?'; quedan '+rr.pending+' en el muelle':''));
   if(notes.length)msg.push(notes.join('. '));
@@ -1761,7 +1763,8 @@ function endDay(){
   lastEnd={payroll,res,fin};scrTab.shop='sum';pg=0;tipsPer=0;
   if(isHost())room.rpt=deptReport();
   if(meta.rep<=0||meta.money<-CREDIT){run.over=false;checkRep();return;}
-  saveGame(true);
+  meta.liveT=0;saveGame(true);
+  if(room&&room.sim){pubState(true);setTimeout(relayNextDay,8000);return;}
   submitScore(false);
   showShop();
   pubState(true);
@@ -1989,7 +1992,7 @@ async function fillRanking(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.16-43';
+const APPV='2026.11.16-44';
 /* Compara versiones por números («-9» < «-11»), no como texto. */
 const verCmp=(a,b)=>{const x=String(a).split(/[.-]/).map(Number),y=String(b).split(/[.-]/).map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
 try{const vt=document.createElement('div');vt.id='vtag';vt.textContent='v'+APPV;document.body.appendChild(vt);}catch(e){}
@@ -1998,7 +2001,7 @@ const REAL_LIM=60,TAKEOVER=120000;
 const JOB_IC={jefe:'👑',atc:'🧾',alm:'📦',back:'💼',rrpp:'📣',rrhh:'🗂️'};
 let room=null,offline=false,rankCache='',rankAt=0;
 const rRef=p=>fb.ref(fb.db,'rooms/'+room.code+(p?'/'+p:''));
-const isHost=()=>!!(room&&room.host);
+const isHost=()=>!!(room&&(room.host||room.sim));
 const isMember=()=>!!(room&&!room.host);
 const plain=o=>JSON.parse(JSON.stringify(o));
 const toObj=v=>{if(!Array.isArray(v))return v||{};const o={};v.forEach((x,i)=>{if(x!=null)o[i]=x;});return o;};
@@ -2027,7 +2030,8 @@ async function enterShared(){
     const ms=await f.get(f.ref(f.db,base+'/meta'));
     meta=ms.exists()?loadRoomMeta(ms.val()):defMeta(meta.best);
     await f.update(f.ref(f.db,base+'/members/'+f.uid),{name:playerName()||'Jefe',role:'jefe',on:true});
-    return enterRoom(SHOP,true);
+    let rl=null;try{rl=(await f.get(f.ref(f.db,base+'/relay'))).val();}catch(e){}
+    return enterRoom(SHOP,true,rl);
   }
   /* Si el registro falla (reglas, permisos…), no es falta de conexión: se entra igual y se avisa. */
   let regErr=null;
@@ -2055,13 +2059,14 @@ function presence(){
   const on=fb.ref(fb.db,'rooms/'+room.code+'/members/'+room.uid+'/on');
   fb.onDisconnect(on).set(false);fb.set(on,true).catch(()=>{});
 }
-function enterRoom(code,host){
+function enterRoom(code,host,relay){
   const f=fb;
-  room={code,host:false,uid:f.uid,info:{},members:{},state:null,note:null,off:0,lastPub:0,lastHb:0,done:{},view:null,subbed:false,lastHtml:'',appsKey:''};
+  room={relay:relay||null,code,host:false,uid:f.uid,info:{},members:{},state:null,note:null,off:0,lastPub:0,lastHb:0,done:{},view:null,subbed:false,lastHtml:'',appsKey:''};
   presence();
   f.onValue(f.ref(f.db,'.info/serverTimeOffset'),s=>{room&&(room.off=s.val()||0);});
   f.onValue(rRef('info'),s=>{if(!room)return;room.info=s.val()||{};roomChanged();});
   f.onValue(rRef('members'),s=>{if(!room)return;room.members=s.val()||{};roomChanged();});
+  f.onValue(rRef('relay'),s=>{if(!room)return;room.relay=s.val();relayChanged();});
   if(host)becomeHost();else{memberSubs();renderMember();}
 }
 function memberSubs(){
@@ -2074,10 +2079,84 @@ function memberSubs(){
     if(isMember())renderMember();
   });
 }
+/* ===== Relevo (encargado/a): si el jefe deja de dar señal 25 s con la tienda abierta, el navegador de un empleado
+   conectado (Almacén, Backoffice, RR.PP. o RR.HH.; los cajeros tienen su caja) sigue moviendo la tienda: reloj, clientes, avisos,
+   otras cajas y cierres, sin decisiones de jefe (no hay reunión ni pedidos manuales). Guarda la partida cada 15 s. Cuando el jefe
+   vuelve, avisa con info.ret; el encargado guarda y suelta (/relay) y el jefe retoma el turno donde iba. */
+const RELAY_T=25000,RELAY_ROLES=['alm','back','rrpp','rrhh'];
+const relayActive=()=>{const r=room&&room.relay;return !!(r&&r.uid&&srvNow()-(r.hb||0)<RELAY_T);};
+const bossAway=()=>{const inf=room&&room.info||{};return !!inf.host&&srvNow()-(inf.hb||0)>RELAY_T&&inf.status&&inf.status!=='lobby';};
+function relayCheck(){
+  if(!room||!fb||offline)return;
+  if(room.sim){
+    fb.update(rRef('relay'),{hb:fb.serverTimestamp()}).catch(()=>{});
+    const inf=room.info||{},r=room.relay||{};
+    if((inf.ret&&r.since&&inf.ret>r.since)||!bossAway())stopRelay('👑 Ha vuelto el jefe: te devuelve la tienda y sigues en tu puesto.');
+    return;
+  }
+  if(room.host||room.relayBusy||!bossAway()||relayActive()||(run&&run.remote))return;
+  const ms=room.members||{},me=ms[room.uid];if(!me||!RELAY_ROLES.includes(me.role))return;
+  const c=Object.entries(ms).filter(([u,m])=>m&&m.on&&RELAY_ROLES.includes(m.role)&&u!==room.info.host).map(([u])=>u).sort();
+  if(c[0]===room.uid)startRelay();
+}
+async function startRelay(){
+  room.relayBusy=true;
+  try{
+    await fb.set(rRef('relay'),{uid:room.uid,name:playerName()||'Encargado/a',hb:fb.serverTimestamp(),since:fb.serverTimestamp()});
+    try{fb.onDisconnect(rRef('relay')).remove();}catch(e){}
+    const raw=(await fb.get(rRef('meta'))).val();
+    if(!raw){await fb.remove(rRef('relay'));room.relayBusy=false;return;}
+    meta=loadRoomMeta(raw);room.sim=true;ensureMeta();
+    room.actsOff=fb.onChildAdded(rRef('acts'),s=>{const a=s.val();fb.remove(s.ref).catch(()=>{});quiet=true;try{onAct(a);}finally{quiet=false;}});
+    resumeDay(meta.liveT||0);if(run&&!run.away)autoTill();
+    toast('👔 El jefe no está: tu navegador lleva la tienda como encargado/a hasta que vuelva. No cierres la app.','good');
+    room.lastHtml='';renderMember();
+  }catch(e){console.warn('Relevo:',e);room.sim=false;}
+  room.relayBusy=false;
+}
+async function stopRelay(msg){
+  if(!room.sim||room.relayBusy)return;room.relayBusy=true;
+  try{if(run&&!run.over)meta.liveT=run.t;meta.closed=!!(run&&run.over);await fb.set(rRef('meta'),plain(meta));}catch(e){console.warn('Relevo: no se pudo guardar',e);}
+  if(room.actsOff){room.actsOff();room.actsOff=null;}
+  room.sim=false;run=null;mg=null;pendingLeave=null;
+  try{await fb.remove(rRef('relay'));}catch(e){}
+  room.relayBusy=false;room.lastHtml='';renderAll();renderMember();if(msg)toast(msg,'good');
+}
+function relayNextDay(){
+  if(!room||!room.sim||!run||!run.over)return;
+  if(meta.day%3===1)meta.emp.forEach(closeSt);
+  meta.day++;meta.closed=false;startDay();if(run&&!run.away)autoTill();
+}
+function resumeDay(t){
+  startDay();
+  if(t>0&&run){run.t=Math.min(t,run.dur-1);meta.liveT=run.t;}
+}
+/* El jefe vuelve con un encargado al mando: le pide la tienda y espera a que la suelte. */
+function waitRelay(){
+  if(room.waitRelay)return;room.waitRelay=true;
+  fb.update(rRef('info'),{ret:fb.serverTimestamp()}).catch(()=>{});
+  showOverlay(`<div class="card"><h2>👔 Recuperando la tienda…</h2><p>${esc(cleanName((room.relay||{}).name))} la ha llevado mientras no estabas. Te la devuelve en unos segundos.</p></div>`);
+  clearTimeout(room.waitT);room.waitT=setTimeout(()=>{if(room&&room.waitRelay){room.relay=null;relayChanged(true);}},30000);
+}
+async function relayChanged(force){
+  if(!room)return;
+  if(room.host&&!room.sim){
+    if(relayActive()&&!room.waitRelay){run=null;mg=null;pendingLeave=null;closeMG();waitRelay();return;}
+    if(room.waitRelay&&(force||!relayActive())){
+      room.waitRelay=false;clearTimeout(room.waitT);
+      try{const raw=(await fb.get(rRef('meta'))).val();if(raw)meta=loadRoomMeta(raw);}catch(e){}
+      ensureMeta();run=null;
+      if(meta.liveT>0&&!meta.closed){hideOverlay();resumeDay(meta.liveT);toast('▶️ Retomas la tienda donde la dejó el encargado.','good');}else showLobby();
+      pubState(true);
+    }
+  }else if(!room.host)renderMember();
+}
 function becomeHost(){
   room.host=true;ensureMeta();if(cam.on)$('#camwin').classList.add('show');
   room.actsOff=fb.onChildAdded(rRef('acts'),s=>{const a=s.val();fb.remove(s.ref).catch(()=>{});onAct(a);});
-  showLobby();pubState(true);
+  if(relayActive()){waitRelay();return;}
+  if(meta.liveT>0&&!meta.closed){resumeDay(meta.liveT);toast('▶️ Retomas el turno donde se quedó.','good');}else showLobby();
+  pubState(true);
 }
 function demote(msg){
   if(room.actsOff){room.actsOff();room.actsOff=null;}
@@ -2186,6 +2265,7 @@ async function applyJob(r){
 }
 async function takeOver(){
   if(!isMember())return;
+  if(room.sim)await stopRelay('');
   hubMsg('👑 Intentando quedarte con el puesto de jefe…');
   try{await fb.set(rRef('info/host'),room.uid);}catch(e){console.warn(e);hubMsg('⚠️ No se puede: el jefe sigue activo o algo ha fallado ('+errMsg(e)+').',true);return;}
   room.msg=null;
@@ -2448,7 +2528,7 @@ function pubState(force){
   const phase=!run?'lobby':run.over?(run.dead?'dead':meet?'meeting':'shop'):run.closing?'closing':'open';
   fb.set(rRef('state'),plain({day:meta.day,t:run?Math.round(run.t):0,dur:run?run.dur:(room.info.dur||100),money:Math.round(meta.money),rep:Math.round(meta.rep*10)/10,
     q:run?run.queue.length:0,v:APPV,tills:run&&run.tills?Object.fromEntries(Object.entries(run.tills).map(([u,t])=>[u,t.n])):{},tq:run&&run.tills?Object.fromEntries(Object.entries(run.tills).map(([u,t])=>[t.n,Object.keys(t.out).length])):{},up:meta.up,dep:depData(),cnt:Object.fromEntries(Object.keys(ROLES).map(r=>[r,staffOf(r).length])),vac:Object.fromEntries(Object.keys(ROLES).map(r=>[r,vacOpen(r)])),phase,away:!!(run&&run.away),tasks,rpt:run&&run.over&&room.rpt||null,cam:run&&!run.over?camModel():null,ts:fb.serverTimestamp()})).catch(()=>{});
-  if(force||now-room.lastHb>10000){room.lastHb=now;fb.update(rRef('info'),{hb:fb.serverTimestamp(),day:meta.day,status:run&&!run.over?'open':run?'closed':'lobby'}).catch(()=>{});}
+  if(!room.sim&&!room.waitRelay&&!relayActive()&&(force||now-room.lastHb>10000)){room.lastHb=now;fb.update(rRef('info'),{hb:fb.serverTimestamp(),day:meta.day,status:run&&!run.over?'open':run?'closed':'lobby'}).catch(()=>{});}
 }
 
 /* Informe del cierre repartido por departamento: cada empleado real ve el suyo (el jefe lo ve todo en el cierre). */
@@ -2608,7 +2688,9 @@ function renderMember(){
   const bossOn=!!inf.host&&srvNow()-(inf.hb||0)<TAKEOVER,bossName=inf.host?esc(cleanName((ms[inf.host]||{}).name||inf.name)):'';
   const whoName=w=>w==='jefe'?'el jefe':ms[w]?'🎮 '+esc(cleanName(ms[w].name)):esc(w);
   const tasks=st&&!stale?toArr(st.tasks):[],mine=tasks.find(t=>t.who===room.uid);
-  const status=!inf.host?'<span class="live off"><i></i>SIN JEFE</span> Nadie lleva la tienda todavía.'
+  const rl=relayActive()?room.relay:null;
+  const status=rl&&!stale?`<span class="live"><i></i>EN DIRECTO</span> 👔 ${rl.uid===room.uid?'<b>Tú</b> llevas la tienda como encargado/a (no cierres la app)':'Encargado/a: <b>'+esc(cleanName(rl.name))+'</b>'} · el jefe no está`
+    :!inf.host?'<span class="live off"><i></i>SIN JEFE</span> Nadie lleva la tienda todavía.'
     :stale?`<span class="live off"><i></i>EN PAUSA</span> 👑 ${bossName} no tiene el juego abierto.`
     :`<span class="live"><i></i>EN DIRECTO</span> 👑 Jefe: <b>${bossName}</b> · turnos de ${durTxt(inf.dur)}`;
   const hud=st&&!stale?`<div class="mhud"><span>Turno <b>${st.day}</b></span><span>🕘 <b>${clockOf(st.t,st.dur)}</b></span><span>Bote <b>${fmt(st.money)}</b></span><span>★ <b>${(+st.rep).toFixed(1)}</b></span><span>Cola <b>${st.q}</b></span></div>`:'';
@@ -5003,7 +5085,10 @@ function offTick(dt){
   while(run.offAcc>=1){run.offAcc--;const v=Math.round(OFF.ticket*rnd(0.4,1.6)),c=Math.round(v*(SUPS[0].cf+OFF.merma));
     run.offS+=v;run.offC+=c;run.offN++;meta.money+=v-c;}
 }
-function tick(ts){
+function tick(ts){step(ts,false);requestAnimationFrame(tick);}
+function step(ts,hid){
+  if(room&&room.waitRelay)return;
+  quiet=!!(room&&room.sim);
   const dt=Math.min(0.1,(ts-last)/1000||0);last=ts;
   if(run&&!run.over&&!guide){
     run.t+=dt;
@@ -5048,11 +5133,25 @@ function tick(ts){
     renderChat();
   }
   renderHud();
+  if(isHost()&&run&&!run.over&&!run.remote&&run.t-(run.saveT||0)>15){run.saveT=run.t;meta.liveT=run.t;saveGame(false);}
+  quiet=false;
   if(isHost())pubState(false);
+  if(hid)return;
   if(tab!=='caja'&&!isMember()&&(ts-(window._dT||0))>700){window._dT=ts;renderDept();}
   drawCams();drawIso();till3d();if((iso.infoT=(iso.infoT||0)+1)%20===0)isoInfo();
-  requestAnimationFrame(tick);
 }
+/* Con la pestaña oculta el navegador no pinta (no hay requestAnimationFrame): si llevas la tienda, se sigue moviendo en segundo plano. */
+setInterval(()=>{
+  if(!document.hidden||!room||!isHost()||offline)return;
+  let n=Math.min(600,Math.floor((performance.now()-last)/100));while(n-->0)step(last+100,true);
+},1000);
+setInterval(relayCheck,3000);
+/* Si el jefe se va a otra pestaña o bloquea el móvil, un cajero de la casa lleva su Caja 3 hasta que vuelva. */
+document.addEventListener('visibilitychange',()=>{
+  if(!room||!room.host||room.sim||!run||run.over||run.remote||mg)return;
+  if(document.hidden){if(!run.away)autoTill();}
+  else if(tab==='caja'&&run.away&&run.away.auto)returnTill();
+});
 
 /* ---------- eventos ---------- */
 document.addEventListener('change',e=>{

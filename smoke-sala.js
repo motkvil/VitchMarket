@@ -43,20 +43,20 @@ function notify(p){
     },0);
   });
 }
-let uidN=0;const acts={},tillSum={served:0,sales:0};
+let uidN=0;const acts={},tillSum={served:0,sales:0},dead=new Set();
 function client(){
   const uid='uid'+(++uidN);
   const ref=(db,p)=>({path:p||''});
   return async()=>({db:{},uid,ref,
     get:async r=>snap(r.path),
-    set:async(r,v)=>{setAt(r.path,v);notify(r.path);},
-    update:async(r,o)=>{Object.keys(o).forEach(k=>setAt(r.path+'/'+k,o[k]));notify(r.path);},
+    set:async(r,v)=>{if(dead.has(uid))return;setAt(r.path,v);notify(r.path);},
+    update:async(r,o)=>{if(dead.has(uid))return;Object.keys(o).forEach(k=>setAt(r.path+'/'+k,o[k]));notify(r.path);},
     remove:async r=>{setAt(r.path,null);notify(r.path);},
     push:async(r,v)=>{if(v&&v.k)acts[v.k]=(acts[v.k]||0)+1;if(v&&v.k==="till"&&v.d){tillSum.served+=(+v.d.served||0);tillSum.sales+=(+v.d.sales||0);}const k='a'+(++pushN);setAt(r.path+'/'+k,v);notify(r.path+'/'+k);return{key:k};},
     onValue(r,cb){if(r.path==='.info/serverTimeOffset'){setTimeout(()=>cb({val:()=>skew}),0);return()=>{};}
       const L={type:'value',path:r.path,cb};listeners.push(L);setTimeout(()=>{if(!L.off)cb(snap(r.path));},0);return()=>{L.off=1;};},
     onChildAdded(r,cb){const L={type:'child',path:r.path,cb,seen:new Set()};listeners.push(L);notify(r.path);return()=>{L.off=1;};},
-    onDisconnect:()=>({set:async()=>{},cancel:async()=>{}}),
+    onDisconnect:()=>({set:async()=>{},remove:async()=>{},cancel:async()=>{}}),
     serverTimestamp:()=>({'.sv':'timestamp'}),
     query:r=>r,orderByChild:()=>0,limitToLast:()=>0});
 }
@@ -159,8 +159,12 @@ function memberBot(d){
     st.memberView=(db.querySelector('#overlay .card h2')||{}).textContent;
     st.note=(getAt('rooms/'+code+'/notes')||{});
     // toma de mando: el latido del jefe se queda viejo
-    A.close();await sleep(200);
-    setAt('rooms/'+code+'/info/hb',Date.now()-200000);notify('rooms/'+code+'/info');await sleep(2500);
+    dead.add('uid1');A.close();await sleep(200); // el navegador del jefe deja de escribir (cerrado)
+    setAt('rooms/'+code+'/info/hb',Date.now()-200000);notify('rooms/'+code+'/info');
+    // relevo: la empleada (Almacén) sigue moviendo la tienda como encargada
+    const t0=(getAt('rooms/'+code+'/state')||{}).t;await sleep(7000);
+    const rl=getAt('rooms/'+code+'/relay');st.relay=rl?rl.uid:null;st.relayT=[t0,(getAt('rooms/'+code+'/state')||{}).t];
+    st.relayView=(db.querySelector('#overlay .card')||{textContent:''}).textContent.includes('encargado');
     st.empRole=(getAt('rooms/'+code+'/members')||{}).uid2;
     const boss=db.querySelector('[data-act=rboss]');st.bossBtn=!!boss;cl(boss);await sleep(500);
     st.newHost=getAt('rooms/'+code+'/info/host');

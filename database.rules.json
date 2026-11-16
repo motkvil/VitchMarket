@@ -71,6 +71,9 @@
           "hb": {
             ".validate": "newData.isNumber() && newData.val() <= now"
           },
+          "ret": {
+            ".validate": "newData.isNumber() && newData.val() <= now"
+          },
           "$other": {
             ".validate": false
           }
@@ -97,19 +100,28 @@
           }
         },
         "state": {
-          ".write": "auth != null && root.child('rooms/'+$code+'/info/host').val() === auth.uid"
+          ".write": "auth != null && (root.child('rooms/'+$code+'/info/host').val() === auth.uid || (root.child('rooms/'+$code+'/relay/uid').val() === auth.uid && now - root.child('rooms/'+$code+'/info/hb').val() > 20000))"
         },
         "meta": {
-          ".write": "auth != null && root.child('rooms/'+$code+'/info/host').val() === auth.uid"
+          ".write": "auth != null && (root.child('rooms/'+$code+'/info/host').val() === auth.uid || (root.child('rooms/'+$code+'/relay/uid').val() === auth.uid && now - root.child('rooms/'+$code+'/info/hb').val() > 20000))"
         },
         "notes": {
           "$uid": {
-            ".write": "auth != null && root.child('rooms/'+$code+'/info/host').val() === auth.uid"
+            ".write": "auth != null && (root.child('rooms/'+$code+'/info/host').val() === auth.uid || (root.child('rooms/'+$code+'/relay/uid').val() === auth.uid && now - root.child('rooms/'+$code+'/info/hb').val() > 20000))"
           }
+        },
+        "relay": {
+          ".write": "auth != null && (root.child('rooms/'+$code+'/info/host').val() === auth.uid || (!newData.exists() && data.child('uid').val() === auth.uid) || (newData.child('uid').val() === auth.uid && root.child('rooms/'+$code+'/members/'+auth.uid+'/role').exists() && now - root.child('rooms/'+$code+'/info/hb').val() > 20000 && (!data.exists() || data.child('uid').val() === auth.uid || now - data.child('hb').val() > 20000)))",
+          ".validate": "!newData.exists() || newData.hasChildren(['uid', 'hb'])",
+          "uid": { ".validate": "newData.isString()" },
+          "name": { ".validate": "newData.isString() && newData.val().length <= 20" },
+          "hb": { ".validate": "newData.isNumber() && newData.val() <= now" },
+          "since": { ".validate": "newData.isNumber() && newData.val() <= now" },
+          "$other": { ".validate": false }
         },
         "acts": {
           "$id": {
-            ".write": "auth != null && ((!data.exists() && newData.child('uid').val() === auth.uid && root.child('rooms/'+$code+'/members/'+auth.uid).exists()) || (!newData.exists() && root.child('rooms/'+$code+'/info/host').val() === auth.uid))",
+            ".write": "auth != null && ((!data.exists() && newData.child('uid').val() === auth.uid && root.child('rooms/'+$code+'/members/'+auth.uid).exists()) || (!newData.exists() && (root.child('rooms/'+$code+'/info/host').val() === auth.uid || (root.child('rooms/'+$code+'/relay/uid').val() === auth.uid && now - root.child('rooms/'+$code+'/info/hb').val() > 20000))))",
             ".validate": "newData.hasChildren(['uid', 'k', 'ts'])",
             "uid": {
               ".validate": "newData.isString()"
@@ -157,7 +169,7 @@
         },
         "till": {
           "$uid": {
-            ".write": "auth != null && (auth.uid === $uid || root.child('rooms/'+$code+'/info/host').val() === auth.uid)"
+            ".write": "auth != null && (auth.uid === $uid || root.child('rooms/'+$code+'/info/host').val() === auth.uid || (root.child('rooms/'+$code+'/relay/uid').val() === auth.uid && now - root.child('rooms/'+$code+'/info/hb').val() > 20000))"
           }
         }
       }
