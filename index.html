@@ -1954,7 +1954,7 @@ async function fillRanking(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.16-37';
+const APPV='2026.11.16-38';
 /* Compara versiones por números («-9» < «-11»), no como texto. */
 const verCmp=(a,b)=>{const x=String(a).split(/[.-]/).map(Number),y=String(b).split(/[.-]/).map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
 try{const vt=document.createElement('div');vt.id='vtag';vt.textContent='v'+APPV;document.body.appendChild(vt);}catch(e){}
@@ -4602,7 +4602,7 @@ function pixTill(slot){
   /* medidas: la cinta manda */
   let cy,ch,bx0=4,bx1,bw,bh,bxx,byy;
   if(V==='B'){cy=Math.round(BH*.34);ch=Math.round(BH*.62);bw=Math.min(Math.round(BW*.2),44);bh=Math.round(bw*.8);bxx=BW-bw-5;byy=cy+ch-bh-4;bx1=bxx-2;}
-  else{cy=Math.round(BH*.36);ch=Math.round(BH*.46);bx1=Math.round(BW*.76);bw=Math.min(Math.round(BW-bx1-8),Math.round(ch*.9),56);bh=Math.round(bw*.8);bxx=bx1+Math.round((BW-bx1-bw)/2);byy=cy+Math.round((ch-bh)/2);}
+  else{cy=Math.round(BH*.3);ch=Math.round(BH*.58);bx1=Math.round(BW*.76);bw=Math.min(Math.round(BW-bx1-8),Math.round(ch*.9),56);bh=Math.round(bw*.8);bxx=bx1+Math.round((BW-bx1-bw)/2);byy=cy+Math.round((ch-bh)/2);}
   /* mostrador y cinta */
   c.fillStyle='#d9dde3';c.fillRect(0,cy-4,BW,ch+8);c.fillStyle='#fff';c.fillRect(0,cy-4,BW,3);c.fillStyle='#e5383b';c.fillRect(0,cy+ch+2,BW,3);
   const beltR=V==='B'?bx1-4:bx1-20;
@@ -4628,8 +4628,8 @@ function pixTill(slot){
   const cu=run&&!run.away&&front(),its=cu&&cu.phase==='scan'?cu.items:[];
   if((cu&&cu.id)!==ptl.cid){ptl.cid=cu&&cu.id;ptl.items.clear();ptl.fly=[];ptl.bask=[];}
   const onBelt=its.filter(i=>!i.scanned&&!i.denied),n=Math.max(1,onBelt.length),BWd=beltR-bx0-8;
-  let rows=V==='B'?2:1,per=Math.ceil(n/rows),isz=Math.min(ch/rows*.8,BWd/per-4);
-  if(V!=='B'&&isz<ch*.4){rows=2;per=Math.ceil(n/2);isz=Math.min(ch/2*.82,BWd/per-4);}
+  /* filas que dejan los productos más grandes (mínimo 2 filas en cuanto hay 3 o más, como en el ordenador) */
+  let rows=1,per=n,isz=0;for(let r=V==='B'||n>=3?2:1;r<=3;r++){const pr=Math.ceil(n/r),sz=Math.min(ch/r*.82,BWd/pr-4);if(sz>isz+.5){isz=sz;rows=r;per=pr;}}
   isz=Math.max(10,Math.floor(isz));const gap=Math.min((BWd-per*isz)/Math.max(1,per),isz*.35);
   ptl.hits=[];
   its.forEach(it=>{const m=ptl.items.get(it.id);if(m&&it.scanned&&!m.gone){m.gone=1;ptl.fly.push({e:it.e,x:m.x,y:m.y,t:0,s:isz});}});
