@@ -1105,6 +1105,8 @@ body.b3d .till3d{flex:1 1 0;min-height:200px}
 
 /* El contenedor de los departamentos no lleva marco: con el de las tarjetas basta */
 .dept{background:transparent;border:0;box-shadow:none;border-radius:0;padding:0}
+
+.vac .vn{display:grid!important;grid-template-columns:auto 1fr;column-gap:8px;align-items:center}.vac .vn i{grid-row:1/3;font-style:normal;font-size:22px}.vac .vn b{font-size:13px}
 </style>
 </head>
 <body>
@@ -1812,7 +1814,7 @@ function showShop(noFit){
       <span>Errores</span><b>${run.errors}</b>
       <span>Ventas del día</span><b>${fmt(run.sales)}</b>
       <span>Propinas</span><b>${fmt(run.tips)}</b>
-      <span>Multas y pérdidas en caja</span><b>−${fmt(run.fines)}</b>
+      <span>Multas y pérdidas en caja</span><b>${run.fines?'−':''}${fmt(run.fines)}</b>
       ${dl('Backoffice',r.back)}${dl('Relaciones Públicas',r.rrpp)}${dl('Almacén',r.alm)}
       <span>Nómina del personal</span><b>−${fmt(e.payroll)}</b>
       <span>Avisos atendidos</span><b>${run.tdone} ✓ · ${run.tlost} ✗</b>
@@ -1918,7 +1920,7 @@ async function fillRanking(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.15-32';
+const APPV='2026.11.15-33';
 /* Compara versiones por números («-9» < «-11»), no como texto. */
 const verCmp=(a,b)=>{const x=String(a).split(/[.-]/).map(Number),y=String(b).split(/[.-]/).map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
 try{const vt=document.createElement('div');vt.id='vtag';vt.textContent='v'+APPV;document.body.appendChild(vt);}catch(e){}
@@ -4541,7 +4543,7 @@ function backHtml(){
   const nom=meta.emp.reduce((t,e)=>t+e.wage,0),r=run||{};
   return `<div class="dgrid"><div class="dpanel"><h2>💼 Backoffice</h2>${staffBlock('back')}
     <div class="zone-title">CUENTAS ${run&&!run.over?'DEL TURNO':'DEL ÚLTIMO TURNO'}</div>
-    <div class="sum"><span>Bote</span><b>${fmt(meta.money)}</b><span>Ventas</span><b>${fmt(r.sales||0)}</b><span>Propinas</span><b>${fmt(r.tips||0)}</b><span>Multas y pérdidas en caja</span><b>−${fmt(r.fines||0)}</b><span>Nómina por turno</span><b>−${fmt(nom)}</b><span>Quiebra si el bote baja de</span><b>−300,00 €</b></div></div>
+    <div class="sum"><span>Bote</span><b>${fmt(meta.money)}</b><span>Ventas</span><b>${fmt(r.sales||0)}</b><span>Propinas</span><b>${fmt(r.tips||0)}</b><span>Multas y pérdidas en caja</span><b>${r.fines?'−':''}${fmt(r.fines||0)}</b><span>Nómina por turno</span><b>−${fmt(nom)}</b><span>Quiebra si el bote baja de</span><b>−300,00 €</b></div></div>
     <div class="dpanel"><div class="zone-title">BANDEJA · RECLAMACIONES DE DINERO</div>${tkList('back')}<div class="supd">Las que nadie resuelva se reparten al cerrar entre el personal de Backoffice.</div></div></div>`;
 }
 function rrppHtml(){
@@ -4556,12 +4558,10 @@ function rrhhHtml(){
   let nm=meta.day+1;while(nm%3!==1)nm++;
   const rr=staffOf('rrhh'),realRR=rr.find(e=>e.real&&run&&run.duty&&working(e));
   const rows=meta.emp.map(e=>`<div class="up"><div class="t"><b>${e.face} ${e.real?'🎮':flag(e)} ${e.name} · ${ROLES[e.role].n}</b>${e.days} ${e.days===1?'turno':'turnos'} · ${fmt(e.wage)}/día${e.trial?' · en prueba ('+e.trial+')':''}${e.warn?' · ⚠️×'+e.warn:''}</div><span class="mood">${mood(e)}</span></div>`).join('')||'<div class="supd">Plantilla vacía.</div>';
-  const cnt=Object.keys(ROLES).map(k=>`<span>${JOB_IC[k]} ${ROLES[k].n}</span><b>${staffOf(k).length}/${ROLES[k].max}</b>`).join('');
   return `<div class="dgrid"><div class="dpanel"><h2>🗂️ Recursos Humanos</h2>${staffBlock('rrhh')}
     ${isHost()?(appsHtml()||'<div class="zone-title">📝 SOLICITUDES DE EMPLEO</div><div class="supd">No hay solicitudes pendientes.</div>')+(realRR?`<div class="supd">${realRR.name} (RR.HH.) también puede tramitarlas desde su pantalla.</div>`:''):'<div class="supd">En solitario no llegan solicitudes de personas reales: contratas en la reunión de personal.</div>'}
     <div class="zone-title">📢 VACANTES</div><div class="supd">${rr.some(e=>!e.real)&&!realRR?'Tu gente de RR.HH. las publica sola cuando falta personal; tú también puedes.':realRR?realRR.name+' (RR.HH.) también las publica desde su puesto.':'Sin nadie en RR.HH., las publicas tú.'} Solo se presentan candidatos a puestos con vacante.</div>
-    <div class="vacs">${Object.keys(ROLES).map(k=>{const v=vacOpen(k),n=staffOf(k).length,mx=ROLES[k].max;return `<div class="vac ${v?'on':''}"><span>${JOB_IC[k]} <b>${ROLES[k].s}</b><small>${n}/${mx} en plantilla</small></span><span class="vbtn"><button class="btn mini" data-act="vac" data-r="${k}" data-d="-1" ${v?'':'disabled'}>−</button><b>${v}</b><button class="btn mini go" data-act="vac" data-r="${k}" data-d="1" ${n+v<mx?'':'disabled'}>＋</button></span></div>`;}).join('')}</div>
-    <div class="zone-title">PLAZAS</div><div class="sum">${cnt}</div>
+    <div class="vacs">${Object.keys(ROLES).map(k=>{const v=vacOpen(k),n=staffOf(k).length,mx=ROLES[k].max;return `<div class="vac ${v?'on':''}"><span class="vn"><i>${JOB_IC[k]}</i><b>${ROLES[k].n}</b><small>${n}/${mx} en plantilla${v?' · se busca'+(v>1?' ('+v+')':''):''}</small></span><span class="vbtn"><button class="btn mini" data-act="vac" data-r="${k}" data-d="-1" ${v?'':'disabled'}>−</button><b>${v}</b><button class="btn mini go" data-act="vac" data-r="${k}" data-d="1" ${n+v<mx?'':'disabled'}>＋</button></span></div>`;}).join('')}</div>
     <div class="supd">Próxima reunión de personal (valorar, aumentos, contratar y despedir): al cerrar el turno ${meta.day%3===1&&!(run&&!run.over)?meta.day:nm}.</div></div>
     <div class="dpanel"><div class="zone-title">PLANTILLA Y CONTRATOS</div><div class="shop">${rows}</div></div></div>`;
 }
