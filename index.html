@@ -1375,6 +1375,51 @@ body.rem .isostore{display:none!important}
 .scn-seal{position:absolute;right:16px;top:44px;transform:rotate(14deg);border:3px double rgba(197,29,34,.55);color:rgba(197,29,34,.55);border-radius:50%;width:66px;height:66px;display:grid;place-items:center;font-family:var(--display);font-weight:700;font-size:10px;letter-spacing:1px;pointer-events:none}
 .scn-bank .balbar{margin:0}
 @media (max-width:820px){.scn-doc{font-size:12px;padding:5px 8px}.scn-doc b{font-size:14px}.scn-seal{width:50px;height:50px;font-size:8px;top:36px;right:10px}}
+/* ===== QUICK WINS de la auditoría de arte ===== */
+
+/* QW1 · Causa raíz de los paneles de 214 px: la línea 1197 redefine .dgrid con auto-FILL (crea 7 pistas aunque solo haya 2 paneles).
+   Con auto-FIT las pistas vacías se colapsan y cada panel crece hasta llenar el ancho. */
+.dgrid{grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr))}
+/* Opcional (QW1b): en pestañas de departamento la tienda grande sobra, porque #deptscene ya enseña su zona.
+@media (min-width:1280px){body:not([data-tab="caja"]) .play{grid-template-columns:minmax(0,1fr) 310px}body:not([data-tab="caja"]) .isostore{display:none}} */
+
+/* QW2 · El dinero nunca se corta con «…»: tamaño fluido y rejilla que salta de línea. */
+.balk{grid-template-columns:repeat(auto-fit,minmax(128px,1fr))}
+.balk b{overflow:visible;text-overflow:clip;font-size:clamp(15px,1.05vw,19px)}
+.dkpis{grid-template-columns:repeat(auto-fit,minmax(120px,1fr))}   /* línea 1214: 4 columnas fijas cortaban «+237,8…» */
+.sups{grid-template-columns:repeat(auto-fit,minmax(110px,1fr))}
+
+/* QW3 · Los avisos emergentes no tapan minijuegos ni el cierre: quedan debajo de #overlay (20), #mg (25) y #scene. */
+#toast{z-index:18}
+
+/* QW4 · Contraste AA: botón «no» y textos verdes/grises. */
+:root{--mute:#5d6a64;--ok:#1e7d47}
+.btn.no{background:linear-gradient(180deg,#e5383b,#a8161c)}
+.btn.go{background:linear-gradient(180deg,#178043,#0f6234)}
+.balk .pos b,.bal .sum .pos{color:#1e7d47}
+
+/* QW5 · Billetes y monedas de la caja con los mismos colores que el arqueo de Backoffice (.money.b50…), y el valor en grande. */
+.dn{font-family:var(--pix);font-size:15px;font-weight:700;color:#1b1f1d;border:2px solid rgba(0,0,0,.25)}
+.dn.bill[data-v="5000"]{background:linear-gradient(90deg,#f6a65a,#ef8b33)}
+.dn.bill[data-v="2000"]{background:linear-gradient(90deg,#86aee9,#5b8fd9)}
+.dn.bill[data-v="1000"]{background:linear-gradient(90deg,#ec8f89,#e0645f)}
+.dn.bill[data-v="500"]{background:linear-gradient(90deg,#a9d0a5,#7cb87a)}
+.dn.coin[data-v="200"],.dn.coin[data-v="100"]{background:radial-gradient(circle,#dfe3e6 0 45%,#d8b24a 47%);border-radius:999px}
+.dn.coin[data-v="50"],.dn.coin[data-v="20"],.dn.coin[data-v="10"]{background:radial-gradient(circle at 35% 35%,#f5dc7a,#c99a2e);border-radius:999px}
+.dn.coin[data-v="5"],.dn.coin[data-v="2"],.dn.coin[data-v="1"]{background:radial-gradient(circle at 35% 35%,#e9a374,#b4602f);color:#fff;border-radius:999px}
+
+/* QW6 · Pestañas en móvil con nombre corto bajo el icono (hoy solo icono). */
+@media (max-width:640px){
+  .tab{flex-direction:column;gap:0;line-height:1.05;padding:4px 2px}
+  .tab span{display:block;font-family:var(--body);font-weight:800;font-size:10px;letter-spacing:0;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+}
+
+/* QW7 · Tamaño mínimo de texto 12 px en etiquetas de datos (hoy 9–11 px). */
+.balk small,.dkpi small,.isostore .ptitle small,.brand small{font-size:12px}
+
+/* QW8 · El agujero de «etiqueta de precio» en los botones de las escenas parecía un botón de radio: se quita. */
+.scn-ch .btn::before{display:none}
+
 </style>
 </head>
 <body>
@@ -1839,6 +1884,7 @@ function dropEmp(e){
   meta.emp=meta.emp.filter(x=>x!==e);if(run&&run.duty)delete run.duty[e.id];
 }
 /* 1 · Candidato en la puerta (entrevista sin nadie de RR.HH.): entrevistarle ya, que espere o hoy no. */
+function mgN(){return parseInt(String(mg&&mg.t&&mg.t.id||'').replace(/\D/g,''),10)||0;}
 function candScene(t){
   const c=t.cand;if(!c)return;
   bScene({k:'cand:'+t.id,tid:t.id,who:c.face,sprite:'c'+t.id,head:'🚪 PUERTA DE PERSONAL',tag:'🧑‍💼 Candidato',name:empTag(c),prio:1,time:14,def:'wait',
@@ -2991,7 +3037,7 @@ async function fillRanking(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.17-73';
+const APPV='2026.11.17-74';
 /* Compara versiones por números («-9» < «-11»), no como texto. */
 const verCmp=(a,b)=>{const x=String(a).split(/[.-]/).map(Number),y=String(b).split(/[.-]/).map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
 try{const vt=document.createElement('div');vt.id='vtag';vt.textContent='v'+APPV;document.body.appendChild(vt);}catch(e){}
@@ -3653,7 +3699,7 @@ function workScreen(o){
   let h=`<div class="gs th-${role}">
    <div class="gs-hud"><div class="gs-id"><span class="gs-ic">${JOB_IC[role]}</span><div><b>${R.n.toUpperCase()}</b><small>${esc(playerName())}${you[5]?' · en prueba':''}</small></div></div>
     <div class="gs-clock">${st&&!stale?`<b class="gled">${clockOf(st.t,st.dur)}</b><span class="gs-bar"><i style="width:${prog}%"></i></span><small>TURNO ${st.day}</small>`:''}</div>
-    <div class="gs-stats">${st&&!stale?`<span><small>BOTE</small><b class="gled">${fmt(st.money)}</b></span><span><small>FAMA</small><b class="gled">★${(+st.rep).toFixed(1)}</b></span><span><small>COLA</small><b class="gled">${st.q}</b></span>`:''}
+    <div class="gs-stats">${st&&!stale?`<span><small>BOTE</small><b class="gled">${fmt(st.money)}</b></span><span><small>REPUTACIÓN</small><b class="gled">★${(+st.rep).toFixed(1).replace('.',',')}</b></span><span><small>COLA</small><b class="gled">${st.q}</b></span>`:''}
      <button class="gs-mini" data-act="guide" title="Cómo se trabaja">📘</button><button class="gs-mini" data-act="rquit" title="Dejar el trabajo" ${mine?'disabled':''}>🚪</button></div><div class="tlane"></div></div>
    <div class="gs-status ${relayActive()?'relay':''}">${status}</div>${verMsg}${room.msg?`<div class="${room.msg.bad?'rerr':'rok'}">${esc(room.msg.t)}</div>`:''}
    <div class="gs-main"><div class="gs-scene sc-${role} ${why&&!mine?'shut':''}"><div class="gs-wall"><span>${S.bg.toUpperCase()}</span></div><div class="gs-iso" id="isoslotw"><span class="gs-zone">📍 Tu zona de la tienda, en directo</span></div><div class="gs-objs ${S.objs.length===4?'g4':''}">`;
@@ -3840,7 +3886,7 @@ function spawnTask(){
   run.tasks.push(t);
   toast(t.ic+' '+t.txt);beep(660,.12,'triangle',.05);
   renderTasks();
-  if(T.k==='cv'&&!hasRR&&sceneOk('cand',40))candScene(t);
+  if(T.k==='cv'&&!hasRR&&sceneOk('cand',40)&&(meta.day>1||run.t>run.dur*0.3))candScene(t);
   if(T.k==='feud'&&sceneOk('feud',60))feudScene(t);
 }
 function assignTask(tid,who){
@@ -4343,7 +4389,7 @@ function almBody(){
     let h=steps(['Albarán','Ubicar'],mg.step);
     if(mg.step===0){
       h+=`<div class="brief">🚚 Compara el <b>albarán</b> con lo que ha bajado al muelle. Sella cada línea antes de firmar: lo que no apuntes, lo pagas.</div>
-        <div class="clip"><i class="clamp"></i><div class="paper"><div class="phd"><b>ALBARÁN Nº ${4800+((mg.t.id||7)*37)%200}</b><small>Hacendado Directo · Muelle 2</small></div>
+        <div class="clip"><i class="clamp"></i><div class="paper"><div class="phd"><b>ALBARÁN Nº ${4800+((mgN()||7)*37)%200}</b><small>Hacendado Directo · Muelle 2</small></div>
         ${mg.lines.map((l,i)=>`<div class="pl"><div class="plt"><b>${l.e} ${l.n}</b><small>Pedido: ${l.q} ${l.q===1?'caja':'cajas'}</small></div>
           <div class="pgot">${Array.from({length:l.got},(_,k)=>`<i class="mini ${k>=l.got-l.roto?'rota':''}"></i>`).join('')}<small>en el muelle</small></div>
           <div class="stamps">${[['ok','✔ OK'],['falta','FALTA'],['roto','ROTO']].map(([k,lb])=>`<button class="stamp s-${k} ${l.mark===k?'on':''}" data-act="mgmark" data-i="${i}" data-k="${k}">${lb}</button>`).join('')}</div></div>`).join('')}
@@ -4452,10 +4498,10 @@ function backBody(){
   const steps=(names,cur)=>'<div class="mgsteps">'+names.map((n,i)=>`<span class="${i===cur?'on':i<cur?'ok':''}">${i<cur?'✔':i+1} ${n}</span>`).join('')+'</div>';
   if(mg.kind==='refund'){
     const tot=mg.lines.reduce((s,l)=>s+l.p,0),now=new Date(TODAY);
-    const ticket=`<div class="thermal"><div class="th-logo">VITCHMARKET</div><div class="th-sub">C/ Mayor 3 · CIF B-00000000<br>${dShort(now)}/${now.getFullYear()} · ${String(9+((mg.t.id||3)%11)).padStart(2,'0')}:${String((mg.t.id||7)*13%60).padStart(2,'0')} · Caja ${1+((mg.t.id||1)%3)}</div>
+    const ticket=`<div class="thermal"><div class="th-logo">VITCHMARKET</div><div class="th-sub">C/ Mayor 3 · CIF B-00000000<br>${dShort(now)}/${now.getFullYear()} · ${String(9+((mgN()||3)%11)).padStart(2,'0')}:${String((mgN()||7)*13%60).padStart(2,'0')} · Caja ${1+((mgN()||1)%3)}</div>
       ${mg.lines.map((l,i)=>`<button class="tl ${mg.mark===i?'circled':''}" data-act="mgline" data-i="${i}" ${mg.step?'disabled':''}><span>${l.n}</span><span>${fmt(l.p)}</span></button>`).join('')}
       <div class="tt"><span>TOTAL</span><b>${fmt(tot)}</b></div>
-      <div class="tp">${mg.pay==='card'?'TARJETA ****'+String(1000+(mg.t.id||1)*271%9000).slice(-4):'EFECTIVO'}${mg.cash?`<br>ENTREGADO ${fmt(mg.cash.given)} · CAMBIO ${fmt(mg.cash.change)}`:''}</div>
+      <div class="tp">${mg.pay==='card'?'TARJETA ****'+String(1000+(mgN()||1)*271%9000).slice(-4):'EFECTIVO'}${mg.cash?`<br>ENTREGADO ${fmt(mg.cash.given)} · CAMBIO ${fmt(mg.cash.change)}`:''}</div>
       <i class="th-bc"></i><div class="th-thanks">¡Gracias por su visita!</div></div>`;
     let h=steps(['Revisar','Reembolso','Devolver'],mg.step)+`<div class="ccust"><span>🧑</span><div class="bubble">${mg.claim}</div></div>`;
     if(mg.step===0){
@@ -5689,7 +5735,7 @@ function isoInfo(){
   const rep=meta.rep,pct=Math.round(rep/5*100),goal=8+2*meta.day;
   const G=[[`Atiende a ${goal} clientes`,Math.min(run.served,goal)/goal,run.served+'/'+goal],['Ningún cliente se va enfadado',run.angry?0:1,run.angry?run.angry+' enfadados':'0'],['Reputación de 4 o más',rep>=4?1:rep/4,'★ '+rep.toFixed(1)]];
   const done=G.filter(g=>g[1]>=1).length,lm=run.lastMsg;
-  const h=`<div class="ib rep"><div class="ibt">⭐ Reputación</div><div class="ibrow"><span class="bigstar">⭐</span><b class="pct">${pct}%</b></div><div class="stars5">${'★'.repeat(Math.round(rep))}<i>${'★'.repeat(5-Math.round(rep))}</i></div><small>${rep>=4?'✅ Clientes contentos':rep>=2.5?'😐 Mejorable':'⚠️ Cuidado: te pueden echar'}</small></div>
+  const h=`<div class="ib rep"><div class="ibt">⭐ Reputación</div><div class="ibrow"><span class="bigstar">⭐</span><b class="pct">${rep.toFixed(1).replace('.',',')}<small>/5</small></b></div><div class="stars5">${'★'.repeat(Math.round(rep))}<i>${'★'.repeat(5-Math.round(rep))}</i></div><small>${rep>=4?'✅ Clientes contentos':rep>=2.5?'😐 Mejorable':'⚠️ Cuidado: te pueden echar'}</small></div>
     <div class="ib pet"><div class="ibt">💬 Vitchi te cuenta</div><div class="petrow"><span class="dog">🐶</span><div class="say ${lm?lm.k:''}">${lm?esc(lm.m):'¡Buenas! Hoy toca vender mucho y sin errores. ¡Tú puedes!'}</div></div></div>
     <div class="ib goals"><div class="ibt">🏆 Objetivos del turno</div>${G.map(g=>`<div class="gl ${g[1]>=1?'ok':''}"><i>${g[1]>=1?'✅':'⬜'}</i><span>${g[0]}</span><small>${g[2]}</small></div>`).join('')}<div class="gbar"><i style="width:${done/3*100}%"></i></div><b class="gcount">${done}/3</b></div>`;
   if(h!==isoInfoH){isoInfoH=h;el.innerHTML=h;}
