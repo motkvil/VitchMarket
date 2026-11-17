@@ -1177,6 +1177,16 @@ body.rem .isostore{display:none!important}
 .card.screen>.scr-head small.sub{color:#ffe1e1;opacity:.9}
 /* Cierre: tarjetas con las cifras clave y ventana a la medida en pantalla grande */
 .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.dkpis{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.dkpi{background:#fff;border:2px solid #f0c9c9;border-radius:12px;padding:6px 8px;display:flex;flex-direction:column;align-items:flex-start;gap:1px;text-align:left;min-width:0;cursor:pointer}
+.dkpi.on{border-color:#e5383b;box-shadow:0 3px 0 #b3141c}
+.dkpi small{font-size:11px;color:var(--mute);white-space:nowrap}.dkpi b{font-family:var(--pix);font-weight:400;font-size:18px;white-space:nowrap}
+.dkpi em{font-style:normal;font-size:10px;font-weight:700;color:var(--mute);white-space:normal;line-height:1.15}.dkpi em.up{color:var(--ok)}.dkpi em.down{color:#e5383b}
+.dchart{width:100%;height:190px;display:block;background:#fff;border:2px solid #f0c9c9;border-radius:12px;margin-top:6px}
+.dchart .dg{stroke:#f2e3e3;stroke-width:1}.dchart .d0{stroke:#bbb;stroke-dasharray:3 3}.dchart .dt{font-size:11px;fill:#8a7f7f}
+.dchart .dl-cur{fill:none;stroke:#e5383b;stroke-width:3;stroke-linejoin:round}.dchart .dl-prev{fill:none;stroke:#9aa3ab;stroke-width:2;stroke-dasharray:6 4}.dchart .dl-dot{fill:#e5383b;stroke:#fff;stroke-width:2}
+.dleg{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12px;color:var(--mute);margin-top:4px}.dleg .lc{color:#e5383b;font-weight:700}.dleg .lp{color:#7d8790;font-weight:700}
+@media (max-width:520px){.dkpis{grid-template-columns:repeat(2,1fr)}.dchart{height:150px}}
 .kpi{background:#fff;border:2px solid #f0c9c9;border-radius:12px;padding:8px 12px;display:flex;flex-direction:column;gap:2px;min-width:0}
 .kpi>small{font-size:12px;color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .kpi>b{font-family:var(--pix);font-size:22px;font-weight:400;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.kpi>b small{font-family:var(--body);font-size:11px;color:var(--mute)}
@@ -1598,7 +1608,7 @@ function startDay(){
     tasks:[],nextTask:6,away:null,tdone:0,tlost:0,duty:{},ev:[],ivaR:0,offS:0,offC:0,offN:0};
   if(isHost())run.dur=room.info.dur||100;
   ensureMeta();
-  run.buy=meta.buyNext||0;meta.buyNext=0;run.m0=meta.money+run.buy;
+  run.buy=meta.buyNext||0;meta.buyNext=0;run.m0=meta.money+run.buy;run.mo=meta.money;run.curve=[];
   meta.liveT=0;saveGame(false);
   const notes=prepShift();
   const rr=receiveDeliveries();
@@ -1829,6 +1839,7 @@ function endDay(){
   meta.money-=iva+is;
   const fin={S,O,ON:run.offN||0,F,B,P:payroll,PB:payB,FX,INT,K,oth,cogs,iva,ivaR,ivaS,cred:meta.ivaCred||0,bai,is,net:bai-is,cash:delta-iva-is,m0:run.m0};
   meta.hist=(meta.hist||[]).concat([{d:meta.day,s:S,n:fin.net}]).slice(-6);
+  curveSample(true);meta.prevCurve=run.curve||[];meta.prevDay=meta.day;
   meta.best=Math.max(meta.best,meta.day);
   cart={};
   lastEnd={payroll,res,fin};scrTab.shop='sum';pg=0;tipsPer=0;
@@ -2059,7 +2070,7 @@ async function fillRanking(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.17-54';
+const APPV='2026.11.17-55';
 /* Compara versiones por números («-9» < «-11»), no como texto. */
 const verCmp=(a,b)=>{const x=String(a).split(/[.-]/).map(Number),y=String(b).split(/[.-]/).map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
 try{const vt=document.createElement('div');vt.id='vtag';vt.textContent='v'+APPV;document.body.appendChild(vt);}catch(e){}
@@ -5030,7 +5041,7 @@ function dirHtml(){
   const card=(k,ic,n,txt)=>`<button class="dcard" data-act="tab" data-k="${k}"><b>${ic} ${n}</b><span>${txt}</span></button>`;
   const present=role=>staffOf(role).filter(e=>live&&inStore(e)).length+'/'+staffOf(role).length+' trabajando';
   const cv=live&&run.away&&run.away.cover&&empById(run.away.cover);
-  return `<div class="dgrid"><div class="dpanel"><h2>👑 Dirección</h2>
+  return `<div class="dgrid"><div class="dpanel"><h2>👑 Dirección</h2><div class="zone-title">📊 HOY CONTRA AYER · EN DIRECTO</div><div id="dirlive"></div>
     <div class="sum"><span>Turno</span><b>${meta.day}</b><span>Bote</span><b>${fmt(meta.money)}</b><span>Reputación</span><b>★ ${meta.rep.toFixed(1)}</b><span>Clientes atendidos</span><b>${r.served||0}</b><span>Se fueron enfadados</span><b>${r.angry||0}</b><span>Ventas</span><b>${fmt(r.sales||0)}</b></div>
     <div class="dcards">
       ${card('caja','🧾','Cajas',live?(cv?cv.face+' '+cv.name+' en la Caja 3':run.away?'Caja 3 sin nadie':'Tú en la Caja 3')+' · cola '+run.queue.length+Object.values(run.tills||{}).map(t=>{const e=empById(t.eid);return '<br>Caja '+t.n+': 🎮 '+(e?e.name:'?')+' · cola '+Object.keys(t.out).length;}).join(''):'Cerradas')}
@@ -5042,12 +5053,42 @@ function dirHtml(){
     <div class="dpanel"><div class="zone-title">📹 CÁMARAS · TOCA UNA PARA AMPLIARLA</div><div id="dircams" class="camslot"></div>
     <div class="zone-title">MEJORAS DE LA TIENDA</div><div class="shop">${upsHtml()}</div></div></div>`;
 }
+/* ===== Dirección: cómo va hoy contra ayer a la misma hora =====
+   run.curve guarda 49 muestras del día (cada 15 min de reloj, 9:00–21:00): [fracción, ventas de todas las cajas,
+   variación del bote desde la apertura, clientes de todas las cajas, reputación]. Al cerrar pasa a meta.prevCurve. */
+const DIRM=[['s','💶 Ventas',v=>fmt(v)],['m','💰 Bote',v=>(v>=0?'+':'')+fmt(v)],['c','🙂 Clientes',v=>Math.round(v)],['r','⭐ Reputación',v=>'★ '+(+v).toFixed(1)]];
+const DIRI={s:1,m:2,c:3,r:4};let dirM='s';
+function curveSample(force){
+  if(!run.curve)run.curve=[];
+  const f=Math.min(1,run.t/(run.dur||100)),i=Math.round(f*48);
+  if(!force&&run.curve.length&&run.curve[run.curve.length-1][0]>=i)return;
+  run.curve.push([i,(run.sales||0)+(run.offS||0),meta.money-(run.mo==null?meta.money:run.mo),(run.served||0)+(run.offN||0),Math.round(meta.rep*100)/100]);
+}
+function dirLive(){
+  const el=document.getElementById('dirlive');if(!el)return;
+  const cur=(run&&run.curve)||[],prev=toArr(meta.prevCurve).map(toArr),k=DIRI[dirM],M=DIRM.find(x=>x[0]===dirM);
+  const live=run&&!run.over,now=cur.length?cur[cur.length-1]:null,i=now?now[0]:0;
+  const at=(arr,ix)=>{let r=null;arr.forEach(p=>{if(p[0]<=ix)r=p;});return r;};
+  const pv=at(prev,i);
+  const W=600,H=190,pl=48,pr=22,pt=10,pb=24,all=cur.concat(prev).map(p=>+p[k]),lo=Math.min(0,...all),hi=Math.max(dirM==='r'?5:1,...all);
+  const X=ix=>pl+(W-pl-pr)*ix/48,Y=v=>pt+(H-pt-pb)*(1-(v-lo)/((hi-lo)||1));
+  const path=arr=>arr.map((p,j)=>(j?'L':'M')+X(p[0]).toFixed(1)+' '+Y(+p[k]).toFixed(1)).join(' ');
+  let g='';for(let h=9;h<=21;h+=3){const x=X((h-9)*4);g+=`<line x1="${x}" y1="${pt}" x2="${x}" y2="${H-pb}" class="dg"/><text x="${x}" y="${H-6}" class="dt" text-anchor="middle">${h}:00</text>`;}
+  [lo,(lo+hi)/2,hi].forEach(v=>{g+=`<line x1="${pl}" y1="${Y(v)}" x2="${W-pr}" y2="${Y(v)}" class="dg"/><text x="${pl-4}" y="${Y(v)+4}" class="dt" text-anchor="end">${dirM==='s'||dirM==='m'?Math.round(v/100)+'€':dirM==='r'?(+v).toFixed(1):Math.round(v)}</text>`;});
+  if(lo<0)g+=`<line x1="${pl}" y1="${Y(0)}" x2="${W-pr}" y2="${Y(0)}" class="d0"/>`;
+  const svg=`<svg viewBox="0 0 ${W} ${H}" class="dchart" preserveAspectRatio="none">${g}${prev.length?`<path d="${path(prev)}" class="dl-prev"/>`:''}${cur.length?`<path d="${path(cur)}" class="dl-cur"/><circle cx="${X(i)}" cy="${Y(+now[k])}" r="4" class="dl-dot"/>`:''}</svg>`;
+  const delta=(a,b,fm)=>{if(b==null)return '<em>sin datos de ayer</em>';const d=a-b,good=d>=0;return `<em class="${d===0?'':good?'up':'down'}">${d>0?'▲':d<0?'▼':'='} ${String(fm(Math.abs(d))).replace(/^\+/,'')}${b&&dirM!=='r'?` (${d>=0?'+':'−'}${Math.round(Math.abs(d)/Math.abs(b)*100)}%)`:''}</em>`;};
+  const tiles=DIRM.map(([key,l,fm])=>{const kk=DIRI[key],a=now?+now[kk]:0,b=pv?+pv[kk]:null;
+    return `<button class="dkpi ${key===dirM?'on':''}" data-act="dirm" data-k="${key}"><small>${l}</small><b>${fm(a)}</b>${prev.length?delta(a,b,fm):'<em>—</em>'}</button>`;}).join('');
+  el.innerHTML=`<div class="dkpis">${tiles}</div>${svg}<div class="dleg"><span class="lc">━ Hoy (turno ${meta.day})</span>${prev.length?`<span class="lp">┅ Ayer (turno ${meta.prevDay||meta.day-1})</span>`:''}<span>${live?'A las '+clockOf(run.t,run.dur)+' · ':''}${prev.length?'comparado con ayer a la misma hora':'Mañana podrás compararlo con hoy.'}</span></div>
+    <div class="supd">La nómina, el alquiler y los impuestos se cobran al cerrar: el bote de la gráfica es lo que ha entrado menos el coste de la mercancía.</div>`;
+}
 function renderDept(force){
   const el=$('#dept');renderTabs();if(!el||tab==='caja'||el.hidden)return;
   const h=tab==='alm'?almHtml():tab==='back'?backHtml():tab==='rrpp'?rrppHtml():tab==='rrhh'?rrhhHtml():dirHtml();
   if(!force&&h===el._h)return;
   const ol=el.querySelector('.ordlist.tall'),o2=el.querySelectorAll('.ordlist')[1],s1=ol?ol.scrollTop:0,s2=o2?o2.scrollTop:0;
-  el._h=h;el.innerHTML=h;
+  el._h=h;el.innerHTML=h;if(tab==='dir')dirLive();
   const n1=el.querySelector('.ordlist.tall'),n2=el.querySelectorAll('.ordlist')[1];if(n1)n1.scrollTop=s1;if(n2)n2.scrollTop=s2;
 }
 /* Pedidos y mejoras se manejan igual desde el cierre que desde las pestañas. */
@@ -5221,10 +5262,11 @@ function step(ts,hid){
   }
   renderHud();
   if(isHost()&&run&&!run.over&&!run.remote&&run.t-(run.saveT||0)>15){run.saveT=run.t;meta.liveT=run.t;if(room)fb.set(rRef('meta'),liveMeta()).catch(e=>console.warn('No se pudo guardar en la sala:',e));}
+  if((!room||isHost())&&run&&!run.over&&!run.remote)curveSample(false);
   quiet=false;
   if(isHost())pubState(false);
   if(hid)return;
-  if(tab!=='caja'&&!isMember()&&(ts-(window._dT||0))>700){window._dT=ts;renderDept();}
+  if(tab!=='caja'&&!isMember()&&(ts-(window._dT||0))>700){window._dT=ts;renderDept();if(tab==='dir')dirLive();}
   drawCams();drawIso();till3d();if((iso.infoT=(iso.infoT||0)+1)%20===0)isoInfo();
 }
 /* Con la pestaña oculta el navegador no pinta (no hay requestAnimationFrame): si llevas la tienda, se sigue moviendo en segundo plano. */
@@ -5270,6 +5312,7 @@ function onClick(e){
   else if(a==='ordp'){cart[b.dataset.id]=(cart[b.dataset.id]||0)+6;refreshView();}
   else if(a==='ordm'){const q=(cart[b.dataset.id]||0)-6;if(q<=0)delete cart[b.dataset.id];else cart[b.dataset.id]=q;refreshView();}
   else if(a==='tab')setTab(b.dataset.k);
+  else if(a==='dirm'){dirM=b.dataset.k;dirLive();}
   else if(a==='stab'){scrTab[b.dataset.s]=b.dataset.k;pg=0;rerenderScreen();}
   else if(a==='pg'){pg+=+b.dataset.d;rerenderScreen();}
   else if(a==='side')$('#sidebar').classList.toggle('open');
