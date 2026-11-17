@@ -1312,6 +1312,20 @@ body.rem .isostore{display:none!important}
 .scn-stamp{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%) rotate(-12deg);font-family:var(--display);font-weight:700;font-size:34px;letter-spacing:2px;padding:4px 16px;border:5px solid currentColor;border-radius:10px;background:rgba(255,253,250,.85);white-space:nowrap;animation:scnStamp .32s cubic-bezier(.3,1.6,.5,1) both;pointer-events:none}
 .scn-stamp.ok{color:#1f9a55}.scn-stamp.bad{color:#d62f3a}
 .scn-fx{position:absolute;inset:0;pointer-events:none}.scn-fx i{position:absolute;left:calc(30% + var(--i)*10%);top:55%;font-style:normal;font-size:26px;animation:scnFx .6s ease-out calc(var(--i)*40ms) both}
+/* Cuerpos de RR.PP.: .scn-post (post de VitchGram con likes que suben), .scn-tv (rótulo de la tele en directo), .scn-badge (chapa con el nombre). */
+.scn-post{display:flex;gap:9px;align-items:flex-start;background:#fff;border:2px solid #e3cccc;border-radius:12px;padding:7px 10px;font-size:13px;color:#3a2323}
+.scn-post .av{flex:none;width:32px;height:32px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:800;font-size:15px}
+.scn-post small{color:#8a6a6a}.scn-post .stars{color:#ffb400;letter-spacing:1px}.scn-post .stars i{font-style:normal;color:#ddd}
+.scn-post .sp-act{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:4px;font-size:14px}.scn-post .sp-act b{font-family:var(--pix);font-size:17px}
+.scn-post .hot{background:#e5383b;color:#fff;border-radius:99px;padding:1px 8px;font-weight:800;font-size:12px;animation:scnDing .8s ease-in-out infinite}
+.scn-tv{position:relative;display:flex;flex-direction:column;gap:2px;background:linear-gradient(180deg,#2b2f3a,#151821);border-radius:8px;padding:22px 10px 8px;overflow:hidden}
+.scn-tv .rec{position:absolute;left:8px;top:5px;color:#fff;font-size:11px;font-weight:800;animation:scnDing 1s ease-in-out infinite}
+.scn-tv b{align-self:flex-start;background:#e5383b;color:#fff;font-family:var(--display);font-size:14px;padding:3px 10px;border-radius:3px 3px 3px 0;letter-spacing:.4px}
+.scn-tv small{align-self:flex-start;background:#fff;color:#c51d22;font-weight:800;font-size:11px;padding:2px 10px;border-radius:0 0 3px 3px}
+.scn-badge{display:flex;align-items:center;gap:10px;align-self:flex-start;background:#fff;border:2px solid #c51d22;border-radius:8px;padding:0 12px 0 0;overflow:hidden;box-shadow:0 3px 0 #b08a00}
+.scn-badge i{align-self:stretch;writing-mode:vertical-rl;transform:rotate(180deg);background:#e5383b;color:#fff;font-style:normal;font-family:var(--display);font-size:9px;letter-spacing:1px;padding:4px 3px;text-align:center}
+.scn-badge>span{font-size:30px}.scn-badge b{display:block;font-family:var(--display);color:#4a1414;font-size:15px}.scn-badge small{font-size:12px;color:#7a5a5a}
+@media (prefers-reduced-motion:reduce){.scn-post .hot,.scn-tv .rec{animation:none}}
 @keyframes scnIn{from{transform:translateY(18px) scale(.94);opacity:0}}
 @keyframes scnOut{to{transform:translateY(10px) scale(.97);opacity:0}}
 @keyframes scnBelt{to{background-position:12px 0}}
@@ -1622,6 +1636,7 @@ function sceneSync(){
   if(sceneCur&&sceneBlocked()){const el=$('#scene');sceneQ.unshift(sceneCur);sceneCur=null;sceneTok++;if(el){el.classList.remove('show','out','hold');el.innerHTML='';}}
   try{cajaScenes();}catch(e){console.warn('cajaScenes',e);}
   scenePump();
+  if(sceneCur&&sceneCur.tick)try{sceneCur.tick();}catch(e){}
   if(sceneCur&&sceneCur.time){const f=1-(performance.now()-sceneCur.t0)/1000/sceneCur.time,b=document.querySelector('#scene .scn-bar i');
     if(f<=0)scenePick(sceneCur.def);else if(b)b.style.width=(f*100).toFixed(1)+'%';}
 }
@@ -1686,6 +1701,83 @@ function cutScene(nc){
     onPick:k=>{if(!run||run.over)return;
       if(k==='end'){const i=run.queue.indexOf(nc);if(i>0){run.queue.splice(i,1);run.queue.push(nc);}meta.rep=clamp(meta.rep+0.05,0,5);sOk();toast('Al final de la cola. La gente asiente.','good');}
       else pen();
+      renderAll();}});
+}
+
+/* ---------- escenas de RR.PP. (solo quien lleva la tienda: jefe o en solitario; el encargado aplica def) ----------
+   viral: reseña de 1 estrella que se hace viral (likes que suben). Responder ya (la contesta alguien de RR.PP. libre según
+          perf; si no hay, la contestas tú con el minijuego de redes) o no contestar (a los 15 s, −0,2 de reputación).
+   press: una vez como mucho por turno (30 % desde el turno 2): periodista de la tele del barrio o influencer. Entrevista
+          (ocupa 12 s a alguien de RR.PP.; si no hay, vas tú y la cola espera: +0,15 o −0,1 de reputación), colaboración
+          pagada (150–400 €, +0,1 de reputación y +15 % de demanda en las otras cajas el turno siguiente, meta.promo) o no.
+   feli:  un cliente felicita a un NPC que acaba de hacer bien un aviso de sala: decírselo (+8 de ánimo, st.fel, +0,03 rep) o vale (+2). */
+const rrOn=()=>!!(run&&!run.over&&!run.remote&&(!room||isHost()));
+const rrFree=()=>staffOf('rrpp').filter(e=>!e.real&&isFree(e)&&!run.duty[e.id].slack).sort((a,b)=>perf(b,true)-perf(a,true))[0];
+const kfmt=n=>n>=1000?(n/1000).toFixed(n>=10000?0:1).replace('.',',')+' mil':String(Math.round(n));
+function rrLater(s,f){(run.rrL=run.rrL||[]).push({at:run.t+s,f});}
+function rrppTick(){
+  if(run.rrL&&run.rrL.length){const now=run.rrL.filter(x=>run.t>=x.at);if(now.length){run.rrL=run.rrL.filter(x=>run.t<x.at);now.forEach(x=>{try{x.f();}catch(e){console.warn('rrpp',e);}});}}
+  if(run.pressAt&&run.t>=run.pressAt){run.pressAt=0;if(!run.closing&&rrOn())pressScene();}
+}
+function viralScene(r){
+  if(!rrOn()||run.closing||(run.viralN||0)>=2||!sceneOk('viral',120)||Math.random()>=(meta.rep<3?0.2:0.12))return;
+  run.viralN=(run.viralN||0)+1;
+  const h=pick(HANDLES),l0=ri(40,140),hue=(h.length*47)%360,s0=performance.now();
+  const likes=()=>l0*Math.pow(1.32,Math.min(30,(performance.now()-s0)/1000));
+  const mute=()=>{rrLater(15,()=>{if(run.over)return;meta.rep=clamp(meta.rep-0.2,0,5);toast('🔥 La reseña de '+h+' ya va por '+kfmt(likes()*4)+' ❤️. Nadie contestó: −reputación.','bad');sBad();renderAll();checkRep();});};
+  const team=e=>{r.ans=1;const ok=Math.random()<perf(e,true);
+    if(ok){meta.rep=clamp(meta.rep+0.05,0,5);e.st.ok++;e.moral=clamp(e.moral+3,0,100);logE(e,'Apagó una reseña viral en redes');toast('📱 '+e.face+' '+e.name+' contesta a '+h+' a tiempo. Se calma la cosa.','good');sOk();}
+    else{meta.rep=clamp(meta.rep-0.15,0,5);e.st.fail++;logE(e,'Contestó mal a una reseña viral');toast('📱 '+e.name+' contesta a '+h+'… y lo empeora. −reputación.','bad');sBad();}
+    renderAll();checkRep();};
+  const me=()=>{if(mg||$('#overlay').classList.contains('show'))return mute();r.ans=1;
+    const tk={id:++uid,dept:'rrpp',t:r.t+' (reseña viral)',refund:0,sev:3,mis:false};run.tickets.push(tk);
+    startMG({id:'d'+tk.id,k:'tk',ic:'📨',dept:'rrpp',mis:false,refund:0,txt:r.t,sev:3,s:'Reseña viral',tkid:tk.id,n:0,pid:0,desk:1});};
+  const e0=rrFree(),mt={t:'🤐 No contestar',k:'mute',cls:'no',key:'N',stamp:'SIN RESPUESTA',sc:'bad'};
+  /* Sin nadie de RR.PP. libre, «contestar» abre el minijuego: la primera (Intro) es no contestar. */
+  const ch=e0?[{t:'📱 Responder ya',k:'ans',cls:'go',key:'R',stamp:'RESPONDIDO',sc:'ok',fx:'💬'},{t:'✍️ Lo contesto yo',k:'me',key:'Y'},mt]
+    :[mt,{t:'📱 Lo contesto yo',k:'me',cls:'go',key:'R'}];
+  scene({k:'viral:'+r.id,who:r.f||'😡',head:'📱 VITCHGRAM · SE ESTÁ HACIENDO VIRAL',name:esc(h),tag:'⭐ 1/5',prio:1,time:12,def:'auto',
+    txt:'«'+esc(r.t)+'»',
+    body:`<div class="scn-post"><span class="av" style="background:hsl(${hue} 60% 55%)">${esc(h.slice(1,2).toUpperCase())}</span><div><b>${esc(h)}</b> <small>· ahora</small> <span class="stars">★<i>★★★★</i></span>
+      <div class="sp-act"><span>❤️ <b class="scn-likes">${l0}</b></span><span>🔁 <b class="scn-rt">${Math.round(l0/3)}</b></span><span class="hot">🔥 VIRAL</span></div></div></div>`,
+    choices:ch,
+    tick:()=>{const a=document.querySelector('#scene .scn-likes'),b=document.querySelector('#scene .scn-rt'),n=likes();if(a)a.textContent=kfmt(n);if(b)b.textContent=kfmt(n/3);},
+    onPick:k=>{if(!run||run.over)return;const e=rrFree();
+      if(k==='auto')k=e?'ans':'mute';
+      if(k==='ans'){if(e)team(e);else me();}else if(k==='me')me();else mute();}});
+}
+function pressScene(){
+  const tv=Math.random()<0.5,cost=ri(15,40)*1000,h=pick(['@comprasconlaura','@eltiodelsuper','@foodie_lowcost','@mama.ahorra']);
+  const body=tv?`<div class="scn-tv"><span class="rec">🔴 EN DIRECTO</span><b>VITCHMARKET, EL SÚPER DEL BARRIO</b><small>📺 Telebarrio · Informativo de las 21:00</small></div>`
+    :`<div class="scn-post scn-live"><span class="av" style="background:#e5383b">🤳</span><div><b>${esc(h)}</b> <small>· ${ri(40,180)} mil seguidores</small><div class="sp-act"><span class="hot">🔴 LIVE</span><span>👀 ${ri(800,4000)}</span></div></div></div>`;
+  scene({k:'press:'+meta.day,who:tv?'🎤':'🤳',head:tv?'🎤 PRENSA · TELEBARRIO':'📸 VITCHGRAM · COLABORACIÓN',name:tv?'Periodista de Telebarrio':esc(h),tag:tv?'📺 Tele':'📱 Influencer',prio:1,time:15,def:'no',
+    txt:tv?'¿Nos dejas grabar una entrevista para el informativo?':'¡Holi! ¿Hacemos un vídeo de tu súper? 💅',body,
+    choices:[{t:tv?'🎤 Sí, entrevista':'🎥 Sí, que grabe',k:'int',cls:'go',key:'S',stamp:'¡ACCIÓN!',sc:'ok',fx:'🎬'},
+      {t:'📸 Colaboración pagada · '+fmt(cost),k:'paid',key:'P',stamp:'PATROCINADO',sc:'ok',fx:'💸'},
+      {t:'🚫 No, gracias',k:'no',cls:'no',key:'N'}],
+    onPick:k=>{if(!run||run.over)return;
+      if(k==='int'){const e=rrFree(),d=e&&run.duty[e.id];let p=0.6;
+        if(e){d.busy=1;d.task='prensa';p=perf(e,true);toast(e.face+' '+e.name+(tv?' atiende a la tele.':' enseña la tienda en directo.'));}
+        else{run.queue.forEach(c=>{c.p=Math.max(1,c.p-c.max*0.15);});toast(tv?'Te pones delante de la cámara. La cola espera…':'Le enseñas tú la tienda. La cola espera…','bad');}
+        rrLater(12,()=>{if(d&&d.task==='prensa'){d.busy=0;d.task=null;}if(run.over)return;const ok=Math.random()<p;
+          meta.rep=clamp(meta.rep+(ok?0.15:-0.1),0,5);if(e){ok?e.st.ok++:e.st.fail++;logE(e,ok?'Lo bordó delante de la cámara':'Se trabó delante de la cámara');if(ok)e.moral=clamp(e.moral+5,0,100);}
+          toast(ok?(tv?'📺 Salís en el informativo: «un súper de los de antes». +reputación':'📱 El vídeo gusta: «qué majos en VitchMarket». +reputación')
+            :(tv?'📺 Os sacan con la cola de fondo y un cliente quejándose. −reputación':'📱 El vídeo sale raro y los comentarios, peor. −reputación'),ok?'good':'bad');ok?sOk():sBad();renderAll();checkRep();});}
+      else if(k==='paid'){meta.money-=cost;meta.rep=clamp(meta.rep+0.1,0,5);meta.promo=meta.day+1;sCoin();
+        toast('📸 Colaboración pagada (−'+fmt(cost)+'). +reputación y mañana viene más gente.','good');renderAll();checkRep();}
+    }});
+}
+function praiseScene(e,t){
+  if(!e||e.real||!rrOn()||!['help','tour','spill','repo','call'].includes(t.k)||!sceneOk('feli',90)||Math.random()>=0.18)return;
+  const nm=e.name.split(' ')[0],L={help:'«¡'+nm+' me ha encontrado lo que buscaba en un momento!»',tour:'«Thank you! ¡'+nm+' muy amable!»',
+    spill:'«'+nm+' ha dejado el pasillo como los chorros del oro.»',repo:'«Gracias a '+nm+' me llevo lo que venía a buscar.»'};
+  scene({k:'feli:'+e.id+':'+t.id,look:'label',head:'💌 FELICITACIÓN',who:t.k==='tour'?'🧳':pick(FACES),name:'Un cliente contento',tag:'👏 '+esc(nm),prio:0,time:8,def:'ok',
+    txt:esc(L[t.k]||L.repo),
+    body:`<div class="scn-badge"><i>VITCHMARKET</i><span>${e.face}</span><div><b>${esc(e.name)}</b><small>${esc(ROLES[e.role].s)} · ${mood(e)}</small></div></div>`,
+    choices:[{t:'📣 Decírselo',k:'tell',cls:'go',key:'D',stamp:'¡BRAVO!',sc:'ok',fx:'👏'},{t:'👍 Vale',k:'ok',key:'V'}],
+    onPick:k=>{if(!run||run.over||!meta.emp.includes(e))return;
+      if(k==='tell'){e.moral=clamp(e.moral+8,0,100);e.st.fel++;meta.rep=clamp(meta.rep+0.03,0,5);logE(e,'Un cliente le felicitó y se lo dijiste');toast(e.face+' '+e.name+' se viene arriba 😄','good');sOk();}
+      else{e.moral=clamp(e.moral+2,0,100);logE(e,'Un cliente le felicitó');}
       renderAll();}});
 }
 
@@ -1880,6 +1972,7 @@ function startDay(){
     tasks:[],nextTask:6,away:null,tdone:0,tlost:0,duty:{},ev:[],ivaR:0,offS:0,offC:0,offN:0,dstat:{},hires:0,revG:0,revB:0};
   if(isHost())run.dur=room.info.dur||100;
   ensureMeta();run.rep0=meta.rep;
+  if(meta.day>=2&&Math.random()<0.3)run.pressAt=run.dur*rnd(0.2,0.65);
   run.buy=meta.buyNext||0;meta.buyNext=0;run.m0=meta.money+run.buy;run.mo=meta.money;run.curve=[];
   meta.liveT=0;saveGame(false);
   const notes=prepShift();
@@ -3362,6 +3455,7 @@ function finishTask(t){
   else if(t.k==='feud'&&t.fd)extra=' · '+applyFeud({a:t.fd.a.id,b:t.fd.b.id,truth:t.fd.truth},true);
   else meta.rep=clamp(meta.rep+0.05,0,5);
   toast((t.who==='me'?'Hecho. Vuelves a la caja':nm+' ha terminado en el pasillo '+t.n)+extra,'good');
+  if(t.who!=='me')praiseScene(empById(t.who),t);
   renderAll();
 }
 function expireTask(t){
@@ -5346,7 +5440,7 @@ const TABS=[['caja','🧾','Caja'],['alm','📦','Almacén'],['back','💼','Bac
 let tab='caja';
 const REV={5:['Rápidos y simpáticos. Así da gusto.','La cajera, un amor. Volveré.','Todo perfecto, hasta me sobró paciencia.'],4:['Bien, sin más.','Correcto. La cola, regular.'],
   3:['Se equivocaron en algo, pero bueno.','Atención justita.'],2:['Lento y con errores. Mejorad.','Me cobraron mal y nadie se disculpó.'],1:['Me fui sin comprar: una cola eterna.','Pésima atención. No vuelvo.','Ni una caja abierta en condiciones.']};
-function addReview(st,face){if(!run)return;if(run.remote){run.outRev.push([st,face||'🙂']);return;}if(st>=4)run.revG=(run.revG||0)+1;else if(st<=2)run.revB=(run.revB||0)+1;run.reviews=run.reviews||[];run.reviews.unshift({id:++uid,st,f:face||'🙂',t:pick(REV[st]),ans:0});if(run.reviews.length>12)run.reviews.pop();}
+function addReview(st,face){if(!run)return;if(run.remote){run.outRev.push([st,face||'🙂']);return;}if(st>=4)run.revG=(run.revG||0)+1;else if(st<=2)run.revB=(run.revB||0)+1;run.reviews=run.reviews||[];run.reviews.unshift({id:++uid,st,f:face||'🙂',t:pick(REV[st]),ans:0});if(run.reviews.length>12)run.reviews.pop();if(st===1)viralScene(run.reviews[0]);}
 const tabBadge=k=>{
   if(k==='caja')return run&&!run.over?run.queue.length:0;
   if(k==='alm')return CAT.filter(x=>(meta.stock[x.id]||0)<=0).length;
@@ -5612,7 +5706,7 @@ function renderGuide(){
 function offTick(dt){
   const n=Math.min(Math.max(0,2-Object.keys(run.tills||{}).length),staffOf('atc').filter(e=>!e.real&&isFree(e)&&!run.duty[e.id].slack).length);if(!n)return;
   const out=CAT.filter(x=>(meta.stock[x.id]||0)<=0).length/CAT.length;
-  const dem=OFF.dem*(0.4+0.12*meta.rep)*(1-0.6*out)*(1+0.03*Math.min(meta.day,10));
+  const dem=OFF.dem*(0.4+0.12*meta.rep)*(1-0.6*out)*(1+0.03*Math.min(meta.day,10))*(meta.promo===meta.day?1.15:1);
   const rate=Math.min(dem,n*OFF.cap)/(run.dur||100);
   run.offAcc=(run.offAcc||0)+dt*rate;
   while(run.offAcc>=1){run.offAcc--;const v=Math.round(OFF.ticket*rnd(0.4,1.6)),c=Math.round(v*(SUPS[0].cf+OFF.merma));
@@ -5654,6 +5748,7 @@ function step(ts,hid){
       if(c.p<=0){leaveAngry(i);if(run.over)break;}
     }
     if(run&&!run.remote&&!run.closing&&!run.over)offTick(dt);
+    if(run&&!run.remote&&!run.over)rrppTick();
     if(run&&!run.remote&&!run.over&&run.queue.length>=2&&run.t-(run.callT||0)>(run.dur||100)/40){const e=freeTill();if(e)sendQueue(e,1,false);else run.callT=run.t-(run.dur||100)/80;}
     if(run&&run.remote){run.syncT+=dt;if(run.syncT>1){run.syncT=0;tillSync();}}
     else{
