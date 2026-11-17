@@ -2087,8 +2087,109 @@ function arqScene(o){
         toast(cause==='cambio'?'🔎 Cambio mal dado a algún cliente. Perdido, y el equipo se siente vigilado.':'🔎 Nadie sabe nada. El equipo se siente vigilado.','bad');}
       renderAll();}});
 }
+/* ---------- el abogado inspector: visitas de Trabajo, Salud Pública, Consumo y PRL (Comunidad de Madrid) ----------
+   Desde el turno 3, una cada 4–6 turnos (meta.ins.next) a un momento al azar (run.inspAt), nunca dos en un turno; antes si vence
+   un requerimiento. Mira el estado real (meta.ins guarda el último turno con caducado en el lineal, etiqueta mal, derrame sin limpiar,
+   caída y reclamaciones sin contestar; la plantilla que trabaja hoy; el muelle). Escala del juego: el 20 % del mínimo legal del tramo
+   (entre 150 y 1.500 €), ×2 si es un requerimiento vencido; el acta enseña el tramo legal de verdad.
+   ?insp=1 (o trab/san/cons/prl) fuerza una visita en cada turno (pruebas). */
+const INSP_Q=(()=>{try{return new URLSearchParams(location.search).get('insp')||'';}catch(e){return '';}})();
+const INSP_A={
+  trab:{s:'Trabajo',h:'👷 INSPECCIÓN DE TRABAJO Y SS',who:'🧑‍💼',n:'Inspector Galindo',seal:'ITSS',ok:['Sueldos ≥ SMI 2026 (1.221 €/mes)','Periodos de prueba por escrito']},
+  san:{s:'Salud Pública',h:'🧪 SALUD PÚBLICA · C. DE MADRID',who:'🥼',n:'Inspectora Bermejo',seal:'SANIDAD',ok:['Control de plagas al día','Albaranes y lotes archivados']},
+  cons:{s:'Consumo',h:'🏛️ CONSUMO · C. DE MADRID',who:'🕵️',n:'Inspector Olmedo',seal:'CONSUMO',ok:['Precio por kg o litro en el lineal','Bolsas cobradas y en el ticket']},
+  prl:{s:'PRL',h:'⛑️ PREVENCIÓN DE RIESGOS LABORALES',who:'👷',n:'Técnica Salcedo',seal:'PRL',ok:['Botiquín completo','Chaqueta y guantes para la cámara']}};
+const insRec=k=>!!meta.ins&&meta.ins[k]!=null&&meta.day-meta.ins[k]<=2;
+const insAfter=(k,r)=>meta.ins[k]!=null&&meta.ins[k]>=r.d;
+const insWork=r=>meta.emp.some(e=>e.role===r&&working(e));
+const insBackP=()=>{const b=staffOf('back').filter(working);return b.length?b.reduce((a,e)=>a+perf(e,true),0)/b.length:0;};
+/* Comprobaciones: L = tramo legal en €; form = formal (admite requerimiento); fx = cómo se subsana;
+   bad(r) = detalle si incumple ('' si no); r = el requerimiento cuando se revisa (solo cuenta lo que pasó después). */
+const INSP_C=[
+  {k:'jornada',a:'trab',g:'Grave',L:[751,7500],law:'ET art. 34.9 · LISOS arts. 7.5 y 40.1',form:1,fx:'Ten a alguien de Backoffice trabajando: lleva el registro.',
+    bad:r=>!insWork('back')?'Nadie lleva el registro de jornada':(!r&&Math.random()<0.3*(1-insBackP()))?'Registro de jornada rellenado a boli hoy':''},
+  {k:'alta',a:'trab',g:'Grave',L:[3750,12000],law:'LISOS arts. 22.2 y 40.1.e',
+    bad:r=>{if(r)return '';const e=meta.emp.find(x=>!x.real&&x.trial>0&&x.days<=1&&working(x));return e&&Math.random()<0.3?'Alta en la SS de '+e.name+' pedida después de empezar':'';}},
+  {k:'cad',a:'san',g:'Grave',L:[5001,20000],law:'Reg. (UE) 1169/2011 · Ley 17/2011 art. 52',
+    bad:r=>(r?insAfter('cad',r):insRec('cad'))?'Producto caducado a la venta':''},
+  {k:'frio',a:'san',g:'Grave',L:[5001,20000],law:'Reg. (CE) 853/2004 · Ley 17/2011 art. 52',
+    bad:r=>!r&&Math.random()<(insWork('alm')?0.12:0.3)?pick(['Carne picada a 5 °C en el mural (máx. 2 °C)','Congelados a −12 °C (mín. −18 °C)','Pollo a 7 °C (máx. 4 °C)']):''},
+  {k:'appcc',a:'san',g:'Leve',L:[1,5000],law:'Reg. (CE) 852/2004 art. 5 (APPCC)',form:1,fx:'Ten a alguien de Almacén trabajando: apunta las temperaturas.',
+    bad:r=>!insWork('alm')?'Hoja de temperaturas del APPCC sin rellenar':(!r&&Math.random()<0.15)?'Hoja de temperaturas rellenada de golpe':''},
+  {k:'limp',a:'san',g:'Leve',L:[1,5000],law:'Reg. (CE) 852/2004 anexo II',form:1,fx:'Que no caduque ningún aviso de derrame.',
+    bad:r=>(r?insAfter('spill',r):insRec('spill'))?'Derrame sin limpiar en la sala':''},
+  {k:'hojas',a:'cons',g:'Leve',L:[150,10000],law:'TRLGDCU art. 21 · Madrid: contestar en 15 días',form:1,fx:'Que no se queden reclamaciones sin atender: contrata o resuélvelas.',
+    bad:r=>(r?insAfter('late',r):(insRec('late')||(meta.consPend||[]).length))?'Hojas de reclamaciones sin contestar':''},
+  {k:'precio',a:'cons',g:'Leve',L:[150,10000],law:'RD 3423/2000 · TRLGDCU',form:1,fx:'Al reponer, la etiqueta del producto correcto.',
+    bad:r=>(r?insAfter('lab',r):insRec('lab'))?'Etiqueta del lineal con otro precio que la caja':''},
+  {k:'cartel',a:'cons',g:'Leve',L:[150,10000],law:'Normativa de consumo de Madrid',form:1,fx:'Nada: el cartel se pone al momento.',
+    bad:r=>!r&&Math.random()<0.2?'Falta el cartel «Hay hojas de reclamaciones»':''},
+  {k:'caida',a:'prl',g:'Grave',L:[2451,49180],law:'RD 486/1997 · LPRL · LISOS art. 40.2',
+    bad:r=>(r?insAfter('fall',r):insRec('fall'))?'Suelo mojado sin señalizar: ha habido una caída':''},
+  {k:'extint',a:'prl',g:'Leve',L:[45,2450],law:'RD 486/1997 · RD 513/2017',form:1,fx:'Vacía el muelle (menos de 150 uds).',
+    bad:()=>CAT.reduce((a,x)=>a+(meta.back[x.id]||0),0)>150?'Extintor tapado por palés en el muelle':''},
+  {k:'evalr',a:'prl',g:'Grave',L:[2451,49180],law:'LPRL art. 16 · LISOS art. 40.2',form:1,fx:'Nada: la gestoría la actualiza.',
+    bad:r=>!r&&Math.random()<0.25?'Evaluación de riesgos sin el muelle ni la cámara':''}];
+const inspFine=c=>clamp(Math.round(c.L[0]*0.2),150,1500)*100;
+const eur=v=>String(v).replace(/\B(?=(\d{3})+(?!\d))/g,'.')+' €';
+function inspPlan(){
+  const I=meta.ins;run.inspAt=null;
+  const due=I.req.filter(r=>meta.day>=r.by);
+  if(!(INSP_Q||(meta.day>=3&&(due.length||meta.day>=(I.next||0)))))return;
+  run.inspA=INSP_A[INSP_Q]?INSP_Q:due.length?due[0].a:pick(Object.keys(INSP_A));
+  run.inspAt=INSP_Q?Math.min(4,run.dur*0.1):run.dur*rnd(0.15,0.7);
+}
+function inspVisit(){
+  const I=meta.ins,a=run.inspA||'cons',A=INSP_A[a],R=run,C=k=>INSP_C.find(c=>c.k===k);
+  I.next=meta.day+ri(4,6);I.n=(I.n||0)+1;
+  const due=I.req.filter(r=>r.a===a&&meta.day>=r.by);
+  const late=[],fixed=[];due.forEach(r=>{const c=C(r.k),d=c&&c.bad(r);(d?late:fixed).push({r,c,d:d||r.t});});
+  const F=INSP_C.filter(c=>c.a===a&&!I.req.some(r=>r.k===c.k)).map(c=>({c,d:c.bad(null)})).filter(x=>x.d);
+  const bp=insWork('back')?insBackP():0.3,win=Math.random()<0.35;
+  F.forEach(x=>{x.ok=Math.random()<bp*0.6;x.pz=Math.random()<0.5;});
+  /* Lo que pasa con cada opción, decidido antes para que el sello lo diga. */
+  const out=k=>{const fin=[],req=[],m=k==='abog'?0.6:1,f0=x=>inspFine(x.c);
+    late.forEach(x=>fin.push([x,f0(x)*2*m]));
+    F.forEach(x=>{const f=x.c.form;
+      if(k==='colab'){if(!f)fin.push([x,f0(x)]);else if(!x.ok)req.push([x,3]);}
+      else if(k==='plazo'){if(f)req.push([x,3]);else if(x.pz)req.push([x,2]);else fin.push([x,f0(x)]);}
+      else if(k==='abog'){if(f)req.push([x,3]);else fin.push([x,f0(x)*m]);}
+      else if(win){if(!f)fin.push([x,f0(x)]);}
+      else fin.push([x,f0(x)*1.5]);});
+    fin.forEach(z=>z[1]=Math.round(z[1]/100)*100);
+    return {fin,req,tot:fin.reduce((s,z)=>s+z[1],0)};};
+  const n=F.length+late.length,ks=n?['colab','plazo','abog','disc']:['ok'],O={};ks.forEach(k=>O[k]=out(k));
+  const fee=25000,st=k=>{const o=O[k];return o.tot?['MULTA '+fmt(o.tot),'bad']:o.req.length?['REQUERIMIENTO','bad']:['EN REGLA','ok'];};
+  const rows=[...late.map(x=>['⏰ '+esc(x.d)+' · requerimiento vencido',x.c.g+' ×2','neg']),
+    ...F.map(x=>['🔴 '+esc(x.d)+' <small>(ley: '+(x.c.L[0]>1?eur(x.c.L[0])+'–':'hasta ')+eur(x.c.L[1])+')</small>',x.c.g,'neg']),
+    ...fixed.map(x=>['✅ '+esc(x.d)+': subsanado','Archivado','pos']),
+    ...A.ok.slice(0,n?1:2).map(t=>['✅ '+t,'En regla','pos']),
+    ...(a==='cons'&&meta.minorFine?[['🍺 Actas por alcohol a menores',String(meta.minorFine),'neg']]:[])];
+  const laws=[...new Set([...late,...F].map(x=>x.c.law))].join(' · ');
+  backScene({k:'ins:'+meta.day,look:'letter',head:A.h,tag:'🛡️ Acta n.º '+(1000+I.n*7),who:A.who,name:A.n+' · '+A.s,prio:3,...serio(),
+    txt:n?'Buenos días, Inspección de '+A.s+'. He visto '+n+(n===1?' cosa que no me gusta.':' cosas que no me gustan.'):'Buenos días, Inspección de '+A.s+'. Vengo a echar un vistazo… Todo en orden.',
+    body:scnDoc(rows,(laws?laws+'. ':'')+(n?'Multa del juego: 20 % del mínimo legal, ×2 si vencido. Abogada: −40 % (Ley 39/2015 art. 85).':''))+`<div class="scn-seal">${A.seal}</div>`,
+    def:n?'colab':'ok',
+    choices:n?[{t:'🗂️ Colaborar y enseñar papeles',k:'colab',cls:'go',key:'C',stamp:st('colab')[0],sc:st('colab')[1]},
+      {t:'⏳ Pedir plazo',k:'plazo',key:'P',stamp:st('plazo')[0],sc:st('plazo')[1]},
+      {t:'⚖️ Abogada · '+fmt(fee).replace(',00',''),k:'abog',key:'A',stamp:st('abog')[0],sc:st('abog')[1]},
+      {t:'😤 Discutir',k:'disc',cls:'no',key:'D',stamp:st('disc')[0],sc:st('disc')[1],fx:O.disc.tot?'💸':''}]
+      :[{t:'🤝 Gracias, inspector',k:'ok',cls:'go',key:'G',stamp:'EN REGLA',sc:'ok',fx:'⭐'}],
+    alive:()=>run===R&&!R.over,
+    onPick:k=>{if(run!==R||R.over)return;const o=O[k]||O[ks[0]];
+      I.req=I.req.filter(r=>!due.includes(r));
+      if(!n){meta.rep=clamp(meta.rep+0.05,0,5);if(fixed.length)toast('🛡️ '+A.s+': requerimiento cumplido, expediente archivado.','good');else toast('🛡️ Inspección de '+A.s+': todo en regla.','good');renderAll();return;}
+      if(k==='abog')meta.money-=fee;
+      if(o.tot){meta.money-=o.tot;run.fines+=o.tot;run.insp=(run.insp||0)+o.tot;meta.rep=clamp(meta.rep-Math.min(0.2,0.05*o.fin.length),0,5);}
+      if(k==='disc'&&!win)meta.rep=clamp(meta.rep-0.1,0,5);
+      o.req.forEach(([x,p])=>I.req.push({k:x.c.k,a,d:meta.day,by:meta.day+p,t:x.d}));
+      (I.hist=I.hist||[]).push({d:meta.day,a,f:o.tot,r:o.req.length});I.hist=I.hist.slice(-12);
+      toast('🛡️ '+A.s+': '+(o.tot?'multa de '+fmt(o.tot):'sin multa')+(o.req.length?' · '+o.req.length+(o.req.length===1?' requerimiento':' requerimientos')+', vuelve en '+o.req[0][1]+' turnos':'')+(k==='disc'?(win?' · se va refunfuñando':' · y no le ha gustado nada el tono'):'')+'.',o.tot?'bad':'');
+      if(o.tot)sBad();renderAll();checkRep();}});
+}
 function backScenes(){
   if(!backOn()||sceneCur||sceneQ.length)return;
+  if(run.inspAt!=null&&!run.inspDone&&run.t>=run.inspAt&&!run.closing){run.inspDone=1;inspVisit();return;}
   /* 1) Carta de Consumo por una hoja de reclamaciones sin contestar (la deja processTickets). */
   if(run.t>3&&(meta.consPend||[]).length&&sceneOk('cons',20)){
     const c=meta.consPend.shift(),arch=Math.random()<0.7,red=Math.round(c.f*0.6/100)*100,fee=5000;
@@ -2277,6 +2378,8 @@ function complaintCustomer(forceStock){
 function addTicket(dept,text,refund,sev,mis){
   if(run&&run.remote){run.outTk.push({dept,t:text,refund:refund||0,sev:sev||1,mis:!!mis});return;}
   const tk={id:++uid,dept,t:text,refund,sev,mis};run.tickets.push(tk);
+  /* Para la inspección: último turno con una caída, un caducado o una etiqueta mal. */
+  if(meta.ins){const s=String(text||'');if(/resbal/.test(s))meta.ins.fall=meta.day;if(/caducad/.test(s))meta.ins.cad=meta.day;if(/etiqueta/.test(s))meta.ins.lab=meta.day;}
   /* Si hay alguien real de ese departamento conectado, le llega como aviso para resolverla en directo. */
   if(isHost()&&!run.over&&meta.emp.some(e=>e.real&&e.role===dept&&inStore(e)))
     run.tasks.push({id:++uid,k:'tk',ic:'📨',roles:[dept],dur:0,pen:0,tkid:tk.id,dept,mis:!!mis,refund:refund||0,txt:text,s:'Reclamación: '+text,n:0,pid:0,lang:null,dl:run.t+REAL_LIM,who:null,until:0,span:1,match:true});
@@ -2341,6 +2444,7 @@ function startDay(){
   if(isHost())run.dur=room.info.dur||100;
   ensureMeta();run.rep0=meta.rep;
   if(meta.day>=2&&Math.random()<0.3)run.pressAt=run.dur*rnd(0.2,0.65);
+  inspPlan();
   run.buy=meta.buyNext||0;meta.buyNext=0;run.m0=meta.money+run.buy;run.mo=meta.money;run.curve=[];
   meta.liveT=0;saveGame(false);
   const notes=prepShift();
@@ -2399,6 +2503,7 @@ let cart={},ordSup='hac';
 const unitCost=(x,k)=>Math.max(1,Math.round(x.p*SUPS.find(z=>z.k===k).cf));
 const cartCost=()=>Object.entries(cart).reduce((t,[id,q])=>{const x=CAT.find(y=>String(y.id)===id);return t+(x?q*unitCost(x,ordSup):0);},0);
 function ensureMeta(){
+  meta.ins=Object.assign({req:[],next:0,n:0},meta.ins);meta.ins.req=toArr(meta.ins.req);
   CAT.forEach(x=>{if(meta.stock[x.id]===undefined)meta.stock[x.id]=4;});
   /* Partidas de antes de la economía real: sueldos al convenio (nunca por debajo del SMI) y ampliación de capital hasta 30.000 €. */
   if(!meta.eco2){meta.eco2=1;(meta.emp||[]).forEach(e=>{e.wage=Math.max(e.wage||0,wageOf(e.role));});if(meta.money<3000000)meta.money=3000000;}
@@ -2567,7 +2672,7 @@ function cadScene(p){
       else if(k==='rebaja'){meta.stock[p.id]-=m;const v=m*dis,iv=p.iva||10;meta.money+=v;run.sales=(run.sales||0)+v;run.ivaR=(run.ivaR||0)+v*iv/(100+iv);
         if(Math.random()<0.2){meta.rep=clamp(meta.rep-0.05,0,5);addReview(2,'🧐');toast('🏷️ Vendidas '+m+' '+p.e+' rebajadas (+'+fmt(v)+'), pero a alguien le ha parecido cutre.','bad');}
         else toast('🏷️ Vuelan: '+m+' '+p.e+' rebajadas, +'+fmt(v),'good');}
-      else if(Math.random()<0.5){addTicket('rrpp','Ha encontrado '+p.n+' caducado en la estantería',0,2,false);meta.rep=clamp(meta.rep-0.15,0,5);toast('🙈 Un cliente ha pillado '+p.e+' caducado y se queja.','bad');sBad();}
+      else if((meta.ins.cad=meta.day)&&Math.random()<0.5){addTicket('rrpp','Ha encontrado '+p.n+' caducado en la estantería',0,2,false);meta.rep=clamp(meta.rep-0.15,0,5);toast('🙈 Un cliente ha pillado '+p.e+' caducado y se queja.','bad');sBad();}
       renderAll();checkRep();
     }});
 }
@@ -2635,7 +2740,7 @@ function processTickets(){
     run.tickets.filter(t=>t.dept===d).sort((x,y)=>y.sev-x.sev).forEach((t,i)=>{
       r.in++;
       const e=slots[i];
-      if(!e){r.late++;meta.rep=clamp(meta.rep-0.15,0,5);
+      if(!e){r.late++;meta.rep=clamp(meta.rep-0.15,0,5);meta.ins.late=meta.day;
         /* Hoja de reclamaciones sin contestar: Consumo puede sancionar (infracción leve, hasta 10.000 €). */
         if(Math.random()<0.08){const f=ri(300,1500)*100;meta.consPend=(meta.consPend||[]).concat([{f,d:meta.day,t:t.t||''}]).slice(-3);}
         return;}
@@ -2810,6 +2915,8 @@ function adviceList(le){
   else if(f&&f.net>0)tip('📈','Ganas dinero','Beneficio neto '+fmt(f.net)+' (margen '+(f.S+(f.O||0)?Math.round(f.net/(f.S+(f.O||0))*100):0)+'%).');
   if(f&&f.B>f.S+(f.O||0)&&f.B>30000)tip('📦','Mucho dinero en stock','Has comprado '+fmt(f.B)+' en mercancía y vendido '+fmt(f.S)+'. No es pérdida (está en el almacén), pero ese dinero no lo tienes en el bote.');
   if(meta.money<300000)hot('🏦','Bote muy justo','Con '+fmt(meta.money)+' cualquier susto te deja en números rojos. Por debajo de 0 tiras de la póliza de crédito (con intereses); a −'+fmt(credLim())+', concurso de acreedores.');
+  /* Requerimientos de la inspección pendientes */
+  ((meta.ins||{}).req||[]).forEach(q=>{const c=INSP_C.find(x=>x.k===q.k);hot('📋','Requerimiento de '+INSP_A[q.a].s+': '+q.t,'Vuelven el turno '+q.by+'. '+(c&&c.fx?c.fx:'Arréglalo antes o multa doble.'));});
   /* Contratar */
   if(r){[['back','Backoffice'],['rrpp','RR.PP.'],['alm','Almacén']].forEach(([k,n])=>{if(r[k].late>0)(room0(k)>0?hot:tip)('➕','Contrata en '+n,r[k].late+(r[k].late===1?' reclamación se quedó':' reclamaciones se quedaron')+' sin atender por falta de gente'+(room0(k)>0?' (quedan '+room0(k)+' plazas).':', pero ya está lleno: mejora a los que hay.'));});}
   if(run.angry>=3&&room0('atc')>0)hot('➕','Contrata en Caja',run.angry+' clientes se fueron hartos de esperar. Cada cajero libre baja la impaciencia un 8%.');
@@ -3037,7 +3144,7 @@ async function fillRanking(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.17-74';
+const APPV='2026.11.17-75';
 /* Compara versiones por números («-9» < «-11»), no como texto. */
 const verCmp=(a,b)=>{const x=String(a).split(/[.-]/).map(Number),y=String(b).split(/[.-]/).map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
 try{const vt=document.createElement('div');vt.id='vtag';vt.textContent='v'+APPV;document.body.appendChild(vt);}catch(e){}
@@ -3973,6 +4080,7 @@ function expireTask(t){
   if(t.k==='inv'||t.k==='order'){toast('Nadie de Almacén pudo con: '+t.ic+' '+t.s,'bad');renderAll();return;}
   tStat(t,false);if(t.chk)albApply(false);
   meta.rep=clamp(meta.rep-t.pen,0,5);
+  if(t.k==='spill')meta.ins.spill=meta.day;
   if(t.k==='spill'&&Math.random()<0.3){addTicket('back','Un cliente se resbaló en el pasillo '+t.n,ri(1000,3000),3,false);toast('Nadie limpió el pasillo '+t.n+' y alguien se ha caído','bad');}
   else toast('Nadie atendió: '+t.ic+' '+t.s,'bad');
   sBad();renderAll();checkRep();
@@ -5119,15 +5227,18 @@ const FIRE={
    despido objetivo procedente: 20 días de salario por año trabajado; improcedente: 33 días por año (art. 56). Un turno = un día. */
 const finiquito=e=>Math.round(e.wage*30*e.days/365);
 const indProc=e=>Math.round(e.wage*20*e.days/365),indImp=e=>Math.round(e.wage*33*e.days/365);
-/* Vender alcohol a un menor: infracción de la ley autonómica de drogodependencias. Solo se multa si hay inspección o denuncia (12 %):
-   la primera, grave (3.001–6.000 €); la segunda, grave en su tramo alto (9.000–30.000 €); desde la tercera, muy grave (30.001–60.000 €). */
+/* Vender alcohol a un menor en la Comunidad de Madrid: Ley 5/2002, de 27 de junio, sobre Drogodependencias y otros Trastornos Adictivos
+   (prohibición en el art. 30.2; cuantías en el art. 59). Solo se multa si hay inspección o denuncia (12 %).
+   Tramos aplicados (sin leer el BOE directamente: art. 59 citado de memoria y contrastado con fuentes secundarias; revisar):
+   grave 30.050,62–60.101,21 €; muy grave 60.101,22–601.012,10 € (caso real en Coslada: 60.102 € por venta reiterada).
+   La primera, grave en su grado mínimo (30.050,62 €); la segunda, grave reincidente (30.051–60.101 €); desde la tercera, muy grave en su mínimo (60.101,22 €). */
 function minorSale(who){
   meta.rep=clamp(meta.rep-0.3,0,5);
-  if(Math.random()<0.12){const n=meta.minorFine=(meta.minorFine||0)+1,f=(n>=3?ri(30001,60000):n===2?ri(9000,30000):ri(3001,6000))*100;
+  if(Math.random()<0.12){const n=meta.minorFine=(meta.minorFine||0)+1,f=n>=3?6010122:n===2?ri(30051,60101)*100:3005062;
     run.fines+=f;meta.money-=f;meta.rep=clamp(meta.rep-1,0,5);
     if(canInsp()&&inspScene(n,f,who))return '';
     return '🚔 Inspección: '+who+' alcohol a un menor. Multa '+(n>=3?'muy grave':'grave')+' de '+fmt(f)+(n>1?' (reincidencia)':'')+'.';}
-  return '⚠️ '+who.replace(/^h/,'H')+' alcohol a un menor. Nadie lo ha denunciado… esta vez (multa grave: desde 3.001 €).';
+  return '⚠️ '+who.replace(/^h/,'H')+' alcohol a un menor. Nadie lo ha denunciado… esta vez (multa grave: desde 30.050 €, Ley 5/2002 de Madrid).';
 }
 function fireEmp(id,r){
   const e=empById(id),F=FIRE[r];if(!meet||!e||!F||meet.acted[id])return;
