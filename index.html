@@ -1175,6 +1175,18 @@ body.rem .isostore{display:none!important}
   .card.screen.sc-lobby .scr-body{flex:0 1 auto}
 }
 .card.screen>.scr-head small.sub{color:#ffe1e1;opacity:.9}
+/* Cierre: tarjetas con las cifras clave y ventana a la medida en pantalla grande */
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.kpi{background:#fff;border:2px solid #f0c9c9;border-radius:12px;padding:8px 12px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.kpi>small{font-size:12px;color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kpi>b{font-family:var(--pix);font-size:22px;font-weight:400;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.kpi>b small{font-family:var(--body);font-size:11px;color:var(--mute)}
+.kpi.neg>b{color:var(--sign)}.kpi.pos>b{color:var(--ok)}
+@media (max-width:420px){.kpis{grid-template-columns:repeat(2,1fr);gap:5px}.kpi{padding:4px 8px;border-radius:10px}.kpi>small{font-size:10px}.kpi>b{font-size:16px}}
+@media (max-width:820px){.sc-shop .scr-body,.sc-meet .scr-body{overflow-y:auto}}
+@media (min-width:821px){
+  .card.screen.sc-shop,.card.screen.sc-meet{position:relative;inset:auto;margin:auto;width:100%;max-width:980px;height:auto;max-height:calc(100dvh - 32px)}
+  .card.screen.sc-shop .scr-body,.card.screen.sc-meet .scr-body{flex:0 1 auto}
+}
 /* ===== Ajustes de móvil (auditoría de diseño) ===== */
 .scr-foot:empty{display:none}
 .alert .who .btn{min-height:34px}
@@ -1939,20 +1951,16 @@ function showShop(noFit){
   const out=CAT.filter(x=>(meta.stock[x.id]||0)<=0).length,ap=isHost()?appsList().length:0;
   if(scrTab.shop==='apps'&&!ap)scrTab.shop='sum';
   const k=scrTab.shop;let body='',nav='';
-  if(k==='sum')body=`<div class="sum">
-      <span>Clientes atendidos</span><b>${run.served}</b>
-      <span>Se fueron enfadados</span><b>${run.angry}</b>
-      <span>Errores</span><b>${run.errors}</b>
-      <span>Ventas del día</span><b>${fmt(run.sales)}</b>
-      <span>Propinas</span><b>${fmt(run.tips)}</b>
-      <span>Multas y pérdidas en caja</span><b>${run.fines?'−':''}${fmt(run.fines)}</b>
-      ${dl('Backoffice',r.back)}${dl('Relaciones Públicas',r.rrpp)}${dl('Almacén',r.alm)}
-      <span>Nómina del personal</span><b>−${fmt(e.payroll)}</b>
-      <span>Avisos atendidos</span><b>${run.tdone} ✓ · ${run.tlost} ✗</b>
-      <span>Productos agotados</span><b>${out}</b>
-      <span class="tot">Bote</span><b class="tot">${fmt(meta.money)}</b>
-      <span>Reputación</span><b>★ ${meta.rep.toFixed(1)}</b>
+  if(k==='sum'){const f=e.fin||{},kp=(ic,l,v,c)=>`<div class="kpi ${c||''}"><small>${ic} ${l}</small><b>${v}</b></div>`;
+    body=`<div class="kpis">
+      ${kp('💰','Bote',fmt(meta.money))}${kp('📈','Beneficio neto',fmt(f.net||0),(f.net||0)<0?'neg':'pos')}${kp('⭐','Reputación','★ '+meta.rep.toFixed(1),meta.rep<2?'neg':'')}
+      ${kp('🧾','Ventas en tu caja',fmt(run.sales))}${kp('🛒','Otras cajas',fmt(run.offS||0)+' <small>· '+(run.offN||0)+' tickets</small>')}${kp('👥','Nómina con S. Social','−'+fmt(e.payroll),'neg')}
+      ${kp('🙂','Atendidos en tu caja',run.served)}${kp('😠','Enfadados',run.angry,run.angry?'neg':'')}${kp('❌','Errores',run.errors,run.errors?'neg':'')}
+      ${kp('🔔','Avisos',run.tdone+' ✓ · '+run.tlost+' ✗',run.tlost?'neg':'')}${kp('📦','Agotados',out,out?'neg':'')}${kp('🚔','Multas y pérdidas',(run.fines?'−':'')+fmt(run.fines),run.fines?'neg':'')}
     </div>
+    <div class="zone-title">RECLAMACIONES AL CIERRE</div><div class="sum">${dl('Backoffice',r.back)}${dl('Relaciones Públicas',r.rrpp)}${dl('Almacén',r.alm)}</div>`
+    +`<div class="supd">Propinas para el personal: ${fmt(run.tips)}.</div>`;}
+  if(k==='sum')body+=`
     <div class="supd">${meetDay?'Hoy toca <b>reunión de personal</b>: valorar, contratar y despedir.':'Próxima reunión de personal al cerrar el turno '+nm+'.'}</div>`;
   else if(k==='fin')body=finHtml(e.fin);
   else if(k==='tips'){const A=adviceList(e);if(!tipsPer)tipsPer=rowsFit(80,230);const P=paged(A,tipsPer,'<div class="supd">Todo en orden. Sigue así, que no dura.</div>');body=`<div class="advice">${P.html}</div>`;nav=P.nav;}
@@ -2051,7 +2059,7 @@ async function fillRanking(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.17-53';
+const APPV='2026.11.17-54';
 /* Compara versiones por números («-9» < «-11»), no como texto. */
 const verCmp=(a,b)=>{const x=String(a).split(/[.-]/).map(Number),y=String(b).split(/[.-]/).map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
 try{const vt=document.createElement('div');vt.id='vtag';vt.textContent='v'+APPV;document.body.appendChild(vt);}catch(e){}
