@@ -2118,7 +2118,7 @@ async function fillRanking(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.17-60';
+const APPV='2026.11.17-61';
 /* Compara versiones por números («-9» < «-11»), no como texto. */
 const verCmp=(a,b)=>{const x=String(a).split(/[.-]/).map(Number),y=String(b).split(/[.-]/).map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
 try{const vt=document.createElement('div');vt.id='vtag';vt.textContent='v'+APPV;document.body.appendChild(vt);}catch(e){}
@@ -3276,13 +3276,13 @@ function supBtn(){if(!(run&&!run.over&&!run.remote))return '';const e=freeTill()
 const freeTill=()=>run&&!run.remote?staffOf('atc').find(e=>!e.real&&isFree(e)&&!run.duty[e.id].slack&&!(run.away&&run.away.cover===e.id)):null;
 function sendQueue(e,n,boss){
   if(!run||run.remote||!e)return 0;let k=0;
-  for(let i=run.queue.length-1;i>=1&&k<n;i--){const c=run.queue[i];if(c.phase==='complaint'||c.complaint)continue;
+  for(let i=1;i<run.queue.length&&k<n;){const c=run.queue[i];if(c.phase==='complaint'||c.complaint){i++;continue;}
     const v=c.items.filter(x=>!x.age||!c.minor).reduce((a,x)=>a+x.p,0),cost=Math.round(v*(SUPS[0].cf+OFF.merma));
     c.items.filter(x=>x.age&&c.minor).forEach(ret);
     run.offS+=v;run.offC+=cost;run.offN++;meta.money+=v-cost;
     const p=ptl.ppl.get(c.id);if(p){ptl.gone.push({x:p.x,y:p.y,ch:pChar(c.id)});ptl.ppl.delete(c.id);}
     run.queue.splice(i,1);k++;}
-  if(k){run.callT=run.t;toast((boss?'📢 Tú: «¡Pasen a la otra caja, por favor!» ':'📢 ')+e.face+' '+e.name+(boss?' les atiende: ':' abre otra caja: «¡Pasen por aquí!» ')+k+(k===1?' cliente se cambia de cola.':' clientes se cambian de cola.'),'good');
+  if(k){run.callT=run.t;toast((boss?'📢 Tú: «¡Pasen a la otra caja, por favor!» ':'📢 ')+e.face+' '+e.name+': «¡'+(k===1?'El siguiente':'Los siguientes')+', por aquí!» '+(k===1?'Pasa el primero de la cola.':'Pasan los '+k+' primeros de la cola.'),'good');
     if(boss)e.moral=clamp(e.moral+1,0,100);renderAll();}
   else if(boss)toast('No hay nadie en tu cola que se pueda cambiar.','bad');
   return k;
@@ -5335,7 +5335,7 @@ function step(ts,hid){
       if(c.p<=0){leaveAngry(i);if(run.over)break;}
     }
     if(run&&!run.remote&&!run.closing&&!run.over)offTick(dt);
-    if(run&&!run.remote&&!run.over&&run.queue.length>=3&&run.t-(run.callT||0)>12){run.callT=run.t-6;const e=freeTill();if(e&&Math.random()<0.25+0.5*e.act+(e.moral-50)/200)sendQueue(e,run.queue.length>=4?2:1,false);}
+    if(run&&!run.remote&&!run.over&&run.queue.length>=2&&run.t-(run.callT||0)>(run.dur||100)/40){const e=freeTill();if(e)sendQueue(e,1,false);else run.callT=run.t-(run.dur||100)/80;}
     if(run&&run.remote){run.syncT+=dt;if(run.syncT>1){run.syncT=0;tillSync();}}
     else{
     if(run&&!run.over)tickStaff(dt);
