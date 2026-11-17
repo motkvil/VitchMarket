@@ -1309,6 +1309,18 @@ body.rem .isostore{display:none!important}
 .dnic-k{font-family:var(--pix);font-size:19px!important;color:#0d2f40}
 .dnic-today{font-size:13px;color:#4a1414}.dnic-today b{font-family:var(--pix);font-size:17px}
 .tpv{display:flex;justify-content:space-between;align-items:center;background:#1b2b22;color:#ff6b6b;border:3px solid #444;border-radius:8px;padding:6px 10px;font-family:var(--pix);font-size:16px}.tpv b{color:#b9f5c9;font-size:20px}
+.alb{background:#fff repeating-linear-gradient(180deg,transparent 0 23px,#f3e8e8 23px 24px);border:1px solid #d9c9c9;border-left:4px solid #c51d22;border-radius:3px;padding:4px 10px 6px;font-size:13px;color:#3a2323;box-shadow:2px 3px 0 #e3cccc;transform:rotate(-.6deg)}
+.alb-h{display:flex;justify-content:space-between;gap:8px;font-family:var(--display);font-weight:700;font-size:11px;letter-spacing:.4px;color:#c51d22;border-bottom:2px dashed #e3cccc;padding-bottom:2px;margin-bottom:2px}
+.alb-l{display:flex;gap:6px;align-items:center;line-height:24px;min-width:0}.alb-n{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.alb-l .scn-it{font-size:18px}
+.alb-l b{font-family:var(--pix);font-size:16px;white-space:nowrap}.alb-l.bad b{color:#d62f3a}.alb-l s{opacity:.5;font-size:13px}
+.alb-f{font-size:11px;color:#7a5a5a;margin-top:2px}
+.cadt{position:relative;display:flex;align-items:center;gap:10px;background:#fff;border:2px solid #c51d22;border-radius:6px;padding:6px 12px;box-shadow:0 3px 0 #c51d22;transform:rotate(-1deg)}
+.cadt-d{font-family:var(--pix);font-size:13px;background:#c51d22;color:#fff;border-radius:4px;padding:2px 6px}.cadt-o{text-decoration:line-through;color:#8a6a6a;font-size:14px}
+.cadt b{font-family:var(--pix);font-size:24px;color:#c51d22}.cadt-x{margin-left:auto;background:#ffd23f;color:#3a2a00;font-weight:800;border-radius:99px;padding:2px 9px;font-size:13px;transform:rotate(6deg)}
+.crash{font-size:30px;letter-spacing:2px;line-height:1.1;background:repeating-linear-gradient(-45deg,#ffd23f 0 10px,#2b2b2b 10px 20px) bottom/100% 6px no-repeat;padding-bottom:8px;animation:scnShake .4s ease-in-out 2}
+@keyframes scnShake{25%{transform:translateX(-4px) rotate(-2deg)}75%{transform:translateX(4px) rotate(2deg)}}
+@media (max-width:820px){.alb{font-size:12px}.alb-l{line-height:21px}.crash{font-size:24px}.cadt b{font-size:20px}}
+@media (max-height:700px){.alb-l{line-height:19px}.alb-l .scn-it{font-size:15px}}
 .scn-stamp{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%) rotate(-12deg);font-family:var(--display);font-weight:700;font-size:34px;letter-spacing:2px;padding:4px 16px;border:5px solid currentColor;border-radius:10px;background:rgba(255,253,250,.85);white-space:nowrap;animation:scnStamp .32s cubic-bezier(.3,1.6,.5,1) both;pointer-events:none}
 .scn-stamp.ok{color:#1f9a55}.scn-stamp.bad{color:#d62f3a}
 .scn-fx{position:absolute;inset:0;pointer-events:none}.scn-fx i{position:absolute;left:calc(30% + var(--i)*10%);top:55%;font-style:normal;font-size:26px;animation:scnFx .6s ease-out calc(var(--i)*40ms) both}
@@ -1318,7 +1330,7 @@ body.rem .isostore{display:none!important}
 @keyframes scnDing{50%{opacity:.4}}
 @keyframes scnStamp{from{transform:translate(-50%,-50%) rotate(-12deg) scale(2.2);opacity:0}}
 @keyframes scnFx{from{transform:translateY(0) scale(.6);opacity:1}to{transform:translateY(-90px) scale(1.1);opacity:0}}
-@media (prefers-reduced-motion:reduce){.scn-wrap,#scene.out .scn-wrap,.scn-belt,.scn-stamp,.scn-pa .scn-head span:first-child{animation:none}.scn-fx{display:none}}
+@media (prefers-reduced-motion:reduce){.scn-wrap,#scene.out .scn-wrap,.scn-belt,.scn-stamp,.scn-pa .scn-head span:first-child{animation:none}.scn-fx{display:none}.crash{animation:none}}
 @media (max-width:820px){#scene{align-items:flex-end;padding:8px 8px 12px}.scn{padding:0 10px 18px;gap:7px}.scn-head{margin:0 -10px;padding:6px 10px;font-size:11px}.scn-belt{margin:-7px -10px 0}
   .scn-who{width:64px;height:64px;font-size:40px}.scn-who canvas{width:50px;height:47px}.scn-face{width:28px;height:28px;font-size:19px;right:-6px;bottom:-6px}
   .scn-say{font-size:15px;padding:6px 10px}.scn-ch .btn{flex:1 1 40%;font-size:14px;min-height:44px}.scn-hint{font-size:11px}.scn-stamp{font-size:26px}}
@@ -1885,6 +1897,7 @@ function startDay(){
   const notes=prepShift();
   const rr=receiveDeliveries();
   if(!(room&&room.sim))hideOverlay();renderAll();
+  try{truckScenes(rr);}catch(e){console.warn('truckScenes',e);}
   const msg=[];
   if(rr.arrived||rr.pending||rr.shelved)msg.push('🚚 '+(rr.arrived?'Han llegado '+rr.arrived+' uds':'Mercancía en el muelle')+(rr.short?' ('+rr.short+' no llegaron)':'')+(rr.shelved?'; antes de abrir Almacén ha colocado '+rr.shelved:'')+(rr.pending?'; quedan '+rr.pending+' en el muelle':''));
   if(notes.length)msg.push(notes.join('. '));
@@ -1955,15 +1968,16 @@ function ensureMeta(){
   meta.boss=Object.assign({cash:0,div:0,divY:0,ret:0,y:0},meta.boss);if(meta.resLeg==null)meta.resLeg=0;
 }
 function receiveDeliveries(){
-  const rr={arrived:0,short:0,shelved:0,pending:0};
+  const rr={arrived:0,short:0,shelved:0,pending:0,lines:[]};
   const due=meta.orders.filter(o=>o.day<=meta.day);
   meta.orders=meta.orders.filter(o=>o.day>meta.day);
   due.forEach(o=>{
-    const sup=SUPS.find(z=>z.k===o.sup);
+    const sup=SUPS.find(z=>z.k===o.sup)||SUPS[0];
     Object.entries(o.items).forEach(([id,q])=>{
       const got=Math.random()<sup.rel?q:Math.ceil(q*0.5);
       rr.arrived+=got;rr.short+=q-got;
       meta.back[id]=(meta.back[id]||0)+got;
+      rr.lines.push({id:+id,q,got,sup:sup.k});
     });
   });
   /* Antes de abrir, quien trabaja en Almacén sube a la estantería lo que puede (30 + 40·rapidez uds cada uno);
@@ -1991,6 +2005,7 @@ function almTask(k,ic,dur,s,txt,extra){
 }
 function almRoutine(){
   if(run.over)return;
+  try{almLiveScenes();}catch(e){console.warn('almLiveScenes',e);}
   const alm=staffOf('alm').filter(inStore);if(!alm.length)return;
   const open=k=>run.tasks.filter(t=>t.k===k);
   const pend=Object.values(meta.back).reduce((t,v)=>t+v,0);
@@ -2006,6 +2021,125 @@ function almRoutine(){
   if(run.closing||!alm.some(e=>!e.real))return;
   if(!open('inv').length&&run.t-(run.invAt||-20)>30){run.invAt=run.t;const n=ri(1,9);almTask('inv','📋',9,'Inventario del pasillo '+n,'Contar lo que queda en el pasillo '+n+' y apuntar lo que falta.',{n});}
   if(!open('order').length&&run.t-(run.ordAt||-20)>20&&lowList().length&&meta.money>0){run.ordAt=run.t;almTask('order','🧾',8,'Pedido a Hacendado de lo que se acaba','Hacer el pedido de lo que se acaba al distribuidor.');}
+}
+/* ---------- escenas de Almacén (motor scene): camión, pedido incompleto, caducados y palé al suelo ----------
+   Solo las ve quien lleva la tienda (jefe o partida sin conexión); el encargado de relevo aplica rdef (o def) al momento. */
+const almSceneOn=()=>!!(run&&!run.over&&!run.remote&&(!room||room.host||room.sim));
+function almScene(o){
+  if(room&&room.sim){if(o.onPick)try{o.onPick(o.rdef!=null?o.rdef:o.def);}catch(e){console.warn('scene',e);}return false;}
+  return scene(o);
+}
+const pName=id=>(CAT.find(x=>x.id===+id)||{}).n||'producto',pEmo=id=>(CAT.find(x=>x.id===+id)||{}).e||'📦';
+/* Quita n uds (primero del muelle, luego de la estantería) y dice cuántas ha quitado. */
+function loseUnits(id,n){const a=Math.min(n,meta.back[id]||0);meta.back[id]=(meta.back[id]||0)-a;const b=Math.min(n-a,meta.stock[id]||0);meta.stock[id]=(meta.stock[id]||0)-b;return a+b;}
+const albLine=(l,bad)=>`<div class="alb-l${bad?' bad':''}"><span class="scn-it">${pEmo(l.id)}</span><span class="alb-n">${esc(pName(l.id))}</span><b>${bad?'<s>'+l.q+'</s> '+l.got:'×'+l.got}</b></div>`;
+/* Daño oculto del camión (run.alb = {d:[{id,k:'roto'|'falta',n,c}]}): si se revisa bien, abono; si se firma sin mirar, se paga. */
+function albApply(found,who){
+  const a=run&&run.alb;if(!a)return;run.alb=null;
+  let lost=0,cost=0;a.d.forEach(x=>{const n=loseUnits(x.id,x.n);lost+=n;cost+=n*x.c;});
+  if(!lost)return;
+  const txt=a.d.map(x=>x.n+' '+pEmo(x.id)+(x.k==='falta'?' que no venían':' rotas')).join(', ');
+  if(found){meta.money+=cost;toast('📋 '+(who||'Almacén')+' revisa el albarán: '+txt+'. Abono del proveedor +'+fmt(cost),'good');}
+  else toast('📦 Al abrir el palé: '+txt+'. Se firmó sin mirar: lo pagas tú ('+fmt(cost)+')','bad');
+  renderAll();
+}
+function truckScenes(rr){
+  run.alb=null;
+  if(!almSceneOn()||!rr||!rr.lines||!rr.arrived)return;
+  const L=rr.lines.filter(l=>l.got>0);if(!L.length)return;
+  const sup=SUPS.find(z=>z.k===L[0].sup)||SUPS[0];
+  /* daño oculto: el 45 % de las veces, 1–2 líneas con 2–4 uds rotas o un lote de 6 que no viene */
+  if(Math.random()<0.45)run.alb={d:shuffle(L).slice(0,ri(1,Math.min(2,L.length))).map(l=>{const x=CAT.find(y=>y.id===l.id)||CAT[0],k=l.got>=12&&Math.random()<0.4?'falta':'roto';
+    return {id:l.id,k,n:k==='falta'?6:Math.min(l.got,ri(2,4)),c:unitCost(x,l.sup)};})};
+  const alm=staffOf('alm').filter(e=>working(e)&&!e.real).sort((a,b)=>perf(b,true)-perf(a,true))[0];
+  const ch=[{t:'📋 Lo reviso yo',k:'me',cls:'go',key:'R',stamp:'A REVISAR',sc:'ok'}];
+  if(alm)ch.push({t:'👷 Que lo mire '+esc(alm.name),k:'alm',key:'A',stamp:'A REVISAR',sc:'ok'});
+  ch.push({t:'✍️ Firmar sin mirar',k:'sign',cls:'no',key:'F',stamp:'FIRMADO',sc:'bad'});
+  almScene({k:'camion:'+meta.day,who:'🚚',sprite:'chofer'+sup.k,head:'🚚 MUELLE · ALBARÁN',name:'Repartidor de '+esc(sup.n),tag:rr.arrived+' uds',prio:1,time:12,def:'sign',rdef:alm?'alm':'sign',
+    txt:'¡Buenas! Fírmame aquí, que voy tarde.',
+    body:`<div class="alb"><div class="alb-h"><span>ALBARÁN Nº ${meta.day*137%9000+1000}</span><span>${esc(sup.n)}</span></div>${L.slice(0,4).map(l=>albLine(l,l.got<l.q)).join('')}${L.length>4?'<div class="alb-f">…y '+(L.length-4)+(L.length===5?' línea más':' líneas más')+'</div>':''}<div class="alb-f">Recibí conforme: ________ ✍️</div></div>`,
+    choices:ch,
+    onPick:k=>{
+      if(!run||run.over)return;
+      if(k==='sign'){if(run.alb)setTimeout(()=>{if(run&&!run.over)albApply(false);},2500);else toast('✍️ Firmado. Esta vez venía todo bien.','good');return;}
+      let t=run.tasks.find(x=>x.k==='truck'&&!x.who);
+      if(!t)t=almTask('truck','🚚',16,'','');
+      Object.assign(t,{chk:1,s:'Revisar el albarán y descargar',txt:'Revisar el albarán del camión línea a línea, reclamar lo que falte o venga roto y colocar.',pen:0.15,dl:run.t+TLIFE+15});
+      if(k==='alm'&&alm&&inStore(alm))assignTask(t.id,String(alm.id));
+      else if(k==='me')assignTask(t.id,'me');
+      else if(k==='alm')toast('👷 '+alm.name+' aún no ha llegado: lo revisa en cuanto entre.');
+      renderAll();
+    }});
+  /* Pedido incompleto: el proveedor no mandó todo (y ya estaba pagado). Reclamar el abono o que lo traigan sin cobrar. */
+  const S=rr.lines.filter(l=>l.got<l.q);
+  if(S.length){
+    const sk=S[0].sup,sp=SUPS.find(z=>z.k===sk)||SUPS[0],miss=S.filter(l=>l.sup===sk);
+    const lots=miss.reduce((a,l)=>a+Math.max(1,Math.round((l.q-l.got)/6)),0);
+    const cost=miss.reduce((a,l)=>a+(l.q-l.got)*unitCost(CAT.find(y=>y.id===l.id)||CAT[0],sk),0),pa={hac:0.85,exp:1,cho:0.45}[sk]||0.8,lead=sk==='cho'?2:1;
+    almScene({k:'incompleto:'+meta.day,who:'📦',sprite:'chofer'+sk,head:'🚚 MUELLE · PEDIDO INCOMPLETO',name:esc(sp.n),tag:'Faltan '+lots+(lots===1?' lote':' lotes'),prio:1,time:12,def:'abono',
+      txt:'Faltan '+lots+(lots===1?' lote':' lotes')+' de '+miss.slice(0,3).map(l=>pEmo(l.id)).join('')+'. «No había más en la nave, jefe.»',
+      body:`<div class="alb"><div class="alb-h"><span>PEDIDO · RECIBIDO</span><span>Ya pagado: ${fmt(cost)}</span></div>${miss.slice(0,4).map(l=>albLine(l,true)).join('')}${sk==='cho'?'<div class="alb-f">📞 Chollo Import no siempre coge el teléfono…</div>':''}</div>`,
+      choices:[{t:'📞 Reclamar abono',k:'abono',cls:'go',key:'R',stamp:'RECLAMADO',sc:'ok',fx:'💶'},{t:'🚚 Que lo traigan '+(lead===1?'mañana':'en 2 turnos'),k:'reenv',key:'T',stamp:'REENVÍO',sc:'ok'}],
+      onPick:k=>{
+        if(!run)return;
+        if(k==='reenv'){const items={};miss.forEach(l=>{items[l.id]=(items[l.id]||0)+(l.q-l.got);});meta.orders.push({day:meta.day+lead,sup:sk,items});toast('🚚 '+sp.n+' lo manda sin cobrar en el turno '+(meta.day+lead)+'. Hoy, sin eso en el lineal.','good');}
+        else if(Math.random()<pa){meta.money+=cost;sOk();toast('📞 '+sp.n+' te abona lo que faltaba: +'+fmt(cost),'good');}
+        else{sBad();toast('📞 '+sp.n+' no coge el teléfono. Lo que faltaba, perdido ('+fmt(cost)+')','bad');}
+        renderAll();
+      }});
+  }
+}
+/* Caducados en el lineal y palé al suelo: salen de vez en cuando durante el turno (desde almRoutine, cada 3 s). */
+function almLiveScenes(){
+  if(!almSceneOn()||run.closing||run.t<15)return;
+  const sim=!!(room&&room.sim);
+  if((run.cadN||0)<2&&sceneOk('cad',80)&&Math.random()<0.025*(1+Math.min(meta.day,10)*0.05)){
+    const p=pick(CAT.filter(x=>!x.age&&perish(x.id)&&(meta.stock[x.id]||0)>=2));
+    if(p){run.cadN=(run.cadN||0)+1;if(sim)sceneLast.cad=performance.now()/1000;cadScene(p);}
+  }
+  if(meta.day>=2&&!run.rotN&&sceneOk('rot',150)&&Math.random()<0.012){
+    const tot=x=>(meta.stock[x.id]||0)+(meta.back[x.id]||0);
+    const p=pick(CAT.filter(x=>x.age&&tot(x)>=6))||pick(CAT.filter(x=>tot(x)>=6));
+    if(p){run.rotN=1;if(sim)sceneLast.rot=performance.now()/1000;rotScene(p);}
+  }
+}
+function cadScene(p){
+  const n=Math.min(meta.stock[p.id]||0,ri(2,4)),a=aisleOf(p.id),dis=Math.round(p.p*0.7/5)*5;
+  almScene({k:'cad:'+p.id,look:'label',who:p.e,head:'🏷️ LINEAL · PASILLO '+a,name:esc(p.n),tag:'⚠️ Caduca hoy',prio:0,time:10,def:'deja',rdef:'merma',
+    txt:'Hay '+n+(n===1?' unidad que caduca':' unidades que caducan')+' hoy. ¿Qué hacemos?',
+    body:`<div class="cadt"><span class="cadt-d">CAD ${dShort(today0)}</span><span class="cadt-o">${fmt(p.p)}</span><b>${fmt(dis)}</b><span class="cadt-x">−30%</span></div>`,
+    choices:[{t:'🗑️ Retirar a merma',k:'merma',cls:'go',key:'M',stamp:'MERMA',sc:'ok'},{t:'🏷️ Rebajar 30%',k:'rebaja',key:'B',stamp:'−30%',sc:'ok',fx:'🏷️'},{t:'🙈 Dejarlo',k:'deja',cls:'no',key:'D',stamp:'¿Y SI…?',sc:'bad'}],
+    onPick:k=>{
+      if(!run||run.over)return;
+      const m=Math.min(n,meta.stock[p.id]||0);
+      if(k==='merma'){meta.stock[p.id]-=m;toast('🗑️ '+m+' '+p.e+' a merma. Lineal limpio.','good');}
+      else if(k==='rebaja'){meta.stock[p.id]-=m;const v=m*dis,iv=p.iva||10;meta.money+=v;run.sales=(run.sales||0)+v;run.ivaR=(run.ivaR||0)+v*iv/(100+iv);
+        if(Math.random()<0.2){meta.rep=clamp(meta.rep-0.05,0,5);addReview(2,'🧐');toast('🏷️ Vendidas '+m+' '+p.e+' rebajadas (+'+fmt(v)+'), pero a alguien le ha parecido cutre.','bad');}
+        else toast('🏷️ Vuelan: '+m+' '+p.e+' rebajadas, +'+fmt(v),'good');}
+      else if(Math.random()<0.5){addTicket('rrpp','Ha encontrado '+p.n+' caducado en la estantería',0,2,false);meta.rep=clamp(meta.rep-0.15,0,5);toast('🙈 Un cliente ha pillado '+p.e+' caducado y se queja.','bad');sBad();}
+      renderAll();checkRep();
+    }});
+}
+function rotScene(p){
+  const a=aisleOf(p.id),n=Math.min((meta.stock[p.id]||0)+(meta.back[p.id]||0),ri(6,12));
+  const mk=(dl,ex)=>almTask('spill','💥',8,'Palé roto de '+p.n+' · pasillo '+a,'Se ha caído un palé de «'+p.n+'» en el pasillo '+a+': cristales y suelo resbaladizo.',Object.assign({n:a,pid:p.id,roles:['alm','atc'],dl:run.t+dl},ex));
+  almScene({k:'rot:'+p.id,look:'pa',who:'💥',head:'MEGAFONÍA',name:'¡Palé al suelo en el pasillo '+a+'!',tag:'Transpaleta',prio:2,time:9,def:'cord',rdef:'clean',
+    txt:'«Personal de Almacén al pasillo '+a+', por favor.»',
+    body:`<div class="crash">${p.e}${p.e}💥${p.e}🫧🫧</div><div class="scn-hint">Unas ${n} uds de ${esc(p.n)} por el suelo. Resbala.</div>`,
+    choices:[{t:'🧹 Limpiar ya',k:'clean',cls:'go',key:'L',stamp:'¡A FREGAR!',sc:'ok',fx:'🫧'},{t:'🚧 Acordonar y seguir',k:'cord',key:'C',stamp:'ACORDONADO',sc:'bad'}],
+    onPick:k=>{
+      if(!run||run.over)return;
+      if(k==='clean'){
+        const lost=loseUnits(p.id,Math.ceil(n*0.7)),t=mk(TLIFE);t.pen=0.4;
+        const c=meta.emp.filter(e=>inStore(e)&&!e.real&&t.roles.includes(e.role)&&!(run.away&&run.away.cover===e.id)).sort((x,y)=>(isFree(y)-isFree(x))||((y.role==='alm')-(x.role==='alm'))||y.rap-x.rap)[0];
+        if(c){assignTask(t.id,String(c.id));toast('🧹 '+c.name+' va corriendo al pasillo '+a+'. Se salvan '+(n-lost)+' uds; '+lost+' a merma.','good');}
+        else toast('🧹 No hay nadie libre de Almacén ni de Caja: el aviso te espera («Voy yo»). '+lost+' uds a merma.','bad');
+      }else{
+        const lost=loseUnits(p.id,n),t=mk(TLIFE+30,{cord:1});t.pen=0.3;
+        toast('🚧 Pasillo '+a+' acordonado: '+lost+' uds a merma. Ojo, que resbala.','bad');
+      }
+      renderAll();
+    }});
 }
 /* Presupuesto de un pedido: el 35% del bote y, en todo el turno, el 80% de lo que había al abrir (mín. 50 €). */
 const orderBudget=()=>Math.max(0,Math.min(Math.floor(meta.money*0.35),60000-(run.autoBuy||0)));
@@ -2984,6 +3118,7 @@ function realFail(t){
   if(t.k==='tk'){if(e)note(e.real,'Se te pasó el tiempo con la reclamación. Se queda en la bandeja.',true);renderAll();return;}
   meta.rep=clamp(meta.rep-t.pen/2,0,5);tStat(t,false,e);
   if(e){e.st.tfail++;logE(e,'Dejó a medias un aviso: '+t.s);note(e.real,'Se te pasó el tiempo: '+t.s,true);toast('🎮 '+e.name+' no ha terminado a tiempo: '+t.s,'bad');}
+  if(t.chk)albApply(false);
   sBad();renderAll();checkRep();
 }
 /* Lo que ven los demás: cada segundo mientras el juego del jefe está abierto (si no, se congela). */
@@ -3340,6 +3475,8 @@ function assignAll(){
 }
 /* Avisos hechos/perdidos por departamento (para el cierre): cuenta el puesto de quien lo hizo o el del aviso. */
 function tStat(t,ok,e){if(ok)run.tdone++;else run.tlost++;const r=(e&&e.role)||(t.roles&&t.roles[0])||'alm',D=run.dstat=run.dstat||{},d=D[r]=D[r]||{ok:0,ko:0};d[ok?'ok':'ko']++;}
+/* Palé acordonado (rotScene): mientras nadie lo limpia, alguien pasa la cinta. 20 %: caída, reclamación a Backoffice y −0,2. */
+function cordFall(t,silent){if(Math.random()>=0.2)return false;addTicket('back','Un cliente pasó la cinta del pasillo '+t.n+' y se resbaló',ri(1500,4000),3,false);meta.rep=clamp(meta.rep-0.2,0,5);if(!silent)toast('🚧 Alguien ha pasado la cinta del pasillo '+t.n+' y se ha caído. Reclamación a Backoffice.','bad');return true;}
 function moveStock(id,max){const mv=Math.min(max,meta.back[id]||0);if(mv>0){meta.back[id]-=mv;meta.stock[id]=(meta.stock[id]||0)+mv;}return mv;}
 function finishTask(t){
   run.tasks=run.tasks.filter(x=>x!==t);
@@ -3352,15 +3489,16 @@ function finishTask(t){
     if(e)logE(e,'Hizo inventario del pasillo '+t.n);
     toast('📋 Inventario del pasillo '+t.n+(ok?': '+ps.length+' productos, '+(out.length?out.length+' agotados ('+out.slice(0,3).map(x=>x.e).join('')+')':'ninguno agotado')+(low.length?', '+low.length+' a punto de acabarse':''):' a medias: '+(e?e.name:'')+' se ha liado contando.'),ok?'good':'bad');
     if(ok)run.ordAt=-99;renderAll();return;}
-  if(!ok){meta.rep=clamp(meta.rep-t.pen/2,0,5);tStat(t,false,empById(t.who));
+  if(!ok){meta.rep=clamp(meta.rep-t.pen/2,0,5);tStat(t,false,empById(t.who));if(t.chk)albApply(false);
+    if(t.cord)cordFall(t);
     const why=t.lang?'. No se han entendido':(t.match?'':'. No es su puesto');
     toast((t.who==='me'?'Te ha salido regular en el pasillo '+t.n:nm+' lo ha dejado a medias en el pasillo '+t.n)+why,'bad');sBad();renderAll();checkRep();return;}
   tStat(t,true,empById(t.who));let extra='';
   if(t.k==='repo'||t.k==='call'){const mv=moveStock(t.pid,8);extra=mv?' (+'+mv+' uds en estantería)':' (en el almacén no quedaba)';}
-  else if(t.k==='truck'){let cap=40,tot=0;Object.keys(meta.back).sort((x,y)=>(meta.stock[x]||0)-(meta.stock[y]||0)).forEach(id=>{if(cap>0){const mv=moveStock(id,cap);cap-=mv;tot+=mv;}});extra=' (+'+tot+' uds)';}
+  else if(t.k==='truck'){let cap=40,tot=0;Object.keys(meta.back).sort((x,y)=>(meta.stock[x]||0)-(meta.stock[y]||0)).forEach(id=>{if(cap>0){const mv=moveStock(id,cap);cap-=mv;tot+=mv;}});extra=' (+'+tot+' uds)';if(t.chk)albApply(true,nm);}
   else if(t.k==='cv'){const c=t.cand,q=c?(c.rap+c.trato+c.punt+c.act)/4:0;extra=q>=0.55?' · '+hireFromCv(c,c.wage):' · no le ha convencido';}
   else if(t.k==='feud'&&t.fd)extra=' · '+applyFeud({a:t.fd.a.id,b:t.fd.b.id,truth:t.fd.truth},true);
-  else meta.rep=clamp(meta.rep+0.05,0,5);
+  else{meta.rep=clamp(meta.rep+0.05,0,5);if(t.cord)cordFall(t);}
   toast((t.who==='me'?'Hecho. Vuelves a la caja':nm+' ha terminado en el pasillo '+t.n)+extra,'good');
   renderAll();
 }
@@ -3368,7 +3506,7 @@ function expireTask(t){
   run.tasks=run.tasks.filter(x=>x!==t);
   if(t.k==='tk'){renderAll();return;}
   if(t.k==='inv'||t.k==='order'){toast('Nadie de Almacén pudo con: '+t.ic+' '+t.s,'bad');renderAll();return;}
-  tStat(t,false);
+  tStat(t,false);if(t.chk)albApply(false);
   meta.rep=clamp(meta.rep-t.pen,0,5);
   if(t.k==='spill'&&Math.random()<0.3){addTicket('back','Un cliente se resbaló en el pasillo '+t.n,ri(1000,3000),3,false);toast('Nadie limpió el pasillo '+t.n+' y alguien se ha caído','bad');}
   else toast('Nadie atendió: '+t.ic+' '+t.s,'bad');
@@ -4303,6 +4441,7 @@ function applyMG(t,sc,early,e,x){
     if(+x.rotErr)L.push('lo nuevo quedó delante');
     msg=(mv?'Lineal repuesto: +'+mv+' uds en estantería':'Lineal revisado, pero en el almacén no quedaba más')+(L.length?' · '+L.join(' · '):'')+'.';
   }else if(kind==='recv'){
+    if(t.chk&&run)run.alb=null;
     meta.money+=Math.round(+x.abono||0)-Math.round(+x.lost||0);
     let cap=Math.min(24,6*Math.round(+x.placed||0)),tot=0;
     toArr(x.ids).forEach(id=>{if(cap>0){const mv=moveStock(id,Math.min(6,cap));cap-=mv;tot+=mv;}});
@@ -4327,6 +4466,7 @@ function applyMG(t,sc,early,e,x){
     if(early&&Math.random()<0.4){addTicket('back','Un cliente se resbaló en el pasillo '+t.n+' (no había cartel)',ri(1000,3000),3,false);meta.rep=clamp(meta.rep-0.3,0,5);L.push('sin cartel, alguien se ha resbalado');good=false;}
     if(+x.wetLeft&&Math.random()<0.3){addTicket('back','Un cliente se resbaló en el pasillo '+t.n+' (suelo mojado sin cartel)',ri(800,2000),2,false);L.push('quitaste el cartel con el suelo mojado');good=false;}
     if(+x.cut){if(e)e.moral=clamp(e.moral-6,0,100);L.push('corte con los cristales');}
+    if(t.cord&&cordFall(t,1))L.push('con el pasillo acordonado tanto rato, alguien se ha colado y resbalado');
     if(+x.notOut&&Math.random()<0.4){addTicket('alm','Un cliente ha cogido un '+((CAT.find(y=>y.id===+x.pid)||{}).n||'producto')+' roto',0,1,false);L.push('el producto roto seguía en la estantería');}
     else if(!+x.notOut)lose(+x.pid,1);
     if(good)meta.rep=clamp(meta.rep+0.05,0,5);
