@@ -1177,6 +1177,9 @@ body.rem .isostore{display:none!important}
 .card.screen>.scr-head small.sub{color:#ffe1e1;opacity:.9}
 /* Cierre: tarjetas con las cifras clave y ventana a la medida en pantalla grande */
 .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.dscene{position:relative;width:100%;max-height:320px;border-radius:14px;overflow:hidden;border:3px solid #7a0d12;background:#ece6e2;margin-bottom:10px;flex:0 0 auto}
+.dscene .gs-zone{position:absolute;left:8px;top:6px;z-index:2}
+@media (max-width:820px){.dscene{max-height:230px;margin-bottom:8px}}
 .dkpis{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
 .dkpi{background:#fff;border:2px solid #f0c9c9;border-radius:12px;padding:6px 8px;display:flex;flex-direction:column;align-items:flex-start;gap:1px;text-align:left;min-width:0;cursor:pointer}
 .dkpi.on{border-color:#e5383b;box-shadow:0 3px 0 #b3141c}
@@ -2070,7 +2073,7 @@ async function fillRanking(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.17-55';
+const APPV='2026.11.17-56';
 /* Compara versiones por números («-9» < «-11»), no como texto. */
 const verCmp=(a,b)=>{const x=String(a).split(/[.-]/).map(Number),y=String(b).split(/[.-]/).map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
 try{const vt=document.createElement('div');vt.id='vtag';vt.textContent='v'+APPV;document.body.appendChild(vt);}catch(e){}
@@ -4802,13 +4805,14 @@ function pixStatic(){
   tI(c,16,380,160);tI(c,17,268,240);tI(c,16,4,236);
   return b;
 }
-function pixStore(slot,m,zone){
+function pixStore(slot,m,zone,cover){
   if(!pst.buf){pst.buf=document.createElement('canvas');pst.buf.width=400;pst.buf.height=262;pst.st=pixStatic();}
   const cv=pixCanvas(slot,'store');if(!cv._click){cv._click=1;cv.addEventListener('click',pixStoreClick);}
   const c=pst.buf.getContext('2d'),now=performance.now();c.imageSmoothingEnabled=false;c.drawImage(pst.st,0,0);
   /* avisos sin dueño, camión, derrames */
+  if(m&&!toArr(m.tasks).some(t=>t.k==='truck'))pst.trT=0;
   if(m)toArr(m.tasks).forEach((t,j)=>{const w=t.k==='truck'?[372,24]:t.k==='cash'?[300,200]:t.k==='cv'||t.k==='feud'?[356,240]:[laneX(t.n)+14,92+(j%3)*10];
-    if(t.k==='truck'){tU(c,420,352,4);tU(c,421,368,4);}
+    if(t.k==='truck'){if(!pst.trT)pst.trT=now;const o=Math.round(Math.max(0,1-(now-pst.trT)/2500)*80);tU(c,420,352+o,4);tU(c,421,368+o,4);}
     if(t.k==='spill'){c.fillStyle='rgba(110,180,255,.75)';c.fillRect(w[0]-6,w[1]-2,12,5);}
     const bl=Math.floor(now/400)%2;c.fillStyle=bl?'#ffd23f':'#ff4d4f';c.fillRect(w[0]-5,w[1]-22,11,11);c.fillStyle='#000';c.font='9px sans-serif';c.textAlign='center';c.textBaseline='middle';c.fillText('!',w[0],w[1]-16);});
   /* personas ordenadas por altura */
@@ -4821,7 +4825,7 @@ function pixStore(slot,m,zone){
     if(s.b){c.font='10px sans-serif';c.textAlign='center';c.textBaseline='bottom';c.fillText(s.b,s.x,s.y-11);}
   });
   let src=null;
-  if(zone){const [x,y,w,d]=zone,pad=24,ar=cv.width/cv.height,BW0=pst.buf.width,BH0=pst.buf.height;let sw=w+pad*2,sh=d+pad*2;if(sw/sh<ar)sw=sh*ar;else sh=sw/ar;sw=Math.min(sw,BW0);sh=Math.min(sh,BH0);src=[clamp(x+w/2-sw/2,0,BW0-sw),clamp(y+d/2-sh/2,0,BH0-sh),sw,sh];}
+  if(zone){const [x,y,w,d]=zone,pad=24,ar=cv.width/cv.height,BW0=pst.buf.width,BH0=pst.buf.height;const pd=cover?6:pad;let sw=w+pd*2,sh=d+pd*2;if(sw/sh<ar)sw=sh*ar;else sh=sw/ar;sw=Math.min(sw,BW0);sh=Math.min(sh,BH0);src=[clamp(x+w/2-sw/2,0,BW0-sw),clamp(y+d/2-sh/2,0,BH0-sh),sw,sh];}
   pst.view=pixBlit(cv,pst.buf,src);
   if(zone){const g=cv.getContext('2d'),v=pst.view,[x,y,w,d]=zone;g.strokeStyle='rgba(229,56,59,'+(.5+.3*Math.sin(now/300))+')';g.lineWidth=3;g.strokeRect(v.ox+(x-v.sx)*v.k,v.oy+(y-v.sy)*v.k,w*v.k,d*v.k);}
   /* carteles a resolución normal */
@@ -5083,9 +5087,19 @@ function dirLive(){
   el.innerHTML=`<div class="dkpis">${tiles}</div>${svg}<div class="dleg"><span class="lc">━ Hoy (turno ${meta.day})</span>${prev.length?`<span class="lp">┅ Ayer (turno ${meta.prevDay||meta.day-1})</span>`:''}<span>${live?'A las '+clockOf(run.t,run.dur)+' · ':''}${prev.length?'comparado con ayer a la misma hora':'Mañana podrás compararlo con hoy.'}</span></div>
     <div class="supd">La nómina, el alquiler y los impuestos se cobran al cerrar: el bote de la gráfica es lo que ha entrado menos el coste de la mercancía.</div>`;
 }
+/* Cada pestaña de departamento abre con su zona de la tienda en directo: la gente trabajando, el camión en el muelle, avisos… */
+const DEPT_ZN={alm:[262,0,138,156],back:[262,150,138,112],rrpp:[262,150,138,112],rrhh:[262,150,138,112]};
+const DEPT_SC={alm:'📦 Almacén y muelle, en directo',back:'💼 Oficina de Backoffice, en directo',rrpp:'📣 Oficina de RR.PP., en directo',rrhh:'🗂️ Despacho de RR.HH., en directo'};
+function drawDeptScene(){
+  const sl=document.getElementById('deptscene');if(!sl||!sl.offsetParent||!PIX.ok||!DEPT_ZN[tab])return;
+  const m=camModel(),now=performance.now();
+  if(now-(cam.stepAt||0)>30){camStep(m,Math.min(0.1,(now-(pst.dl||now))/1000));cam.stepAt=now;}pst.dl=now;
+  pixStore(sl,m,DEPT_ZN[tab],true);
+}
 function renderDept(force){
   const el=$('#dept');renderTabs();if(!el||tab==='caja'||el.hidden)return;
-  const h=tab==='alm'?almHtml():tab==='back'?backHtml():tab==='rrpp'?rrppHtml():tab==='rrhh'?rrhhHtml():dirHtml();
+  const sc=DEPT_ZN[tab]&&PIX.ok?`<div class="dscene" id="deptscene" style="aspect-ratio:${DEPT_ZN[tab][2]+12}/${DEPT_ZN[tab][3]+12}"><span class="gs-zone">${DEPT_SC[tab]}</span></div>`:'';
+  const h=sc+(tab==='alm'?almHtml():tab==='back'?backHtml():tab==='rrpp'?rrppHtml():tab==='rrhh'?rrhhHtml():dirHtml());
   if(!force&&h===el._h)return;
   const ol=el.querySelector('.ordlist.tall'),o2=el.querySelectorAll('.ordlist')[1],s1=ol?ol.scrollTop:0,s2=o2?o2.scrollTop:0;
   el._h=h;el.innerHTML=h;if(tab==='dir')dirLive();
@@ -5267,7 +5281,7 @@ function step(ts,hid){
   if(isHost())pubState(false);
   if(hid)return;
   if(tab!=='caja'&&!isMember()&&(ts-(window._dT||0))>700){window._dT=ts;renderDept();if(tab==='dir')dirLive();}
-  drawCams();drawIso();till3d();if((iso.infoT=(iso.infoT||0)+1)%20===0)isoInfo();
+  drawCams();drawIso();if(tab!=='caja'&&!isMember())drawDeptScene();till3d();if((iso.infoT=(iso.infoT||0)+1)%20===0)isoInfo();
 }
 /* Con la pestaña oculta el navegador no pinta (no hay requestAnimationFrame): si llevas la tienda, se sigue moviendo en segundo plano. */
 /* El reloj de fondo va en un Worker: los temporizadores de la pestaña se congelan (Chrome los baja a uno por minuto
