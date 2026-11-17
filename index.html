@@ -1342,7 +1342,8 @@ const TRAITS={
  timido:{n:'Timidez',ic:'🙈',d:'Puntualísimo, pero le cuesta tratar con clientes.'},
  lider:{n:'Liderazgo',ic:'⭐',d:'Los de su mismo puesto rinden más cuando está.'},
  pasota:{n:'Pasota',ic:'😴',d:'Menos actitud. No se agobia por nada.'},
- servicial:{n:'Servicial',ic:'🤝',d:'Cubre la caja aunque no sea su puesto sin rendir peor.'}
+ servicial:{n:'Servicial',ic:'🤝',d:'Cubre la caja aunque no sea su puesto sin rendir peor.'},
+ capullo:{n:'Genio capullo',ic:'🦂',d:'Rinde como nadie, pero amarga a quien trabaja con él y monta broncas.'}
 };
 const TALK={
  bromista:['¿Sabéis por qué el tomate se puso rojo? ¡Porque vio la ensalada!','Hoy estoy que me salgo, ¿eh?'],
@@ -1352,7 +1353,8 @@ const TALK={
  timido:['…','Eh… vale.'],
  lider:['Venga, equipo, que hoy lo sacamos.','Cada uno a lo suyo y salimos antes.'],
  pasota:['Bah, ya lo hará alguien.','Tranqui, que no corre prisa.'],
- servicial:['Si necesitas algo, me dices.','Te echo una mano con eso.']
+ servicial:['Si necesitas algo, me dices.','Te echo una mano con eso.'],
+ capullo:['Si lo hicierais bien, no tendría que hacerlo yo.','Apartad, que así no se hace.']
 };
 /* ===== Economía de una pyme real (España, 2026) =====
    Sueldos: SMI 2026 (RD 126/2026) = 1.221 €/mes × 14 pagas = 17.094 €/año; los convenios de comercio de alimentación
@@ -1373,7 +1375,7 @@ const CREDIT=1500000,CREDIT_I=0.085;
    La demanda de la tienda es limitada: ~240 clientes al día con reputación 5 (menos con mala fama o con agotados, algo más con los días);
    cada caja despacha como mucho ~150. Ticket medio 18 €, IVA medio de la cesta ~7,5 % y mermas del 1,5 % de lo vendido. */
 const OFF={dem:240,cap:150,ticket:1800,iva:0.075,merma:0.015};
-const blankSt=()=>({ok:0,fail:0,late:0,abs:0,tasks:0,tfail:0,quej:0,fel:0,shifts:0,caught:0,cv:0,cvErr:0});
+const blankSt=()=>({ok:0,fail:0,late:0,abs:0,tasks:0,tfail:0,quej:0,fel:0,shifts:0,caught:0,cv:0,cvErr:0,robo:0});
 /* Al cerrar una reunión, las estadísticas pasan al historial (e.tot), que sirve de prueba al despedir. */
 const sumSt=(a,b)=>{const o=blankSt();Object.keys(o).forEach(k=>{o[k]=((a||{})[k]||0)+((b||{})[k]||0);});return o;};
 function closeSt(e){e.tot=sumSt(e.tot,e.st);e.st=blankSt();}
@@ -1384,7 +1386,7 @@ function newEmp(role,m,opt,taken){
   if(!pool.length){nat=NATS[0];pool=nat.n.filter(x=>!used.has(x[0]));if(!pool.length)pool=nat.n;}
   const nm=pick(pool),sk=()=>Math.round(rnd(0.15,0.95)*100)/100,pers=pick(Object.keys(TRAITS));
   m.eid=(m.eid||0)+1;
-  const e={id:m.eid,name:nm[0],face:nm[1],role,rap:sk(),trato:sk(),punt:sk(),act:sk(),moral:ri(55,80),wage:wageOf(role),days:0,warn:0,trial:0,focus:0,off:0,st:blankSt(),
+  const e={id:m.eid,name:nm[0],face:nm[1],role,rap:sk(),trato:sk(),punt:sk(),act:sk(),hon:sk(),moral:ri(55,80),wage:wageOf(role),days:0,warn:0,trial:0,focus:0,off:0,st:blankSt(),
     nat:NATS.indexOf(nat),langs:nat.l.concat(nat.c==='España'&&Math.random()<0.3?['en']:[]),pers};
   const lim=v=>clamp(v,0.05,0.98);
   if(pers==='currante')e.act=lim(e.act+0.15);
@@ -1680,6 +1682,7 @@ function ensureMeta(){
     if(e.nat==null){const i=NATS.findIndex(n=>n.n.some(x=>x[0]===e.name));e.nat=i<0?0:i;}
     if(!e.langs)e.langs=NATS[e.nat].l.slice();
     if(!e.pers&&!e.real)e.pers=pick(Object.keys(TRAITS));
+    if(e.hon==null)e.hon=e.real?1:Math.round(rnd(0.15,0.95)*100)/100;
   });
   meta.regs=meta.regs||{};
   meta.runId=meta.runId||Math.random().toString(36).slice(2,10)+Date.now().toString(36);
@@ -1821,7 +1824,15 @@ function endDay(){
     if(working(e)){e.days++;if(e.trial>0)e.trial--;}
     if(e.focus>0)e.focus--;
     e.moral=clamp(e.moral+(meta.rep>=4?2:meta.rep<2?-3:0),0,100);
+    if(!e.real&&working(e)){
+      /* Desgaste por encaje: su puesto pide justo lo que peor se le da. */
+      if(e[{atc:'trato',rrpp:'trato',rrhh:'trato',alm:'rap',back:'punt'}[e.role]]<0.35)e.moral=clamp(e.moral-2,0,100);
+      /* Merma interna: la poca honestidad (y el poco ánimo o la poca responsabilidad) acaba en hurtos pequeños; a veces se pilla. */
+      if(Math.random()<0.12*(1-(e.hon==null?0.6:e.hon))*(e.moral<40?1.8:1)*(1.3-(e.punt+e.act)/2)){const v=ri(3,40)*100;meta.money-=v;
+        if(Math.random()<0.45){e.st.robo=(e.st.robo||0)+1;logE(e,'Pillado/a llevándose '+fmt(v));toast('🕵️ '+e.name+' se llevaba '+fmt(v)+'. Queda en su ficha.','bad');}}
+    }
   });
+  if(meta.surv>0)meta.surv--;
   meta.money-=payroll;
   const FX=Math.round(FIXED_D*wf);meta.money-=FX;
   /* Intereses de la póliza de crédito si el bote estaba en negativo. */
@@ -2075,7 +2086,7 @@ async function fillRanking(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.17-57';
+const APPV='2026.11.17-58';
 /* Compara versiones por números («-9» < «-11»), no como texto. */
 const verCmp=(a,b)=>{const x=String(a).split(/[.-]/).map(Number),y=String(b).split(/[.-]/).map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
 try{const vt=document.createElement('div');vt.id='vtag';vt.textContent='v'+APPV;document.body.appendChild(vt);}catch(e){}
@@ -2500,7 +2511,7 @@ function syncRealEmps(){
     let e=meta.emp.find(x=>x.real===u);
     const nm=cleanName(m.name);
     if(!e){
-      e=newEmp(m.role,meta,{real:u,name:nm,face:'🧑‍💼',rap:0.6,trato:0.6,punt:1,act:0.7,moral:70,pers:null,nat:0,langs:['es'],trial:3});
+      e=newEmp(m.role,meta,{real:u,name:nm,face:'🧑‍💼',rap:0.6,trato:0.6,punt:1,act:0.7,hon:1,moral:70,pers:null,nat:0,langs:['es'],trial:3});
       meta.emp.push(e);ch=true;
       toast('🎮 '+nm+' entra en '+ROLES[m.role].n,'good');
     }
@@ -2849,14 +2860,19 @@ const isFree=e=>inStore(e)&&!run.duty[e.id].busy;
 function perf(e,match,lang){
   let b=0.5+0.35*(e.rap+e.act)/2+(e.moral-50)/300+(e.focus>0?0.08:0)+Math.min(e.days,15)*0.004;
   if(!match&&e.pers!=='servicial')b-=0.15;
+  if(e.pers==='capullo')b+=0.1;
+  if(meta.surv>0&&!e.real)b-=0.05;
   if(lang)b+=e.langs.includes(lang)?0.15:-0.15;
   if(run&&run.duty&&meta.emp.some(x=>x!==e&&x.pers==='lider'&&x.role===e.role&&working(x)))b+=0.05;
   return clamp(b,0.15,0.97);
 }
 const flag=e=>(NATS[e.nat]||NATS[0]).f;
 const mood=e=>e.moral>=70?'😄':e.moral>=45?'🙂':e.moral>=25?'😒':'😠';
-function score(e){const s=e.st,g=s.ok+s.tasks+s.fel*2+s.cv,b=s.fail+s.tfail+s.quej*2+s.late+s.abs*2+s.caught*2+s.cvErr;return (g+1)/(g+b+2);}
-const verdict=e=>{const v=score(e);return v>=0.7?'✅ Cumple de sobra':v>=0.5?'👍 Cumple':v>=0.35?'😬 Flojea':'🚩 Da problemas';};
+function score(e){const s=e.st,g=s.ok+s.tasks+s.fel*2+s.cv,b=s.fail+s.tfail+s.quej*2+s.late+s.abs*2+s.caught*2+s.cvErr+(s.robo||0)*3;return (g+1)/(g+b+2);}
+/* b: un escalón mejor (sesgo con quien contrataste tú). Keeper test: ¿lucharías por retenerle? */
+const vIdx=(e,b)=>{const v=score(e);return Math.max(0,(v>=0.7?0:v>=0.5?1:v>=0.35?2:3)-(b?1:0));};
+const verdict=(e,b)=>['✅ Cumple de sobra','👍 Cumple','😬 Flojea','🚩 Da problemas'][vIdx(e,b)];
+const keeper=(e,b)=>['Sí','Sí','Dudoso','No'][vIdx(e,b)];
 
 /* Al empezar el turno: quién viene, quién llega tarde, quién falta y qué incidentes tendrá. */
 function prepShift(){
@@ -2877,7 +2893,7 @@ function prepShift(){
   });
   const wk=meta.emp.filter(working);
   if(wk.some(e=>e.role==='rrhh'))wk.forEach(o=>{o.moral=clamp(o.moral+2,0,100);});
-  wk.forEach(e=>{if(e.pers==='bromista'||e.pers==='quejica')wk.forEach(o=>{if(o!==e)o.moral=clamp(o.moral+(e.pers==='bromista'?2:-2),0,100);});});
+  wk.forEach(e=>{const d={bromista:2,quejica:-2,capullo:-3}[e.pers];if(d)wk.forEach(o=>{if(o!==e)o.moral=clamp(o.moral+d,0,100);});});
   run.nextTalk=rnd(10,20);
   return notes;
 }
@@ -3670,12 +3686,12 @@ const fillVac=r=>{if(meta.vac&&meta.vac[r]>0)meta.vac[r]--;};
 function makeCand(any){
   let vr=vacRoles();if(!vr.length&&any)vr=Object.keys(ROLES).filter(r=>staffOf(r).length<ROLES[r].max);if(!vr.length&&any)vr=Object.keys(ROLES);if(!vr.length)return null;
   const role=pick(vr),c=newEmp(role,meta,{},[]);
-  return {name:c.name,face:c.face,role,rap:c.rap,trato:c.trato,punt:c.punt,act:c.act,nat:c.nat,langs:c.langs,pers:c.pers,
+  return {name:c.name,face:c.face,role,rap:c.rap,trato:c.trato,punt:c.punt,act:c.act,hon:c.hon,nat:c.nat,langs:c.langs,pers:c.pers,
     exp:ri(0,8),prev:pick(PREV),wage:Math.round(wageOf(role)*(1+ri(0,4)*0.02))};
 }
 function makeFeud(){
   const ws=meta.emp.filter(e=>!e.real&&inStore(e));if(ws.length<2)return null;
-  const [a,b]=shuffle(ws).slice(0,2),ha=hist(a),hb=hist(b),sa=score(a),sb=score(b);
+  const cp=ws.find(e=>e.pers==='capullo'),[a,b]=cp&&Math.random()<0.6?[cp,pick(ws.filter(e=>e!==cp))]:shuffle(ws).slice(0,2),ha=hist(a),hb=hist(b),sa=score(a),sb=score(b);
   const ev=(e,h)=>({id:e.id,name:e.name,face:e.face,role:ROLES[e.role].n,late:h.late,caught:h.caught,quej:h.quej,tfail:h.tfail+h.fail,tasks:h.tasks+h.ok});
   return {a:ev(a,ha),b:ev(b,hb),truth:Math.abs(sa-sb)<0.08?'both':sa>sb?'a':'b',
     why:pick(['no da palo al agua','me deja todo el trabajo a mí','me habla fatal delante de los clientes','siempre llega tarde y le cubro yo'])};
@@ -3683,8 +3699,8 @@ function makeFeud(){
 function startCv(t){
   const c=Object.assign({},t.cand||makeCand(true));c.langs=toArr(c.langs);
   const ans=k=>{
-    if(k==='lang'){const lie=Math.random()<0.25&&!c.langs.includes('en');return{q:CVQ.lang,a:'«Hablo '+c.langs.concat(lie?['en']:[]).map(l=>LANG[l]).join(', ')+'.»',lie};}
-    const v=c[k];let l=v>0.62?'hi':v<0.38?'lo':'mid',lie=false;if(l!=='hi'&&Math.random()<0.25){l='hi';lie=true;}
+    if(k==='lang'){const lie=Math.random()<(mg&&mg.struct?0.1:0.25)&&!c.langs.includes('en');return{q:CVQ.lang,a:'«Hablo '+c.langs.concat(lie?['en']:[]).map(l=>LANG[l]).join(', ')+'.»',lie};}
+    const v=c[k];let l=v>0.62?'hi':v<0.38?'lo':'mid',lie=false;if(l!=='hi'&&Math.random()<(mg&&mg.struct?0.1:0.25)){l='hi';lie=true;}
     return{q:CVQ[k],a:'«'+pick(IV[k][l])+'»',lie};
   };
   const notes=['rap','trato','punt','act'].filter(k=>c[k]<0.38).map(k=>CVNOTE[k]);
@@ -3704,11 +3720,12 @@ function rrhhBody(){
     h+='<div class="chatlog">'+mg.asked.map(k=>{const x=mg.ans[k];return `<div class="cq">${x.q}</div><div class="ca"><span>${c.face}</span><div>${x.a.replace(/[«»]/g,'')}</div>${mg.step===0?`<button class="flag ${mg.flags[k]?'on':''}" data-act="mgflag" data-k="${k}" title="¿Miente?">🚩</button>`:mg.flags[k]?'<b class="flag on">🚩</b>':''}</div>`;}).join('')+'</div>';
     if(mg.step===0){
       const left=3-mg.asked.length;
-      h+=left?`<div class="brief">🗣️ Te quedan <b>${left}</b> ${left===1?'pregunta':'preguntas'}. Toca 🚩 en lo que no cuadre con el currículum.</div><div class="qcards cvq">${Object.keys(CVQ).filter(k=>!mg.asked.includes(k)).map(k=>`<button class="qcard" data-act="mgask" data-k="${k}">❓ ${CVQ[k]}</button>`).join('')}</div>`
+      h+=left?`<div class="brief">🗣️ Te quedan <b>${left}</b> ${left===1?'pregunta':'preguntas'}. Toca 🚩 en lo que no cuadre con el currículum.</div><div class="qcards cvq">${left===3?'<button class="qcard" data-act="mgstruct">📋 Guion fijo (rapidez, trato, puntualidad): se miente menos</button>':''}${Object.keys(CVQ).filter(k=>!mg.asked.includes(k)).map(k=>`<button class="qcard" data-act="mgask" data-k="${k}">❓ ${CVQ[k]}</button>`).join('')}</div>`
         :'<div class="brief">🚩 Marca lo que no te creas y pasa a decidir.</div><button class="btn go" data-act="mgcvnext">Decidir ▶</button>';
     }else{
       h+=`<div class="contract"><b>CONTRATO DE TRABAJO</b><small>${c.name} · ${R.n} · periodo de prueba: 3 turnos</small>
         <div class="wage">${[-1,0,1].map(k=>{const d=k<0?Math.max(SMI_D,Math.round(c.wage*0.95))-c.wage:k>0?Math.round(c.wage*0.05):0;return `<button class="wpill ${mg.offer===d?'on':''}" data-act="mgoffer" data-d="${d}" ${k<0&&d===0?'disabled':''}>${monthTxt(c.wage+d)}<small>${k<0?(d===0?' · ya es el SMI':' · −5%'):k>0?' · +5%':' · lo que pide'}</small></button>`;}).join('')}</div>
+        ${mg.integ?`<small>🧪 Integridad: <b>${mg.integ}</b> (aprox.)</small>`:`<button class="btn" data-act="mginteg">🧪 Test de integridad · ${fmt(INTEG)}</button>`}
         <div class="stamps2"><button class="stamp big s-ok" data-act="mghire" data-k="1">✔ CONTRATADO</button><button class="stamp big s-roto" data-act="mghire" data-k="0">✖ NO APTO</button></div>
         ${meta.money<HIRE&&!mg.t.remote?`<small class="bad">Ojo: contratar cuesta ${fmt(HIRE)} y no llega el bote.</small>`:''}</div>`;
     }
@@ -3728,13 +3745,15 @@ function rrhhAct(a,b){
   if(mg.kind==='cv'){
     if(a==='mgask'){const k=b.dataset.k;if(mg.asked.length>=3||mg.asked.includes(k))return;mg.asked.push(k);mg.ans[k]=mg.mkAns(k);sCoin();mg.fx={sel:'.chatlog .ca:last-child',k:'ok'};}
     else if(a==='mgflag'){const k=b.dataset.k;mg.flags[k]=!mg.flags[k];}
+    else if(a==='mgstruct'){if(mg.asked.length)return;mg.struct=1;['rap','trato','punt'].forEach(k=>{mg.asked.push(k);mg.ans[k]=mg.mkAns(k);});sCoin();}
+    else if(a==='mginteg'){if(!mg.integ){mg.integ=integBand(mg.c.hon);sCoin();}}
     else if(a==='mgcvnext'){mg.step=1;}
     else if(a==='mgoffer'){mg.offer=+b.dataset.d;}
     else if(a==='mghire'){
       const c=mg.c,q=(c.rap+c.trato+c.punt+c.act)/4,hire=b.dataset.k==='1';
       let sc=(hire?(q>=0.55?0.6:q>=0.45?0.35:0):(q<0.5?0.6:0.3));
       mg.asked.forEach(k=>{const lie=mg.ans[k].lie;if(mg.flags[k]&&lie)sc+=0.2;else if(mg.flags[k]&&!lie)sc-=0.1;else if(lie)sc-=0.05;});
-      mg.x={hire:hire?1:0,wage:c.wage+mg.offer,ask:c.wage,q:Math.round(q*100)/100,cand:c};
+      mg.x={hire:hire?1:0,wage:c.wage+mg.offer,ask:c.wage,q:Math.round(q*100)/100,cand:c,integ:mg.integ?1:0};
       return endMG(clamp(sc,0,1));
     }
   }else if(a==='mgfeud'){
@@ -3744,12 +3763,14 @@ function rrhhAct(a,b){
   renderMG();
 }
 /* Efectos en el navegador del jefe (también los usa el NPC de RR.HH. cuando le toca el aviso). */
-function hireFromCv(c,wage){
+/* Test de integridad (≈15 €): banda aproximada de honestidad, con algo de ruido. */
+const INTEG=1500,integBand=h=>{const v=(h==null?0.6:h)+rnd(-0.15,0.15);return v>0.62?'alta':v<0.38?'baja':'media';};
+function hireFromCv(c,wage,mine){
   if(!c||!ROLES[c.role])return 'Candidato perdido.';
   if(staffOf(c.role).length>=ROLES[c.role].max)return 'Iba a entrar en '+ROLES[c.role].n+', pero el puesto está completo.';
   if(meta.money<HIRE)return 'No hay bote para contratar ('+fmt(HIRE)+').';
   meta.money-=HIRE;
-  const e=newEmp(c.role,meta,{name:cleanName(c.name),face:c.face,rap:c.rap,trato:c.trato,punt:c.punt,act:c.act,nat:c.nat,langs:toArr(c.langs),pers:c.pers,wage:Math.max(SMI_D,Math.round(wage||c.wage)),trial:3});
+  const e=newEmp(c.role,meta,{name:cleanName(c.name),face:c.face,rap:c.rap,trato:c.trato,punt:c.punt,act:c.act,hon:c.hon==null?Math.round(rnd(0.15,0.95)*100)/100:+c.hon,mine:mine?1:0,nat:c.nat,langs:toArr(c.langs),pers:c.pers,wage:Math.max(SMI_D,Math.round(wage||c.wage)),trial:3});
   e.moral=clamp(e.moral+(wage<c.wage?-10:wage>c.wage?8:0),0,100);
   meta.emp.push(e);fillVac(e.role);logE(e,'Contratado/a tras la entrevista');
   return 'Contratado/a: '+e.face+' '+e.name+' entra en '+ROLES[e.role].n+' a '+monthTxt(e.wage)+' bruto (en prueba).';
@@ -3920,7 +3941,8 @@ function applyMG(t,sc,early,e,x){
     if(sc<0.6)meta.rep=clamp(meta.rep-0.1,0,5);
   }else if(kind==='cv'){
     const c=x.cand;
-    msg=+x.hire?hireFromCv(c,+x.wage):'Entrevista hecha: no le contratamos.';
+    if(+x.integ)meta.money-=INTEG;
+    msg=+x.hire?hireFromCv(c,+x.wage,!e):'Entrevista hecha: no le contratamos.';
     if(+x.hire&&c&&+x.q<0.45)msg+=' Mmm… no pinta bien.';
   }else if(kind==='feud'){
     msg=applyFeud(x,good);
@@ -4035,6 +4057,7 @@ function didList(e){
   if(s.caught)L.push(`Le pillaste sin hacer nada ${s.caught} ${s.caught===1?'vez':'veces'}.`);
   if(s.quej)L.push(`Un cliente se quejó de su trato ${s.quej} ${s.quej===1?'vez':'veces'}.`);
   if(s.fel)L.push(`Le felicitaron ${s.fel} ${s.fel===1?'vez':'veces'}.`);
+  if(s.robo)L.push(`Le pillaron llevándose género o dinero ${s.robo} ${s.robo===1?'vez':'veces'}.`);
   return L.map(x=>'<li>'+x+'</li>').join('');
 }
 
@@ -4102,6 +4125,7 @@ const FIRE={
  abs:{t:'📅 Faltas sin avisar',ok:(e,h)=>h.abs>=1,ev:(e,h)=>h.abs+(h.abs===1?' falta registrada':' faltas registradas')},
  late:{t:'⏰ Retrasos repetidos',ok:(e,h)=>h.late>=2,ev:(e,h)=>h.late+(h.late===1?' retraso registrado':' retrasos registrados')},
  caught:{t:'📱 Pillado/a sin trabajar',ok:(e,h)=>h.caught>=1,ev:(e,h)=>h.caught+(h.caught===1?' vez pillado/a':' veces pillado/a')},
+ robo:{t:'🕵️ Hurto de género o dinero',ok:(e,h)=>h.robo>=1,ev:(e,h)=>h.robo+(h.robo===1?' hurto registrado':' hurtos registrados')},
  quej:{t:'😡 Quejas de clientes por su trato',ok:(e,h)=>h.quej>=1,ev:(e,h)=>h.quej+(h.quej===1?' queja registrada':' quejas registradas')},
  perf:{t:'📉 Bajo rendimiento',ok:(e,h)=>h.fail+h.tfail+h.cvErr>=2&&score(e)<0.5,ev:(e,h)=>(h.fail+h.tfail+h.cvErr)+' fallos registrados · valoración: '+verdict(e).replace(/^\S+ /,'')},
  none:{t:'🤷 Sin motivo: despido improcedente reconocido',ok:()=>false,ev:()=>''}
@@ -4128,6 +4152,7 @@ function fireEmp(id,r){
   const L=['<b>Carta de despido de '+e.face+' '+e.name+'.</b> Motivo: '+F.t.replace(/^\S+ /,'')+(F.ev(e,h)?' ('+F.ev(e,h)+')':'')+'.',
     'Finiquito por vacaciones no disfrutadas ('+e.days+(e.days===1?' turno':' turnos')+'): '+fmt(fin)+'.',
     (r==='trial'?'Sin indemnización: estaba en periodo de prueba.':r==='none'?'Indemnización por despido improcedente: '+fmt(ind)+'.':just?'Indemnización por despido procedente: '+fmt(ind)+'.':'Le pagas la indemnización de un despido procedente ('+fmt(ind)+'), aunque no tienes pruebas.')];
+  if(just&&!e.warn&&['abs','late','caught','quej','robo'].includes(r))L.push('Sin amonestación previa por escrito.');
   const risk=r==='trial'||r==='none'?0:just?(e.warn>0?0:0.15):0.7;
   if(Math.random()<risk){
     extra=Math.max(0,indImp(e)-ind)+ri(600,1500)*100;cost+=extra;meta.rep=clamp(meta.rep-0.3,0,5);
@@ -4137,7 +4162,9 @@ function fireEmp(id,r){
   L.push('Total pagado: <b>'+fmt(cost)+'</b>.');
   meta.money-=cost;meta.emp=meta.emp.filter(x=>x!==e);meet.firing=null;
   meta.emp.forEach(x=>{x.moral=clamp(x.moral+(bad?3:-8),0,100);});
-  L.push(bad?'El resto respira aliviado.':'El resto se ha quedado tenso.');
+  /* Síndrome del superviviente: tras un despido el resto rinde menos (nada si era malo; menos si el despido era justo). */
+  const sv=r==='trial'||bad?0:just?1:2;meta.surv=Math.max(meta.surv||0,sv);if(sv)meet.expl=0;
+  L.push(bad?'El resto respira aliviado.':'El resto se ha quedado tenso'+(sv?': rendirá menos '+sv+(sv===1?' turno':' turnos'):'')+'.');
   if(e.real&&isHost()){note(e.real,'Estás despedido/a. Motivo: '+F.t.replace(/^\S+ /,'')+'. Liquidación: '+fmt(fin+ind)+(extra?' (más lo que le ha sacado tu denuncia al jefe: '+fmt(extra)+')':'')+'.',true);fb.update(rRef('members/'+e.real),{role:null}).catch(()=>{});}
   meet.gone.push(L.join('<br>'));scrTab.meet='gone';pg=0;
   sBad();renderHud();showMeeting();
@@ -4158,7 +4185,7 @@ function hireCand(i){
   const c=meet&&meet.cands[i];if(!c||c.hired)return;
   if(staffOf(c.role).length>=ROLES[c.role].max||meta.money<HIRE)return;
   meta.money-=HIRE;
-  const e=Object.assign({},c);delete e.qa;delete e.exp;delete e.hired;e.trial=3;e.st=blankSt();
+  const e=Object.assign({},c);delete e.qa;delete e.exp;delete e.hired;delete e.integ;e.trial=3;e.mine=1;e.st=blankSt();
   meta.emp.push(e);fillVac(e.role);c.hired=1;meet.acted[e.id]='🆕 Recién fichado. Empieza el próximo turno.';
   sOk();renderHud();showMeeting();
 }
@@ -4171,7 +4198,7 @@ function showMeeting(){
   scrRender=showMeeting;
   const emps=meta.emp.map(e=>{
     const s=e.st,a=meet.acted[e.id];
-    const tag=[flag(e)+' '+ROLES[e.role].n,e.days+(e.days===1?' turno':' turnos'),monthTxt(e.wage)].concat(e.trial?['en prueba ('+e.trial+')']:[]).concat(e.warn?['⚠️×'+e.warn]:[]).join(' · ');
+    const tag=[flag(e)+' '+ROLES[e.role].n,e.days+(e.days===1?' turno':' turnos'),monthTxt(e.wage)].concat(e.trial?['en prueba ('+e.trial+')']:[]).concat(e.warn?['⚠️×'+e.warn]:[]).concat(e.mine?['🫶 contratado por ti']:[]).join(' · ');
     const h=hist(e),fin=finiquito(e);
     const btns=a?`<div class="supd">${a}</div>`:meet.firing===e.id?`<div class="supd"><b>¿Por qué le despides?</b> Si el motivo no se puede demostrar con lo registrado, te puede denunciar. Finiquito: ${fmt(fin)} · indemnización: ${e.trial?'nada si es por no superar la prueba':fmt(indProc(e))+' si es procedente, '+fmt(indImp(e))+' si es improcedente'}.${e.warn?'':' Ojo: nunca le has dado un toque.'}</div>
       <div class="opts">${Object.keys(FIRE).filter(k=>k!=='trial'||e.trial>0).map(k=>{const ok=k==='trial'||FIRE[k].ok(e,h),ev=FIRE[k].ev(e,h);
@@ -4186,7 +4213,7 @@ function showMeeting(){
       <ul class="did">${didList(e)}</ul>
       ${e.log&&e.log.length?'<div class="es">📒 Lo último: '+e.log.slice(-3).join(' · ')+'</div>':''}
       <div class="es">${e.real?'🎮 <b>Persona real.</b> Su carácter lo conoces tú mejor que nadie':e.days>=1&&TRAITS[e.pers]?TRAITS[e.pers].ic+' <b>'+TRAITS[e.pers].n+'</b>: '+TRAITS[e.pers].d:'❔ Carácter: aún no le conoces.'} · Habla ${e.langs.map(l=>LANG[l]).join(', ')}.</div>
-      <div class="ev">${s.shifts?verdict(e):'Sin datos todavía'}</div>${btns}</div>`;
+      <div class="ev">${s.shifts?verdict(e,e.mine)+' · 🔁 ¿Lucharías por retenerle? <b>'+keeper(e,e.mine)+'</b>':'Sin datos todavía'}</div>${btns}</div>`;
   });
   const reqs=meet.reqs.map((r,i)=>{
     const a=empById(r.a),b=r.b&&empById(r.b);if(!a||(r.k==='feud'&&!b))return '';
@@ -4201,8 +4228,8 @@ function showMeeting(){
   const cands=meet.cands.map((c,i)=>{
     const full=staffOf(c.role).length>=ROLES[c.role].max;
     const qa=c.qa.map(x=>`<div class="qa">${x.q}<i>«${x.a}»</i></div>`).join('');
-    const btn=c.hired?'<div class="supd">Fichado. Empieza el próximo turno, en periodo de prueba.</div>'
-      :`<button class="btn go" data-act="hirec" data-c="${i}" ${full||meta.money<HIRE?'disabled':''}>${full?'Puesto completo':'Contratar · '+fmt(HIRE)}</button>`;
+    const btn=(c.hired?'':c.integ?`<div class="qa">🧪 Integridad: <b>${c.integ}</b> (aprox.)</div>`:`<button class="btn" data-act="integc" data-c="${i}" ${meta.money<INTEG?'disabled':''}>🧪 Test de integridad · ${fmt(INTEG)}</button>`)+(c.hired?'<div class="supd">Fichado. Empieza el próximo turno, en periodo de prueba.</div>'
+      :`<button class="btn go" data-act="hirec" data-c="${i}" ${full||meta.money<HIRE?'disabled':''}>${full?'Puesto completo':'Contratar · '+fmt(HIRE)}</button>`);
     return `<div class="emp"><div class="eh"><span class="ef">${c.face}</span><div class="t"><b>${c.name}</b>${flag(c)} ${(NATS[c.nat]||NATS[0]).c} · para ${ROLES[c.role].n} · habla ${c.langs.map(l=>LANG[l]).join(', ')} ·${c.exp?c.exp+(c.exp===1?' año':' años')+' de experiencia':'sin experiencia'} · pide ${fmt(c.wage)}/día</div></div>${qa}${btn}</div>`;
   });
   const duties=Object.keys(ROLES).map(k=>`<div class="up"><div class="t"><b>${ROLES[k].n} · ${staffOf(k).length}/${ROLES[k].max}</b>${ROLES[k].duties.join(' · ')}</div></div>`).join('');
@@ -4214,7 +4241,7 @@ function showMeeting(){
   else if(k==='req'){const P=paged(reqs,c*2,'<div class="supd">Nadie pide nada. Sospechoso.</div>');body=`<div class="cgrid" style="--cols:${c}">${P.html}</div>`;nav=P.nav;}
   else if(k==='cand'){const P=paged(cands,c,'<div class="supd">No hay candidatos: no hay vacantes publicadas. Publícalas en la pestaña 🗂️ RR.HH. (o que lo haga tu gente de RR.HH.) y para la próxima reunión vendrá gente.</div>');body=`<div class="cgrid" style="--cols:${c}">${P.html}</div>`;nav=P.nav;}
   else if(k==='rum')body='<div class="shop">'+meet.rumors.map(r=>'<div class="emp"><div>'+r+'</div></div>').join('')+'</div>';
-  else if(k==='gone'){const P=paged(meet.gone.slice().reverse().map(g=>`<div class="emp letter">${g}</div>`),1);body=P.html;nav=P.nav;}
+  else if(k==='gone'){const P=paged(meet.gone.slice().reverse().map((g,i)=>`<div class="emp letter">${g}${!i&&meta.surv>0&&!meet.expl?'<div class="row ea"><button class="btn go" data-act="explfire">📣 Explicar el despido al equipo</button></div>':''}</div>`),1);body=P.html;nav=P.nav;}
   else if(k==='duty')body=`<div class="cgrid" style="--cols:${Math.min(c,2)}">${duties}</div>`;
   else body=appsHtml();
   const pend=meet.reqs.filter(r=>r.done==null&&empById(r.a)).length;
@@ -5346,6 +5373,8 @@ function onClick(e){
   else if(a==='endmeet')endMeeting();
   else if(a==='emp')empAct(+b.dataset.e,b.dataset.k);
   else if(a==='fire')fireEmp(+b.dataset.e,b.dataset.r);
+  else if(a==='integc'){const c=meet&&meet.cands[+b.dataset.c];if(c&&!c.integ&&meta.money>=INTEG){meta.money-=INTEG;c.integ=integBand(c.hon);sCoin();renderHud();showMeeting();}}
+  else if(a==='explfire'){if(meet&&!meet.expl){meet.expl=1;meta.surv=0;meta.emp.forEach(x=>{x.moral=clamp(x.moral+2,0,100);});toast('📣 Lo has explicado claro. El equipo lo entiende.','good');sOk();showMeeting();}}
   else if(a==='firex'){if(meet){meet.firing=null;showMeeting();}}
   else if(a==='req')applyReq(+b.dataset.r,+b.dataset.o);
   else if(a==='hirec')hireCand(+b.dataset.c);
