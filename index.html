@@ -124,7 +124,7 @@ button:focus-visible{outline:3px solid var(--tag);outline-offset:2px}
 #toast .tst.good{border-left-color:#1f9a55}#toast .tst.bad{border-left-color:#d62f3a;background:#fff0f0}
 #toast .tst.out{opacity:0}
 #toast .tst .tn{flex:none;padding:0 7px;border-radius:9px;background:#3a1012;color:#fff;font-size:.8em}
-#toast.fl{top:6px;left:50%;transform:translateX(-50%);width:min(620px,94vw);height:auto;flex-direction:column}
+#toast.fl{top:auto;bottom:86px;left:50%;transform:translateX(-50%);width:min(620px,94vw);height:auto;flex-direction:column}
 #toast.fl .tst{padding:8px 14px;border:2px solid #7a0d12;border-left-width:6px;box-shadow:0 6px 18px rgba(0,0,0,.3)}
 @keyframes tstIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 @media (max-width:820px){.tlane{height:42px}.hud .tlane{flex-basis:calc(100% + 56px);margin-right:-56px}#toast .tst{font-size:15px;padding:2px 10px}}
@@ -1991,14 +1991,15 @@ function finHtml(f){
   const mg=f.S+(f.O||0)?Math.round(f.net/(f.S+(f.O||0))*100):0,h=meta.hist||[],mx=Math.max(1,...h.map(x=>Math.abs(x.n)));
   return `<div class="fin"><div class="sum">
       <span class="hd">INGRESOS · VENTAS CON IVA</span><b></b>
-      ${row('🧾 Tu Caja 3'+(Object.keys((run&&run.tills)||{}).length||f.R?' y las de jugadores':''),f.S)}${f.O!=null?row('🛒 Cajas de tus cajeros ('+(f.ON||0)+' clientes)',f.O):''}${f.oth>0?row('Otros ingresos (abonos, arqueos)',f.oth):''}
+      ${row('🧾 Tu Caja 3'+(Object.keys((run&&run.tills)||{}).length||f.R?' y las de jugadores':''),f.S)}${f.O!=null?row('🛒 Cajas 1 y 2, tus cajeros ('+(f.ON||0)+' clientes)',f.O):''}${f.oth>0?row('Otros ingresos (abonos, arqueos)',f.oth):''}
+      ${f.ivaR!=null?row(f.ivaS>f.ivaR?'🏛️ IVA a tu favor (Hacienda te lo descuenta)':'🏛️ IVA de las ventas: no es tuyo, es de Hacienda',f.ivaS-f.ivaR):''}
       <span class="hd">GASTOS</span><b></b>
       ${row('Coste de la mercancía vendida (≈'+Math.round(SUPS[0].cf*100)+'%)',-(f.cogs||0))}${f.PB!=null?row('Sueldos brutos',-f.PB)+row('Seguridad Social de la empresa (32,15%)',-(f.P-f.PB)):row('Nómina del personal',-f.P)}${f.FX!=null?row('Alquiler, luz, seguros y gestoría',-f.FX):''}${f.INT?row('Intereses de la póliza de crédito',-f.INT):''}${row('Reclamaciones al cierre',-f.K)}${row('Multas y pérdidas en caja',-f.F)}${f.oth<0?row('Reembolsos, compensaciones y otros',f.oth):''}
-      ${row('Resultado antes de impuestos',f.bai+(f.ivaR!=null?f.ivaR-f.ivaS:f.iva),'tot')}
-      ${f.ivaR!=null?row('IVA repercutido − soportado (4/10/21%)'+(f.cred?' · a compensar '+fmt(f.cred):''),-f.iva):row('IVA a Hacienda',-f.iva)}${row('Impuesto de sociedades (microempresa 19%)',-f.is)}
+      ${row('Resultado antes de impuestos',f.ivaR!=null?f.bai:f.bai+f.iva,'tot')}
+      ${row('Impuesto sobre beneficios (19%)'+(f.bai<=0?' · hoy no, hay pérdidas':''),-f.is)}
       ${row('Beneficio neto del turno',f.net,'tot '+(f.net<0?'neg':'pos'))}
       <span class="hd">CAJA (EL BOTE)</span><b></b>
-      ${row('Compras de mercancía (inversión en stock)',-f.B)}${row('Variación del bote',f.cash,f.cash<0?'neg':'pos')}
+      ${row('Compras de mercancía (inversión en stock)',-f.B)}${f.ivaR!=null?row('IVA pagado hoy a Hacienda'+(f.cred?' · te debe '+fmt(f.cred)+', se descuenta del próximo':''),-f.iva):row('IVA a Hacienda',-f.iva)}${row('Variación del bote',f.cash,f.cash<0?'neg':'pos')}
     </div>
     <div class="zone-title">🏦 BALANCE</div>${balHtml()}
     <div class="supd">${f.S+(f.O||0)?`Margen neto <b>${mg}%</b> · la nómina se come el <b>${Math.round(f.P/(f.S+(f.O||0))*100)}%</b> de las ventas · a Hacienda <b>${fmt(f.iva+f.is)}</b>.`:'Hoy no se ha vendido nada.'} Las propinas no son de la empresa: van al bote del personal.</div>
@@ -2161,7 +2162,7 @@ async function fillRanking(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.17-64';
+const APPV='2026.11.17-66';
 /* Compara versiones por números («-9» < «-11»), no como texto. */
 const verCmp=(a,b)=>{const x=String(a).split(/[.-]/).map(Number),y=String(b).split(/[.-]/).map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
 try{const vt=document.createElement('div');vt.id='vtag';vt.textContent='v'+APPV;document.body.appendChild(vt);}catch(e){}
@@ -3316,7 +3317,7 @@ function supBtn(){if(!(run&&!run.over&&!run.remote))return '';const e=freeTill()
   return (e&&run.queue.length>=2?`<button class="btn sup call" data-act="callq">📢 «¡Pasen a la otra caja!» · ${e.face} ${e.name}</button>`:'')+'<button class="btn sup" data-act="supervise">👀 Supervisar la tienda</button>';}
 /* Repartir la cola: un cajero/a de la casa libre abre otra caja y se lleva a los últimos de tu cola (las reclamaciones se quedan contigo).
    Lo hace solo cada cierto tiempo si ve tu cola larga (según su actitud y su ánimo), o cuando el jefe lo dice. */
-const freeTill=()=>run&&!run.remote?staffOf('atc').find(e=>!e.real&&isFree(e)&&!run.duty[e.id].slack&&!(run.away&&run.away.cover===e.id)):null;
+const freeTill=()=>run&&!run.remote&&Object.keys(run.tills||{}).length<2?staffOf('atc').find(e=>!e.real&&isFree(e)&&!run.duty[e.id].slack&&!(run.away&&run.away.cover===e.id)):null;
 function sendQueue(e,n,boss){
   if(!run||run.remote||!e)return 0;let k=0;
   for(let i=1;i<run.queue.length&&k<n;){const c=run.queue[i];if(c.phase==='complaint'||c.complaint){i++;continue;}
@@ -5333,7 +5334,7 @@ function renderGuide(){
 /* Las otras cajas: cada cajero/a de la casa libre (máx. 3) despacha clientes que no ves. Entra más gente con buena reputación
    y se vende menos si hay productos agotados. Cada venta trae su coste de mercancía (la repone el proveedor habitual). */
 function offTick(dt){
-  const n=Math.min(3,staffOf('atc').filter(e=>!e.real&&isFree(e)&&!run.duty[e.id].slack).length);if(!n)return;
+  const n=Math.min(Math.max(0,2-Object.keys(run.tills||{}).length),staffOf('atc').filter(e=>!e.real&&isFree(e)&&!run.duty[e.id].slack).length);if(!n)return;
   const out=CAT.filter(x=>(meta.stock[x.id]||0)<=0).length/CAT.length;
   const dem=OFF.dem*(0.4+0.12*meta.rep)*(1-0.6*out)*(1+0.03*Math.min(meta.day,10));
   const rate=Math.min(dem,n*OFF.cap)/(run.dur||100);
