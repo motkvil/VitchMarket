@@ -1192,6 +1192,19 @@ body.rem .isostore{display:none!important}
   .card.screen.sc-lobby .scr-body{flex:0 1 auto}
 }
 .card.screen>.scr-head small.sub{color:#ffe1e1;opacity:.9}
+/* Cierre: departamentos y bolsillo del jefe */
+.dgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:6px}
+.dcard{background:#fff;border:2px solid #f0c9c9;border-left:6px solid var(--mute);border-radius:10px;padding:5px 8px;display:flex;flex-direction:column;gap:3px;min-width:0}
+.dcard.ga{border-left-color:var(--ok)}.dcard.gb{border-left-color:#7cc36b}.dcard.gc{border-left-color:#f0a020}.dcard.gd{border-left-color:#e5383b}
+.dch{display:flex;align-items:center;gap:6px}.dch b{font-family:var(--display);font-size:14px;flex:1;white-space:nowrap}.dpp{font-size:11px;color:var(--mute)}
+.grade{font-family:var(--display);font-weight:700;font-size:14px;line-height:1.2;border-radius:8px;padding:0 7px;white-space:nowrap;color:#fff;background:var(--mute)}
+.ga .grade{background:var(--ok)}.gb .grade{background:#5ea94d}.gc .grade{background:#e08a00}.gd .grade{background:#e5383b}
+.card .dcard .sum{font-size:12px;gap:0 8px;line-height:1.3}.dcard .sum b{text-align:right}.dcard .sum b.neg{color:#e5383b}
+.dhint{font-size:11px;font-weight:700;color:#7a1418;background:#fff6f4;border-radius:6px;padding:2px 6px}
+.dhint.ok{color:#2f6b25;background:#f1faee}
+.pocket{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px;margin-top:6px;padding:5px 10px;border:2px dashed #c9a227;border-radius:10px;background:#fffbea;font-size:13px}
+.pocket small{color:var(--mute)}.pocket b{white-space:nowrap;font-family:var(--pix);font-weight:400;font-size:16px;color:#8a6500}
+.divb{display:flex;flex-wrap:wrap;gap:6px}.divb .btn{flex:1 1 90px}.divb .btn small{font-size:10px;font-weight:400}
 /* Cierre: tarjetas con las cifras clave y ventana a la medida en pantalla grande */
 .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
 .dscene{position:relative;width:100%;max-height:320px;border-radius:14px;overflow:hidden;border:3px solid #7a0d12;background:#ece6e2;margin-bottom:10px;flex:0 0 auto}
@@ -1671,9 +1684,9 @@ function cashGiven(t){
 function startDay(){
   if(isHost()){room.view=null;room.rpt=null;syncRealEmps();}
   run={t:0,dur:100,queue:[],next:1.5,served:0,angry:0,errors:0,tips:0,fines:0,closing:false,over:false,tray:[],card:false,pendingId:null,flash:0,tickets:[],sales:0,
-    tasks:[],nextTask:6,away:null,tdone:0,tlost:0,duty:{},ev:[],ivaR:0,offS:0,offC:0,offN:0};
+    tasks:[],nextTask:6,away:null,tdone:0,tlost:0,duty:{},ev:[],ivaR:0,offS:0,offC:0,offN:0,dstat:{},hires:0,revG:0,revB:0};
   if(isHost())run.dur=room.info.dur||100;
-  ensureMeta();
+  ensureMeta();run.rep0=meta.rep;
   run.buy=meta.buyNext||0;meta.buyNext=0;run.m0=meta.money+run.buy;run.mo=meta.money;run.curve=[];
   meta.liveT=0;saveGame(false);
   const notes=prepShift();
@@ -1746,6 +1759,7 @@ function ensureMeta(){
   meta.regs=meta.regs||{};
   meta.runId=meta.runId||Math.random().toString(36).slice(2,10)+Date.now().toString(36);
   meta.back=meta.back||{};meta.orders=meta.orders||[];meta.vac=meta.vac||{atc:1,alm:1};
+  meta.boss=Object.assign({cash:0,div:0,divY:0,ret:0,y:0},meta.boss);if(meta.resLeg==null)meta.resLeg=0;
 }
 function receiveDeliveries(){
   const rr={arrived:0,short:0,shelved:0,pending:0};
@@ -1867,7 +1881,7 @@ function processTickets(){
 function endDay(){
   if(run.tills)Object.keys(run.tills).forEach(u=>closeTill(u));
   run.over=true;
-  run.tasks.forEach(t=>{if(!t.who&&t.k!=='tk'){meta.rep=clamp(meta.rep-t.pen/2,0,5);run.tlost++;}});
+  run.tasks.forEach(t=>{if(!t.who&&t.k!=='tk'){meta.rep=clamp(meta.rep-t.pen/2,0,5);tStat(t,false);}});
   run.tasks=[];run.away=null;mg=null;pendingLeave=null;closeMG();
   const res=processTickets();
   /* RR.HH. (NPC) publica vacantes donde falta gente: reclamaciones sin atender, muchos enfadados o muchos agotados. */
@@ -1876,10 +1890,10 @@ function endDay(){
     [...new Set(need)].forEach(k=>{if(!vacOpen(k)&&staffOf(k).length<ROLES[k].max){const m=setVac(k,1,hr);if(m)run.vacNote=(run.vacNote||[]).concat(hr.name+': '+m);}});}}
   /* El sueldo es por cada 100 s de turno: en la tienda compartida, con turnos largos, se cobra en proporción. */
   /* Nómina: salario bruto del día + Seguridad Social a cargo de la empresa. Quien falta sin avisar no cobra ese día. */
-  let payroll=0,payB=0;const wf=1;
+  let payroll=0,payB=0;const wf=1,payD={};
   meta.emp.forEach(e=>{
     const d=run.duty[e.id];
-    if(!(d&&(d.st==='abs'||d.st==='gone'))){const b=Math.round(e.wage*wf);payB+=b;payroll+=empCost(b);}
+    if(!(d&&(d.st==='abs'||d.st==='gone'))){const b=Math.round(e.wage*wf);payB+=b;payroll+=empCost(b);payD[e.role]=(payD[e.role]||0)+empCost(b);}
     if(working(e)){e.days++;if(e.trial>0)e.trial--;}
     if(e.focus>0)e.focus--;
     e.moral=clamp(e.moral+(meta.rep>=4?2:meta.rep<2?-3:0),0,100);
@@ -1913,11 +1927,13 @@ function endDay(){
   if(base>0){const y=meta.isY||0,lo=Math.max(0,Math.min(base,5000000-y));is=Math.round(lo*0.19+(base-lo)*0.21);meta.isY=y+base;}
   meta.money-=iva+is;
   const fin={S,O,ON:run.offN||0,F,B,P:payroll,PB:payB,FX,INT,K,oth,cogs,iva,ivaR,ivaS,cred:meta.ivaCred||0,bai,is,net:bai-is,cash:delta-iva-is,m0:run.m0};
+  /* Reserva legal (art. 274 LSC): el 10% del beneficio va a reserva hasta llegar al 20% del capital; solo cuando ya no hay pérdidas acumuladas. */
+  {const rl=meta.resLeg||0;if(fin.net>0&&rl<CAP0*0.2&&balData().res>0){fin.rl=Math.min(Math.round(fin.net*0.1),CAP0*0.2-rl);meta.resLeg=rl+fin.rl;}}
   meta.hist=(meta.hist||[]).concat([{d:meta.day,s:S,n:fin.net}]).slice(-6);
   curveSample(true);meta.prevCurve=run.curve||[];meta.prevDay=meta.day;
   meta.best=Math.max(meta.best,meta.day);
   cart={};
-  lastEnd={payroll,res,fin};scrTab.shop='sum';pg=0;tipsPer=0;
+  lastEnd={payroll,res,fin,dep:deptPerf(res,payD)};scrTab.shop='sum';pg=0;tipsPer=0;
   if(isHost())room.rpt=deptReport();
   if(!(room&&room.sim)&&(meta.rep<=0||meta.money<-CREDIT)){run.over=false;checkRep();return;}
   meta.liveT=0;saveGame(true);
@@ -1983,7 +1999,8 @@ function balHtml(){
   return `<div class="bal"><div class="balk"><span><small>💶 Caja</small><b>${fmt(b.cash)}</b></span><span class="${b.debt?'neg':''}"><small>🏦 Deuda</small><b>${b.debt?'−':''}${fmt(b.debt)}</b></span><span class="${b.pat<0?'neg':'pos'}"><small>📒 Patrimonio</small><b>${m(b.pat)}</b></span></div>
     <div class="balbar ${b.debt?'on':''}" title="Póliza usada"><i style="width:${pc}%"></i></div>
     <div class="sum"><span>Stock a coste</span><b>${fmt(b.stk)}</b>${b.cred?`<span>IVA a favor</span><b>${fmt(b.cred)}</b>`:''}<span>Póliza libre</span><b>${fmt(b.free)}</b>${b.int?`<span>Intereses/día</span><b class="neg">−${fmt(b.int)}</b>`:''}<span>Capital inicial</span><b>${fmt(CAP0)}</b><span>Resultado acumulado</span><b class="${b.res<0?'neg':'pos'}">${b.res<0?'−':'+'}${fmt(Math.abs(b.res))}</b></div>
-    <div class="supd">Patrimonio = caja + stock + IVA a favor − póliza (${fmt(CREDIT)} máx.).</div></div>`;
+    <div class="supd">Patrimonio = caja + stock + IVA a favor − póliza (${fmt(CREDIT)} máx.).</div>
+    <div class="pocket"><span>👑 Tu bolsillo <small>(no es de la tienda)</small></span><b>${fmt(bossOf().cash)}</b></div></div>`;
 }
 function finHtml(f){
   if(!f)return '<div class="supd">Sin datos de este turno.</div>';
@@ -1999,7 +2016,7 @@ function finHtml(f){
       ${row('Impuesto sobre beneficios (19%)'+(f.bai<=0?' · hoy no, hay pérdidas':''),-f.is)}
       ${row('Beneficio neto del turno',f.net,'tot '+(f.net<0?'neg':'pos'))}
       <span class="hd">CAJA (EL BOTE)</span><b></b>
-      ${row('Compras de mercancía (inversión en stock)',-f.B)}${f.ivaR!=null?row('IVA pagado hoy a Hacienda'+(f.cred?' · te debe '+fmt(f.cred)+', se descuenta del próximo':''),-f.iva):row('IVA a Hacienda',-f.iva)}${row('Variación del bote',f.cash,f.cash<0?'neg':'pos')}
+      ${row('Compras de mercancía (inversión en stock)',-f.B)}${f.div?row('Dividendos al socio (no es gasto)',-f.div):''}${f.ivaR!=null?row('IVA pagado hoy a Hacienda'+(f.cred?' · te debe '+fmt(f.cred)+', se descuenta del próximo':''),-f.iva):row('IVA a Hacienda',-f.iva)}${row('Variación del bote',f.cash-(f.div||0),f.cash-(f.div||0)<0?'neg':'pos')}${f.rl?`<span class="sm">A reserva legal (10%)</span><b class="sm">${fmt(f.rl)}</b>`:''}
     </div>
     <div class="zone-title">🏦 BALANCE</div>${balHtml()}
     <div class="supd">${f.S+(f.O||0)?`Margen neto <b>${mg}%</b> · la nómina se come el <b>${Math.round(f.P/(f.S+(f.O||0))*100)}%</b> de las ventas · a Hacienda <b>${fmt(f.iva+f.is)}</b>.`:'Hoy no se ha vendido nada.'} Las propinas no son de la empresa: van al bote del personal.</div>
@@ -2038,8 +2055,80 @@ function adviceList(le){
     if(why)(meta.money>=u.c*2?hot:tip)('⭐','Compra: '+u.n+' ('+fmt(u.c)+')',why+(meta.money<u.c?' Aún no te llega el bote.':''));
   });
   if(run.vacNote)tip('📢','RR.HH. ha publicado vacantes',run.vacNote.join(' · '));
+  {const d=divData();if(f&&f.net<0&&d.max>0)tip('👑','No te saques dividendos','La tienda pierde dinero: deja la caja para aguantar.');
+    else if(d.max>=50000&&meta.money>=1000000&&(!f||f.net>0))tip('👑','Puedes cobrarte hasta '+fmt(d.max),'Hay beneficio repartible y caja sana. En «👑 Tú», con retención de IRPF.');}
   if(meta.rep<2.5)hot('⭐','Reputación baja (★ '+meta.rep.toFixed(1)+')','Menos errores en caja y responde las malas reseñas en RR.PP. A cero, te despiden.');
   return A;
+}
+/* ---------- rendimiento por departamento (cierre, pestaña 🏢) ----------
+   Se calcula en endDay y va en lastEnd.dep: gente que trabajó/total, nota, 2–4 cifras, coste del día (sueldo + S. Social) y un consejo. */
+const DEPS=[['atc','🧾','Caja'],['alm','📦','Almacén'],['back','💼','Backoffice'],['rrpp','📣','RR.PP.'],['rrhh','🗂️','RR.HH.']];
+function deptPerf(res,payD){
+  const D=run.dstat||{},T=k=>D[k]||{ok:0,ko:0},O={},fr=(a,b)=>b?a/b:0;
+  const out=CAT.filter(x=>(meta.stock[x.id]||0)<=0).length,pend=Object.values(meta.back).reduce((t,v)=>t+(v||0),0);
+  const tk=x=>x.in?x.ok+' ✓ · '+x.fail+' ✗'+(x.late?' · '+x.late+' sin tiempo':''):'0';
+  const free=k=>ROLES[k].max-staffOf(k).length,rg=run.revG||0,rb=run.revB||0,r0=run.rep0==null?meta.rep:run.rep0;
+  DEPS.forEach(([k])=>{const all=staffOf(k);O[k]={w:all.filter(working).length,n:all.length,cost:payD[k]||0,t:T(k),kv:[],s:1,h:''};});
+  {const o=O.atc,t=o.t,cl=run.served+(run.offN||0);
+    o.kv=[['Clientes (todas las cajas)',cl],['Enfadados',run.angry,run.angry>0],['Errores',run.errors,run.errors>0],['Tickets otras cajas',run.offN||0]];
+    o.s=1-Math.min(1,(run.angry*2+run.errors)/Math.max(6,run.served+run.angry))-t.ko*0.05;
+    o.h=run.angry>=3&&free('atc')>0?'Falta gente: '+run.angry+' se fueron hartos':run.errors>=3?'Muchos errores: más calma al cobrar':!o.n?'Sin cajeros: la Caja 3 es solo tuya':'Bien: la cola fluye';}
+  {const o=O.alm,t=o.t,r=res.alm;
+    o.kv=[['Agotados',out,out>0],['En el muelle',pend+' uds',pend>100],['Avisos',t.ok+' ✓ · '+t.ko+' ✗',t.ko>0],['Pedidos en camino',meta.orders.length]];
+    o.s=1-out*0.04-fr(t.ko,t.ok+t.ko)*0.4-r.late*0.1-(pend>150?0.15:0);
+    o.h=r.late?'Falta gente: '+r.late+' reclamaciones sin atender':out>=4?out+' agotados: pide más o contrata':pend>100?'Muelle lleno: falta quien coloque':!t.ok&&!t.ko&&!r.in&&o.n>1?'Va sobrado: nadie tuvo trabajo':'Bien: estanterías al día';}
+  {const o=O.back,t=o.t,r=res.back;
+    o.kv=[['Reclamaciones',tk(r),r.fail+r.late>0],['Coste',r.cost?'−'+fmt(r.cost):'0',r.cost>0],['Arqueos y avisos',t.ok+' ✓ · '+t.ko+' ✗',t.ko>0]];
+    o.s=r.in?(r.ok-r.fail*0.5-r.late)/r.in-t.ko*0.1:1-t.ko*0.15;
+    o.h=r.late?'Falta gente: '+r.late+' reclamaciones sin atender':r.fail>=2?r.fail+' reembolsos mal: cuestan el doble':!r.in&&!t.ok&&!t.ko&&o.n>1?'Va sobrado: nadie tuvo trabajo':'Bien: cuentas al día';}
+  {const o=O.rrpp,t=o.t,r=res.rrpp,dr=meta.rep-r0;
+    o.kv=[['Reputación','★ '+r0.toFixed(1)+'→'+meta.rep.toFixed(1),dr<0],['Quejas de trato',tk(r),r.fail+r.late>0],['Reseñas',rg+' 👍 · '+rb+' 👎',rb>rg]];
+    o.s=0.75+dr*0.5-r.late*0.1-r.fail*0.1+fr(rg-rb,rg+rb)*0.15;
+    o.h=r.late?'Falta gente: '+r.late+' quejas sin atender':rb>rg?'Más reseñas malas que buenas: contéstalas':dr<=-0.5?'La fama cae: menos errores en caja':!r.in&&!t.ok&&!t.ko&&o.n>1?'Va sobrado: nadie tuvo trabajo':'Bien: la fama aguanta';}
+  {const o=O.rrhh,t=o.t,vac=Object.keys(ROLES).reduce((a,k)=>a+vacOpen(k),0),mo=meta.emp.length?Math.round(meta.emp.reduce((a,e)=>a+e.moral,0)/meta.emp.length):0;
+    o.kv=[['Vacantes',vac],['Entrevistas y broncas',t.ok+' ✓ · '+t.ko+' ✗',t.ko>0],['Contratados hoy',run.hires||0],['Ánimo medio',mo+'/100',mo<45]];
+    o.s=mo/100+0.2-t.ko*0.1-(vac&&!run.hires?0.1:0);
+    o.h=mo<45?'Plantilla quemada: felicita o sube sueldos':!o.n&&meta.emp.length>=5?'Sin RR.HH.: las entrevistas las haces tú':vac&&!run.hires?vac+(vac===1?' vacante sin cubrir':' vacantes sin cubrir'):'Bien: buen ambiente';}
+  DEPS.forEach(([k])=>{O[k].s=clamp(O[k].s,0,1);});
+  return O;
+}
+const GRADE=s=>s>=0.85?['A','😀','ga']:s>=0.65?['B','🙂','gb']:s>=0.45?['C','😐','gc']:['D','😟','gd'];
+function deptHtml(D){
+  if(!D)return '<div class="supd">Sin datos de este turno.</div>';
+  return '<div class="dgrid">'+DEPS.map(([k,ic,n])=>{const o=D[k];if(!o)return '';const g=GRADE(o.s);
+    return `<div class="dcard ${g[2]}"><div class="dch"><b>${ic} ${n}</b><span class="dpp" title="Trabajaron / plantilla">👥 ${o.w}/${o.n}</span><span class="grade" title="Nota">${g[1]} ${g[0]}</span></div>
+      <div class="sum">${o.kv.map(x=>`<span>${x[0]}</span><b class="${x[2]?'neg':''}">${x[1]}</b>`).join('')}<span>Coste del día</span><b>${o.cost?'−'+fmt(o.cost):'0'}</b></div>
+      <div class="dhint ${/^Bien/.test(o.h)?'ok':''}">${o.h}</div></div>`;}).join('')+'</div>';
+}
+/* ---------- el jefe, socio único de la SL ----------
+   Su dinero (meta.boss) no es el de la tienda (meta.money). Solo cobra dividendos (Ley de Sociedades de Capital, simplificada):
+   del beneficio acumulado (patrimonio − capital − reserva legal), sin bajar el patrimonio del capital ni tirar de la póliza.
+   La empresa paga el bruto; Hacienda retiene el IRPF del ahorro (19/21/23/27/30%) sobre lo cobrado en el año (365 turnos). */
+const bossOf=()=>meta.boss=meta.boss||{cash:0,div:0,divY:0,ret:0,y:0};
+const canDiv=()=>!room||!!(room.host&&!room.sim);
+function divData(){const b=balData(),res=meta.resLeg||0,dist=Math.max(0,b.pat-CAP0-res);return {dist,res,max:Math.max(0,Math.min(dist,meta.money))};}
+const IRPF_A=[[600000,0.19],[5000000,0.21],[20000000,0.23],[30000000,0.27],[Infinity,0.30]];
+function irpfAh(y,g){let t=0,lo=0;for(const [top,r] of IRPF_A){const a=Math.max(lo,y),b=Math.min(top,y+g);if(b>a)t+=(b-a)*r;lo=top;}return Math.round(t);}
+const divYear=()=>{const B=bossOf(),yr=Math.floor((meta.day-1)/365);if(B.y!==yr){B.y=yr;B.divY=0;}return B;};
+function payDiv(pct){
+  if(!canDiv()||!run||!run.over)return;
+  const d=divData(),g=Math.floor(d.max*pct/100);if(g<=0)return;
+  const B=divYear(),ret=irpfAh(B.divY,g);
+  meta.money-=g;B.divY+=g;B.div+=g;B.ret+=ret;B.cash+=g-ret;
+  if(lastEnd&&lastEnd.fin)lastEnd.fin.div=(lastEnd.fin.div||0)+g;
+  saveGame(true);sOk();toast('👑 Dividendo de '+fmt(g)+': Hacienda retiene '+fmt(ret)+', a tu bolsillo '+fmt(g-ret)+'.','good');
+  renderHud();rerenderScreen();
+}
+function bossHtml(){
+  const B=divYear(),d=divData(),k=(ic,l,v,c)=>`<div class="kpi ${c||''}"><small>${ic} ${l}</small><b>${v}</b></div>`;
+  const btn=p=>{const g=Math.floor(d.max*p/100);return `<button class="btn ${p===100?'':'go'}" data-act="div" data-p="${p}" ${g>0&&canDiv()?'':'disabled'}>${p}%<small> → ${fmt(g-irpfAh(B.divY,g))}</small></button>`;};
+  const why=!canDiv()?'Solo el jefe reparte dividendos.':d.dist<=0?'No hay beneficio acumulado que repartir (sin tocar capital ni reserva legal).':meta.money<=0?'Sin caja: no puedes tirar de la póliza para pagarte.':'';
+  return `<div class="kpis">${k('👑','Tu bolsillo',fmt(B.cash),'pos')}${k('💸','Repartible',fmt(d.max))}${k('🏛️','Reserva legal',fmt(d.res)+' <small>/ '+fmt(CAP0*0.2)+'</small>')}</div>
+    <div class="zone-title">💸 DIVIDENDOS</div>
+    <div class="divb">${[25,50,100].map(btn).join('')}</div>
+    ${why?`<div class="supd">${why}</div>`:''}
+    <div class="sum"><span>Caja de la tienda</span><b>${fmt(meta.money)}</b><span>Dividendos cobrados (bruto)</span><b>${fmt(B.div)}</b><span>Retención IRPF</span><b class="neg">−${fmt(B.ret)}</b><span>Este año (bruto)</span><b>${fmt(B.divY)}</b></div>
+    <div class="supd">La caja es de la empresa, no tuya: solo te llevas dividendos del beneficio, sin tocar el capital (${fmt(CAP0)}) ni la reserva legal. Hacienda retiene 19–30%; el botón dice lo que te llega.</div>`;
 }
 function showShop(noFit){
   scrRender=()=>showShop();
@@ -2066,14 +2155,16 @@ function showShop(noFit){
   if(k==='sum')body+=`
     <div class="supd">${meetDay?'Hoy toca <b>reunión de personal</b>: valorar, contratar y despedir.':'Próxima reunión de personal al cerrar el turno '+nm+'.'}</div>`;
   else if(k==='fin')body=finHtml(e.fin);
+  else if(k==='dep')body=deptHtml(e.dep);
+  else if(k==='you')body=bossHtml();
   else if(k==='tips'){const A=adviceList(e);if(!tipsPer)tipsPer=rowsFit(80,230);const P=paged(A,tipsPer,'<div class="supd">Todo en orden. Sigue así, que no dura.</div>');body=`<div class="advice">${P.html}</div>`;nav=P.nav;}
   else if(k==='staff'){const P=paged(dep,rowsFit(54,250),'<div class="supd">No tienes a nadie contratado.</div>');body=`<div class="shop">${P.html}</div>`;nav=P.nav;}
   else if(k==='order'){if(!ordPer)ordPer=Math.max(2,Math.floor((innerHeight-330)/50));body=orderHtml(ordPer);}
   else if(k==='ups')body=`<div class="shop">${upsHtml()}</div>`;
   else body=appsHtml();
-  const tabs=[['sum','📊 Resumen'],['fin','💰 Cuentas'],['tips','🧭 Consejos',adviceList(e).filter(x=>x.includes('adv hot')).length],['staff','👥 Plantilla',meta.emp.length],['order','📦 Pedido',Object.keys(cart).length],['ups','⭐ Mejoras']].concat(ap?[['apps','📝 Solicitudes',ap]]:[]);
+  const tabs=[['sum','📊 Resumen'],['dep','🏢 Departamentos'],['fin','💰 Cuentas'],['you','👑 Tú'],['tips','🧭 Consejos',adviceList(e).filter(x=>x.includes('adv hot')).length],['staff','👥 Plantilla',meta.emp.length],['order','📦 Pedido',Object.keys(cart).length],['ups','⭐ Mejoras']].concat(ap?[['apps','📝 Solicitudes',ap]]:[]);
   showOverlay(screenHtml('shop','Cierre · turno '+meta.day,tabs,body,nav,
-    `<span class="supd">Bote <b>${fmt(meta.money)}</b> · ★ ${meta.rep.toFixed(1)}</span>`+(meetDay?'<button class="btn go big" data-act="meeting">Reunión de personal ▸</button>':`<button class="btn go big" data-act="next">Turno ${meta.day+1} ▸</button>`)));
+    `<span class="supd">Bote <b>${fmt(meta.money)}</b> · ★ ${meta.rep.toFixed(1)} · 👑 ${fmt(bossOf().cash)}</span>`+(meetDay?'<button class="btn go big" data-act="meeting">Reunión de personal ▸</button>':`<button class="btn go big" data-act="next">Turno ${meta.day+1} ▸</button>`)));
   /* El pedido mide la pantalla real: quita productos de la página hasta que no sobre nada. */
   if(k==='tips'&&!noFit){for(let n=0;n<10;n++){const sb=$('#overlay .scr-body');if(!sb||sb.scrollHeight<=sb.clientHeight+1||tipsPer<=1)break;tipsPer--;showShop(true);}}
   if(k==='order'&&!noFit){for(let n=0;n<14;n++){const sb=$('#overlay .scr-body');if(!sb||sb.scrollHeight<=sb.clientHeight+1||ordPer<=3)break;ordPer--;showShop(true);}}
@@ -2162,7 +2253,7 @@ async function fillRanking(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.17-66';
+const APPV='2026.11.17-67';
 /* Compara versiones por números («-9» < «-11»), no como texto. */
 const verCmp=(a,b)=>{const x=String(a).split(/[.-]/).map(Number),y=String(b).split(/[.-]/).map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
 try{const vt=document.createElement('div');vt.id='vtag';vt.textContent='v'+APPV;document.body.appendChild(vt);}catch(e){}
@@ -2385,7 +2476,7 @@ function appsAlerts(){
 function hireReal(u){
   const m=room.members[u];if(!isHost()||!m||!ROLES[m.apply])return;
   if(staffOf(m.apply).length>=ROLES[m.apply].max){toast('Ese puesto está completo.','bad');return;}
-  fb.update(rRef('members/'+u),{role:m.apply,apply:null}).catch(e=>console.warn(e));fillVac(m.apply);
+  fb.update(rRef('members/'+u),{role:m.apply,apply:null}).catch(e=>console.warn(e));fillVac(m.apply);if(run&&!run.over)run.hires=(run.hires||0)+1;
   note(u,'¡Contratado/a en '+ROLES[m.apply].n+'! Empiezas ya, en periodo de prueba.');
   sOk();toast('🎮 '+cleanName(m.name)+' contratado/a en '+ROLES[m.apply].n,'good');
 }
@@ -2688,7 +2779,7 @@ function doneReal(t,e,sc,early,x){
   run.tasks=run.tasks.filter(x=>x!==t);
   const d=run.duty[e.id];if(d){d.busy=0;d.task=null;}
   const r=applyMG(t,sc,early,e,x);
-  if(t.k!=='tk'){if(r.good){e.st.tasks++;run.tdone++;}else{e.st.tfail++;run.tlost++;}}
+  if(t.k!=='tk'){if(r.good)e.st.tasks++;else e.st.tfail++;tStat(t,r.good,e);}
   logE(e,(r.good?'Resolvió':'Hizo mal')+' un aviso: '+t.s);
   toast('🎮 '+e.name+': '+r.msg,r.good?'good':'bad');
   note(e.real,r.msg,!r.good);
@@ -2698,7 +2789,7 @@ function realFail(t){
   const e=empById(t.who);run.tasks=run.tasks.filter(x=>x!==t);
   if(e){const d=run.duty[e.id];if(d){d.busy=0;d.task=null;}}
   if(t.k==='tk'){if(e)note(e.real,'Se te pasó el tiempo con la reclamación. Se queda en la bandeja.',true);renderAll();return;}
-  meta.rep=clamp(meta.rep-t.pen/2,0,5);run.tlost++;
+  meta.rep=clamp(meta.rep-t.pen/2,0,5);tStat(t,false,e);
   if(e){e.st.tfail++;logE(e,'Dejó a medias un aviso: '+t.s);note(e.real,'Se te pasó el tiempo: '+t.s,true);toast('🎮 '+e.name+' no ha terminado a tiempo: '+t.s,'bad');}
   sBad();renderAll();checkRep();
 }
@@ -3054,22 +3145,24 @@ function assignAll(){
   const left=run.tasks.filter(t=>!t.who&&t.k!=='tk').length;
   toast(n?'⚡ '+n+(n===1?' aviso asignado':' avisos asignados')+(left?'. Quedan '+left+' sin nadie libre de su departamento.':'.'):'No hay nadie libre del departamento que toca.',n?'good':'bad');
 }
+/* Avisos hechos/perdidos por departamento (para el cierre): cuenta el puesto de quien lo hizo o el del aviso. */
+function tStat(t,ok,e){if(ok)run.tdone++;else run.tlost++;const r=(e&&e.role)||(t.roles&&t.roles[0])||'alm',D=run.dstat=run.dstat||{},d=D[r]=D[r]||{ok:0,ko:0};d[ok?'ok':'ko']++;}
 function moveStock(id,max){const mv=Math.min(max,meta.back[id]||0);if(mv>0){meta.back[id]-=mv;meta.stock[id]=(meta.stock[id]||0)+mv;}return mv;}
 function finishTask(t){
   run.tasks=run.tasks.filter(x=>x!==t);
   let ok=true,nm='Tú';
   if(t.who==='me'){run.away=null;if(t.lang&&t.lang!=='en'&&Math.random()<0.5)ok=false;}
   else{const e=empById(t.who);if(e){nm=e.name;const d=run.duty[e.id];if(d){d.busy=0;d.task=null;}ok=Math.random()<perf(e,t.match,t.lang);if(ok)e.st.tasks++;else e.st.tfail++;logE(e,(ok?'Resolvió':'Hizo mal')+' un aviso: '+t.s);}}
-  if(t.k==='order'){run.tdone++;autoOrder(empById(t.who)||{name:'Tú',st:{}},ok);renderAll();return;}
-  if(t.k==='inv'){run.tdone++;const e=empById(t.who),inc=incoming(),ps=CAT.filter(x=>aisleOf(x.id)===t.n);
+  if(t.k==='order'){tStat(t,true,empById(t.who));autoOrder(empById(t.who)||{name:'Tú',st:{}},ok);renderAll();return;}
+  if(t.k==='inv'){tStat(t,true,empById(t.who));const e=empById(t.who),inc=incoming(),ps=CAT.filter(x=>aisleOf(x.id)===t.n);
     const out=ps.filter(x=>!(meta.stock[x.id]>0)),low=ps.filter(x=>meta.stock[x.id]>0&&meta.stock[x.id]<=2);
     if(e)logE(e,'Hizo inventario del pasillo '+t.n);
     toast('📋 Inventario del pasillo '+t.n+(ok?': '+ps.length+' productos, '+(out.length?out.length+' agotados ('+out.slice(0,3).map(x=>x.e).join('')+')':'ninguno agotado')+(low.length?', '+low.length+' a punto de acabarse':''):' a medias: '+(e?e.name:'')+' se ha liado contando.'),ok?'good':'bad');
     if(ok)run.ordAt=-99;renderAll();return;}
-  if(!ok){meta.rep=clamp(meta.rep-t.pen/2,0,5);run.tlost++;
+  if(!ok){meta.rep=clamp(meta.rep-t.pen/2,0,5);tStat(t,false,empById(t.who));
     const why=t.lang?'. No se han entendido':(t.match?'':'. No es su puesto');
     toast((t.who==='me'?'Te ha salido regular en el pasillo '+t.n:nm+' lo ha dejado a medias en el pasillo '+t.n)+why,'bad');sBad();renderAll();checkRep();return;}
-  run.tdone++;let extra='';
+  tStat(t,true,empById(t.who));let extra='';
   if(t.k==='repo'||t.k==='call'){const mv=moveStock(t.pid,8);extra=mv?' (+'+mv+' uds en estantería)':' (en el almacén no quedaba)';}
   else if(t.k==='truck'){let cap=40,tot=0;Object.keys(meta.back).sort((x,y)=>(meta.stock[x]||0)-(meta.stock[y]||0)).forEach(id=>{if(cap>0){const mv=moveStock(id,cap);cap-=mv;tot+=mv;}});extra=' (+'+tot+' uds)';}
   else if(t.k==='cv'){const c=t.cand,q=c?(c.rap+c.trato+c.punt+c.act)/4:0;extra=q>=0.55?' · '+hireFromCv(c,c.wage):' · no le ha convencido';}
@@ -3082,7 +3175,7 @@ function expireTask(t){
   run.tasks=run.tasks.filter(x=>x!==t);
   if(t.k==='tk'){renderAll();return;}
   if(t.k==='inv'||t.k==='order'){toast('Nadie de Almacén pudo con: '+t.ic+' '+t.s,'bad');renderAll();return;}
-  run.tlost++;
+  tStat(t,false);
   meta.rep=clamp(meta.rep-t.pen,0,5);
   if(t.k==='spill'&&Math.random()<0.3){addTicket('back','Un cliente se resbaló en el pasillo '+t.n,ri(1000,3000),3,false);toast('Nadie limpió el pasillo '+t.n+' y alguien se ha caído','bad');}
   else toast('Nadie atendió: '+t.ic+' '+t.s,'bad');
@@ -3855,7 +3948,7 @@ function hireFromCv(c,wage,mine){
   if(!c||!ROLES[c.role])return 'Candidato perdido.';
   if(staffOf(c.role).length>=ROLES[c.role].max)return 'Iba a entrar en '+ROLES[c.role].n+', pero el puesto está completo.';
   if(meta.money<HIRE)return 'No hay bote para contratar ('+fmt(HIRE)+').';
-  meta.money-=HIRE;
+  meta.money-=HIRE;if(run&&!run.over)run.hires=(run.hires||0)+1;
   const e=newEmp(c.role,meta,{name:cleanName(c.name),face:c.face,rap:c.rap,trato:c.trato,punt:c.punt,act:c.act,hon:c.hon==null?Math.round(rnd(0.15,0.95)*100)/100:+c.hon,mine:mine?1:0,nat:c.nat,langs:toArr(c.langs),pers:c.pers,wage:Math.max(SMI_D,Math.round(wage||c.wage)),trial:3});
   e.moral=clamp(e.moral+(wage<c.wage?-10:wage>c.wage?8:0),0,100);
   meta.emp.push(e);fillVac(e.role);logE(e,'Contratado/a tras la entrevista');
@@ -3989,7 +4082,7 @@ function endMG(sc){
   if(remote){room.done[t.id]=1;roomAct({k:'done',t:t.id,sc,early:!!early,x});toast(sc>=0.6?'Hecho. Se lo cuentas al jefe…':'Regular… Se lo cuentas al jefe.',sc>=0.6?'good':'bad');sc>=0.6?sOk():sBad();room.lastHtml='';renderMember();return;}
   run.tasks=run.tasks.filter(y=>y!==t);
   const r=applyMG(t,sc,early,null,x);
-  if(r.good)run.tdone++;else run.tlost++;
+  tStat(t,r.good);
   if(run.away&&run.away.auto)renderAll();else returnTill();
   toast(r.msg,r.good?'good':'bad');if(r.good)sOk();else sBad();
   checkRep();
@@ -5070,7 +5163,7 @@ const TABS=[['caja','🧾','Caja'],['alm','📦','Almacén'],['back','💼','Bac
 let tab='caja';
 const REV={5:['Rápidos y simpáticos. Así da gusto.','La cajera, un amor. Volveré.','Todo perfecto, hasta me sobró paciencia.'],4:['Bien, sin más.','Correcto. La cola, regular.'],
   3:['Se equivocaron en algo, pero bueno.','Atención justita.'],2:['Lento y con errores. Mejorad.','Me cobraron mal y nadie se disculpó.'],1:['Me fui sin comprar: una cola eterna.','Pésima atención. No vuelvo.','Ni una caja abierta en condiciones.']};
-function addReview(st,face){if(!run)return;if(run.remote){run.outRev.push([st,face||'🙂']);return;}run.reviews=run.reviews||[];run.reviews.unshift({id:++uid,st,f:face||'🙂',t:pick(REV[st]),ans:0});if(run.reviews.length>12)run.reviews.pop();}
+function addReview(st,face){if(!run)return;if(run.remote){run.outRev.push([st,face||'🙂']);return;}if(st>=4)run.revG=(run.revG||0)+1;else if(st<=2)run.revB=(run.revB||0)+1;run.reviews=run.reviews||[];run.reviews.unshift({id:++uid,st,f:face||'🙂',t:pick(REV[st]),ans:0});if(run.reviews.length>12)run.reviews.pop();}
 const tabBadge=k=>{
   if(k==='caja')return run&&!run.over?run.queue.length:0;
   if(k==='alm')return CAT.filter(x=>(meta.stock[x.id]||0)<=0).length;
@@ -5431,6 +5524,7 @@ function onClick(e){
   if(a==='start'){beep(1200,.05);startDay();}
   else if(a==='restart'){meta=defMeta(meta.best);meet=null;startDay();}
   else if(a==='next'){meta.day++;startDay();}
+  else if(a==='div')payDiv(+b.dataset.p);
   else if(a==='buy'){
     const u=UPS.find(x=>x.k===b.dataset.k);
     if(u&&!meta.up[u.k]&&meta.money>=u.c){meta.money-=u.c;meta.up[u.k]=1;sOk();renderHud();refreshView();
