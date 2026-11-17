@@ -1323,6 +1323,20 @@ body.rem .isostore{display:none!important}
   .scn-who{width:64px;height:64px;font-size:40px}.scn-who canvas{width:50px;height:47px}.scn-face{width:28px;height:28px;font-size:19px;right:-6px;bottom:-6px}
   .scn-say{font-size:15px;padding:6px 10px}.scn-ch .btn{flex:1 1 40%;font-size:14px;min-height:44px}.scn-hint{font-size:11px}.scn-stamp{font-size:26px}}
 @media (max-height:700px){.scn{gap:6px}.scn-main{gap:5px}.scn-who{width:56px;height:56px;font-size:34px}.scn-who canvas{width:44px;height:42px}.dnic-ph{height:42px;font-size:24px}}
+/* Escenas de Backoffice: carta oficial (look 'letter': Consumo, Hacienda), carta del banco (look 'bank'), papel con importes (.scn-doc) y sello de tinta (.scn-seal). */
+.scn-letter,.scn-bank{background:linear-gradient(#fffdf4,#fbf5e2);background-image:repeating-linear-gradient(180deg,transparent 0 23px,rgba(70,90,140,.08) 23px 24px),linear-gradient(#fffdf4,#fbf5e2)}
+.scn-letter .scn-head{background:linear-gradient(180deg,#3d5688,#25365c)}.scn-letter .scn-tag{color:#25365c}
+.scn-bank .scn-head{background:linear-gradient(180deg,#1f8a62,#11573d)}.scn-bank .scn-tag{color:#11573d}
+.scn-letter .scn-belt,.scn-bank .scn-belt{height:6px;animation:none;background:repeating-linear-gradient(-45deg,#d62f3a 0 10px,#fff 10px 16px,#2d55a8 16px 26px,#fff 26px 32px)}
+.scn-letter .scn-who,.scn-bank .scn-who{background:#fff}
+.scn-doc{position:relative;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:3px 12px;align-items:baseline;background:#fff;border:1px dashed #b9a98a;border-radius:4px;padding:7px 10px;font-size:13px;color:#3a2f22}
+.scn-doc span{border-bottom:1px dotted #e2d8c2}.scn-doc b{font-family:var(--pix);font-size:16px;text-align:right;white-space:nowrap}
+.scn-doc .neg{color:#c51d22}.scn-doc .pos{color:#1f9a55}.scn-doc span.tot{font-weight:800}.scn-doc b.tot{font-size:18px;border-top:2px solid #3a2f22}
+.scn-doc small{grid-column:1/-1;font-size:11px;color:#7a6a50;line-height:1.3}
+.scn-doc.zmini{background:#fff;border:0;border-left:4px solid #c51d22;font-family:ui-monospace,Menlo,monospace;box-shadow:inset 0 -8px 8px -8px rgba(0,0,0,.15)}
+.scn-seal{position:absolute;right:16px;top:44px;transform:rotate(14deg);border:3px double rgba(197,29,34,.55);color:rgba(197,29,34,.55);border-radius:50%;width:66px;height:66px;display:grid;place-items:center;font-family:var(--display);font-weight:700;font-size:10px;letter-spacing:1px;pointer-events:none}
+.scn-bank .balbar{margin:0}
+@media (max-width:820px){.scn-doc{font-size:12px;padding:5px 8px}.scn-doc b{font-size:14px}.scn-seal{width:50px;height:50px;font-size:8px;top:36px;right:10px}}
 </style>
 </head>
 <body>
@@ -1466,6 +1480,8 @@ const FIXED=[['Alquiler del local',16000,21],['Luz y frío de las neveras',6500,
 const FIXED_D=FIXED.reduce((a,x)=>a+x[1],0);
 /* Póliza de crédito con el banco: el bote puede bajar hasta −15.000 € pagando un 8,5 % anual de interés; pasado eso, concurso de acreedores. */
 const CREDIT=1500000,CREDIT_I=0.085;
+/* Límite e interés de la póliza de esta partida (el banco puede ampliarla: meta.credit/meta.creditI). */
+const credLim=()=>(meta&&meta.credit)||CREDIT,credI=()=>(meta&&meta.creditI)||CREDIT_I;
 /* Las otras cajas: cada cajero/a de la casa que está libre abre una caja y despacha clientes que no ves.
    La demanda de la tienda es limitada: ~240 clientes al día con reputación 5 (menos con mala fama o con agotados, algo más con los días);
    cada caja despacha como mucho ~150. Ticket medio 18 €, IVA medio de la cesta ~7,5 % y mermas del 1,5 % de lo vendido. */
@@ -1621,6 +1637,7 @@ function sceneSync(){
   if(sceneCur&&sceneCur.alive&&!sceneCur.alive())sceneClose();
   if(sceneCur&&sceneBlocked()){const el=$('#scene');sceneQ.unshift(sceneCur);sceneCur=null;sceneTok++;if(el){el.classList.remove('show','out','hold');el.innerHTML='';}}
   try{cajaScenes();}catch(e){console.warn('cajaScenes',e);}
+  try{backScenes();}catch(e){console.warn('backScenes',e);}
   scenePump();
   if(sceneCur&&sceneCur.time){const f=1-(performance.now()-sceneCur.t0)/1000/sceneCur.time,b=document.querySelector('#scene .scn-bar i');
     if(f<=0)scenePick(sceneCur.def);else if(b)b.style.width=(f*100).toFixed(1)+'%';}
@@ -1687,6 +1704,109 @@ function cutScene(nc){
       if(k==='end'){const i=run.queue.indexOf(nc);if(i>0){run.queue.splice(i,1);run.queue.push(nc);}meta.rep=clamp(meta.rep+0.05,0,5);sOk();toast('Al final de la cola. La gente asiente.','good');}
       else pen();
       renderAll();}});
+}
+
+/* ---------- escenas de Backoffice (dinero y papeles) ----------
+   Solo quien lleva la tienda (sin conexión o el jefe); el encargado de relevo aplica def al momento. Sin conexión paran el turno.
+   arqScene = el arqueo no cuadra; Consumo (meta.consPend, de processTickets); Hacienda cada 7 turnos (meta.taxQ, de endDay);
+   el banco al tirar de la póliza y al pasar del 50 % (meta.bank), con ampliación a 20.000 € (meta.credit/meta.creditI). */
+const backOn=()=>!!(run&&!run.over&&!run.dead&&!run.remote&&(!room||isHost()));
+function bScene(o){
+  if(room&&room.sim){if(o.def!=null&&o.onPick)try{o.onPick(o.def);}catch(e){console.warn('scene',e);}return false;}
+  if(!room)o.pause=true;
+  return scene(o);
+}
+/* Papel con filas [concepto, importe, clase]; foot = letra pequeña. */
+const scnDoc=(rows,foot,cls)=>`<div class="scn-doc ${cls||''}">${rows.map(([a,b,c])=>`<span class="${c||''}">${a}</span><b class="${c||''}">${b}</b>`).join('')}${foot?`<small>${foot}</small>`:''}</div>`;
+const backNpc=()=>staffOf('back').find(e=>!e.real&&working(e));
+const sgn=v=>(v<0?'−':'')+fmt(Math.abs(v));
+/* El arqueo no cuadra. v = lo que falta; already = ya estaba perdido (arqueo mal hecho), si no se descuenta ahora.
+   La causa se decide al salir: recuento mal hecho, cambio mal dado o un hurto (pesa la poca honestidad de quien llevaba caja). */
+function arqScene(o){
+  if(!backOn())return;
+  const v=o.v,n=o.n||ri(1,3),pool=meta.emp.filter(e=>!e.real&&working(e)&&(e.role==='atc'||e.role==='back'));
+  let cause=Math.random()<0.5?'err':'cambio',cul=null;
+  if(pool.length){const h=e=>1-(e.hon==null?0.6:e.hon),w=pool.map(h);let x=Math.random()*w.reduce((a,b)=>a+b,0);cul=pool.find((e,i)=>(x-=w[i])<=0)||pool[0];
+    if(Math.random()<h(cul)*0.9)cause='robo';}
+  if(!o.already){meta.money-=v;run.fines+=v;}
+  const be=backNpc(),found=cause==='err'?Math.random()<0.85:cause==='robo'?Math.random()<(be?0.45+0.3*perf(be,true):0.55):false;
+  const back=()=>{meta.money+=v;if(!o.already)run.fines=Math.max(0,run.fines-v);};
+  const sys=ri(600,1400)*100;
+  bScene({k:'arq:'+meta.day+':'+n+':'+v,who:be?be.face:'🧮',sprite:be?'s'+be.id:null,head:'🧮 ARQUEO · CAJA '+n,tag:'➖ Descuadre',prio:2,name:be?esc(be.name)+' · Backoffice':'Backoffice',
+    txt:'Jefe, faltan <b>'+fmt(v)+'</b> en la caja '+n+'. 😬',
+    body:scnDoc([['Según el sistema',fmt(sys)],['Contado en el cajón',fmt(sys-v)],['Diferencia','−'+fmt(v),'neg']],'','zmini'),
+    def:'asu',
+    choices:[{t:'🔎 Investigar',k:'inv',cls:'go',key:'I',stamp:found?'ENCONTRADO':'SIN PISTAS',sc:found?'ok':'bad',fx:found?'🪙':''},
+      {t:'💸 Asumirlo',k:'asu',cls:'no',key:'A',stamp:'ASUMIDO',sc:'bad',fx:'💸'}],
+    onPick:k=>{
+      if(k!=='inv'){toast('Descuadre asumido: −'+fmt(v)+' en la caja '+n+'.','bad');renderAll();return;}
+      if(found&&cause==='robo'&&cul){back();cul.st.robo=(cul.st.robo||0)+1;logE(cul,'Pillado/a: faltaban '+fmt(v)+' en la caja '+n);
+        cul.moral=clamp(cul.moral-10,0,100);toast('🕵️ Las cámaras no mienten: era '+cul.name+'. Lo devuelve y queda en su ficha.','bad');}
+      else if(found){back();toast('🔎 Un billete pegado a otro. La caja cuadra: +'+fmt(v)+'.','good');}
+      else{pool.forEach(e=>{e.moral=clamp(e.moral-3,0,100);});
+        toast(cause==='cambio'?'🔎 Cambio mal dado a algún cliente. Perdido, y el equipo se siente vigilado.':'🔎 Nadie sabe nada. El equipo se siente vigilado.','bad');}
+      renderAll();}});
+}
+function backScenes(){
+  if(!backOn()||sceneCur||sceneQ.length)return;
+  /* 1) Carta de Consumo por una hoja de reclamaciones sin contestar (la deja processTickets). */
+  if(run.t>3&&(meta.consPend||[]).length&&sceneOk('cons',20)){
+    const c=meta.consPend.shift(),arch=Math.random()<0.7,red=Math.round(c.f*0.6/100)*100,fee=5000;
+    bScene({k:'cons:'+c.d+':'+c.f,look:'letter',head:'🏛️ CONSUMO · REQUERIMIENTO',tag:'📨 Plazo: 10 días',who:'🕵️',name:'Inspección de Consumo',prio:2,
+      txt:'Una hoja de reclamaciones se quedó sin contestar.',
+      body:'<div class="scn-hint">📋 «'+esc(c.t||'Sin respuesta al cliente')+'»</div>'+scnDoc([['Turno de la queja',String(c.d)],['Propuesta de sanción',fmt(c.f),'neg']],'Contestar: gestoría '+fmt(fee)+'. Si no lo archivan, −40 % por reconocerlo y pagar pronto.')+'<div class="scn-seal">CONSUMO</div>',
+      def:'ign',
+      choices:[{t:'📨 Contestar en plazo',k:'ok',cls:'go',key:'C',stamp:arch?'ARCHIVADO':'REDUCIDA',sc:arch?'ok':'bad'},{t:'🙈 Ignorar',k:'ign',cls:'no',key:'I',stamp:'MULTA',sc:'bad',fx:'💸'}],
+      onPick:k=>{
+        if(k==='ok'){meta.money-=fee;if(arch){toast('📨 Consumo archiva la queja. Gestoría: −'+fmt(fee)+'.','good');}
+          else{run.fines+=red;meta.money-=red;run.consumo=(run.consumo||0)+red;toast('📨 Sanción reducida: −'+fmt(red)+' (+'+fmt(fee)+' de gestoría).','bad');}}
+        else{run.fines+=c.f;meta.money-=c.f;run.consumo=(run.consumo||0)+c.f;toast('🙈 Consumo te multa: −'+fmt(c.f)+'.','bad');}
+        renderAll();checkRep();}});
+    return;
+  }
+  /* 2) Hacienda: carta del «trimestre» cada 7 turnos con el IVA y el impuesto de sociedades ya pagados cada día (no cambia nada de lo pagado).
+     Si Backoffice flojea, puede haber un fallo en las facturas: a pagar (Hacienda lo pilla: cuota + sanción del 50 %) o a favor (se pierde).
+     La gestoría (60 €) lo encuentra: complementaria sin sanción o devolución. */
+  const q=meta.taxQ;
+  if(q&&q.n>=7&&run.t>5&&sceneOk('hac',20)){
+    meta.taxQ={r:0,s:0,iva:0,is:0,n:0};const tn=meta.trim=(meta.trim||0)+1;
+    const bs=staffOf('back').filter(e=>!e.real&&working(e)),ap=bs.length?bs.reduce((a,e)=>a+perf(e,true),0)/bs.length:0;
+    const err=Math.random()<(bs.length?clamp(0.4*(1-ap),0.05,0.3):0.35)?(Math.random()<0.5?'pay':'fav'):'';
+    const aP=Math.max(2000,Math.round(q.r*0.03)),aF=Math.max(1500,Math.round(q.s*0.03)),fee=6000;
+    const st=k=>k==='go'?(err==='pay'?['REQUERIMIENTO','bad']:['PRESENTADO','ok']):err==='pay'?['CORREGIDO','ok']:err==='fav'?['A DEVOLVER','ok']:['TODO OK','ok'];
+    bScene({k:'hac:'+tn,look:'letter',head:'🏛️ HACIENDA · MODELO 303',tag:'📅 '+(((tn-1)%4)+1)+'T',who:'🧾',name:'Agencia Tributaria',prio:2,
+      txt:'Toca presentar el trimestre. ¿Lo firmas tal cual?',
+      body:scnDoc([['IVA cobrado en ventas',fmt(q.r)],['IVA pagado en compras y gastos','−'+fmt(q.s)],['Resultado',sgn(q.r-q.s),'tot'],['Ya ingresado cada día',fmt(q.iva)],
+        ...(meta.ivaCred?[['A compensar',fmt(meta.ivaCred),'pos']]:[]),['Imp. de sociedades pagado',fmt(q.is)]],'Últimos '+q.n+' turnos. '+(bs.length?'Lo ha preparado '+esc(bs[0].name)+'.':'Nadie de Backoffice: lo has hecho tú.'))+'<div class="scn-seal">AEAT</div>',
+      def:'go',
+      choices:[{t:'✍️ Firmar y presentar',k:'go',cls:'go',key:'F',stamp:st('go')[0],sc:st('go')[1]},{t:'🧾 Que lo mire la gestoría · '+fmt(fee),k:'rev',key:'G',stamp:st('rev')[0],sc:st('rev')[1],fx:err==='fav'?'🪙':''}],
+      onPick:k=>{
+        if(k==='go'){if(err==='pay'){const s=Math.round(aP*0.5);meta.money-=aP+s;run.fines+=s;toast('📬 Hacienda: faltaba una factura. Cuota '+fmt(aP)+' + sanción '+fmt(s)+'.','bad');}
+          else toast('🏛️ Trimestre presentado.','good');}
+        else{meta.money-=fee;
+          if(err==='pay'){meta.money-=aP;toast('🧾 La gestoría pilla un fallo: complementaria de '+fmt(aP)+', sin sanción.','good');}
+          else if(err==='fav'){meta.money+=aF;toast('🧾 Una factura sin deducir: Hacienda devuelve +'+fmt(aF)+'.','good');}
+          else toast('🧾 Todo correcto. '+fmt(fee)+' de tranquilidad.','');}
+        renderAll();checkRep();}});
+    return;
+  }
+  /* Arqueo de media tarde que no cuadra: como mucho uno por turno (desde el turno 2, ~30 % de los turnos). */
+  if(meta.day>=2&&!run.arqS&&run.t>run.dur*0.45&&run.t<run.dur*0.9){run.arqS=1;
+    if(Math.random()<0.3&&sceneOk('arq',30)){arqScene({v:pick([500,1000,2000,2000,5000])+ri(0,9)*10});return;}}
+  /* 3) El banco: primera vez en negativo y al pasar del 50 % de la póliza (se rearma al bajar del 30 %). */
+  const B=meta.bank=meta.bank||{neg:0,half:0},L=credLim(),debt=-meta.money;
+  if(debt<L*0.3)B.half=0;
+  let lv=-1;if(meta.money<0&&!B.neg){B.neg=1;lv=0;}else if(debt>L*0.5&&!B.half){B.half=1;B.neg=1;lv=1;}
+  if(lv<0)return;
+  const can=L<2000000,okPat=meta.rep>=3,i=credI();
+  bScene({k:'bank:'+meta.day+':'+lv,look:'bank',head:'🏦 BANCO CUADRADO · OF. 0042',tag:lv?'⚠️ Más del 50 %':'Póliza',who:'👔',name:'Don Arturo, el director',prio:2,
+    txt:lv?'Ya llevas más de la mitad de la póliza. A −'+fmt(L)+' cerramos el grifo.':'Has tirado de la póliza. Ahora pagas intereses por lo que debas.',
+    body:scnDoc([['Límite',fmt(L)],['Dispuesto','−'+fmt(debt),'neg'],['Libre',fmt(Math.max(0,L-debt))],['Intereses ('+String(+(i*100).toFixed(1)).replace('.',',')+' % anual)','−'+fmt(Math.round(debt*i/365))+'/día','neg']])
+      +`<div class="balbar on"><i style="width:${Math.min(100,Math.round(debt/L*100))}%"></i></div>`
+      +(can?`<div class="scn-hint">${okPat?'📈 Ampliar a 20.000 €: comisión de apertura 100 € (0,5 %) y el interés sube al 9,5 %.':'📈 Con esta fama (menos de 3 ★) no te la amplían.'}</div>`:''),
+    def:'ok',
+    choices:[{t:'👍 Entendido',k:'ok',cls:'go',key:'E',stamp:'FIRMADO',sc:'ok'}].concat(can&&okPat?[{t:'📈 Ampliar a 20.000 €',k:'up',key:'A',stamp:'AMPLIADA',sc:'ok',fx:'🏦'}]:[]),
+    onPick:k=>{if(k==='up'&&credLim()<2000000){meta.credit=2000000;meta.creditI=0.095;meta.money-=10000;toast('🏦 Póliza ampliada a '+fmt(2000000)+' (comisión −'+fmt(10000)+').','good');renderAll();}}});
 }
 
 /* ---------- clientes ---------- */
@@ -1915,11 +2035,11 @@ function checkRep(){
   if(run&&run.remote)return;
   /* El encargado no despide ni declara el concurso: eso lo decide la partida del jefe. Aguanta con lo mínimo. */
   if(room&&room.sim){if(meta.rep<0.5)meta.rep=0.5;return;}
-  if((meta.rep<=0||meta.money<-CREDIT)&&run&&!run.over){
+  if((meta.rep<=0||meta.money<-credLim())&&run&&!run.over){
     run.over=true;run.dead=true;mg=null;pendingLeave=null;closeMG();wipeGame();
-    const days=meta.day,q=meta.money<-CREDIT;
+    const days=meta.day,q=meta.money<-credLim();
     showOverlay(`<div class="card"><h2>${q?'Concurso de acreedores':'Te han despedido'}</h2>
-      <p>${q?'Has agotado la póliza de crédito ('+fmt(CREDIT)+') y no puedes pagar a proveedores, nóminas ni a Hacienda: la empresa entra en concurso de acreedores y cierra.':'La reputación llegó a cero.'} Sobreviviste ${days} ${days===1?'turno':'turnos'}.</p>
+      <p>${q?'Has agotado la póliza de crédito ('+fmt(credLim())+') y no puedes pagar a proveedores, nóminas ni a Hacienda: la empresa entra en concurso de acreedores y cierra.':'La reputación llegó a cero.'} Sobreviviste ${days} ${days===1?'turno':'turnos'}.</p>
       ${online()?'<div class="zone-title">🏆 RANKING</div><div id="rank"></div>':''}
       <button class="btn go big" data-act="restart">Volver a empezar</button></div>`);
     submitScore(true).then(fillRanking);
@@ -2052,7 +2172,7 @@ function processTickets(){
       const e=slots[i];
       if(!e){r.late++;meta.rep=clamp(meta.rep-0.15,0,5);
         /* Hoja de reclamaciones sin contestar: Consumo puede sancionar (infracción leve, hasta 10.000 €). */
-        if(Math.random()<0.08){const f=ri(300,1500)*100;run.fines+=f;meta.money-=f;run.consumo=(run.consumo||0)+f;}
+        if(Math.random()<0.08){const f=ri(300,1500)*100;meta.consPend=(meta.consPend||[]).concat([{f,d:meta.day,t:t.t||''}]).slice(-3);}
         return;}
       const dd=run.duty[e.id]||{};
       const p=t.mis?0.3:clamp(perf(e,true)+(dd.seen?0.05:0)-((dd.slackT||0)>15?0.1:0),0.1,0.97);
@@ -2102,7 +2222,7 @@ function endDay(){
   meta.money-=payroll;
   const FX=Math.round(FIXED_D*wf);meta.money-=FX;
   /* Intereses de la póliza de crédito si el bote estaba en negativo. */
-  const INT=meta.money<0?Math.round(-meta.money*CREDIT_I/365):0;meta.money-=INT;
+  const INT=meta.money<0?Math.round(-meta.money*credI()/365):0;meta.money-=INT;
   /* Cuentas del turno. S = ventas de las cajas que ves (la tuya y las de jugadores), O = las otras cajas (ya cobradas con su coste).
      Lo que no está apuntado aparte (reembolsos en directo, compensaciones, abonos, despidos, contratos…) sale como «otros».
      IVA real de cada producto (4/10/21 %) repercutido − soportado (compras, mercancía de las otras cajas y gastos fijos); si sale a devolver,
@@ -2119,6 +2239,8 @@ function endDay(){
   let base=bai,is=0;if(base>0&&meta.bin>0){const u=Math.min(base,meta.bin);base-=u;meta.bin-=u;}if(bai<0)meta.bin=(meta.bin||0)-bai;
   if(base>0){const y=meta.isY||0,lo=Math.max(0,Math.min(base,5000000-y));is=Math.round(lo*0.19+(base-lo)*0.21);meta.isY=y+base;}
   meta.money-=iva+is;
+  /* Para la carta trimestral de Hacienda (backScenes): lo declarado y pagado desde la última. */
+  {const q=meta.taxQ=meta.taxQ||{r:0,s:0,iva:0,is:0,n:0};q.r+=ivaR;q.s+=ivaS;q.iva+=iva;q.is+=is;q.n++;}
   const fin={S,O,ON:run.offN||0,F,B,P:payroll,PB:payB,FX,INT,K,oth,cogs,iva,ivaR,ivaS,cred:meta.ivaCred||0,bai,is,net:bai-is,cash:delta-iva-is,m0:run.m0};
   /* Reserva legal (art. 274 LSC): el 10% del beneficio va a reserva hasta llegar al 20% del capital; solo cuando ya no hay pérdidas acumuladas. */
   {const rl=meta.resLeg||0;if(fin.net>0&&rl<CAP0*0.2&&balData().res>0){fin.rl=Math.min(Math.round(fin.net*0.1),CAP0*0.2-rl);meta.resLeg=rl+fin.rl;}}
@@ -2128,7 +2250,7 @@ function endDay(){
   cart={};
   lastEnd={payroll,res,fin,dep:deptPerf(res,payD)};scrTab.shop='sum';pg=0;tipsPer=0;
   if(isHost())room.rpt=deptReport();
-  if(!(room&&room.sim)&&(meta.rep<=0||meta.money<-CREDIT)){run.over=false;checkRep();return;}
+  if(!(room&&room.sim)&&(meta.rep<=0||meta.money<-credLim())){run.over=false;checkRep();return;}
   meta.liveT=0;saveGame(true);
   if(room&&room.sim){pubState(true);clearTimeout(room.nextT);room.nextT=setTimeout(relayNextDay,8000);return;}
   submitScore(false);
@@ -2185,14 +2307,14 @@ const CAP0=3000000;
 function balData(){
   const inc=incoming(),stk=CAT.reduce((t,x)=>t+((meta.stock[x.id]||0)+(meta.back[x.id]||0)+(inc[x.id]||0))*unitCost(x,'hac'),0);
   const cash=Math.max(0,meta.money),debt=Math.max(0,-meta.money),cred=meta.ivaCred||0,pat=cash+stk+cred-debt;
-  return {cash,debt,stk,cred,pat,res:pat-CAP0,free:CREDIT-debt,int:Math.round(debt*CREDIT_I/365)};
+  return {cash,debt,stk,cred,pat,res:pat-CAP0,free:credLim()-debt,int:Math.round(debt*credI()/365)};
 }
 function balHtml(){
-  const b=balData(),m=v=>(v<0?'−':'')+fmt(Math.abs(v)),pc=Math.min(100,Math.round(b.debt/CREDIT*100));
+  const b=balData(),m=v=>(v<0?'−':'')+fmt(Math.abs(v)),pc=Math.min(100,Math.round(b.debt/credLim()*100));
   return `<div class="bal"><div class="balk"><span><small>💶 Caja</small><b>${fmt(b.cash)}</b></span><span class="${b.debt?'neg':''}"><small>🏦 Deuda</small><b>${b.debt?'−':''}${fmt(b.debt)}</b></span><span class="${b.pat<0?'neg':'pos'}"><small>📒 Patrimonio</small><b>${m(b.pat)}</b></span></div>
     <div class="balbar ${b.debt?'on':''}" title="Póliza usada"><i style="width:${pc}%"></i></div>
     <div class="sum"><span>Stock a coste</span><b>${fmt(b.stk)}</b>${b.cred?`<span>IVA a favor</span><b>${fmt(b.cred)}</b>`:''}<span>Póliza libre</span><b>${fmt(b.free)}</b>${b.int?`<span>Intereses/día</span><b class="neg">−${fmt(b.int)}</b>`:''}<span>Capital inicial</span><b>${fmt(CAP0)}</b><span>Resultado acumulado</span><b class="${b.res<0?'neg':'pos'}">${b.res<0?'−':'+'}${fmt(Math.abs(b.res))}</b></div>
-    <div class="supd">Patrimonio = caja + stock + IVA a favor − póliza (${fmt(CREDIT)} máx.).</div>
+    <div class="supd">Patrimonio = caja + stock + IVA a favor − póliza (${fmt(credLim())} máx.).</div>
     <div class="pocket"><span>👑 Tu bolsillo <small>(no es de la tienda)</small></span><b>${fmt(bossOf().cash)}</b></div></div>`;
 }
 function finHtml(f){
@@ -2223,7 +2345,7 @@ function adviceList(le){
   if(f&&f.net<0)hot('📉','Pierdes dinero','Este turno has perdido '+fmt(-f.net)+'.'+(f.S+(f.O||0)&&f.P/(f.S+(f.O||0))>0.2?' La nómina se come el '+Math.round(f.P/(f.S+(f.O||0))*100)+'% de lo que vendes (en un súper sano ronda el 10–14%): sobra gente o falta venta.':''));
   else if(f&&f.net>0)tip('📈','Ganas dinero','Beneficio neto '+fmt(f.net)+' (margen '+(f.S+(f.O||0)?Math.round(f.net/(f.S+(f.O||0))*100):0)+'%).');
   if(f&&f.B>f.S+(f.O||0)&&f.B>30000)tip('📦','Mucho dinero en stock','Has comprado '+fmt(f.B)+' en mercancía y vendido '+fmt(f.S)+'. No es pérdida (está en el almacén), pero ese dinero no lo tienes en el bote.');
-  if(meta.money<300000)hot('🏦','Bote muy justo','Con '+fmt(meta.money)+' cualquier susto te deja en números rojos. Por debajo de 0 tiras de la póliza de crédito (con intereses); a −15.000 €, concurso de acreedores.');
+  if(meta.money<300000)hot('🏦','Bote muy justo','Con '+fmt(meta.money)+' cualquier susto te deja en números rojos. Por debajo de 0 tiras de la póliza de crédito (con intereses); a −'+fmt(credLim())+', concurso de acreedores.');
   /* Contratar */
   if(r){[['back','Backoffice'],['rrpp','RR.PP.'],['alm','Almacén']].forEach(([k,n])=>{if(r[k].late>0)(room0(k)>0?hot:tip)('➕','Contrata en '+n,r[k].late+(r[k].late===1?' reclamación se quedó':' reclamaciones se quedaron')+' sin atender por falta de gente'+(room0(k)>0?' (quedan '+room0(k)+' plazas).':', pero ya está lleno: mejora a los que hay.'));});}
   if(run.angry>=3&&room0('atc')>0)hot('➕','Contrata en Caja',run.angry+' clientes se fueron hartos de esperar. Cada cajero libre baja la impaciencia un 8%.');
@@ -4321,7 +4443,9 @@ function applyMG(t,sc,early,e,x){
   }else if(kind==='cash'){
     const d=Math.round(+x.diff||0),said=Math.round(+x.said||0);
     if(said===d){if(d<0){meta.money+=-d;msg='Arqueo: faltaban '+fmt(-d)+'. Encontrado el ticket mal cobrado y recuperado.';}else msg=d?'Arqueo: sobraban '+fmt(d)+'. Apuntado como sobrante.':'Arqueo: la caja cuadra al céntimo.';meta.rep=clamp(meta.rep+0.03,0,5);}
-    else msg='Arqueo mal hecho: '+(d?'el descuadre de '+fmt(Math.abs(d))+' se queda sin explicar.':'la caja cuadraba y has dado una falsa alarma.');
+    else{msg='Arqueo mal hecho: '+(d?'el descuadre de '+fmt(Math.abs(d))+' se queda sin explicar.':'la caja cuadraba y has dado una falsa alarma.');
+      /* Faltaba dinero y no se encontró: el jefe decide si investigar (escena de Backoffice). */
+      if(d<0&&!e)setTimeout(()=>arqScene({v:-d,n:t.n,already:true}),900);}
   }else if(kind==='spill2'){
     const L=[];
     if(early&&Math.random()<0.4){addTicket('back','Un cliente se resbaló en el pasillo '+t.n+' (no había cartel)',ri(1000,3000),3,false);meta.rep=clamp(meta.rep-0.3,0,5);L.push('sin cartel, alguien se ha resbalado');good=false;}
@@ -4563,7 +4687,7 @@ function hireCand(i){
 }
 function endMeeting(){
   meta.emp.forEach(closeSt);meet=null;
-  if(!(room&&room.sim)&&(meta.rep<=0||meta.money<-CREDIT)){run.over=false;checkRep();return;}
+  if(!(room&&room.sim)&&(meta.rep<=0||meta.money<-credLim())){run.over=false;checkRep();return;}
   meta.day++;startDay();
 }
 function showMeeting(){
@@ -5409,7 +5533,7 @@ function backHtml(){
   const nom=meta.emp.reduce((t,e)=>t+empCost(e.wage),0),r=run||{};
   return `<div class="dgrid"><div class="dpanel"><h2>💼 Backoffice</h2>${staffBlock('back')}
     <div class="zone-title">CUENTAS ${run&&!run.over?'DEL TURNO':'DEL ÚLTIMO TURNO'}</div>
-    <div class="sum"><span>Bote</span><b>${fmt(meta.money)}</b><span>Ventas</span><b>${fmt(r.sales||0)}</b><span>Otras cajas</span><b>${fmt(r.offS||0)}</b><span>Multas y pérdidas en caja</span><b>${r.fines?'−':''}${fmt(r.fines||0)}</b><span>Nómina por día (con Seg. Social)</span><b>−${fmt(nom)}</b><span>Alquiler, luz y demás por día</span><b>−${fmt(FIXED_D)}</b><span>Concurso de acreedores si el bote baja de</span><b>−${fmt(CREDIT)}</b></div></div>
+    <div class="sum"><span>Bote</span><b>${fmt(meta.money)}</b><span>Ventas</span><b>${fmt(r.sales||0)}</b><span>Otras cajas</span><b>${fmt(r.offS||0)}</b><span>Multas y pérdidas en caja</span><b>${r.fines?'−':''}${fmt(r.fines||0)}</b><span>Nómina por día (con Seg. Social)</span><b>−${fmt(nom)}</b><span>Alquiler, luz y demás por día</span><b>−${fmt(FIXED_D)}</b><span>Concurso de acreedores si el bote baja de</span><b>−${fmt(credLim())}</b></div></div>
     <div class="dpanel"><div class="zone-title">BANDEJA · RECLAMACIONES DE DINERO</div>${tkList('back')}<div class="supd">Las que nadie resuelva se reparten al cerrar entre el personal de Backoffice.</div></div></div>`;
 }
 function rrppHtml(){
