@@ -1420,6 +1420,14 @@ body.rem .isostore{display:none!important}
 /* QW8 · El agujero de «etiqueta de precio» en los botones de las escenas parecía un botón de radio: se quita. */
 .scn-ch .btn::before{display:none}
 
+/* ===== Desbloqueo progresivo y objetivos de la semana ===== */
+.tab.lock{opacity:.55;cursor:not-allowed;filter:grayscale(.7)}
+.tab.lock i{background:#7a5a5a;color:#fff}
+button.stat{font:inherit;cursor:pointer}
+.stat.s-week i{background:radial-gradient(circle at 35% 30%,#fff8,transparent 60%),#1f9a55}
+.wk{margin:6px 0}.wk .gl{font-size:13px;padding:2px 0;grid-template-columns:22px 1fr auto}.wk .gl small{font-size:13px}
+.wk .gl:not(.ok) span{color:inherit}
+.end-why{background:#fff3f3;border:2px solid #e5383b;border-radius:10px;padding:8px 10px;margin:8px 0}
 </style>
 </head>
 <body>
@@ -1431,6 +1439,7 @@ body.rem .isostore{display:none!important}
     <div class="stat s-rep"><i>⭐</i><span>Reputación</span><b id="hRep">★ 5.0</b></div>
     <div class="stat s-tk"><i>📨</i><span>Reclamac.</span><b id="hTk">0</b></div>
     <div class="stat s-out"><i>📦</i><span>Agotados</span><b id="hOut">0</b></div>
+    <button class="stat s-week" id="hWeekB" data-act="week" title="Objetivos de la semana" aria-label="Objetivos de la semana" hidden><i>🎯</i><span>Semana</span><b id="hWeek">0/3</b></button>
     <button class="mute" id="muteBtn" data-act="mute" aria-label="Sonido">🔊</button>
     <button class="mute camb" data-act="cams" aria-label="Cámaras de seguridad" title="Cámaras de seguridad">📹</button>
     <div class="tlane"></div>
@@ -1558,17 +1567,19 @@ const dayW=y=>Math.round(y/365),SMI_D=dayW(SMI_Y),wageOf=r=>dayW(WAGE_Y[r]||SMI_
 const HIRE=10000; /* contratar: anuncio en un portal de empleo y reconocimiento médico (≈100 €) */
 const monthTxt=w=>fmt(Math.round(w*365/14))+'/mes';
 const empCost=w=>Math.round(w*(1+SS_EMP));
-/* Gastos fijos de un súper de barrio de ~400 m² por día (alquiler ~4.800 €/mes, luz con neveras ~2.000 €/mes…). [nombre, €/día en céntimos, IVA soportado %] */
-const FIXED=[['Alquiler del local',16000,21],['Luz y frío de las neveras',6500,21],['Agua, basuras y limpieza',2000,10],['Seguros (local y responsabilidad civil)',900,0],['Gestoría, TPV y software',1100,21],['Mantenimiento',1500,21]];
+/* Gastos fijos de un súper de barrio de ~250 m² por día (alquiler ~3.000 €/mes, unos 12 €/m² en un barrio de Madrid; luz con neveras ~1.500 €/mes…).
+   Antes era un local de 400 m² (4.800 €/mes de alquiler), demasiado grande para 4–6 personas y 3 cajas. [nombre, €/día en céntimos, IVA soportado %] */
+const FIXED=[['Alquiler del local',10000,21],['Luz y frío de las neveras',5000,21],['Agua, basuras y limpieza',2000,10],['Seguros (local y responsabilidad civil)',900,0],['Gestoría, TPV y software',1100,21],['Mantenimiento',1500,21]];
 const FIXED_D=FIXED.reduce((a,x)=>a+x[1],0);
 /* Póliza de crédito con el banco: el bote puede bajar hasta −15.000 € pagando un 8,5 % anual de interés; pasado eso, concurso de acreedores. */
 const CREDIT=1500000,CREDIT_I=0.085;
 /* Límite e interés de la póliza de esta partida (el banco puede ampliarla: meta.credit/meta.creditI). */
 const credLim=()=>(meta&&meta.credit)||CREDIT,credI=()=>(meta&&meta.creditI)||CREDIT_I;
 /* Las otras cajas: cada cajero/a de la casa que está libre abre una caja y despacha clientes que no ves.
-   La demanda de la tienda es limitada: ~240 clientes al día con reputación 5 (menos con mala fama o con agotados, algo más con los días);
-   cada caja despacha como mucho ~150. Ticket medio 18 €, IVA medio de la cesta ~7,5 % y mermas del 1,5 % de lo vendido. */
-const OFF={dem:240,cap:150,ticket:1800,iva:0.075,merma:0.015};
+   La demanda de la tienda es limitada: ~240 clientes al día con reputación 5 (×(0,2+0,16·rep): con mala fama, bastante menos; también menos con agotados y algo más con los días);
+   cada caja despacha como mucho ~240 (20 clientes/hora en 12 h: un cajero de súper despacha 20–30 por hora; antes 150, 12,5/h, lento para una caja que solo cobra).
+   Ticket medio 20 € (la cesta media de súper en España ronda los 20 €; antes 18), IVA medio de la cesta ~7,5 % y mermas del 1,5 % de lo vendido. */
+const OFF={dem:240,cap:240,ticket:2000,iva:0.075,merma:0.015};
 const blankSt=()=>({ok:0,fail:0,late:0,abs:0,tasks:0,tfail:0,quej:0,fel:0,shifts:0,caught:0,cv:0,cvErr:0,robo:0});
 /* Al cerrar una reunión, las estadísticas pasan al historial (e.tot), que sirve de prueba al despedir. */
 const sumSt=(a,b)=>{const o=blankSt();Object.keys(o).forEach(k=>{o[k]=((a||{})[k]||0)+((b||{})[k]||0);});return o;};
@@ -1588,9 +1599,116 @@ function newEmp(role,m,opt,taken){
   if(pers==='timido'){e.trato=lim(e.trato-0.15);e.punt=lim(e.punt+0.15);}
   return Object.assign(e,opt||{});
 }
-const defMeta=best=>{const m={day:1,money:3000000,eco2:1,rep:5,up:{scanner:0,fan:0,coffee:0},emp:[],eid:0,stock:{},back:{},orders:[],vac:{atc:1,alm:1},best:best||1};CAT.forEach(x=>{m.stock[x.id]=4;});['atc','back','rrpp','alm'].forEach(r=>m.emp.push(newEmp(r,m)));return m;};
+/* La plantilla inicial es gente con oficio: rasgos visibles comprimidos a ~0,4–0,85 (ni desastres ni estrellas), para que la partida
+   no dependa de que te toque un cajero lentísimo. Los que contratas después vienen con el abanico entero (0,15–0,95). */
+const defMeta=best=>{const m={day:1,money:3000000,eco2:1,rep:5,up:{scanner:0,fan:0,coffee:0},emp:[],eid:0,stock:{},back:{},orders:[],vac:{atc:1,alm:1},best:best||1};CAT.forEach(x=>{m.stock[x.id]=4;});['atc','back','rrpp','alm'].forEach(r=>{const e=newEmp(r,m);['rap','trato','punt','act'].forEach(k=>{e[k]=Math.round((0.35+0.5*e[k])*100)/100;});m.emp.push(e);});return m;};
 let meta=defMeta();
 let run=null,last=0,muted=false,uid=0,cid=Date.now()%1e9,toastQ=[];
+/* ===== Desbloqueo progresivo (el jefe y la partida en solitario; las pantallas de los empleados reales no) =====
+   Turnos 1–2 solo Caja; 3 Almacén; 5 Backoffice y RR.PP.; 7 RR.HH., Dirección y la reunión de personal; 10 el inspector.
+   Mientras tanto la plantilla trabaja igual (NPC): el jefe no ve esas pestañas, avisos ni escenas (se aplica su def).
+   meta.unl = {k:1} lo ya abierto (con su escena de bienvenida, una vez). Partidas de antes (sin meta.unl y turno >1): todo abierto. ?unl=1 abre todo. */
+const UNLOCK=[['alm',3,'📦','Almacén','Pedidos a distribuidores, el camión y el muelle. Si se acaba algo, ya no es culpa de nadie más.'],
+ ['back',5,'💼','Backoffice','Reclamaciones de dinero, arqueos y cartas de Hacienda. Aquí se cuenta cada céntimo.'],
+ ['rrpp',5,'📣','RR.PP.','Reseñas, redes y prensa. Una reseña viral sin contestar hunde la reputación.'],
+ ['rrhh',7,'🗂️','RR.HH.','Entrevistas, broncas y la reunión de personal: desde hoy contratas, subes sueldos y despides tú.'],
+ ['dir',7,'👑','Dirección','Hoy contra ayer en directo, el balance y tus dividendos. Bienvenido/a al despacho.'],
+ ['insp',10,'🛡️','Inspecciones','Trabajo, Sanidad, Consumo y PRL pueden presentarse sin avisar. Papeles en regla y suelo seco.']];
+const UNL_ALL=(()=>{try{return new URLSearchParams(location.search).get('unl')==='1';}catch(e){return false;}})();
+const unlDay=k=>(UNLOCK.find(x=>x[0]===k)||[0,1])[1];
+const unl=k=>UNL_ALL||k==='caja'||k==='atc'||!meta||!meta.unl||!!meta.unl[k];
+/* ¿Lo ve el jefe? Un aviso sin dueño se enseña si alguno de sus departamentos está abierto. */
+const tVis=t=>!t.roles||toArr(t.roles).some(unl);
+/* Al empezar el turno: abre lo que toca y presenta cada sección con su jefe/a de departamento (escena). */
+function unlockCheck(){
+  const nw=UNLOCK.filter(u=>!meta.unl[u[0]]&&meta.day>=u[1]);
+  nw.forEach(u=>{meta.unl[u[0]]=1;});
+  if(!UNL_ALL)nw.forEach(unlockScene);
+}
+function unlockScene(u){
+  if(!bossScn())return;
+  const [k,,ic,n,t]=u,rk=k==='insp'?'back':k,e=ROLES[rk]?staffOf(rk).find(x=>!x.real):null,R=run,tabk=TABS.some(x=>x[0]===k);
+  scene({k:'unl:'+k,look:'label',head:'🔓 NUEVO · '+n.toUpperCase(),tag:'Turno '+meta.day,who:e?e.face:ic,sprite:e?'s'+e.id:null,role:e&&e.role,
+    name:e?esc(e.name)+' · '+ROLES[rk].n:'Tu gestor',prio:2,time:16,def:'later',
+    txt:(tabk?'Jefe, desde hoy llevas tú <b>'+ic+' '+n+'</b>. ':'Jefe, una cosa: ')+esc(t),
+    choices:tabk?[{t:ic+' Ver '+n,k:'go',cls:'go',key:'V',stamp:'¡ABIERTO!',sc:'ok',fx:'🔓'},{t:'⏳ Luego',k:'later',key:'L'}]
+      :[{t:'😬 Entendido',k:'later',cls:'go',key:'V',stamp:'APUNTADO',sc:'ok'}],
+    onPick:c=>{if(c==='go'&&run===R&&!R.over&&!mg)setTab(k);renderTabs();}});
+}
+/* ===== Objetivos de la semana (7 turnos, meta.week) =====
+   Principales: cerrar la semana con el bote ≥ gm (el de la apertura + 0 / 500 / 1.000 €; los dividendos no cuentan en contra)
+   y la reputación ≥ gr (4,0 / 4,2 / 4,4). Secundario que rota (WSEC): premio mayor. Superada = escena con premio a elegir:
+   una mejora gratis, +0,3 de reputación o una ayuda del Ayuntamiento al comercio de proximidad (600 €; 1.000 € con el secundario). */
+const WSEC=[{k:'calm',w:1,n:2,t:'😊 Cero enfadados en 2 turnos',v:r=>r.angry?0:1},
+ {k:'err',w:1,n:3,t:'🎯 3 turnos sin errores en caja',v:r=>r.errors?0:1},
+ {k:'serve',w:1,n:75,t:'🧾 Atiende a 75 clientes en tu caja',v:r=>r.served||0},
+ {k:'stock',w:2,n:2,t:'📦 Cierra 2 turnos sin agotados',v:()=>CAT.some(x=>(meta.stock[x.id]||0)<=0)?0:1},
+ {k:'hire',w:2,n:1,t:'🤝 Contrata a alguien',v:null}];
+const WEEK_G=[0,50000,100000],WEEK_R=[4,4.2,4.4];
+function weekNew(){
+  const o=meta.week,n=o?o.n+1:Math.floor((meta.day-1)/7)+1,av=WSEC.filter(s=>n>=s.w),i=Math.min(n,3)-1;
+  meta.week={n,d0:meta.day,m0:meta.money,gm:Math.round((meta.money+WEEK_G[i])/10000)*10000,gr:WEEK_R[i],
+    sec:av[(n-1)%av.length].k,p:0,div:0,eid:meta.emp.reduce((a,e)=>Math.max(a,e.id),0)};
+}
+function weekCheck(){
+  const w=meta.week;
+  if(w&&w.pend)weekReward(w,'cash',true);
+  if(!w||meta.day>w.d0+6)weekNew();
+}
+const wSec=w=>WSEC.find(s=>s.k===w.sec)||WSEC[0];
+/* Progreso: [texto, hecho, valor] de los tres objetivos (con el turno en curso si está abierto). */
+function weekGoals(){
+  const w=meta.week;if(!w)return [];
+  const S=wSec(w),live=run&&!run.over&&!run.remote&&S.k==='serve'?run.served||0:0,m=meta.money+(w.div||0);
+  const p=S.k==='hire'?(meta.emp.some(e=>e.id>w.eid)?1:0):(w.p||0)+live;
+  return [['💰 Bote ≥ '+fmt(w.gm).replace(',00',''),m>=w.gm,fmt(m).replace(',00','')],['⭐ Reputación ≥ '+w.gr.toFixed(1).replace('.',','),meta.rep>=w.gr,'★ '+meta.rep.toFixed(1)],
+    [S.t+' <small>(premio mayor)</small>',p>=S.n,Math.min(p,S.n)+'/'+S.n]];
+}
+const weekLeft=()=>meta.week?Math.max(0,meta.week.d0+6-meta.day):0;
+function weekHtml(){
+  const w=meta.week;if(!w)return '';const G=weekGoals(),r=w.res,l=weekLeft();
+  return `<div class="wk"><div class="zone-title">🎯 SEMANA ${w.n} · ${r?(r.ok?'SUPERADA':'NO SUPERADA'):l?'QUEDAN '+l+(l===1?' TURNO':' TURNOS'):'ÚLTIMO TURNO'}</div>
+    ${G.map(g=>`<div class="gl ${g[1]?'ok':''}"><i>${g[1]?'✅':'⬜'}</i><span>${g[0]}</span><small>${g[2]}</small></div>`).join('')}${w.got?`<div class="supd">Premio: ${w.got}</div>`:''}</div>`;
+}
+/* Al cerrar el turno: suma el secundario y, el 7.º turno, decide la semana. */
+function weekEnd(){
+  const w=meta.week;if(!w||w.res)return;const S=wSec(w);
+  if(S.v)w.p=(w.p||0)+S.v(run);
+  if(meta.day<w.d0+6)return;
+  const G=weekGoals(),ok=G[0][1]&&G[1][1];
+  w.res={ok,sec:G[2][1]};
+  if(ok)w.pend=1;
+}
+const weekCash=w=>w.res&&w.res.sec?100000:60000;
+function weekReward(w,k,silent){
+  if(!w.pend)return;w.pend=0;const u=UPS.find(x=>!meta.up[x.k]);
+  if(k==='up'&&u){meta.up[u.k]=1;w.got='🎁 '+u.n;}
+  else if(k==='rep'){meta.rep=clamp(meta.rep+0.3,0,5);w.got='⭐ +0,3 de reputación';}
+  else{meta.money+=weekCash(w);w.got='🏛️ Ayuda del Ayuntamiento: '+fmt(weekCash(w));}
+  if(!silent){toast('🏆 Premio de la semana '+w.n+': '+w.got,'good');sCoin();saveGame(true);renderHud();rerenderScreen();}
+}
+/* Escena del final de semana, encima del cierre. El encargado de relevo coge la ayuda en metálico. */
+function weekScene(){
+  const w=meta.week;if(!w||!w.res||w.shown)return;w.shown=1;
+  if(quiet||isMember()||(room&&room.sim)){weekReward(w,'cash',true);return;}
+  const G=weekGoals(),u=UPS.find(x=>!meta.up[x.k]),list=`<div class="wk">${G.map(g=>`<div class="gl ${g[1]?'ok':''}"><i>${g[1]?'✅':'❌'}</i><span>${g[0]}</span><small>${g[2]}</small></div>`).join('')}</div>`;
+  if(!w.res.ok){scene({k:'week:'+w.n,over:true,look:'label',head:'📅 FIN DE LA SEMANA '+w.n,tag:'❌ No superada',who:'🐶',name:'Vitchi',prio:3,def:'ok',
+    txt:'Esta semana no ha salido. La tienda sigue abierta; el orgullo, un poco menos.',body:list+'<div class="scn-hint">La semana que viene, otra oportunidad.</div>',
+    choices:[{t:'💪 Seguimos',k:'ok',cls:'go',key:'S',stamp:'A POR LA '+(w.n+1),sc:'bad'}]});return;}
+  scene({k:'week:'+w.n,over:true,look:'label',head:'🏆 SEMANA '+w.n+' SUPERADA',tag:w.res.sec?'⭐⭐⭐':'⭐⭐',who:'🐶',name:'Vitchi',prio:3,def:'cash',
+    txt:'¡Semana superada! Elige premio, que esto no pasa todos los días.',body:list,
+    choices:[{t:'🏛️ Ayuda del Ayuntamiento · '+fmt(weekCash(w)).replace(',00',''),k:'cash',cls:'go',key:'1',stamp:'INGRESADO',sc:'ok',fx:'💶'},
+      ...(u?[{t:'🎁 Gratis: '+u.n,k:'up',key:'2',stamp:'INSTALADO',sc:'ok',fx:'🎁'}]:[]),
+      {t:'⭐ +0,3 de reputación',k:'rep',key:'3',stamp:'¡FAMA!',sc:'ok',fx:'⭐'}],
+    onPick:k=>weekReward(w,k)});
+}
+/* El 🎯 del HUD: los objetivos de la semana en una etiqueta (también en móvil). */
+function weekInfo(){
+  const w=meta.week;if(!w)return;const l=weekLeft();
+  scene({k:'wkinfo:'+Date.now(),over:true,look:'label',head:'🎯 OBJETIVOS · SEMANA '+w.n,tag:w.res?(w.res.ok?'Superada':'No superada'):l?'Quedan '+l+(l===1?' turno':' turnos'):'Último turno',
+    who:'🐶',name:'Vitchi',prio:1,time:12,def:'ok',txt:'Los dos primeros, obligatorios. El tercero, premio mayor.',body:weekHtml(),
+    choices:[{t:'👍 A por ello',k:'ok',cls:'go',key:'A'}]});
+}
 
 /* ---------- audio ---------- */
 let ac=null;
@@ -1728,12 +1846,21 @@ function sceneSync(){
   if(sceneCur&&sceneCur.time){const f=1-(performance.now()-sceneCur.t0)/1000/sceneCur.time,b=document.querySelector('#scene .scn-bar i');
     if(f<=0)scenePick(sceneCur.def);else if(b)b.style.width=(f*100).toFixed(1)+'%';}
 }
+/* La primera vez que sale un +18 en la cinta: aviso serio de la multa de Madrid (una vez por partida, meta.ageWarn). */
+function ageWarn(){
+  meta.ageWarn=1;
+  scene({k:'edad:1',look:'pa',head:'MEGAFONÍA · ENCARGADA',who:'👮',name:'Ojo con el alcohol',tag:'🔞 +18',prio:4,...serio(),def:'ok',
+    txt:'Vender alcohol a un menor en Madrid = desde <b>30.050 €</b> de multa (Ley 5/2002). Con este bote, eso es cerrar.',
+    body:'<div class="scn-hint">🪪 Mira la fecha de nacimiento del DNI contra la de hoy. ¿Menor de 18? 🚫 Negar, y que se enfade.</div>',
+    choices:[{t:'🪪 Entendido: DNI siempre',k:'ok',cls:'go',key:'S',stamp:'APUNTADO',sc:'ok'}]});
+}
 /* Escenas de la caja. tillOn = estás tú en la caja (jefe en la pestaña Caja o cajero real), no fuera ni de encargado. */
 const tillOn=()=>!!(run&&!run.over&&!run.away&&!quiet&&(run.remote||(!isMember()&&tab==='caja')));
 const DNI_AP=['García','López','Martín','Sánchez','Pérez','Gómez','Ruiz','Díaz','Moreno','Jiménez','Romero','Navarro'];
 function cajaScenes(){
   if(!tillOn())return;
   const c=front();if(!c)return;
+  if(c.phase==='scan'&&!meta.ageWarn&&c.items.some(i=>i.age&&!i.scanned)){ageWarn();return;}
   if(c.phase==='complaint'){
     const q=c.complaint;
     scene({k:'rec:'+c.id,who:c.face,sprite:c.id,head:'📋 HOJA DE RECLAMACIONES',name:esc(q.title),tag:'📣 Reclamación',prio:3,txt:'«'+esc(q.t)+'»',
@@ -1799,7 +1926,7 @@ function cutScene(nc){
           (ocupa 12 s a alguien de RR.PP.; si no hay, vas tú y la cola espera: +0,15 o −0,1 de reputación), colaboración
           pagada (150–400 €, +0,1 de reputación y +15 % de demanda en las otras cajas el turno siguiente, meta.promo) o no.
    feli:  un cliente felicita a un NPC que acaba de hacer bien un aviso de sala: decírselo (+8 de ánimo, st.fel, +0,03 rep) o vale (+2). */
-const rrOn=()=>!!(run&&!run.over&&!run.remote&&(!room||isHost()));
+const rrOn=()=>!!(run&&!run.over&&!run.remote&&(!room||isHost())&&unl('rrpp'));
 const rrFree=()=>staffOf('rrpp').filter(e=>!e.real&&isFree(e)&&!run.duty[e.id].slack).sort((a,b)=>perf(b,true)-perf(a,true))[0];
 const kfmt=n=>n>=1000?(n/1000).toFixed(n>=10000?0:1).replace('.',',')+' mil':String(Math.round(n));
 function rrLater(s,f){(run.rrL=run.rrL||[]).push({at:run.t+s,f});}
@@ -1873,7 +2000,7 @@ function praiseScene(e,t){
 const bossScn=()=>!!(run&&!run.over&&!run.remote&&!quiet&&!isMember()&&!(room&&room.sim));
 /* Decisiones serias: paran el turno en solitario; en la tienda compartida hay gente currando, así que caducan a los 25 s. */
 const serio=()=>room?{time:25}:{pause:true};
-function bScene(o){if(bossScn())return scene(o);if(o.onPick&&o.def!=null)try{o.onPick(o.def);}catch(e){console.warn('scene',e);}return false;}
+function bScene(o){if(bossScn()&&unl(o.dep||'rrhh'))return scene(o);if(o.onPick&&o.def!=null)try{o.onPick(o.def);}catch(e){console.warn('scene',e);}return false;}
 /* La escena abierta «retiene» su aviso: nadie lo coge solo mientras decides. */
 const sceneHold=id=>!!(sceneCur&&sceneCur.tid===id);
 const empTag=e=>esc(e.name)+' '+flag(e);
@@ -1929,7 +2056,7 @@ function quitScene(e){
 }
 /* 4 · Retraso: tarjeta de fichaje. Tranquilo (+ánimo) o toque (cuenta como amonestación para un despido). */
 function lateScene(e){
-  if(!bossScn()||!sceneOk('tarde',90))return false;
+  if(!bossScn()||!unl('rrhh')||!sceneOk('tarde',90))return false;
   const R=run;
   return scene({k:'tarde:'+e.id,who:e.face,sprite:'s'+e.id,role:e.role,head:'⏰ FICHAJE · ENTRADA DE PERSONAL',tag:'Llega tarde',name:empTag(e),prio:1,time:9,def:'ok',
     txt:pick(['Perdón, el bus…','Ay, jefe, el metro…','No sonó el despertador, lo juro.','Había un atasco tremendo…']),
@@ -1945,7 +2072,7 @@ function theft(e,v){
   meta.money-=v;
   if(Math.random()>=0.45)return;
   const rec=()=>{e.st.robo=(e.st.robo||0)+1;logE(e,'Pillado/a llevándose '+fmt(v));};
-  if(!bossScn()){rec();toast('🕵️ '+e.name+' se llevaba '+fmt(v)+'. Queda en su ficha.','bad');return;}
+  if(!bossScn()||!unl('rrhh')){rec();toast('🕵️ '+e.name+' se llevaba '+fmt(v)+'. Queda en su ficha.','bad');return;}
   const R=run;
   scene({k:'robo:'+e.id,who:e.face,sprite:'s'+e.id,role:e.role,head:'📹 CÁMARA 3 · CAJÓN',tag:'🕵️ Pillado/a',name:empTag(e),prio:4,...serio(),def:'warn',
     txt:pick(['Iba a devolverlo, jefe, lo juro…','¿Esto? Es un préstamo…','No es lo que parece.']),
@@ -1988,7 +2115,7 @@ function inspScene(n,f,who){
   return scene({k:'insp:'+n+':'+Date.now(),who:'👮',head:'🚔 INSPECCIÓN DE CONSUMO',tag:'🛡️ Placa 0451',name:'Inspectora Ruiz',prio:4,...serio(),def:'pay',
     txt:esc(who.replace(/^h/,'H'))+' alcohol a un menor. Queda levantada acta.',
     body:`<div class="sdoc acta"><h6><span>📋 Acta de infracción</span><span class="splaca">🛡️</span></h6><dl><dt>Infracción</dt><dd>${n>=3?'Muy grave':'Grave'}</dd><dt>Reincidencia</dt><dd>${n===1?'Primera vez':n+'.ª vez'}</dd><dt>Multa</dt><dd class="sbig neg">${fmt(f)}</dd><dt>Reputación</dt><dd>−1 ★</dd></dl></div>`,
-    choices:[{t:'😬 Pagar',k:'pay',cls:'no',key:'P',stamp:'MULTADO',sc:'bad',fx:'💸'}]});
+    choices:[{t:'😬 Pagar',k:'pay',cls:'no',key:'P',stamp:'MULTADO',sc:'bad',fx:'💸'}],onPick:()=>setTimeout(checkRep,600)});
 }
 /* 8 · Oferta de un comercial: un producto de los que menos quedan al 60 % del PVP si coges 2–4 lotes (pedido de verdad, llega mañana). */
 function offerScene(){
@@ -2007,7 +2134,7 @@ function offerScene(){
 }
 /* 9 · Charla antes de abrir tras un día de récord o un mal día: felicitar, bronca general o nada. */
 function dayTalk(){
-  const H=meta.hist||[],h=H[H.length-1];if(!h||h.d!==meta.day-1||meta.talkD===meta.day||!bossScn())return;
+  const H=meta.hist||[],h=H[H.length-1];if(!h||h.d!==meta.day-1||meta.talkD===meta.day||!bossScn()||!unl('dir'))return;
   const prev=H.slice(0,-1),best=prev.length>=2&&h.n>0&&h.s>Math.max(...prev.map(x=>x.s)),bad=!best&&(h.n<-80000||(prev.length>=2&&h.n<0&&h.n<Math.min(...prev.map(x=>x.n))));
   if(!best&&!bad)return;meta.talkD=meta.day;
   const R=run,crew=()=>meta.emp.filter(e=>working(e));
@@ -2023,7 +2150,7 @@ function dayTalk(){
 }
 /* 10 · Dividendo: si hay beneficio repartible y la caja va holgada, como mucho cada 5 turnos, al abrir. */
 function divScene(){
-  if(!bossScn()||!canDiv()||meta.day-(meta.divAsk||-99)<5)return;
+  if(!bossScn()||!unl('dir')||!canDiv()||meta.day-(meta.divAsk||-99)<5)return;
   const d=divData();if(d.max<100000||meta.money-d.max/2<1500000)return;
   meta.divAsk=meta.day;
   const B=divYear(),net=p=>{const g=Math.floor(d.max*p/100);return g-irpfAh(B.divY,g);},R=run;
@@ -2052,7 +2179,7 @@ function noteScene(v){
    el banco al tirar de la póliza y al pasar del 50 % (meta.bank), con ampliación a 20.000 € (meta.credit/meta.creditI). */
 const backOn=()=>!!(run&&!run.over&&!run.dead&&!run.remote&&(!room||isHost()));
 function backScene(o){
-  if(room&&room.sim){if(o.def!=null&&o.onPick)try{o.onPick(o.def);}catch(e){console.warn('scene',e);}return false;}
+  if((room&&room.sim)||!unl('back')){if(o.def!=null&&o.onPick)try{o.onPick(o.def);}catch(e){console.warn('scene',e);}return false;}
   if(!room)o.pause=true;
   return scene(o);
 }
@@ -2135,7 +2262,7 @@ const eur=v=>String(v).replace(/\B(?=(\d{3})+(?!\d))/g,'.')+' €';
 function inspPlan(){
   const I=meta.ins;run.inspAt=null;
   const due=I.req.filter(r=>meta.day>=r.by);
-  if(!(INSP_Q||(meta.day>=3&&(due.length||meta.day>=(I.next||0)))))return;
+  if(!(INSP_Q||(unl('insp')&&(due.length||meta.day>=(I.next||0)))))return;
   run.inspA=INSP_A[INSP_Q]?INSP_Q:due.length?due[0].a:pick(Object.keys(INSP_A));
   run.inspAt=INSP_Q?Math.min(4,run.dur*0.1):run.dur*rnd(0.15,0.7);
 }
@@ -2443,6 +2570,7 @@ function startDay(){
     tasks:[],nextTask:6,away:null,tdone:0,tlost:0,duty:{},ev:[],ivaR:0,offS:0,offC:0,offN:0,dstat:{},hires:0,revG:0,revB:0};
   if(isHost())run.dur=room.info.dur||100;
   ensureMeta();run.rep0=meta.rep;
+  unlockCheck();weekCheck();
   if(meta.day>=2&&Math.random()<0.3)run.pressAt=run.dur*rnd(0.2,0.65);
   inspPlan();
   run.buy=meta.buyNext||0;meta.buyNext=0;run.m0=meta.money+run.buy;run.mo=meta.money;run.curve=[];
@@ -2484,14 +2612,29 @@ function checkRep(){
   /* El encargado no despide ni declara el concurso: eso lo decide la partida del jefe. Aguanta con lo mínimo. */
   if(room&&room.sim){if(meta.rep<0.5)meta.rep=0.5;return;}
   if((meta.rep<=0||meta.money<-credLim())&&run&&!run.over){
+    const q=meta.money<-credLim(),mf=q&&meta.minorAt&&meta.day-meta.minorAt.d<=1?meta.minorAt:null;
+    /* Si la multa por alcohol a un menor acaba de hundir la empresa, primero el acta (escena) y luego el cierre. */
+    if(mf&&!run.closing&&[sceneCur,...sceneQ].some(x=>x&&/^insp:/.test(x.k)))return;
     run.over=true;run.dead=true;mg=null;pendingLeave=null;closeMG();wipeGame();
-    const days=meta.day,q=meta.money<-credLim();
+    const days=meta.day;
+    if(mf){showOverlay(minorEndHtml(mf,days));submitScore(true).then(fillRanking);return;}
     showOverlay(`<div class="card"><h2>${q?'Concurso de acreedores':'Te han despedido'}</h2>
       <p>${q?'Has agotado la póliza de crédito ('+fmt(credLim())+') y no puedes pagar a proveedores, nóminas ni a Hacienda: la empresa entra en concurso de acreedores y cierra.':'La reputación llegó a cero.'} Sobreviviste ${days} ${days===1?'turno':'turnos'}.</p>
       ${online()?'<div class="zone-title">🏆 RANKING</div><div id="rank"></div>':''}
       <button class="btn go big" data-act="restart">Volver a empezar</button></div>`);
     submitScore(true).then(fillRanking);
   }
+}
+/* Fin de partida por la multa de alcohol a un menor (Ley 5/2002 de Madrid): el porqué, con números. */
+function minorEndHtml(mf,days){
+  const lim=credLim();
+  return `<div class="card"><h2>🔒 Clausurado · Concurso de acreedores</h2>
+    <p><b>Le vendiste alcohol a un menor.</b> Consumo de la Comunidad de Madrid levantó acta: infracción ${mf.n>=3?'muy grave':'grave'}${mf.n>1?' y reincidente':''}, <b>${fmt(mf.f)}</b> de multa (Ley 5/2002 de Drogodependencias, arts. 30.2 y 59).</p>
+    ${scnDoc([['💶 Bote antes de la multa',fmt(mf.m)],['🚔 Multa por vender alcohol a un menor','−'+fmt(mf.f),'neg'],['🏦 Póliza de crédito (lo máximo en rojo)','−'+fmt(lim)],['📉 Bote al cerrar',(meta.money<0?'−':'')+fmt(Math.abs(meta.money)),'neg tot']],'Por debajo de −'+fmt(lim)+' no hay con qué pagar a proveedores, nóminas ni a Hacienda.')}
+    <div class="end-why">Un súper de barrio no aguanta una multa así: el banco cierra el grifo, los proveedores dejan de servir y el juzgado declara el <b>concurso de acreedores</b>. Persiana abajo tras ${days} ${days===1?'turno':'turnos'}.</div>
+    <p class="supd">Moraleja: el DNI se pide <b>siempre</b>. Mirarlo cuesta dos segundos; no mirarlo, ${fmt(mf.f)}.</p>
+    ${online()?'<div class="zone-title">🏆 RANKING</div><div id="rank"></div>':''}
+    <button class="btn go big" data-act="restart">Volver a empezar</button></div>`;
 }
 let lastEnd=null;
 const SUPS=[
@@ -2522,6 +2665,8 @@ function ensureMeta(){
   meta.runId=meta.runId||Math.random().toString(36).slice(2,10)+Date.now().toString(36);
   meta.back=meta.back||{};meta.orders=meta.orders||[];meta.vac=meta.vac||{atc:1,alm:1};
   meta.boss=Object.assign({cash:0,div:0,divY:0,ret:0,y:0},meta.boss);if(meta.resLeg==null)meta.resLeg=0;
+  /* Desbloqueo progresivo: partida nueva = solo Caja; las de antes (ya pasado el turno 1) lo tienen todo abierto. */
+  if(!meta.unl){meta.unl={caja:1};if(meta.day>1)UNLOCK.forEach(u=>{meta.unl[u[0]]=1;});}
 }
 function receiveDeliveries(){
   const rr={arrived:0,short:0,shelved:0,pending:0,lines:[]};
@@ -2582,7 +2727,7 @@ function almRoutine(){
    Solo las ve quien lleva la tienda (jefe o partida sin conexión); el encargado de relevo aplica rdef (o def) al momento. */
 const almSceneOn=()=>!!(run&&!run.over&&!run.remote&&(!room||room.host||room.sim));
 function almScene(o){
-  if(room&&room.sim){if(o.onPick)try{o.onPick(o.rdef!=null?o.rdef:o.def);}catch(e){console.warn('scene',e);}return false;}
+  if((room&&room.sim)||!unl('alm')){if(o.onPick)try{o.onPick(o.rdef!=null?o.rdef:o.def);}catch(e){console.warn('scene',e);}return false;}
   return scene(o);
 }
 const pName=id=>(CAT.find(x=>x.id===+id)||{}).n||'producto',pEmo=id=>(CAT.find(x=>x.id===+id)||{}).e||'📦';
@@ -2818,12 +2963,14 @@ function endDay(){
   meta.best=Math.max(meta.best,meta.day);
   cart={};
   lastEnd={payroll,res,fin,dep:deptPerf(res,payD)};scrTab.shop='sum';pg=0;tipsPer=0;
+  try{weekEnd();}catch(e){console.warn('weekEnd',e);}
   if(isHost())room.rpt=deptReport();
   if(!(room&&room.sim)&&(meta.rep<=0||meta.money<-credLim())){run.over=false;checkRep();return;}
   meta.liveT=0;saveGame(true);
-  if(room&&room.sim){pubState(true);clearTimeout(room.nextT);room.nextT=setTimeout(relayNextDay,8000);return;}
+  if(room&&room.sim){weekScene();pubState(true);clearTimeout(room.nextT);room.nextT=setTimeout(relayNextDay,8000);return;}
   submitScore(false);
   showShop();
+  try{weekScene();}catch(e){console.warn('weekScene',e);}
   pubState(true);
 }
 /* ---------- pantallas de juego (cierre y reunión): pestañas y páginas, sin desplazar ---------- */
@@ -2910,7 +3057,7 @@ function finHtml(f){
 function adviceList(le){
   const A=[],f=le&&le.fin,r=le&&le.res,hot=(ic,t,d)=>A.push(`<div class="adv hot"><b>${ic} ${t}</b><span>${d}</span></div>`),tip=(ic,t,d)=>A.push(`<div class="adv"><b>${ic} ${t}</b><span>${d}</span></div>`);
   const cnt=k=>staffOf(k).length,room0=k=>ROLES[k].max-cnt(k);
-  let nm=meta.day+1;while(nm%3!==1)nm++;const meetTxt=meta.day%3===1?'en la reunión de ahora':'en la reunión del turno '+nm;
+  let nm=meta.day+1;while(nm%3!==1||nm<(unl('rrhh')?0:unlDay('rrhh')))nm++;const meetTxt=meta.day%3===1&&unl('rrhh')?'en la reunión de ahora':'en la reunión del turno '+nm;
   if(f&&f.net<0)hot('📉','Pierdes dinero','Este turno has perdido '+fmt(-f.net)+'.'+(f.S+(f.O||0)&&f.P/(f.S+(f.O||0))>0.2?' La nómina se come el '+Math.round(f.P/(f.S+(f.O||0))*100)+'% de lo que vendes (en un súper sano ronda el 10–14%): sobra gente o falta venta.':''));
   else if(f&&f.net>0)tip('📈','Ganas dinero','Beneficio neto '+fmt(f.net)+' (margen '+(f.S+(f.O||0)?Math.round(f.net/(f.S+(f.O||0))*100):0)+'%).');
   if(f&&f.B>f.S+(f.O||0)&&f.B>30000)tip('📦','Mucho dinero en stock','Has comprado '+fmt(f.B)+' en mercancía y vendido '+fmt(f.S)+'. No es pérdida (está en el almacén), pero ese dinero no lo tienes en el bote.');
@@ -3007,7 +3154,7 @@ function payDiv(pct){
 /* Paga g céntimos brutos al socio (la retención va a Hacienda). La escena del dividendo lo usa durante el turno (run.div). */
 function divPay(g){
   const B=divYear(),ret=irpfAh(B.divY,g);
-  meta.money-=g;B.divY+=g;B.div+=g;B.ret+=ret;B.cash+=g-ret;
+  meta.money-=g;B.divY+=g;B.div+=g;B.ret+=ret;B.cash+=g-ret;if(meta.week)meta.week.div=(meta.week.div||0)+g;
   sOk();toast('👑 Dividendo de '+fmt(g)+': Hacienda retiene '+fmt(ret)+', a tu bolsillo '+fmt(g-ret)+'.','good');
 }
 function bossHtml(){
@@ -3028,11 +3175,12 @@ function showShop(noFit){
   const dep=meta.emp.map(e=>{const d=run.duty[e.id];
     return `<div class="up"><div class="t"><b>${e.face} ${e.real?'🎮':flag(e)} ${e.name} · ${ROLES[e.role].n}</b>${d?DST[d.st]||'—':'—'}${e.trial?' · en prueba':''} · ${monthTxt(e.wage)} · ${verdict(e)}</div><span class="mood" title="Ánimo">${mood(e)}</span></div>`;
   });
-  const meetDay=meta.day%3===1;
-  let nm=meta.day+1;while(nm%3!==1)nm++;
+  const meetDay=meta.day%3===1&&unl('rrhh');
+  let nm=meta.day+1;while(nm%3!==1||nm<(unl('rrhh')?0:unlDay('rrhh')))nm++;
   const dl=(n,x)=>`<span class="sm">${n}: ${x.in} recibidas</span><b class="sm">${x.ok} ok · ${x.fail} mal · ${x.late} sin tiempo (−${fmt(x.cost)})</b>`;
   const out=CAT.filter(x=>(meta.stock[x.id]||0)<=0).length,ap=isHost()?appsList().length:0;
   if(scrTab.shop==='apps'&&!ap)scrTab.shop='sum';
+  if((scrTab.shop==='order'&&!unl('alm'))||(scrTab.shop==='you'&&!unl('dir')))scrTab.shop='sum';
   const k=scrTab.shop;let body='',nav='';
   if(k==='sum'){const f=e.fin||{},kp=(ic,l,v,c)=>`<div class="kpi ${c||''}"><small>${ic} ${l}</small><b>${v}</b></div>`;
     body=`<div class="kpis">
@@ -3044,7 +3192,7 @@ function showShop(noFit){
     <div class="zone-title">RECLAMACIONES AL CIERRE</div><div class="sum">${dl('Backoffice',r.back)}${dl('Relaciones Públicas',r.rrpp)}${dl('Almacén',r.alm)}</div>`
     +`<div class="supd">Propinas para el personal: ${fmt(run.tips)}.</div>`;}
   if(k==='sum')body+=`
-    <div class="supd">${meetDay?'Hoy toca <b>reunión de personal</b>: valorar, contratar y despedir.':'Próxima reunión de personal al cerrar el turno '+nm+'.'}</div>`;
+    <div class="supd">${meetDay?'Hoy toca <b>reunión de personal</b>: valorar, contratar y despedir.':'Próxima reunión de personal al cerrar el turno '+nm+'.'}</div>`+weekHtml();
   else if(k==='fin')body=finHtml(e.fin);
   else if(k==='dep')body=deptHtml(e.dep);
   else if(k==='you')body=bossHtml();
@@ -3053,7 +3201,7 @@ function showShop(noFit){
   else if(k==='order'){if(!ordPer)ordPer=Math.max(2,Math.floor((innerHeight-330)/50));body=orderHtml(ordPer);}
   else if(k==='ups')body=`<div class="shop">${upsHtml()}</div>`;
   else body=appsHtml();
-  const tabs=[['sum','📊 Resumen'],['dep','🏢 Departamentos'],['fin','💰 Cuentas'],['you','👑 Tú'],['tips','🧭 Consejos',adviceList(e).filter(x=>x.includes('adv hot')).length],['staff','👥 Plantilla',meta.emp.length],['order','📦 Pedido',Object.keys(cart).length],['ups','⭐ Mejoras']].concat(ap?[['apps','📝 Solicitudes',ap]]:[]);
+  const tabs=[['sum','📊 Resumen'],['dep','🏢 Departamentos'],['fin','💰 Cuentas'],['you','👑 Tú'],['tips','🧭 Consejos',adviceList(e).filter(x=>x.includes('adv hot')).length],['staff','👥 Plantilla',meta.emp.length],['order','📦 Pedido',Object.keys(cart).length],['ups','⭐ Mejoras']].concat(ap?[['apps','📝 Solicitudes',ap]]:[]).filter(x=>(x[0]!=='order'||unl('alm'))&&(x[0]!=='you'||unl('dir')));
   showOverlay(screenHtml('shop','Cierre · turno '+meta.day,tabs,body,nav,
     `<span class="supd">Bote <b>${fmt(meta.money)}</b> · ★ ${meta.rep.toFixed(1)} · 👑 ${fmt(bossOf().cash)}</span>`+(meetDay?'<button class="btn go big" data-act="meeting">Reunión de personal ▸</button>':`<button class="btn go big" data-act="next">Turno ${meta.day+1} ▸</button>`)));
   /* El pedido mide la pantalla real: quita productos de la página hasta que no sobre nada. */
@@ -3075,7 +3223,7 @@ function showStart(confirmWipe){
   const cont=hasSave||meta.day>1;
   if(scrTab.start==='rank'&&!online())scrTab.start='how';
   const k=scrTab.start;
-  const HOW=['🛒 Toca cada producto de la cinta para escanearlo. Los de código dañado piden varios toques.','🪪 Productos <b>18+</b>: mira la fecha de nacimiento del DNI y decide si vendes.','🛍️ Si el cliente pide bolsa, añádela. Si no la pide, no la cobres.','💶 Con tarjeta, cobra. En efectivo, da el cambio exacto con billetes y monedas.','📨 <b>Reclamaciones</b>: las dudas, tú. Dinero, a Backoffice. Trato y redes, a RR.PP. Agotados, a Almacén.','📦 Lo que vendes sale de la estantería: pide a los distribuidores y ten gente en Almacén. Empiezas con 30.000 € y una póliza de crédito de 15.000 €: si la agotas, concurso de acreedores.','⭐ La paciencia se agota. Con la reputación a cero, te despiden.'].map(x=>'<li>'+x+'</li>');
+  const HOW=['🛒 Toca cada producto de la cinta para escanearlo. Los de código dañado piden varios toques.','🪪 Productos <b>18+</b>: mira la fecha de nacimiento del DNI y decide si vendes.','🛍️ Si el cliente pide bolsa, añádela. Si no la pide, no la cobres.','💶 Con tarjeta, cobra. En efectivo, da el cambio exacto con billetes y monedas.','📨 <b>Reclamaciones</b>: las dudas, tú. Dinero, a Backoffice. Trato y redes, a RR.PP. Agotados, a Almacén.','📦 Lo que vendes sale de la estantería: pide a los distribuidores y ten gente en Almacén. Empiezas con 30.000 € y una póliza de crédito de 15.000 €: si la agotas, concurso de acreedores.','⭐ La paciencia se agota. Con la reputación a cero, te despiden.','🔓 Empiezas solo en caja: Almacén se abre en el turno 3, Backoffice y RR.PP. en el 5, RR.HH. y Dirección en el 7. Cada semana, objetivos 🎯 con premio.'].map(x=>'<li>'+x+'</li>');
   const P=k==='rank'?{html:'',nav:''}:paged(HOW,innerHeight<700&&innerWidth<900?3:innerHeight<860&&innerWidth<900?5:7);
   const body=k==='rank'?'<div id="rank"></div>':`${offline?'<div class="rerr">📴 Sin conexión: juegas en solitario.</div>':''}
     <div class="hero" id="herobox"><span class="htag">🛒 Tu súper, tu historia</span></div>
@@ -3144,7 +3292,7 @@ async function fillRanking(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.17-75';
+const APPV='2026.11.17-76';
 /* Compara versiones por números («-9» < «-11»), no como texto. */
 const verCmp=(a,b)=>{const x=String(a).split(/[.-]/).map(Number),y=String(b).split(/[.-]/).map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
 try{const vt=document.createElement('div');vt.id='vtag';vt.textContent='v'+APPV;document.body.appendChild(vt);}catch(e){}
@@ -3980,7 +4128,7 @@ const TSHORT={repo:'Reponer «%p%» · pasillo %n%',spill:'Derrame · pasillo %n
 function spawnTask(){
   const hasRR=staffOf('rrhh').some(e=>inStore(e)),fd=hasRR?makeFeud():null;
   /* con vacantes publicadas llegan candidatos aunque no haya nadie en RR.HH. (entonces entrevistas tú) */
-  const vac=vacRoles().length&&!run.tasks.some(x=>x.k==='cv');
+  const vac=(unl('rrhh')||staffOf('rrhh').some(e=>e.real&&inStore(e)))&&vacRoles().length&&!run.tasks.some(x=>x.k==='cv');
   const T=vac&&Math.random()<.4?TASKS.find(x=>x.k==='cv'):pick(TASKS.filter(x=>x.k!=='truck'&&(x.k!=='cv'||vac)&&(x.k!=='feud'||fd)));
   const p=pick(CAT.filter(x=>!x.age).sort((a,b)=>(meta.stock[a.id]||0)-(meta.stock[b.id]||0)).slice(0,6));
   const n=(T.k==='repo'||T.k==='call')?aisleOf(p.id):T.k==='cash'?ri(1,3):ri(1,9);
@@ -4035,13 +4183,13 @@ function pullOff(e){
 function assignAll(){
   if(!run||run.over)return;
   let n=0;
-  run.tasks.filter(t=>!t.who&&t.k!=='tk').forEach(t=>{
+  run.tasks.filter(t=>!t.who&&t.k!=='tk'&&tVis(t)).forEach(t=>{
     const free=meta.emp.filter(e=>isFree(e)&&t.roles.includes(e.role)&&!(t.npc&&e.real));if(!free.length)return;
     const sc=e=>(t.roles.includes(e.role)?2:0)+(t.lang&&e.langs.includes(t.lang)?2:0)-(e.real?1.5:0)+e.rap*0.5-(run.duty[e.id].slack?0.3:0);
     const e=free.sort((a,b)=>sc(b)-sc(a))[0];
     assignTask(t.id,String(e.id));n++;
   });
-  const left=run.tasks.filter(t=>!t.who&&t.k!=='tk').length;
+  const left=run.tasks.filter(t=>!t.who&&t.k!=='tk'&&tVis(t)).length;
   toast(n?'⚡ '+n+(n===1?' aviso asignado':' avisos asignados')+(left?'. Quedan '+left+' sin nadie libre de su departamento.':'.'):'No hay nadie libre del departamento que toca.',n?'good':'bad');
 }
 /* Avisos hechos/perdidos por departamento (para el cierre): cuenta el puesto de quien lo hizo o el del aviso. */
@@ -4079,7 +4227,7 @@ function expireTask(t){
   if(t.k==='tk'){renderAll();return;}
   if(t.k==='inv'||t.k==='order'){toast('Nadie de Almacén pudo con: '+t.ic+' '+t.s,'bad');renderAll();return;}
   tStat(t,false);if(t.chk)albApply(false);
-  meta.rep=clamp(meta.rep-t.pen,0,5);
+  if(tVis(t))meta.rep=clamp(meta.rep-t.pen,0,5);
   if(t.k==='spill')meta.ins.spill=meta.day;
   if(t.k==='spill'&&Math.random()<0.3){addTicket('back','Un cliente se resbaló en el pasillo '+t.n,ri(1000,3000),3,false);toast('Nadie limpió el pasillo '+t.n+' y alguien se ha caído','bad');}
   else toast('Nadie atendió: '+t.ic+' '+t.s,'bad');
@@ -4137,8 +4285,8 @@ function tickStaff(dt){
   meta.emp.forEach(e=>{const d=run.duty[e.id];if(d&&d.st==='late'&&!d.ann&&run.t>=d.at){d.ann=1;dirty=true;if(!lateScene(e))toast(e.face+' '+e.name+' llega tarde. «Perdón, el bus…»','bad');}});
   /* Escenas raras de Dirección y RR.HH.: un aumento que te piden y la oferta de un comercial. */
   if(bossScn()&&!run.closing&&(run.scnT=(run.scnT||0)+dt)>40){run.scnT=0;
-    if(sceneOk('aum',300)&&Math.random()<0.15)raiseScene();
-    else if(meta.day>=2&&sceneOk('oferta',400)&&Math.random()<0.15)offerScene();}
+    if(unl('rrhh')&&sceneOk('aum',300)&&Math.random()<0.15)raiseScene();
+    else if(unl('alm')&&meta.day>=2&&sceneOk('oferta',400)&&Math.random()<0.15)offerScene();}
   run.ev.forEach(v=>{
     if(v.done||run.t<v.t)return;v.done=1;
     const e=empById(v.e);if(!e||!inStore(e))return;
@@ -4186,7 +4334,7 @@ function renderTasks(){
   const keepAl=al.contains(document.activeElement)&&document.activeElement.tagName==='SELECT';
   const free=meta.emp.filter(isFree);
   /* Avisos sin asignar: arriba, en la cabecera fija, para que se vean siempre. */
-  if(!keepAl)al.innerHTML=(isHost()?appsAlerts():'')+run.tasks.filter(t=>!t.who&&t.k!=='tk').map(t=>{
+  if(!keepAl)al.innerHTML=(isHost()?appsAlerts():'')+run.tasks.filter(t=>!t.who&&t.k!=='tk'&&tVis(t)).map(t=>{
     const sc=e=>(t.roles.includes(e.role)||e.pers==='servicial'?1:0)+(t.lang&&e.langs.includes(t.lang)?2:0);
     const opts=free.filter(e=>t.roles.includes(e.role)&&!(t.npc&&e.real)).sort((a,b)=>sc(b)-sc(a)).slice(0,3).map(e=>{
       const m=t.roles.includes(e.role),sp=t.lang&&e.langs.includes(t.lang);
@@ -4210,9 +4358,9 @@ function renderTasks(){
   el.innerHTML=`<div class="zone-title">AVISOS EN CURSO</div>${tk||'<div class="supd">Nadie está con ningún aviso.</div>'}
     <div class="zone-title">PERSONAL EN TIENDA</div><div class="crew">${crew||'Nadie. Tú contra el mundo.'}</div>`;
   updateTaskBars();
-  const n=run.tasks.filter(t=>!t.who&&t.k!=='tk').length+(isHost()?appsList().length:0),ab=$('#alertBtn');
+  const n=run.tasks.filter(t=>!t.who&&t.k!=='tk'&&tVis(t)).length+(isHost()?appsList().length:0),ab=$('#alertBtn');
   if(ab){ab.querySelector('b').textContent=n;ab.classList.toggle('hot',n>0);}
-  const aa=$('#aallBtn'),pendT=run.tasks.filter(t=>!t.who&&t.k!=='tk').length,freeN=meta.emp.filter(isFree).length;
+  const aa=$('#aallBtn'),pendT=run.tasks.filter(t=>!t.who&&t.k!=='tk'&&tVis(t)).length,freeN=meta.emp.filter(isFree).length;
   if(aa){const ok=pendT&&freeN&&!run.over;aa.disabled=!ok;
     aa.textContent=ok?'⚡ Asignar todo ('+Math.min(pendT,freeN)+')':pendT?'⏳ Nadie libre':'✅ Todo asignado';
     aa.title=ok?'Reparte los avisos pendientes entre el personal libre de cada departamento':pendT?'Hay avisos esperando, pero no queda nadie libre del departamento que toca':'No hay avisos sin dueño: la plantilla los coge sola';}
@@ -5235,7 +5383,7 @@ const indProc=e=>Math.round(e.wage*20*e.days/365),indImp=e=>Math.round(e.wage*33
 function minorSale(who){
   meta.rep=clamp(meta.rep-0.3,0,5);
   if(Math.random()<0.12){const n=meta.minorFine=(meta.minorFine||0)+1,f=n>=3?6010122:n===2?ri(30051,60101)*100:3005062;
-    run.fines+=f;meta.money-=f;meta.rep=clamp(meta.rep-1,0,5);
+    run.fines+=f;meta.money-=f;meta.rep=clamp(meta.rep-1,0,5);meta.minorAt={d:meta.day,f,m:meta.money+f,n};
     if(canInsp()&&inspScene(n,f,who))return '';
     return '🚔 Inspección: '+who+' alcohol a un menor. Multa '+(n>=3?'muy grave':'grave')+' de '+fmt(f)+(n>1?' (reincidencia)':'')+'.';}
   return '⚠️ '+who.replace(/^h/,'H')+' alcohol a un menor. Nadie lo ha denunciado… esta vez (multa grave: desde 30.050 €, Ley 5/2002 de Madrid).';
@@ -5450,6 +5598,7 @@ function finish(c,noTip){
 
 /* ---------- render ---------- */
 function renderHud(){
+  {const wb=$('#hWeekB'),G=run&&run.remote||isMember()?[]:weekGoals();if(wb){wb.hidden=!G.length;if(G.length)$('#hWeek').textContent=G.filter(g=>g[1]).length+'/3';}}
   if(run&&run.remote){const st=room.state||{};$('#hTill').textContent=run.till;$('#hDay').textContent=st.day||1;$('#hMoney').textContent=fmt(st.money||0);$('#hMoney').parentNode.classList.toggle('neg',(st.money||0)<0);$('#hRep').textContent='★ '+(+st.rep||0).toFixed(1);
     $('#hTk').textContent=st.dep&&st.dep.tk?Object.values(st.dep.tk).reduce((a,b)=>a+(+b||0),0):0;$('#hOut').textContent=(st.dep&&st.dep.out)||0;const c=clockOf(st.t,st.dur);$('#hClock').textContent=c;$('#hBar').style.width=Math.min(1,(st.t||0)/(st.dur||100))*100+'%';return;}
   $('#hTill').textContent='3';
@@ -6087,10 +6236,10 @@ const tabBadge=k=>{
 function renderTabs(){
   const el=$('#tabs');if(!el)return;
   if(isMember()){el.innerHTML='';return;}
-  el.innerHTML=TABS.map(([k,ic,n])=>{const b=tabBadge(k);return `<button class="tab ${tab===k?'on':''}" data-act="tab" data-k="${k}">${ic}<span>${n}</span>${b?`<i>${b}</i>`:''}</button>`;}).join('')+'<button class="tab help" data-act="guide" title="Cómo se trabaja en esta pestaña" aria-label="Cómo se trabaja">📘</button>';
+  el.innerHTML=TABS.map(([k,ic,n])=>{if(!unl(k))return `<button class="tab lock" disabled title="${n}: se abre en el turno ${unlDay(k)}" aria-label="${n}, bloqueado hasta el turno ${unlDay(k)}">🔒<span>${n}</span><i>T${unlDay(k)}</i></button>`;const b=tabBadge(k);return `<button class="tab ${tab===k?'on':''}" data-act="tab" data-k="${k}">${ic}<span>${n}</span>${b?`<i>${b}</i>`:''}</button>`;}).join('')+'<button class="tab help" data-act="guide" title="Cómo se trabaja en esta pestaña" aria-label="Cómo se trabaja">📘</button>';
 }
 function setTab(k){
-  if(!TABS.some(x=>x[0]===k))return;
+  if(!TABS.some(x=>x[0]===k)||!unl(k))return;
   tab=k;const caja=k==='caja';document.body.dataset.tab=k;
   $('.stage').hidden=!caja;$('#dept').hidden=caja;
   $('#camwin').classList.toggle('show',cam.on&&k!=='dir');
@@ -6342,7 +6491,7 @@ function renderGuide(){
 function offTick(dt){
   const n=Math.min(Math.max(0,2-Object.keys(run.tills||{}).length),staffOf('atc').filter(e=>!e.real&&isFree(e)&&!run.duty[e.id].slack).length);if(!n)return;
   const out=CAT.filter(x=>(meta.stock[x.id]||0)<=0).length/CAT.length;
-  const dem=OFF.dem*(0.4+0.12*meta.rep)*(1-0.6*out)*(1+0.03*Math.min(meta.day,10))*(meta.promo===meta.day?1.15:1);
+  const dem=OFF.dem*(0.2+0.16*meta.rep)*(1-0.6*out)*(1+0.03*Math.min(meta.day,10))*(meta.promo===meta.day?1.15:1);
   const rate=Math.min(dem,n*OFF.cap)/(run.dur||100);
   run.offAcc=(run.offAcc||0)+dt*rate;
   while(run.offAcc>=1){run.offAcc--;const v=Math.round(OFF.ticket*rnd(0.4,1.6)),c=Math.round(v*(SUPS[0].cf+OFF.merma));
@@ -6437,7 +6586,7 @@ function onClick(e){
   if(a==='rapply'&&$('#pname')&&isMember()){if(!nameOk())return;room.renaming=false;fb.update(rRef('members/'+room.uid),{name:playerName()}).catch(()=>{});}
   if(a==='start'){beep(1200,.05);startDay();}
   else if(a==='restart'){meta=defMeta(meta.best);meet=null;startDay();}
-  else if(a==='next'){meta.day++;startDay();}
+  else if(a==='next'){if(meta.day%3===1)meta.emp.forEach(closeSt);meta.day++;startDay();}
   else if(a==='div')payDiv(+b.dataset.p);
   else if(a==='buy'){
     const u=UPS.find(x=>x.k===b.dataset.k);
@@ -6465,6 +6614,7 @@ function onClick(e){
   else if(a==='ordgo')placeOrder();
   else if(a==='meeting')startMeeting();
   else if(a==='endmeet')endMeeting();
+  else if(a==='week')weekInfo();
   else if(a==='emp')empAct(+b.dataset.e,b.dataset.k);
   else if(a==='fire')fireEmp(+b.dataset.e,b.dataset.r);
   else if(a==='integc'){const c=meet&&meet.cands[+b.dataset.c];if(c&&!c.integ&&meta.money>=INTEG){meta.money-=INTEG;c.integ=integBand(c.hon);sCoin();renderHud();showMeeting();}}
