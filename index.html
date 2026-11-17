@@ -493,6 +493,13 @@ button:focus-visible{outline:3px solid var(--tag);outline-offset:2px}
   .mute{padding:1px 4px;font-size:11px}
 }
 @media (prefers-reduced-motion:reduce){.item.flash{animation:none}.proc i{animation-duration:.01s}}
+/* sensación de juego en la caja: monedas al bote, pastilla que late, registradora que tiembla al fallar */
+.jcoin{position:fixed;z-index:17;font-size:22px;line-height:1;pointer-events:none;will-change:transform,opacity;margin:-11px 0 0 -11px}
+.stat.jpulse{animation:jPulse .32s cubic-bezier(.2,.8,.2,1)}
+@keyframes jPulse{0%{transform:scale(1)}40%{transform:scale(1.14);filter:brightness(1.25)}100%{transform:scale(1)}}
+.register.jshake{animation:jShake .2s cubic-bezier(.2,.8,.2,1)}
+@keyframes jShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}50%{transform:translateX(4px)}75%{transform:translateX(-2px)}}
+@media (prefers-reduced-motion:reduce){.stat.jpulse,.register.jshake{animation:none}.jcoin{display:none}}
 
 /* ---------- Marco de juego: todo cabe en la ventana, sin desplazar la página ---------- */
 html,body{height:100%;overflow:hidden}
@@ -1607,7 +1614,7 @@ function beep(f,d,type,v){
 }
 const sBeep=()=>beep(1900,.07);
 const sOk=()=>{beep(880,.08,'triangle',.06);setTimeout(()=>beep(1320,.12,'triangle',.06),80)};
-const sBad=()=>beep(150,.25,'sawtooth',.06);
+let sBadT=0;const sBad=()=>{sBadT=performance.now();beep(150,.25,'sawtooth',.06);};
 const sCoin=()=>beep(2400,.04,'square',.03);
 
 /* ---------- toast ---------- */
@@ -1673,11 +1680,57 @@ const sceneOk=(k,gap)=>!(sceneLast[sceneKind(k)]&&performance.now()/1000-sceneLa
 /* over:true = puede salir encima de #overlay (la pantalla del empleado real es un overlay); #mg y la guía la siguen parando. */
 const sceneBlocked=s=>[s&&s.over?'':'#overlay','#mg','#guide'].some(id=>{const x=id&&$(id);return x&&x.classList.contains('show');});
 const scenePaused=()=>!!(sceneCur&&sceneCur.pause&&(!room||room.host)&&!sceneBlocked(sceneCur));
+/* ---------- director de ritmo: presupuesto de tensión de las escenas (todo lo ajustable, en PACE) ----------
+   core = flujo de caja que no puede esperar (DNI, reclamación, tarjeta) y continuaciones (carta, nota): siempre pasan.
+   ser = serias (y cualquiera con pause). El resto, menores. Tiempos en segundos de juego (run.t); los de serias, ×run.dur/100.
+   · tras una seria, otra seria espera gap; como mucho maxSer serias por turno (las demás aplican def en silencio; must nunca);
+   · pico (cola ≥ peakQ o burstN escenas en burstW s) → calm s sin escenas que no sean core;
+   · las serias prefieren win (40–75 % del turno): antes, esperan como mucho prefW·dur;
+   · una escena aplazada que espera más de waitS·dur (serias) o waitM s (menores), o que sigue en cola al cerrar, aplica def. */
+const PACE={core:['dni','rec','tarj','carta','nota'],ser:['robo','dimite','insp','ins','bank','hac','cons','arq','press','viral'],must:['insp'],
+  gap:25,maxSer:3,peakQ:4,burstN:2,burstW:20,calm:10,win:[0.4,0.75],prefW:0.3,waitS:0.5,waitM:25};
+const paceLog=[];window.__pace=paceLog;
+const paceCls=s=>{const k=sceneKind(s.k);return PACE.core.includes(k)?'core':(PACE.ser.includes(k)||s.pause)?'ser':'min';};
+const paceRun=()=>run&&(run.pace||(run.pace={ser:0,lastSer:-1e9,shows:[],calmTo:-1}));
+function paceNote(s,a){if(s._pa===a)return;s._pa=a;paceLog.push({d:meta.day,t:run?Math.round(run.t*10)/10:0,k:sceneKind(s.k),c:paceCls(s),a});if(paceLog.length>400)paceLog.shift();}
+/* 'ok' | 'wait:motivo' | 'drop:motivo'. Fuera de turno, las de encima del overlay y las ya vistas no esperan. */
+function paceGate(s){
+  if(!run||run.over||s.over||s.paced||!s.qrun)return 'ok';
+  const cl=paceCls(s);if(cl==='core')return 'ok';
+  if(s.qrun!==run)return 'drop:fin';
+  const P=paceRun(),t=run.t,D=run.dur||100,ser=cl==='ser',must=PACE.must.includes(sceneKind(s.k));
+  if(ser&&!must&&P.ser>=PACE.maxSer)return 'drop:tope';
+  if(run.queue.length>=PACE.peakQ)P.calmTo=Math.max(P.calmTo,t+PACE.calm);
+  let w='';
+  if(P.calmTo>t)w='calma';
+  else if(ser&&t-P.lastSer<PACE.gap*D/100)w='hueco';
+  else if(ser&&t<PACE.win[0]*D&&t-s.q0<PACE.prefW*D)w='pronto';
+  if(!w)return 'ok';
+  if(must&&(w!=='calma'||run.closing||(s.w0!=null&&t-s.w0>PACE.calm)))return 'ok';
+  if(run.closing||(s.w0!=null&&t-s.w0>(ser?PACE.waitS*D:PACE.waitM)))return 'drop:'+(run.closing?'cierre':'espera');
+  if(s.w0==null)s.w0=t;
+  return 'wait:'+w;
+}
+function paceDrop(s,why){paceNote(s,why);if(s.def!=null&&s.onPick)try{s.onPick(s.def);}catch(e){console.warn('scene',e);}}
+/* Se llama en cada fotograma: aplica def a las que ya no van a salir y apunta por qué esperan las demás. */
+function pacePrune(){
+  for(let i=sceneQ.length-1;i>=0;i--){const s=sceneQ[i];if(!s.qrun||s.paced)continue;
+    const g=(run&&!run.over&&s.qrun===run)?paceGate(s):'drop:fin';
+    if(g.startsWith('drop')){sceneQ.splice(i,1);paceDrop(s,g);}else if(g!=='ok')paceNote(s,g);}
+}
+function paceShown(s){
+  if(s.paced||!run||run.over)return;s.paced=1;const P=paceRun(),t=run.t;
+  P.shows=P.shows.filter(x=>t-x<PACE.burstW);P.shows.push(t);if(P.shows.length>=PACE.burstN)P.calmTo=Math.max(P.calmTo,t+PACE.calm);
+  if(paceCls(s)==='ser'){P.ser++;P.lastSer=t;}
+  paceNote(s,'show');
+}
 function scene(o){
   if(!o||!o.k)return false;
   if(quiet){if(o.def!=null&&o.onPick)try{o.onPick(o.def);}catch(e){console.warn('scene',e);}return false;}
   if((sceneCur&&sceneCur.k===o.k)||sceneQ.some(x=>x.k===o.k))return false;
-  if(sceneCur&&(o.prio||0)>(sceneCur.prio||0)){sceneQ.unshift(sceneCur);sceneCur=null;}
+  if(run&&!run.over){o.qrun=run;o.q0=run.t;}
+  const g=paceGate(o);if(g.startsWith('drop')){paceDrop(o,g);return true;}
+  if(sceneCur&&g==='ok'&&(o.prio||0)>(sceneCur.prio||0)){sceneQ.unshift(sceneCur);sceneCur=null;}
   sceneQ.push(o);
   if(sceneQ.length>4){sceneQ.sort((a,b)=>(b.prio||0)-(a.prio||0));const x=sceneQ.pop();if(x.def!=null&&x.onPick)try{x.onPick(x.def);}catch(e){console.warn('scene',e);}}
   scenePump();return true;
@@ -1686,12 +1739,12 @@ function scenePump(){
   const el=$('#scene');if(sceneCur||!sceneQ.length||sceneBlocked({over:1})||(el&&(el.classList.contains('hold')||el.classList.contains('out'))))return;
   sceneQ.sort((a,b)=>(b.prio||0)-(a.prio||0));
   const bl=sceneBlocked();let s;
-  for(;;){const i=sceneQ.findIndex(x=>!bl||x.over);if(i<0)return;s=sceneQ.splice(i,1)[0];if(!(s.alive&&!s.alive()))break;}
+  for(;;){const i=sceneQ.findIndex(x=>(!bl||x.over)&&paceGate(x)==='ok');if(i<0)return;s=sceneQ.splice(i,1)[0];if(!(s.alive&&!s.alive()))break;}
   sceneShow(s);
 }
 function sceneShow(s){
   const el=$('#scene');if(!el)return;
-  sceneCur=s;sceneTok++;s.t0=performance.now();sceneLast[sceneKind(s.k)]=s.t0/1000;
+  sceneCur=s;sceneTok++;s.t0=performance.now();sceneLast[sceneKind(s.k)]=s.t0/1000;paceShown(s);
   const h=document.querySelector('#app .hud'),r=h&&h.getBoundingClientRect();
   el.style.setProperty('--scnT',(r&&r.bottom>0&&r.bottom<innerHeight/3?Math.round(r.bottom):0)+'px');
   const ch=(s.choices||[]).map(c=>`<button class="btn ${c.cls||''}" data-act="${c.act||'scene'}" data-k="${c.k}"${String(c.k)===String(s.def)?' data-def="1"':''}${c.key?` data-key="${String(c.key).toLowerCase()}"`:''} ${c.attrs||''}>${c.key?`<i class="kk">${c.key}</i>`:''}${c.t}</button>`).join('');
@@ -1705,7 +1758,7 @@ function sceneShow(s){
   el.classList.remove('out','hold');el.classList.toggle('top',!!s.over);el.classList.add('show');
 }
 function sceneClose(){
-  const el=$('#scene'),s=sceneCur;sceneCur=null;if(!el)return;
+  const el=$('#scene'),s=sceneCur;sceneCur=null;if(s&&run&&run.pace&&s.paced&&paceCls(s)==='ser')run.pace.lastSer=run.t;if(!el)return;
   const tok=++sceneTok,c=s&&s.hit!=null&&(s.choices||[]).find(x=>String(x.k)===String(s.hit));
   const out=()=>{if(tok!==sceneTok)return;el.classList.remove('hold');el.classList.add('out');
     setTimeout(()=>{if(tok!==sceneTok)return;el.classList.remove('show','out');el.innerHTML='';scenePump();},170);};
@@ -1723,7 +1776,7 @@ function sceneSync(){
   if(sceneCur&&sceneBlocked(sceneCur)){const el=$('#scene');sceneQ.unshift(sceneCur);sceneCur=null;sceneTok++;if(el){el.classList.remove('show','out','hold');el.innerHTML='';}}
   try{cajaScenes();}catch(e){console.warn('cajaScenes',e);}
   try{backScenes();}catch(e){console.warn('backScenes',e);}
-  scenePump();
+  pacePrune();scenePump();
   if(sceneCur&&sceneCur.tick)try{sceneCur.tick();}catch(e){}
   if(sceneCur&&sceneCur.time){const f=1-(performance.now()-sceneCur.t0)/1000/sceneCur.time,b=document.querySelector('#scene .scn-bar i');
     if(f<=0)scenePick(sceneCur.def);else if(b)b.style.width=(f*100).toFixed(1)+'%';}
@@ -3144,7 +3197,7 @@ async function fillRanking(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.17-75';
+const APPV='2026.11.17-77';
 /* Compara versiones por números («-9» < «-11»), no como texto. */
 const verCmp=(a,b)=>{const x=String(a).split(/[.-]/).map(Number),y=String(b).split(/[.-]/).map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
 try{const vt=document.createElement('div');vt.id='vtag';vt.textContent='v'+APPV;document.body.appendChild(vt);}catch(e){}
@@ -5357,7 +5410,7 @@ function scanItem(id){
   if(run.pendingId){toast('Primero resuelve el DNI','bad');return;}
   const it=c.items.find(i=>i.id===id);
   if(!it||it.scanned||it.denied)return;
-  it.done++;sBeep();run.flash=id;
+  it.done++;comboTap();run.flash=id;
   if(it.done<it.hits){renderBelt();run.flash=0;return;}
   if(it.age&&c.idOk==='deny'){it.denied=true;ret(it);toast('Ya le viste el DNI: esto tampoco se le vende.');renderAll();run.flash=0;return;}
   if(it.age&&!c.idOk){run.pendingId=id;renderAll();run.flash=0;return;}
@@ -5432,8 +5485,9 @@ function finish(c,noTip){
   }
   const frac=c.p/c.max,P=PERS[c.pk]||{},rm=c.reg&&meta.regs[c.reg];
   if(!noTip&&c.err===0){
-    let tip=Math.round(frac*250*(meta.up.coffee?1.5:1)*(P.tip!=null?P.tip:1)*(rm&&rm.good>=3?1.3:1)/5)*5;
-    if(tip>0){run.tips+=tip;toast('Propina para el bote del personal: '+fmt(tip),'good');}
+    const cbB=comboBonus(c);
+    let tip=Math.round(frac*250*(meta.up.coffee?1.5:1)*(P.tip!=null?P.tip:1)*(rm&&rm.good>=3?1.3:1)*(1+cbB)/5)*5;
+    if(tip>0){run.tips+=tip;toast('Propina para el bote del personal: '+fmt(tip)+(cbB?' · racha +'+Math.round(cbB*100)+'%':''),'good');}
     if(frac>0.5)meta.rep=clamp(meta.rep+0.08,0,5);
   }
   if(P.influ){
@@ -5444,8 +5498,51 @@ function finish(c,noTip){
   regVisit(c,c.err===0&&frac>0.3);
   if(c.err>0&&Math.random()<0.4)addTicket('back','Error en su compra',ri(100,600),2,false);
   run.served++;
+  juiceDone(c,tot,frac);
   removeFront();
   renderAll();checkRep();
+}
+/* ---------- sensación de juego en la caja (también en la de los cajeros reales: es el mismo código) ----------
+   Racha (CB): escaneos seguidos con ≤ gap s de juego entre toques y sin errores; desde x3 sale «¡Racha!» junto a la cesta
+   y la propina sube step por escalón (máx. max), según la mejor racha con ese cliente (c.cbMax). El pitido sube un semitono
+   por escalón (hasta una quinta). Al cobrar, monedas que vuelan de la registradora al bote y la pastilla late; al fallar,
+   la registradora tiembla (≤200 ms) con un zumbido grave. Con prefers-reduced-motion no hay movimiento. */
+const CB={gap:1.2,from:3,step:0.05,max:0.25};
+const redMo=()=>{try{return !!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches);}catch(e){return false;}};
+function comboTap(){
+  const cb=run.cb||(run.cb={n:0,t:-9,e:run.errors});
+  if(run.errors!==cb.e||run.t-cb.t>CB.gap)cb.n=0;
+  cb.n++;cb.t=run.t;cb.e=run.errors;cb.at=performance.now();
+  const c=front();if(c)c.cbMax=Math.max(c.cbMax||0,cb.n);
+  beep(1900*Math.pow(2,Math.min(cb.n-1,7)/12),.07);
+}
+const comboBonus=c=>(c.cbMax||0)>=CB.from?Math.min(CB.max,CB.step*(c.cbMax-CB.from+1)):0;
+function juiceDone(c,tot,frac){
+  if(tot>0)juiceCoins(Math.min(5,2+Math.floor(tot/1500)));
+  const p=ptl.ppl.get(c.id);
+  if(p&&c.err===0&&frac>0.3){ptl.pops.push({x:p.x,y:p.y,e:frac>0.7?'⭐':'❤️',t:performance.now()});ptl.gone.push({x:p.x,y:p.y,ch:pChar(c.id)});ptl.ppl.delete(c.id);}
+}
+function juiceCoins(n){
+  const h=$('#hMoney'),pill=h&&h.parentNode;if(!pill||!pill.classList)return;
+  pill.classList.remove('jpulse');void pill.offsetWidth;pill.classList.add('jpulse');setTimeout(()=>pill.classList.remove('jpulse'),360);
+  if(redMo()||document.hidden)return;
+  const src=['#register','#till3d'].map(x=>$(x)).find(x=>x&&x.getBoundingClientRect().width>0);if(!src)return;
+  const a=src.getBoundingClientRect(),b=pill.getBoundingClientRect();if(!b.width)return;
+  for(let i=0;i<n;i++){const el=document.createElement('span');el.className='jcoin';el.textContent='🪙';
+    const x0=a.left+a.width*(0.35+Math.random()*0.3),y0=a.top+Math.min(a.height*0.35,160);
+    el.style.left=x0+'px';el.style.top=y0+'px';if(!el.animate)return;document.body.appendChild(el);
+    const dx=b.left+b.width*0.25-x0,dy=b.top+b.height/2-y0;
+    el.animate([{transform:'translate(0,0) scale(.6)',opacity:0},{transform:`translate(${dx*0.15}px,${dy*0.15-40}px) scale(1.15)`,opacity:1,offset:0.3},{transform:`translate(${dx}px,${dy}px) scale(.55)`,opacity:0.6}],
+      {duration:400,delay:i*55,easing:'cubic-bezier(.2,.8,.2,1)',fill:'both'}).onfinish=()=>el.remove();
+    setTimeout(()=>el.remove(),900);}
+}
+function juiceTick(){
+  if(!run){ptl.errR=null;return;}
+  const e=run.errors|0;if(ptl.errR!==run){ptl.errR=run;ptl.errs=e;return;}
+  if(e<=ptl.errs){ptl.errs=e;return;}
+  ptl.errs=e;if(run.cb)run.cb.n=0;if(!tillOn())return;
+  const r=$('#register');if(r&&!redMo()){r.classList.remove('jshake');void r.offsetWidth;r.classList.add('jshake');setTimeout(()=>r.classList.remove('jshake'),220);}
+  if(performance.now()-sBadT>150)beep(110,.12,'sawtooth',.05);
 }
 
 /* ---------- render ---------- */
@@ -5981,7 +6078,7 @@ function pixWall(BW){
 }
 /* ===== la caja vista desde arriba: cliente al otro lado del mostrador, cola, cinta, lector y cesta ===== */
 let TILLV='A';try{TILLV=new URLSearchParams(location.search).get('tv')||'A'}catch(e){}
-const ptl={buf:null,items:new Map(),fly:[],bask:[],cid:null,hits:[],view:null,belt:0,ppl:new Map(),gone:[],bw:0,bh:0};
+const ptl={buf:null,items:new Map(),fly:[],bask:[],cid:null,hits:[],view:null,belt:0,ppl:new Map(),gone:[],pops:[],bump:0,bw:0,bh:0};
 function pixTill(slot){
   const cv=pixCanvas(slot,'till');if(!cv._click){cv._click=1;cv.addEventListener('click',pixTillClick);}
   const V=TILLV;
@@ -6011,7 +6108,8 @@ function pixTill(slot){
   ptl.ppl.forEach((p,id)=>{if(!seen.has(id))ptl.ppl.delete(id);});
   /* los que se cambian a otra caja se van andando hacia la izquierda */
   ptl.gone=ptl.gone.filter(g=>{g.x-=dt*45;pPerson(c,g.x,g.y,{ch:g.ch,dir:'l',mv:true,t:now,s:2});return g.x>-20;});
-  /* cesta normal */
+  /* cesta normal (da un saltito cuando cae algo) */
+  const RM=redMo(),bmp=RM?0:Math.round(2*Math.max(0,Math.sin(Math.min(1,(now-ptl.bump)/200)*Math.PI)));byy+=bmp;
   c.fillStyle='#1f7a45';c.fillRect(bxx,byy+4,bw,bh-4);c.fillStyle='#2a9d5c';c.fillRect(bxx+2,byy+6,bw-4,bh-8);
   c.fillStyle='#1f7a45';for(let x=bxx+5;x<bxx+bw-3;x+=6)c.fillRect(x,byy+6,1,bh-8);for(let y=byy+10;y<byy+bh-3;y+=6)c.fillRect(bxx+2,y,bw-4,1);
   c.fillStyle='#9aa3ab';c.fillRect(bxx+bw*.2,byy-4,bw*.6,2);c.fillRect(bxx+bw*.2,byy-4,2,8);c.fillRect(bxx+bw*.8-2,byy-4,2,8);
@@ -6038,8 +6136,23 @@ function pixTill(slot){
     if(it.damaged){const w=S*.18;for(let j=0;j<it.hits;j++){g.fillStyle=j<it.done?'#2a9d5c':'#e5383b';g.fillRect(X(x)-S*.42+j*(w+S*.04),Y(y)+S*.46,w,S*.08);}}
     if(it.age){g.fillStyle='#e5383b';g.fillRect(X(x)+S*.14,Y(y)-S*.5,S*.38,S*.24);g.fillStyle='#fff';g.font='700 '+Math.round(S*.18)+'px sans-serif';g.fillText('18',X(x)+S*.33,Y(y)-S*.38);}});
   const bc=Math.max(1,Math.floor((bw-4)/10));
-  ptl.bask.forEach((b,j)=>{g.font=Math.round(9*v.k)+'px sans-serif';g.fillText(b.e,X(bxx+7+(j%bc)*10),Y(byy+bh-8-Math.floor(j/bc)*6));});
-  ptl.fly=ptl.fly.filter(f=>{f.t=Math.min(1,f.t+dt*2.6);const x=f.x+(bxx+bw/2-f.x)*f.t,y=f.y+(byy+bh/2-f.y)*f.t-Math.sin(f.t*Math.PI)*28;const sz=f.s*(1-.5*f.t)*v.k;g.font=Math.round(sz)+'px sans-serif';g.fillText(f.e,X(x),Y(y));if(f.t>=1){ptl.bask.push({e:f.e});return false;}return true;});
+  /* al caer en la cesta: aplastado y rebote (~260 ms) */
+  ptl.bask.forEach((b,j)=>{const x=X(bxx+7+(j%bc)*10),y=Y(byy+bh-8-Math.floor(j/bc)*6),p=RM||!b.t?1:Math.min(1,(now-b.t)/260);g.font=Math.round(9*v.k)+'px sans-serif';
+    if(p>=1){g.fillText(b.e,x,y);return;}
+    const sq=Math.sin(p*Math.PI)*(1-p)*0.9;g.save();g.translate(x,y+4*v.k*sq);g.scale(1+sq*0.5,1-sq*0.45);g.fillText(b.e,0,0);g.restore();});
+  ptl.fly=ptl.fly.filter(f=>{f.t=Math.min(1,f.t+dt*2.6);const e=1-Math.pow(1-f.t,3),x=f.x+(bxx+bw/2-f.x)*e,y=f.y+(byy+bh/2-f.y)*e-Math.sin(f.t*Math.PI)*28;const sz=f.s*(1-.5*f.t)*v.k;g.font=Math.round(sz)+'px sans-serif';g.fillText(f.e,X(x),Y(y));if(f.t>=1){ptl.bask.push({e:f.e,t:now});ptl.bump=now;return false;}return true;});
+  /* racha: «x3 ¡Racha!» encima de la cesta, salta al subir y se apaga al cortarse */
+  const cb=run&&run.cb;
+  if(cb&&cb.n>=CB.from&&!run.away){const left=CB.gap+0.3-(run.t-cb.t);
+    if(left>0){const a=Math.min(1,left/0.3),p=RM?1:Math.min(1,(now-cb.at)/220),sc=1+0.4*(1-p)*(1-p),fs=Math.round(Math.min(13,6+cb.n*0.6)*v.k*sc);
+      g.save();g.globalAlpha=a;g.font='700 '+fs+'px "Pixelify Sans","Fredoka",sans-serif';g.lineJoin='round';g.lineWidth=Math.max(2,v.k*1.6);
+      const t1='x'+cb.n+' ¡Racha!',hw=g.measureText(t1).width/2+g.lineWidth,tx=Math.max(hw,Math.min(cv.width-hw,X(bxx+bw/2))),ty=Y(byy-12);g.strokeStyle='#3a1012';g.fillStyle=cb.n>=7?'#ff4d4f':'#ffd23f';
+      g.strokeText(t1,tx,ty);g.fillText(t1,tx,ty);
+      const bon=Math.min(CB.max,CB.step*(cb.n-CB.from+1));g.font='700 '+Math.round(6*v.k)+'px "Pixelify Sans",sans-serif';g.lineWidth=Math.max(2,v.k);
+      g.strokeText('propina +'+Math.round(bon*100)+'%',tx,ty+fs*0.75);g.fillStyle='#fff';g.fillText('propina +'+Math.round(bon*100)+'%',tx,ty+fs*0.75);g.restore();}}
+  /* cliente que se va contento: ❤️ / ⭐ que sube encima de él */
+  ptl.pops=ptl.pops.filter(o=>{const p=(now-o.t)/400;if(p>=1)return false;const e=1-Math.pow(1-p,3);
+    g.save();g.globalAlpha=1-p*p;g.font=Math.round((RM?10:8+5*Math.sin(Math.min(1,p*2.2)*Math.PI*0.5))*v.k)+'px sans-serif';g.fillText(o.e,X(o.x),Y(o.y-38-(RM?0:12*e)));g.restore();return true;});
 }
 function pixTillClick(ev){
   const cv=ev.currentTarget,r=cv.getBoundingClientRect(),k=cv.width/r.width,v=ptl.view;if(!v)return;
@@ -6049,6 +6162,7 @@ function pixTillClick(ev){
 }
 
 function till3d(){
+  try{juiceTick();}catch(e){}
   const slot=document.getElementById('till3d'),on=!!(PIX.ok&&run&&slot);
   document.body.classList.toggle('b3d',on);document.body.classList.toggle('rem',!!(run&&run.remote));
   if(!on||!slot.offsetParent||run.over)return;
