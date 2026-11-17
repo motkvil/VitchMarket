@@ -31,6 +31,7 @@ setInterval(()=>{
   const rtn=d.querySelector('#register [data-act=return]');if(rtn&&Math.random()<.05){cl(rtn);return;}
   if(Math.random()<.1){const aa=d.querySelector('#aallBtn:not([disabled])');if(aa){const before=d.querySelectorAll('#alerts .alert').length;cl(aa);stats.aall=(stats.aall||0)+1;stats.aallFreed=(stats.aallFreed||0)+(before-d.querySelectorAll('#alerts .alert').length);return;}}
   if(Math.random()<.3){const as=any(d,'[data-act=assign]:not([disabled])');if(as){stats.assign++;cl(as);return;}}
+  {const sb=[...d.querySelectorAll('#scene.show button[data-act=scene]')];if(sb.length){const x=sb[Math.floor(Math.random()*sb.length)];stats['scn_'+x.dataset.k]=(stats['scn_'+x.dataset.k]||0)+1;cl(x);return;}}
   const rt=d.querySelector('[data-act=route]');
   if(rt){stats.complaints++;const k=['atc','back','rrpp','alm','no'];cl(d.querySelector('[data-act=route][data-d='+k[Math.floor(Math.random()*5)]+']'));return;}
   const idy=d.querySelector('[data-act=idyes]');if(idy){stats.ids++;cl(Math.random()<.5?idy:d.querySelector('[data-act=idno]'));return;}

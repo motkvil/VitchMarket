@@ -96,6 +96,7 @@ function hostBot(d){
   if(mgel){const x=any(mgel,'button:not([disabled])');if(x)cl(x);return;}
   const real=d.querySelector('#alerts [data-act=assign][data-e]:not([data-e=me])');
   if(real&&/🎮/.test(real.textContent)&&Math.random()<.3){st.assignReal++;cl(real);return;}
+  {const sb=[...d.querySelectorAll('#scene.show button[data-act=scene]')];if(sb.length){cl(sb[Math.floor(Math.random()*sb.length)]);return;}}
   const rt=d.querySelector('[data-act=route]');
   if(rt){const k=['atc','back','rrpp','alm','no'];cl(d.querySelector('[data-act=route][data-d='+k[Math.floor(Math.random()*5)]+']'));return;}
   const idy=d.querySelector('[data-act=idyes]');if(idy){cl(Math.random()<.5?idy:d.querySelector('[data-act=idno]'));return;}
@@ -110,6 +111,7 @@ function hostBot(d){
 }
 let tkSeen=0;
 function cashier(d){
+  {const sb=[...d.querySelectorAll('#scene.show button[data-act=scene]')];if(sb.length){cl(sb[Math.floor(Math.random()*sb.length)]);return true;}}
   const rt=d.querySelector('[data-act=route]');
   if(rt){const k=['atc','back','rrpp','alm'];cl(d.querySelector('[data-act=route][data-d='+k[Math.floor(Math.random()*4)]+']'));return true;}
   const idy=d.querySelector('[data-act=idyes]');if(idy){cl(Math.random()<.5?idy:d.querySelector('[data-act=idno]'));return true;}

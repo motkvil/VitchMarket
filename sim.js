@@ -28,6 +28,7 @@ setInterval(()=>{try{
   if(!g||!g.run||g.run.over)return;
   const mg=d.querySelector('#mg.show');if(mg){cl(mg.querySelector('[data-act=leavecancel]')||mg.querySelector('button'));return;}
   const c=g.front();if(!c)return;
+  {const sb=d.querySelector('#scene.show button[data-act=scene]');if(sb){cl(sb);return;}}
   if(c.phase==='complaint'){const q=c.complaint;cl(d.querySelector('[data-act=route][data-d='+(bad()?'no':q.dept)+']'));return;}
   if(d.querySelector('[data-act=idyes]')){cl(d.querySelector(((!c.minor)!==bad())?'[data-act=idyes]':'[data-act=idno]'));return;}
   const it=d.querySelector('#belt .item');if(it){cl(it);return;}

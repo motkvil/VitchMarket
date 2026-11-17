@@ -1267,6 +1267,62 @@ body.rem .isostore{display:none!important}
   body.b3d .register .led b{font-size:24px}body.b3d .register .led{padding:4px 10px}
   body.b3d .register{gap:5px;padding:6px}
 }
+/* Escenas (scene): una situación puntual en tarjeta centrada; encima del panel, debajo de #overlay y #mg; no tapa el HUD.
+   Clases reutilizables: .scn-wrap (sombra y sello) > .scn.scn-ticket|scn-pa|scn-label > .scn-head (franja) + .scn-belt (cinta)
+   + .scn-row (.scn-who persona, .scn-main: .scn-name, .scn-say bocadillo, body) + .scn-ch (botones etiqueta) + .scn-bar (tiempo);
+   .scn-stamp.ok|.bad (sello), .scn-fx (emojis que saltan); cuerpos: .dnic (DNI), .tpv (datáfono), .scn-hint (pista). */
+#scene{position:fixed;left:0;right:0;bottom:0;top:var(--scnT,0px);display:none;align-items:center;justify-content:center;padding:12px;z-index:19;background:rgba(42,30,72,.32)}
+#scene.show{display:flex}#scene.out,#scene.hold{pointer-events:none}
+.scn-wrap{position:relative;width:min(540px,100%);max-height:100%;display:flex;filter:drop-shadow(0 6px 0 rgba(122,20,24,.45)) drop-shadow(0 14px 18px rgba(0,0,0,.25));animation:scnIn .22s cubic-bezier(.2,1.4,.5,1)}
+#scene.out .scn-wrap{animation:scnOut .16s ease-in forwards}
+.scn{flex:1;min-width:0;overflow:auto;display:flex;flex-direction:column;gap:9px;padding:0 14px 20px;background:#fffdfa;border-radius:6px 6px 0 0;
+  -webkit-mask:conic-gradient(from -45deg at bottom,#0000,#000 1deg 89deg,#0000 90deg) 50%/14px 100%;mask:conic-gradient(from -45deg at bottom,#0000,#000 1deg 89deg,#0000 90deg) 50%/14px 100%}
+.scn-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:0 -14px;padding:7px 14px;background:linear-gradient(180deg,#ff4d4f,#c51d22);color:#fff;font-family:var(--display);font-weight:600;font-size:13px;letter-spacing:.5px;text-shadow:0 1px 0 rgba(0,0,0,.3)}
+.scn-tag{background:#fff;color:#c51d22;border-radius:99px;padding:1px 10px;font-size:12px;font-weight:700;text-shadow:none;white-space:nowrap}
+.scn-belt{height:7px;margin:-9px -14px 0;background:repeating-linear-gradient(90deg,#2b2b2b 0 9px,#4a4a4a 9px 12px);animation:scnBelt 1s linear infinite}
+.scn-row{display:flex;gap:12px;align-items:flex-start}
+.scn-who{position:relative;flex:none;width:92px;height:92px;display:grid;place-items:center;font-size:58px;line-height:1;border:3px solid var(--line);border-radius:14px;
+  background:linear-gradient(180deg,#fde3e3 0 62%,#d9dde3 62% 66%,#ebe4de 66%);box-shadow:inset 0 -4px 0 rgba(0,0,0,.06)}
+.scn-who canvas{width:72px;height:68px;image-rendering:pixelated}
+.scn-face{position:absolute;right:-8px;bottom:-8px;font-size:26px;background:#fff;border:2px solid var(--line);border-radius:50%;width:36px;height:36px;display:grid;place-items:center}
+.scn-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:7px}
+.scn-name{font-family:var(--display);color:#4a1414;font-size:16px;line-height:1.1}
+.scn-say{position:relative;background:#fff;border:2px solid #e3cccc;border-radius:12px;padding:8px 12px;font-size:17px;font-weight:800;color:#3a2323}
+.scn-say::before{content:'';position:absolute;left:-10px;top:12px;border:8px solid transparent;border-right-color:#e3cccc;border-left:0}
+.scn-it{font-size:22px;vertical-align:middle}
+.scn-hint{font-size:12px;color:#7a5a5a;line-height:1.35}
+.scn-ch{display:flex;flex-wrap:wrap;gap:8px}
+.scn-ch .btn{position:relative;min-height:46px;flex:1 1 130px;font-size:15px;padding:6px 10px 6px 24px;border-radius:6px 14px 14px 6px}
+.scn-ch .btn::before{content:'';position:absolute;left:8px;top:50%;width:8px;height:8px;margin-top:-4px;border-radius:50%;background:#fffdfa;box-shadow:inset 0 1px 2px rgba(0,0,0,.45)}
+.scn-ch .btn:not(.go):not(.no){background:linear-gradient(180deg,#fff3a8,#ffd23f);border-color:#b08a00;box-shadow:0 4px 0 #b08a00;color:#3a2a00}
+.scn-ch .btn:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,.3)}
+.scn-bar{height:6px;background:#f0dede;border-radius:99px;overflow:hidden}.scn-bar i{display:block;height:100%;width:100%;background:repeating-linear-gradient(90deg,#e5383b 0 10px,#ff6b6b 10px 14px)}
+.scn-pa .scn-head{background:repeating-linear-gradient(-45deg,#ffd23f 0 14px,#f5b800 14px 28px);color:#3a2a00;text-shadow:none}
+.scn-pa .scn-head span:first-child{animation:scnDing 1s ease-in-out 2}
+.scn-label{background:linear-gradient(180deg,#fffbe0,#fff3a8)}.scn-label .scn-head{background:linear-gradient(180deg,#ffd23f,#e0a800);color:#3a2a00;text-shadow:none}
+.scn-label .scn-belt{background:#c51d22;animation:none;height:4px}
+.dnic{background:linear-gradient(135deg,#e3f1fa,#c6e0f0);border:2px solid #6aa5c4;border-radius:10px;padding:6px 10px;color:#1f4a60;box-shadow:0 2px 0 #6aa5c4}
+.dnic-h{font-family:var(--display);font-weight:700;font-size:13px;display:flex;gap:6px;align-items:baseline}.dnic-h small{font-size:8px;opacity:.7;letter-spacing:.5px}
+.dnic-b{display:flex;gap:10px;align-items:center;margin-top:4px}
+.dnic-ph{font-size:30px;width:44px;height:52px;display:grid;place-items:center;background:#fff;border:1px solid #8bb8d0;border-radius:6px;filter:grayscale(.3)}
+.dnic dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:1px 8px;align-items:baseline}.dnic dt{font-size:10px;text-transform:uppercase;opacity:.75}.dnic dd{margin:0;font-weight:800;font-size:14px}
+.dnic-k{font-family:var(--pix);font-size:19px!important;color:#0d2f40}
+.dnic-today{font-size:13px;color:#4a1414}.dnic-today b{font-family:var(--pix);font-size:17px}
+.tpv{display:flex;justify-content:space-between;align-items:center;background:#1b2b22;color:#ff6b6b;border:3px solid #444;border-radius:8px;padding:6px 10px;font-family:var(--pix);font-size:16px}.tpv b{color:#b9f5c9;font-size:20px}
+.scn-stamp{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%) rotate(-12deg);font-family:var(--display);font-weight:700;font-size:34px;letter-spacing:2px;padding:4px 16px;border:5px solid currentColor;border-radius:10px;background:rgba(255,253,250,.85);white-space:nowrap;animation:scnStamp .32s cubic-bezier(.3,1.6,.5,1) both;pointer-events:none}
+.scn-stamp.ok{color:#1f9a55}.scn-stamp.bad{color:#d62f3a}
+.scn-fx{position:absolute;inset:0;pointer-events:none}.scn-fx i{position:absolute;left:calc(30% + var(--i)*10%);top:55%;font-style:normal;font-size:26px;animation:scnFx .6s ease-out calc(var(--i)*40ms) both}
+@keyframes scnIn{from{transform:translateY(18px) scale(.94);opacity:0}}
+@keyframes scnOut{to{transform:translateY(10px) scale(.97);opacity:0}}
+@keyframes scnBelt{to{background-position:12px 0}}
+@keyframes scnDing{50%{opacity:.4}}
+@keyframes scnStamp{from{transform:translate(-50%,-50%) rotate(-12deg) scale(2.2);opacity:0}}
+@keyframes scnFx{from{transform:translateY(0) scale(.6);opacity:1}to{transform:translateY(-90px) scale(1.1);opacity:0}}
+@media (prefers-reduced-motion:reduce){.scn-wrap,#scene.out .scn-wrap,.scn-belt,.scn-stamp,.scn-pa .scn-head span:first-child{animation:none}.scn-fx{display:none}}
+@media (max-width:820px){#scene{align-items:flex-end;padding:8px 8px 12px}.scn{padding:0 10px 18px;gap:7px}.scn-head{margin:0 -10px;padding:6px 10px;font-size:11px}.scn-belt{margin:-7px -10px 0}
+  .scn-who{width:64px;height:64px;font-size:40px}.scn-who canvas{width:50px;height:47px}.scn-face{width:28px;height:28px;font-size:19px;right:-6px;bottom:-6px}
+  .scn-say{font-size:15px;padding:6px 10px}.scn-ch .btn{flex:1 1 40%;font-size:14px;min-height:44px}.scn-hint{font-size:11px}.scn-stamp{font-size:26px}}
+@media (max-height:700px){.scn{gap:6px}.scn-main{gap:5px}.scn-who{width:56px;height:56px;font-size:34px}.scn-who canvas{width:44px;height:42px}.dnic-ph{height:42px;font-size:24px}}
 </style>
 </head>
 <body>
@@ -1315,7 +1371,7 @@ body.rem .isostore{display:none!important}
   </div>
   <button class="alertbtn" id="alertBtn" data-act="side" aria-label="Ver avisos">🔔<b>0</b></button>
 </div>
-<div id="toast" role="status"></div><div id="overlay"></div>
+<div id="toast" role="status"></div><div id="scene" role="dialog" aria-live="polite"></div><div id="overlay"></div>
 <div id="mg" role="dialog" aria-modal="true"></div>
 <div id="guide" role="dialog" aria-modal="true" aria-label="Cómo se trabaja"></div>
 
@@ -1496,6 +1552,142 @@ function toastPump(){
 }
 function toastArm(el){clearTimeout(el._t);if(el._hold||el._out)return;const ms=toastQ.length?Math.max(2500,el._ms*.55):el._ms;el._t=setTimeout(()=>toastOut(el),Math.max(300,ms-(Date.now()-el._t0)));}
 function toastOut(el){if(el._out)return;el._out=1;clearTimeout(el._t);el.classList.add('out');setTimeout(()=>{el.remove();toastPump();},260);}
+
+/* ---------- escenas: situaciones puntuales en una tarjeta centrada (#scene), sin mover el panel fijo ----------
+   scene({k,who,name,tag,txt,body,choices:[{t,k,cls,key,act,attrs}],def,time,pause,prio,alive,esc,onPick})
+   k = id único ('tipo:id'; el tipo, lo de antes de ':', es lo que mira sceneOk); who = cara/emoji; name/tag = nombre y etiqueta;
+   txt = la frase (HTML); body = HTML extra (p. ej. el DNI); choices: t texto, k lo que llega a onPick, cls 'go'|'no'|'',
+   key = tecla (una letra o número); act = data-act de un botón de siempre (el clic va a su manejador y no a onPick; la escena
+   se cierra sola cuando alive() deja de cumplirse); attrs = atributos extra (p. ej. 'data-d="back"').
+   def = opción si se acaba el tiempo (y con Esc si esc!==false); time = segundos con barra (sin time, no caduca);
+   pause = para el turno mientras está abierta (solo decisiones serias; solo si llevas tú la tienda); prio = mayor sale antes
+   y aparta a una de menor prioridad; alive = ()=>bool, si deja de cumplirse se cierra sin aplicar nada.
+   Una a la vez, cola sceneQ (máx. 4, sin repetir k). Esperan si hay #overlay, #mg o la guía abiertos.
+   En modo silencioso (encargado de relevo) se aplica def al momento. sceneOk(tipo,s) = ¿han pasado s segundos desde la última?
+   Aspecto: look 'ticket' (papel de ticket con borde dentado, por defecto) | 'pa' (megafonía «ding-dong», amarilla) | 'label'
+   (etiqueta de lineal); head = texto de la franja roja (por defecto «🛒 VITCHMARKET»); sprite = id para pintar a la persona
+   en pixel art (pChar(id), la misma que en la caja) con la cara emoji de chapa. Opción: stamp = sello al elegirla
+   ('VENDIDO'…), sc 'ok'|'bad' su color, fx = emoji que salta (🪙). */
+let sceneCur=null,sceneTok=0;const sceneQ=[],sceneLast={};
+const sceneKind=k=>String(k).split(':')[0];
+const sceneOk=(k,gap)=>!(sceneLast[sceneKind(k)]&&performance.now()/1000-sceneLast[sceneKind(k)]<gap);
+const sceneBlocked=()=>['#overlay','#mg','#guide'].some(id=>{const x=$(id);return x&&x.classList.contains('show');});
+const scenePaused=()=>!!(sceneCur&&sceneCur.pause&&(!room||room.host)&&!sceneBlocked());
+function scene(o){
+  if(!o||!o.k)return false;
+  if(quiet){if(o.def!=null&&o.onPick)try{o.onPick(o.def);}catch(e){console.warn('scene',e);}return false;}
+  if((sceneCur&&sceneCur.k===o.k)||sceneQ.some(x=>x.k===o.k))return false;
+  if(sceneCur&&(o.prio||0)>(sceneCur.prio||0)){sceneQ.unshift(sceneCur);sceneCur=null;}
+  sceneQ.push(o);
+  if(sceneQ.length>4){sceneQ.sort((a,b)=>(b.prio||0)-(a.prio||0));const x=sceneQ.pop();if(x.def!=null&&x.onPick)try{x.onPick(x.def);}catch(e){console.warn('scene',e);}}
+  scenePump();return true;
+}
+function scenePump(){
+  const el=$('#scene');if(sceneCur||!sceneQ.length||sceneBlocked()||(el&&(el.classList.contains('hold')||el.classList.contains('out'))))return;
+  sceneQ.sort((a,b)=>(b.prio||0)-(a.prio||0));
+  let s;while((s=sceneQ.shift())&&s.alive&&!s.alive()){}
+  if(s)sceneShow(s);
+}
+function sceneShow(s){
+  const el=$('#scene');if(!el)return;
+  sceneCur=s;sceneTok++;s.t0=performance.now();sceneLast[sceneKind(s.k)]=s.t0/1000;
+  const h=document.querySelector('#app .hud'),r=h&&h.getBoundingClientRect();
+  el.style.setProperty('--scnT',(r&&r.bottom>0&&r.bottom<innerHeight/3?Math.round(r.bottom):0)+'px');
+  const ch=(s.choices||[]).map(c=>`<button class="btn ${c.cls||''}" data-act="${c.act||'scene'}" data-k="${c.k}"${c.key?` data-key="${String(c.key).toLowerCase()}"`:''} ${c.attrs||''}>${c.key?`<i class="kk">${c.key}</i>`:''}${c.t}</button>`).join('');
+  const spr=s.sprite!=null&&PIX.ok,look=s.look||'ticket';
+  el.innerHTML=`<div class="scn-wrap"><div class="scn scn-${look}" aria-label="${esc(String(s.name||'').replace(/<[^>]+>/g,''))}">
+    <div class="scn-head"><span>${look==='pa'?'🔔 ding-dong · ':''}${s.head||'🛒 VITCHMARKET'}</span>${s.tag?`<span class="scn-tag">${s.tag}</span>`:''}</div><div class="scn-belt"></div>
+    <div class="scn-row"><div class="scn-who${spr?' spr':''}">${spr?'<canvas width="18" height="17"></canvas><span class="scn-face">'+(s.who||'🙂')+'</span>':(s.who||'🙂')}</div>
+    <div class="scn-main">${s.name?`<b class="scn-name">${s.name}</b>`:''}<div class="scn-say">${s.txt||''}</div>${s.body||''}</div></div>
+    <div class="scn-ch">${ch}</div>${s.time?'<div class="scn-bar"><i></i></div>':''}</div></div>`;
+  if(spr)try{const cv=el.querySelector('.scn-who canvas'),g=cv.getContext('2d');g.imageSmoothingEnabled=false;pPerson(g,9,16,{ch:pChar(s.sprite),dir:'d',s:1});}catch(e){}
+  el.classList.remove('out','hold');el.classList.add('show');
+}
+function sceneClose(){
+  const el=$('#scene'),s=sceneCur;sceneCur=null;if(!el)return;
+  const tok=++sceneTok,c=s&&s.hit!=null&&(s.choices||[]).find(x=>String(x.k)===String(s.hit));
+  const out=()=>{if(tok!==sceneTok)return;el.classList.remove('hold');el.classList.add('out');
+    setTimeout(()=>{if(tok!==sceneTok)return;el.classList.remove('show','out');el.innerHTML='';scenePump();},170);};
+  const card=el.querySelector('.scn-wrap');
+  if(c&&c.stamp&&card){el.classList.add('hold');
+    card.insertAdjacentHTML('beforeend',`<div class="scn-stamp ${c.sc||'ok'}">${c.stamp}</div>`+(c.fx?`<div class="scn-fx">${[0,1,2,3,4].map(i=>`<i style="--i:${i}">${c.fx}</i>`).join('')}</div>`:''));
+    setTimeout(out,520);}
+  else out();
+}
+function scenePick(k){const s=sceneCur;if(!s)return;s.hit=k;sceneClose();if(s.onPick)try{s.onPick(k);}catch(e){console.warn('scene',e);}}
+/* Se llama en cada fotograma (step) y en renderAll: caduca, cierra lo que ya no pinta nada y saca la siguiente. */
+function sceneSync(){
+  for(let i=sceneQ.length-1;i>=0;i--)if(sceneQ[i].alive&&!sceneQ[i].alive())sceneQ.splice(i,1);
+  if(sceneCur&&sceneCur.alive&&!sceneCur.alive())sceneClose();
+  if(sceneCur&&sceneBlocked()){const el=$('#scene');sceneQ.unshift(sceneCur);sceneCur=null;sceneTok++;if(el){el.classList.remove('show','out','hold');el.innerHTML='';}}
+  try{cajaScenes();}catch(e){console.warn('cajaScenes',e);}
+  scenePump();
+  if(sceneCur&&sceneCur.time){const f=1-(performance.now()-sceneCur.t0)/1000/sceneCur.time,b=document.querySelector('#scene .scn-bar i');
+    if(f<=0)scenePick(sceneCur.def);else if(b)b.style.width=(f*100).toFixed(1)+'%';}
+}
+/* Escenas de la caja. tillOn = estás tú en la caja (jefe en la pestaña Caja o cajero real), no fuera ni de encargado. */
+const tillOn=()=>!!(run&&!run.over&&!run.away&&!quiet&&(run.remote||(!isMember()&&tab==='caja')));
+const DNI_AP=['García','López','Martín','Sánchez','Pérez','Gómez','Ruiz','Díaz','Moreno','Jiménez','Romero','Navarro'];
+function cajaScenes(){
+  if(!tillOn())return;
+  const c=front();if(!c)return;
+  if(c.phase==='complaint'){
+    const q=c.complaint;
+    scene({k:'rec:'+c.id,who:c.face,sprite:c.id,head:'📋 HOJA DE RECLAMACIONES',name:esc(q.title),tag:'📣 Reclamación',prio:3,txt:'«'+esc(q.t)+'»',
+      body:'<div class="scn-hint">💶 Dinero → Backoffice · 🗣️ Trato y redes → RR.PP. · 📦 Agotados → Almacén · ❓ Dudas → tú</div>',
+      choices:[['atc','🙋 Resolver yo','go','RESUELTO'],['back','💼 Backoffice','','DERIVADO'],['rrpp','📣 RR.PP.','','DERIVADO'],['alm','📦 Almacén','','DERIVADO'],['no','✋ Rechazar','no','RECHAZADO']].map(([d,t,cls,st],i)=>({t,k:d,cls,key:String(i+1),act:'route',attrs:`data-d="${d}"`,stamp:d===q.dept||(d==='atc'&&q.dept==='atc')?st:d==='no'?st:d==='atc'?'':'MAL DERIVADO',sc:d===q.dept?'ok':'bad'})),
+      alive:()=>tillOn()&&front()===c&&c.phase==='complaint'});
+    return;
+  }
+  if(c.phase==='scan'&&run.pendingId){
+    const pid=run.pendingId,it=c.items.find(i=>i.id===pid);if(!it)return;
+    c.dniN=c.dniN||pick(NATS[0].n)[0]+' '+pick(DNI_AP)+' '+pick(DNI_AP);
+    scene({k:'dni:'+pid,who:c.face,sprite:c.id,head:'🛒 VITCHMARKET · CAJA '+(run.remote?run.till:3),tag:'🔞 +18',prio:3,txt:'¿Me cobras esto? <span class="scn-it">'+it.e+'</span> '+esc(it.n),
+      body:`<div class="dnic"><div class="dnic-h">🇪🇸 DNI <small>DOCUMENTO NACIONAL DE IDENTIDAD</small></div><div class="dnic-b"><div class="dnic-ph">${c.face}</div>
+        <dl><dt>Nombre</dt><dd>${esc(c.dniN)}</dd><dt>Nacimiento</dt><dd class="dnic-k">${dmy(c.birth)}</dd></dl></div></div><div class="dnic-today">📅 Hoy: <b>${dmy(TODAY)}</b></div>`,
+      choices:[{t:'🪪 Vender',k:'yes',cls:'go',key:'S',act:'idyes',stamp:'VENDIDO',sc:'ok',fx:'🪙'},{t:'🚫 Negar',k:'no',cls:'no',key:'N',act:'idno',stamp:'DENEGADO',sc:'bad'}],
+      alive:()=>tillOn()&&front()===c&&run.pendingId===pid});
+    return;
+  }
+  /* Habitual que vuelve: saludo corto (como mucho uno por minuto). */
+  if(c.phase==='scan'&&c.reg&&c.mem&&!c.greet&&sceneOk('hola',60)){
+    const R=REGS.find(r=>r.k===c.reg);if(!R)return;c.greet=1;c.memSaid=1;
+    const nm=R.name.split(',')[0];
+    scene({k:'hola:'+c.id,look:'label',head:'⭐ CLIENTE HABITUAL',who:c.face,sprite:c.id,name:esc(R.name),tag:'Habitual',prio:0,txt:esc(c.mem),time:6,def:'x',
+      choices:[{t:'👋 ¡Hombre, '+esc(nm)+'!',k:'hi',cls:'go',key:'H',stamp:'¡HOLA!',sc:'ok',fx:'💛'}],
+      alive:()=>tillOn()&&front()===c,
+      onPick:k=>{if(k==='hi'&&front()===c){c.p=Math.min(c.max,c.p+c.max*0.12);sOk();run.chat={face:c.face,text:nm+': «¡Qué alegría verte!»',angry:false,until:run.t+3};renderChat();}}});
+  }
+}
+/* Tarjeta rechazada: pagar en efectivo (por defecto) o probar otra vez (35 %, y tarda). */
+function cardScene(c){
+  const cash=msg=>{if(front()!==c||c.phase!=='pay')return;c.cardNo=0;run.card=false;c.pay='cash';c.given=cashGiven(totalOf(c));if(msg)toast(msg,'bad');renderAll();};
+  if(!scene({k:'tarj:'+c.id,who:c.face,sprite:c.id,head:'💳 DATÁFONO · CAJA '+(run.remote?run.till:3),name:c.lab?esc(c.lab.replace(/<[^>]+>/g,'')):'',tag:'Rechazada',prio:2,txt:'Ups, no pasa… 😬',
+    body:`<div class="tpv"><span>DENEGADA</span><b>${fmt(totalOf(c))}</b></div>`,time:8,def:'cash',
+    choices:[{t:'💶 En efectivo',k:'cash',cls:'go',key:'E',stamp:'EFECTIVO',sc:'ok',fx:'💶'},{t:'🔁 Probar otra vez',k:'retry',key:'R'}],
+    alive:()=>front()===c&&c.phase==='pay'&&c.cardNo,
+    onPick:k=>{
+      if(k!=='retry'){cash('');return;}
+      if(front()!==c)return;c.cardNo=0;run.card=true;sBeep();renderRegister();
+      setTimeout(()=>{if(!run||run.over||front()!==c||c.phase!=='pay')return;run.card=false;
+        if(Math.random()<0.35){sOk();toast('¡Ahora sí ha pasado!','good');finish(c,false);}
+        else{c.p=Math.max(0,c.p-c.max*0.1);sBad();cash('Tampoco. Pagará en efectivo.');}},1500);
+    }})&&c.cardNo&&!sceneCur)cash('');
+}
+/* Alguien se cuela (PERS colon): la cola protesta. Mandarle al final (+0,05 de reputación) o dejarlo (−12 % de paciencia al resto). */
+function cutScene(nc){
+  const pen=()=>{const i=run.queue.indexOf(nc);if(i<0)return;run.queue.slice(i+1).forEach(q=>{q.p=Math.max(1,q.p-q.max*0.12);});toast('Alguien se ha colado. La cola murmura…','bad');};
+  if(!tillOn()){pen();return;}
+  const b=run.queue[run.queue.indexOf(nc)+1];
+  scene({k:'cuela:'+nc.id,who:b?b.face:'🙋',sprite:b?b.id:null,head:'🛒 VITCHMARKET · COLA',name:'La cola',tag:'🚫 Se ha colado '+nc.face,prio:1,time:7,def:'let',
+    txt:'¡Eh, que yo estaba antes!',
+    choices:[{t:'👉 Al final de la cola',k:'end',cls:'go',key:'F',stamp:'AL FINAL',sc:'ok',fx:'👏'},{t:'🤷 Dejarlo',k:'let',key:'D'}],
+    alive:()=>run&&!run.over&&run.queue.indexOf(nc)>0,
+    onPick:k=>{if(!run||run.over)return;
+      if(k==='end'){const i=run.queue.indexOf(nc);if(i>0){run.queue.splice(i,1);run.queue.push(nc);}meta.rep=clamp(meta.rep+0.05,0,5);sOk();toast('Al final de la cola. La gente asiente.','good');}
+      else pen();
+      renderAll();}});
+}
 
 /* ---------- clientes ---------- */
 function pickProduct(arr){
@@ -2254,7 +2446,7 @@ async function fillRanking(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.17-68';
+const APPV='2026.11.17-69';
 /* Compara versiones por números («-9» < «-11»), no como texto. */
 const verCmp=(a,b)=>{const x=String(a).split(/[.-]/).map(Number),y=String(b).split(/[.-]/).map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
 try{const vt=document.createElement('div');vt.id='vtag';vt.textContent='v'+APPV;document.body.appendChild(vt);}catch(e){}
@@ -4478,14 +4670,13 @@ function goPay(){
   renderAll();
 }
 function payCard(){
-  const c=front();if(!c||c.phase!=='pay'||c.pay!=='card'||run.card)return;
+  const c=front();if(!c||c.phase!=='pay'||c.pay!=='card'||run.card||c.cardNo)return;
   run.card=true;sBeep();renderRegister();
   const mine=c.id;
   setTimeout(()=>{
     if(!run||run.over||!front()||front().id!==mine)return;
     if(!c.declined&&Math.random()<((PERS[c.pk]||{}).decl||0.08)){
-      c.declined=true;c.pay='cash';c.given=cashGiven(totalOf(c));run.card=false;
-      toast('Tarjeta rechazada. Pagará en efectivo.','bad');sBad();renderAll();
+      c.declined=true;c.cardNo=1;run.card=false;sBad();renderAll();cardScene(c);
     }else{sOk();finish(c,false);}
   },1200);
 }
@@ -4597,13 +4788,8 @@ function renderRegister(){
   if(c.phase==='complaint'){
     const q=c.complaint;
     el.innerHTML=`<div class="led"><small>RECLAMACIÓN</small><b>📣</b></div>
-      <div class="idcard"><h4>${q.title.toUpperCase()}</h4><div>«${q.t}»</div>
-      <div class="hintline">Dinero y cobros → Backoffice · Trato y redes → RR.PP. · Agotados → Almacén · Dudas → tú</div>
-      <div class="routes"><button class="btn go" data-act="route" data-d="atc"><i class="kk">1</i>Resolver yo (ATC)</button>
-      <button class="btn" data-act="route" data-d="back"><i class="kk">2</i>Backoffice</button>
-      <button class="btn" data-act="route" data-d="rrpp"><i class="kk">3</i>RR.PP.</button>
-      <button class="btn" data-act="route" data-d="alm"><i class="kk">4</i>Almacén</button>
-      <button class="btn no" data-act="route" data-d="no"><i class="kk">5</i>Rechazar</button></div></div>${supBtn()}${KBD}`;
+      <div class="receipt"><div class="rhead">🛒 VITCHMARKET · CAJA ${run&&run.remote?run.till:3}<small>${clockOf(run.t,run.dur)}</small></div><div class="ln mute2"><span>📣 ${esc(q.title)}</span><span></span></div></div>
+      <div class="paywait">Viene a reclamar: decide adónde va.</div>${supBtn()}${KBD}`;
     return;
   }
   const t=totalOf(c);
@@ -4612,17 +4798,13 @@ function renderRegister(){
   let h=`<div class="led"><small>TOTAL</small><b>${fmt(t)}</b></div>
     <div class="receipt"><div class="rhead">🛒 VITCHMARKET · CAJA ${run&&run.remote?run.till:3}<small>${c.lab?esc(c.lab.replace(/<[^>]+>/g,''))+' · ':''}${clockOf(run.t,run.dur)}</small></div>${lines||'<div class="ln mute2"><span>Pasa los productos por el lector…</span><span></span></div>'}</div>`;
   if(c.phase==='scan'){
-    if(run.pendingId){
-      h+=`<div class="idcard"><h4>DNI · COMPROBAR EDAD</h4>
-        <dl><dt>Nacimiento</dt><dd>${dmy(c.birth)}</dd><dt>Hoy</dt><dd>${dmy(TODAY)}</dd></dl>
-        <div class="row"><button class="btn go" data-act="idyes">Vender</button><button class="btn no" data-act="idno">Negar venta</button></div></div>`;
-    }else{
-      const ready=!c.items.some(i=>!i.scanned&&!i.denied);
+    {
+      const ready=!run.pendingId&&!c.items.some(i=>!i.scanned&&!i.denied);
       h+=`<div class="row"><button class="btn ${c.bag?'on':''}" data-act="bag">🛍️ Bolsa +0,15 €</button>
         <button class="btn go" data-act="pay" ${ready?'':'disabled'}>Cobrar ▸</button></div>`;
     }
   }else if(c.pay==='card'){
-    h+=run.card?`<div class="paywait">Procesando…</div><div class="proc"><i></i></div>`
+    h+=c.cardNo?`<div class="paywait">💳 Tarjeta rechazada…</div>`:run.card?`<div class="paywait">Procesando…</div><div class="proc"><i></i></div>`
       :`<button class="btn go big" data-act="card">💳 Cobrar con tarjeta</button>`;
     h+=`<div class="row"><button class="btn ${c.bag?'on':''}" data-act="bag" ${run.card?'disabled':''}>🛍️ Bolsa +0,15 €</button></div>`;
   }else{
@@ -4638,7 +4820,7 @@ function renderRegister(){
   }
   el.innerHTML=h+supBtn()+KBD;
 }
-function renderAll(){renderHud();renderQueue();renderBelt();renderRegister();renderTasks();if(typeof renderDept==='function')renderDept();}
+function renderAll(){renderHud();renderQueue();renderBelt();renderRegister();renderTasks();if(typeof renderDept==='function')renderDept();sceneSync();}
 
 /* ---------- cámaras de seguridad: la tienda vista desde arriba (canvas 2D, sin librerías) ----------
    camModel() resume quién está dónde (sirve igual en solitario, para el jefe y, publicado en state.cam,
@@ -5441,7 +5623,7 @@ function step(ts,hid){
   if(room&&(room.waitRelay||room.yieldR||room.stopping))return;
   quiet=!!(room&&room.sim);
   const dt=Math.min(0.1,(ts-last)/1000||0);last=ts;
-  if(run&&!run.over&&!guide){
+  if(run&&!run.over&&!guide&&!scenePaused()){
     run.t+=dt;
     if(!run.closing&&run.t>=run.dur){run.closing=true;renderQueue();}
     if(!run.closing){
@@ -5453,8 +5635,7 @@ function step(ts,hid){
           else if(run.queue.length>=5){nc.items.forEach(ret);}
           else if(nc.cut&&run.queue.length>=2){
             run.queue.splice(1,0,nc);
-            run.queue.slice(2).forEach(q=>{q.p=Math.max(1,q.p-q.max*0.12);});
-            toast('Alguien se ha colado. La cola murmura…','bad');
+            cutScene(nc);
           }else run.queue.push(nc);
           const ia=Math.max(5.5,9.5-meta.day*0.6);
           run.next=rnd(ia*0.7,ia*1.3);
@@ -5490,7 +5671,7 @@ function step(ts,hid){
   if(isHost())pubState(false);
   if(hid)return;
   if(tab!=='caja'&&!isMember()&&(ts-(window._dT||0))>700){window._dT=ts;renderDept();if(tab==='dir')dirLive();}
-  drawCams();drawIso();if(tab!=='caja'&&!isMember())drawDeptScene();till3d();if((iso.infoT=(iso.infoT||0)+1)%20===0)isoInfo();
+  sceneSync();drawCams();drawIso();if(tab!=='caja'&&!isMember())drawDeptScene();till3d();if((iso.infoT=(iso.infoT||0)+1)%20===0)isoInfo();
 }
 /* Con la pestaña oculta el navegador no pinta (no hay requestAnimationFrame): si llevas la tienda, se sigue moviendo en segundo plano. */
 /* El reloj de fondo va en un Worker: los temporizadores de la pestaña se congelan (Chrome los baja a uno por minuto
@@ -5518,6 +5699,7 @@ document.addEventListener('change',e=>{
 });
 function onClick(e){
   const b=e.target.closest('[data-act]');if(!b||b.disabled)return;
+  if(sceneCur&&b.closest('#scene'))sceneCur.hit=b.dataset.k;
   const a=b.dataset.act;
   if(run&&run.away&&['scan','idyes','idno','bag','pay','card','den','clear','deliver','route'].includes(a)){toast('Estás en el pasillo. Termina y vuelve a la caja.','bad');return;}
   if((a==='start'||a==='restart')&&$('#pname'))setPlayerName($('#pname').value);
@@ -5567,6 +5749,7 @@ function onClick(e){
   else if(a==='return')returnTill();
   else if(a==='supact')supAct(+b.dataset.e,b.dataset.k);
   else if(a.startsWith('mg'))mgAct(a,b);  else if(a==='scan')scanItem(+b.dataset.id);
+  else if(a==='scene')scenePick(b.dataset.k);
   else if(a==='idyes')idDecision(true);
   else if(a==='idno')idDecision(false);
   else if(a==='bag')toggleBag();
@@ -5603,6 +5786,12 @@ document.addEventListener('keydown',ev=>{
   const tg=ev.target;if(tg&&(tg.tagName==='INPUT'||tg.tagName==='TEXTAREA'||tg.tagName==='SELECT'||tg.isContentEditable))return;
   if(ev.ctrlKey||ev.metaKey||ev.altKey)return;
   const k=ev.key.toLowerCase(),show=id=>{const x=$(id);return x&&x.classList.contains('show');};
+  /* Escena abierta: sus teclas, Intro = la primera opción y Esc = la de por defecto (si se puede). */
+  if(sceneCur&&show('#scene')&&!sceneBlocked()){
+    if(k==='escape'){if(sceneCur.def!=null&&sceneCur.esc!==false){ev.preventDefault();scenePick(sceneCur.def);}return;}
+    const bs=[...document.querySelectorAll('#scene .scn-ch button:not([disabled])')],el=k==='enter'?bs[0]:bs.find(x=>x.dataset.key===k);
+    if(el){ev.preventDefault();if(document.activeElement&&document.activeElement.blur)document.activeElement.blur();el.click();return;}
+  }
   if(k==='escape'){const x=document.querySelector('#mg.show [data-act=leavecancel],#guide.show [data-act=gclose],#overlay.show .gs-pick [data-act=wpick]');if(x){ev.preventDefault();x.click();}return;}
   /* En el puesto de trabajo del empleado real, 1–6 son los botones de la barra de acciones. */
   if(isMember()&&show('#overlay')&&!show('#mg')&&!show('#guide')&&/^[1-6]$/.test(k)){const b=document.querySelectorAll('#overlay .gs-bar2 .hk')[+k-1];if(b&&!b.disabled){ev.preventDefault();b.click();}return;}
