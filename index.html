@@ -1338,6 +1338,17 @@ body.rem .isostore{display:none!important}
 .scn-badge i{align-self:stretch;writing-mode:vertical-rl;transform:rotate(180deg);background:#e5383b;color:#fff;font-style:normal;font-family:var(--display);font-size:9px;letter-spacing:1px;padding:4px 3px;text-align:center}
 .scn-badge>span{font-size:30px}.scn-badge b{display:block;font-family:var(--display);color:#4a1414;font-size:15px}.scn-badge small{font-size:12px;color:#7a5a5a}
 @media (prefers-reduced-motion:reduce){.scn-post .hot,.scn-tv .rec{animation:none}}
+#scene.top{z-index:22;top:0}
+/* papeles de RR.HH. y Dirección: ficha, acta, carta, oferta */
+.sdoc{background:#fff;border:2px solid #e3cccc;border-radius:8px;padding:6px 10px;font-size:13px;color:#3a2323;box-shadow:0 2px 0 #e3cccc}
+.sdoc h6{margin:0 0 4px;font-family:var(--display);font-size:11px;letter-spacing:1px;color:#c51d22;text-transform:uppercase;display:flex;justify-content:space-between;gap:6px}
+.sdoc dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:2px 10px;align-items:baseline}.sdoc dt{font-size:11px;color:#7a5a5a}.sdoc dd{margin:0;font-weight:800}
+.sdoc .pix,.sbig{font-family:var(--pix)}.sbig{font-size:28px;line-height:1;color:#4a1414}.sbig.neg{color:#d62f3a}.sbig.pos{color:#1f9a55}
+.sdoc.fich{background:repeating-linear-gradient(180deg,#fffbe0 0 17px,#f0e2a8 17px 18px);border-color:#c9a64a;box-shadow:0 2px 0 #c9a64a}.sdoc.fich dd{font-family:var(--pix);font-size:17px}
+.sdoc.acta{border-color:#2f6db5;box-shadow:0 2px 0 #2f6db5;background:linear-gradient(180deg,#eef4fb,#fff)}.sdoc.acta h6{color:#1d4f8f}
+.sdoc.carta{background:repeating-linear-gradient(180deg,#fffdf4 0 19px,#e9e2cf 19px 20px);border-color:#cbbf9f;box-shadow:0 2px 0 #cbbf9f;font-family:Georgia,serif;font-size:12.5px;line-height:20px;max-height:180px;overflow:auto}
+.sdoc.oferta{display:flex;align-items:center;gap:12px;border-style:dashed;border-color:#c51d22}.sdoc.oferta .it{font-size:40px}.sdoc s{color:#9a7a7a}
+.splaca{display:inline-block;background:linear-gradient(180deg,#ffe07a,#d4a800);color:#3a2a00;border:2px solid #8a6d00;border-radius:50% 50% 45% 45%;padding:0 8px;font-size:11px;font-weight:800}
 @keyframes scnIn{from{transform:translateY(18px) scale(.94);opacity:0}}
 @keyframes scnOut{to{transform:translateY(10px) scale(.97);opacity:0}}
 @keyframes scnBelt{to{background-position:12px 0}}
@@ -1347,7 +1358,8 @@ body.rem .isostore{display:none!important}
 @media (prefers-reduced-motion:reduce){.scn-wrap,#scene.out .scn-wrap,.scn-belt,.scn-stamp,.scn-pa .scn-head span:first-child{animation:none}.scn-fx{display:none}.crash{animation:none}}
 @media (max-width:820px){#scene{align-items:flex-end;padding:8px 8px 12px}.scn{padding:0 10px 18px;gap:7px}.scn-head{margin:0 -10px;padding:6px 10px;font-size:11px}.scn-belt{margin:-7px -10px 0}
   .scn-who{width:64px;height:64px;font-size:40px}.scn-who canvas{width:50px;height:47px}.scn-face{width:28px;height:28px;font-size:19px;right:-6px;bottom:-6px}
-  .scn-say{font-size:15px;padding:6px 10px}.scn-ch .btn{flex:1 1 40%;font-size:14px;min-height:44px}.scn-hint{font-size:11px}.scn-stamp{font-size:26px}}
+  .scn-say{font-size:15px;padding:6px 10px}.scn-ch .btn{flex:1 1 40%;font-size:14px;min-height:44px}.scn-hint{font-size:11px}.scn-stamp{font-size:26px}
+  .sdoc{font-size:12px;padding:5px 8px}.sbig{font-size:22px}.sdoc.carta{max-height:130px}.sdoc.oferta .it{font-size:30px}}
 @media (max-height:700px){.scn{gap:6px}.scn-main{gap:5px}.scn-who{width:56px;height:56px;font-size:34px}.scn-who canvas{width:44px;height:42px}.dnic-ph{height:42px;font-size:24px}}
 </style>
 </head>
@@ -1597,8 +1609,9 @@ function toastOut(el){if(el._out)return;el._out=1;clearTimeout(el._t);el.classLi
 let sceneCur=null,sceneTok=0;const sceneQ=[],sceneLast={};
 const sceneKind=k=>String(k).split(':')[0];
 const sceneOk=(k,gap)=>!(sceneLast[sceneKind(k)]&&performance.now()/1000-sceneLast[sceneKind(k)]<gap);
-const sceneBlocked=()=>['#overlay','#mg','#guide'].some(id=>{const x=$(id);return x&&x.classList.contains('show');});
-const scenePaused=()=>!!(sceneCur&&sceneCur.pause&&(!room||room.host)&&!sceneBlocked());
+/* over:true = puede salir encima de #overlay (la pantalla del empleado real es un overlay); #mg y la guía la siguen parando. */
+const sceneBlocked=s=>[s&&s.over?'':'#overlay','#mg','#guide'].some(id=>{const x=id&&$(id);return x&&x.classList.contains('show');});
+const scenePaused=()=>!!(sceneCur&&sceneCur.pause&&(!room||room.host)&&!sceneBlocked(sceneCur));
 function scene(o){
   if(!o||!o.k)return false;
   if(quiet){if(o.def!=null&&o.onPick)try{o.onPick(o.def);}catch(e){console.warn('scene',e);}return false;}
@@ -1609,25 +1622,26 @@ function scene(o){
   scenePump();return true;
 }
 function scenePump(){
-  const el=$('#scene');if(sceneCur||!sceneQ.length||sceneBlocked()||(el&&(el.classList.contains('hold')||el.classList.contains('out'))))return;
+  const el=$('#scene');if(sceneCur||!sceneQ.length||sceneBlocked({over:1})||(el&&(el.classList.contains('hold')||el.classList.contains('out'))))return;
   sceneQ.sort((a,b)=>(b.prio||0)-(a.prio||0));
-  let s;while((s=sceneQ.shift())&&s.alive&&!s.alive()){}
-  if(s)sceneShow(s);
+  const bl=sceneBlocked();let s;
+  for(;;){const i=sceneQ.findIndex(x=>!bl||x.over);if(i<0)return;s=sceneQ.splice(i,1)[0];if(!(s.alive&&!s.alive()))break;}
+  sceneShow(s);
 }
 function sceneShow(s){
   const el=$('#scene');if(!el)return;
   sceneCur=s;sceneTok++;s.t0=performance.now();sceneLast[sceneKind(s.k)]=s.t0/1000;
   const h=document.querySelector('#app .hud'),r=h&&h.getBoundingClientRect();
   el.style.setProperty('--scnT',(r&&r.bottom>0&&r.bottom<innerHeight/3?Math.round(r.bottom):0)+'px');
-  const ch=(s.choices||[]).map(c=>`<button class="btn ${c.cls||''}" data-act="${c.act||'scene'}" data-k="${c.k}"${c.key?` data-key="${String(c.key).toLowerCase()}"`:''} ${c.attrs||''}>${c.key?`<i class="kk">${c.key}</i>`:''}${c.t}</button>`).join('');
+  const ch=(s.choices||[]).map(c=>`<button class="btn ${c.cls||''}" data-act="${c.act||'scene'}" data-k="${c.k}"${String(c.k)===String(s.def)?' data-def="1"':''}${c.key?` data-key="${String(c.key).toLowerCase()}"`:''} ${c.attrs||''}>${c.key?`<i class="kk">${c.key}</i>`:''}${c.t}</button>`).join('');
   const spr=s.sprite!=null&&PIX.ok,look=s.look||'ticket';
   el.innerHTML=`<div class="scn-wrap"><div class="scn scn-${look}" aria-label="${esc(String(s.name||'').replace(/<[^>]+>/g,''))}">
     <div class="scn-head"><span>${look==='pa'?'🔔 ding-dong · ':''}${s.head||'🛒 VITCHMARKET'}</span>${s.tag?`<span class="scn-tag">${s.tag}</span>`:''}</div><div class="scn-belt"></div>
     <div class="scn-row"><div class="scn-who${spr?' spr':''}">${spr?'<canvas width="18" height="17"></canvas><span class="scn-face">'+(s.who||'🙂')+'</span>':(s.who||'🙂')}</div>
     <div class="scn-main">${s.name?`<b class="scn-name">${s.name}</b>`:''}<div class="scn-say">${s.txt||''}</div>${s.body||''}</div></div>
     <div class="scn-ch">${ch}</div>${s.time?'<div class="scn-bar"><i></i></div>':''}</div></div>`;
-  if(spr)try{const cv=el.querySelector('.scn-who canvas'),g=cv.getContext('2d');g.imageSmoothingEnabled=false;pPerson(g,9,16,{ch:pChar(s.sprite),dir:'d',s:1});}catch(e){}
-  el.classList.remove('out','hold');el.classList.add('show');
+  if(spr)try{const cv=el.querySelector('.scn-who canvas'),g=cv.getContext('2d');g.imageSmoothingEnabled=false;pPerson(g,9,16,{ch:s.role==='alm'?PWORK:pChar(s.sprite),dir:'d',s:1,staff:!!s.role,role:s.role});}catch(e){}
+  el.classList.remove('out','hold');el.classList.toggle('top',!!s.over);el.classList.add('show');
 }
 function sceneClose(){
   const el=$('#scene'),s=sceneCur;sceneCur=null;if(!el)return;
@@ -1645,7 +1659,7 @@ function scenePick(k){const s=sceneCur;if(!s)return;s.hit=k;sceneClose();if(s.on
 function sceneSync(){
   for(let i=sceneQ.length-1;i>=0;i--)if(sceneQ[i].alive&&!sceneQ[i].alive())sceneQ.splice(i,1);
   if(sceneCur&&sceneCur.alive&&!sceneCur.alive())sceneClose();
-  if(sceneCur&&sceneBlocked()){const el=$('#scene');sceneQ.unshift(sceneCur);sceneCur=null;sceneTok++;if(el){el.classList.remove('show','out','hold');el.innerHTML='';}}
+  if(sceneCur&&sceneBlocked(sceneCur)){const el=$('#scene');sceneQ.unshift(sceneCur);sceneCur=null;sceneTok++;if(el){el.classList.remove('show','out','hold');el.innerHTML='';}}
   try{cajaScenes();}catch(e){console.warn('cajaScenes',e);}
   scenePump();
   if(sceneCur&&sceneCur.tick)try{sceneCur.tick();}catch(e){}
@@ -1791,6 +1805,183 @@ function praiseScene(e,t){
       if(k==='tell'){e.moral=clamp(e.moral+8,0,100);e.st.fel++;meta.rep=clamp(meta.rep+0.03,0,5);logE(e,'Un cliente le felicitó y se lo dijiste');toast(e.face+' '+e.name+' se viene arriba 😄','good');sOk();}
       else{e.moral=clamp(e.moral+2,0,100);logE(e,'Un cliente le felicitó');}
       renderAll();}});
+}
+/* ---------- escenas de RR.HH. y Dirección: solo las ve quien lleva la tienda (jefe o en solitario).
+   El encargado de relevo, el cajero real y el resto aplican lo de siempre (def). ---------- */
+const bossScn=()=>!!(run&&!run.over&&!run.remote&&!quiet&&!isMember()&&!(room&&room.sim));
+/* Decisiones serias: paran el turno en solitario; en la tienda compartida hay gente currando, así que caducan a los 25 s. */
+const serio=()=>room?{time:25}:{pause:true};
+function bScene(o){if(bossScn())return scene(o);if(o.onPick&&o.def!=null)try{o.onPick(o.def);}catch(e){console.warn('scene',e);}return false;}
+/* La escena abierta «retiene» su aviso: nadie lo coge solo mientras decides. */
+const sceneHold=id=>!!(sceneCur&&sceneCur.tid===id);
+const empTag=e=>esc(e.name)+' '+flag(e);
+/* Sacar a alguien de la tienda a mitad de turno (dimisión o despido): suelta su aviso o la Caja 3. */
+function dropEmp(e){
+  const d=run&&run.duty&&run.duty[e.id];
+  if(d&&(d.busy||(run.away&&run.away.cover===e.id)))pullOff(e);
+  meta.emp=meta.emp.filter(x=>x!==e);if(run&&run.duty)delete run.duty[e.id];
+}
+/* 1 · Candidato en la puerta (entrevista sin nadie de RR.HH.): entrevistarle ya, que espere o hoy no. */
+function candScene(t){
+  const c=t.cand;if(!c)return;
+  bScene({k:'cand:'+t.id,tid:t.id,who:c.face,sprite:'c'+t.id,head:'🚪 PUERTA DE PERSONAL',tag:'🧑‍💼 Candidato',name:empTag(c),prio:1,time:14,def:'wait',
+    txt:'Hola… vengo por la vacante de <b>'+ROLES[c.role].n+'</b>.',
+    body:`<div class="sdoc"><h6><span>📄 Currículum</span><span>${c.exp} ${c.exp===1?'año':'años'} de experiencia</span></h6><dl><dt>Antes</dt><dd>${esc(c.prev)}</dd><dt>Pide</dt><dd class="pix">${monthTxt(c.wage)}</dd></dl></div>`,
+    choices:[{t:'🧑‍💼 Entrevistarle ya',k:'now',cls:'go',key:'E'},{t:'⏳ Que espere',k:'wait',key:'W'},{t:'🚪 Hoy no',k:'no',cls:'no',key:'N',stamp:'HOY NO',sc:'bad'}],
+    alive:()=>run&&!run.over&&run.tasks.includes(t)&&!t.who,
+    onPick:k=>{if(!run||run.over||!run.tasks.includes(t)||t.who)return;
+      if(k==='now')assignTask(t.id,'me');
+      else if(k==='wait'){t.dl=Math.max(t.dl,run.t+45);if(bossScn())toast('🪑 '+c.name+' espera en la puerta.');}
+      else{run.tasks=run.tasks.filter(x=>x!==t);toast('🚪 '+c.name+' se va. Otro día será.');renderAll();}}});
+}
+/* 2 · Bronca: separarlos tú (minijuego de siempre), que lo arregle RR.HH. o ni caso (−ánimo a los dos y un poco al resto). */
+function feudScene(t){
+  const fd=t.fd;if(!fd)return;const ea=empById(fd.a.id);
+  bScene({k:'feud:'+t.id,tid:t.id,who:fd.a.face,sprite:'s'+fd.a.id,role:ea&&ea.role,look:'pa',head:'¡BRONCA EN EL ALMACÉN!',tag:'🥊 '+esc(fd.a.name)+' vs '+esc(fd.b.name),
+    name:esc(fd.a.name)+' '+fd.b.face+' '+esc(fd.b.name),prio:1,time:12,def:'rrhh',
+    txt:'«¡Es que '+esc(fd.why)+'!» Y a gritos, con clientes delante.',
+    choices:[{t:'🛑 Separarlos yo',k:'me',cls:'go',key:'S'},{t:'🙉 Que lo arregle RR.HH.',k:'rrhh',key:'R'},{t:'🙈 Ni caso',k:'no',cls:'no',key:'N',stamp:'NI CASO',sc:'bad'}],
+    alive:()=>run&&!run.over&&run.tasks.includes(t)&&!t.who,
+    onPick:k=>{if(!run||run.over||!run.tasks.includes(t)||t.who)return;
+      if(k==='me'){assignTask(t.id,'me');return;}
+      if(k==='rrhh'){const c=staffOf('rrhh').filter(e=>isFree(e)&&!e.real&&!run.duty[e.id].slack).sort((a,b)=>b.rap-a.rap)[0];
+        if(c){assignTask(t.id,String(c.id));if(bossScn())toast(c.face+' '+c.name+' se los lleva a la sala de descanso.');}return;}
+      run.tasks=run.tasks.filter(x=>x!==t);tStat(t,false);
+      [fd.a,fd.b].forEach(v=>{const e=empById(v.id);if(e){e.moral=clamp(e.moral-6,0,100);logE(e,'Bronca con un compañero; nadie hizo nada');}});
+      meta.emp.forEach(e=>{if(working(e))e.moral=clamp(e.moral-1,0,100);});
+      toast('🙈 Siguen a gritos. El ambiente se enrarece.','bad');sBad();renderAll();}});
+}
+/* 3 · Dimisión (ánimo < 15): +5 % para que se quede (más fácil cuanto menos hundido esté) o suerte. */
+function quitScene(e){
+  const R=run;
+  bScene({k:'dimite:'+e.id,who:e.face,sprite:'s'+e.id,role:e.role,head:'🗂️ RR.HH. · DESPACHO',tag:'📝 Dimisión',name:empTag(e),prio:4,...serio(),def:'bye',
+    txt:pick(['Me voy, jefe. No puedo más.','Lo dejo. Aquí no hay quien trabaje.','Me ha salido otra cosa. Me piro.']),
+    body:`<div class="sdoc"><h6><span>📝 Carta de dimisión</span><span>Ánimo ${mood(e)}</span></h6><dl><dt>Puesto</dt><dd>${ROLES[e.role].n} · ${e.days} turnos</dd><dt>Cobra</dt><dd class="pix">${monthTxt(e.wage)}</dd><dt>Con +5%</dt><dd class="pix">${monthTxt(Math.round(e.wage*1.05))}</dd></dl></div>`,
+    choices:[{t:'💶 +5% y te quedas',k:'raise',cls:'go',key:'Q'},{t:'👋 Suerte',k:'bye',cls:'no',key:'S',stamp:'BAJA',sc:'bad'}],
+    alive:()=>run===R&&!R.over&&meta.emp.includes(e),
+    onPick:k=>{if(run!==R||!meta.emp.includes(e))return;
+      if(k==='raise'&&Math.random()<0.35+e.moral/40-(e.pers==='quejica'?0.1:0)){
+        e.wage=Math.round(e.wage*1.05);e.moral=clamp(e.moral+20,0,100);logE(e,'Quería irse; se queda con +5%');sOk();toast('💶 '+e.name+' se queda ('+monthTxt(e.wage)+').','good');renderAll();return;}
+      dropEmp(e);toast(k==='raise'?'Ni con +5%: '+e.name+' se va.':'👋 '+e.name+' ha dejado el trabajo.','bad');sBad();renderAll();}});
+}
+/* 4 · Retraso: tarjeta de fichaje. Tranquilo (+ánimo) o toque (cuenta como amonestación para un despido). */
+function lateScene(e){
+  if(!bossScn()||!sceneOk('tarde',90))return false;
+  const R=run;
+  return scene({k:'tarde:'+e.id,who:e.face,sprite:'s'+e.id,role:e.role,head:'⏰ FICHAJE · ENTRADA DE PERSONAL',tag:'Llega tarde',name:empTag(e),prio:1,time:9,def:'ok',
+    txt:pick(['Perdón, el bus…','Ay, jefe, el metro…','No sonó el despertador, lo juro.','Había un atasco tremendo…']),
+    body:`<div class="sdoc fich"><h6><span>🕘 Tarjeta de fichaje</span><span>${ROLES[e.role].n}</span></h6><dl><dt>Entrada</dt><dd>09:00</dd><dt>Fichado</dt><dd style="color:#d62f3a">${clockOf(run.t,run.dur)}</dd><dt>Toques</dt><dd>${e.warn||0}</dd></dl></div>`,
+    choices:[{t:'👍 Tranquilo',k:'ok',cls:'go',key:'T',stamp:'VALE',sc:'ok',fx:'💛'},{t:'⚠️ Toque',k:'warn',cls:'no',key:'W',stamp:'TOQUE',sc:'bad'}],
+    alive:()=>run===R&&!R.over&&meta.emp.includes(e),
+    onPick:k=>{if(!meta.emp.includes(e))return;
+      if(k==='warn'){e.warn=(e.warn||0)+1;e.moral=clamp(e.moral-8,0,100);e.focus=Math.max(e.focus||0,2);logE(e,'Toque por llegar tarde');toast('⚠️ Toque a '+e.name+' (lleva '+e.warn+').','bad');}
+      else e.moral=clamp(e.moral+3,0,100);}});
+}
+/* 5 · Hurto pillado (evento del turno, ver prepShift): despedir (carta con liquidación), toque por escrito o vista gorda. */
+function theft(e,v){
+  meta.money-=v;
+  if(Math.random()>=0.45)return;
+  const rec=()=>{e.st.robo=(e.st.robo||0)+1;logE(e,'Pillado/a llevándose '+fmt(v));};
+  if(!bossScn()){rec();toast('🕵️ '+e.name+' se llevaba '+fmt(v)+'. Queda en su ficha.','bad');return;}
+  const R=run;
+  scene({k:'robo:'+e.id,who:e.face,sprite:'s'+e.id,role:e.role,head:'📹 CÁMARA 3 · CAJÓN',tag:'🕵️ Pillado/a',name:empTag(e),prio:4,...serio(),def:'warn',
+    txt:pick(['Iba a devolverlo, jefe, lo juro…','¿Esto? Es un préstamo…','No es lo que parece.']),
+    body:`<div class="sdoc acta"><h6><span>📹 Grabación</span><span class="pix">${clockOf(run.t,run.dur)}</span></h6><dl><dt>Se llevaba</dt><dd class="sbig neg">${fmt(v)}</dd><dt>Toques previos</dt><dd>${e.warn||0}</dd><dt>Hurtos en su ficha</dt><dd>${hist(e).robo||0}</dd></dl></div>`,
+    choices:[{t:'🔥 Despedir',k:'fire',cls:'no',key:'D',stamp:'DESPEDIDO',sc:'bad'},{t:'⚠️ Toque por escrito',k:'warn',cls:'go',key:'T',stamp:'AMONESTADO',sc:'bad'},{t:'🙈 Vista gorda',k:'blind',key:'V'}],
+    alive:()=>run===R&&meta.emp.includes(e),
+    onPick:k=>{if(!meta.emp.includes(e))return;
+      if(k==='blind'){e.hon=Math.max(0,(e.hon==null?0.5:e.hon)-0.1);toast('🙈 No has visto nada. '+e.name+' tampoco.','bad');return;}
+      rec();meta.money+=v;
+      if(k==='warn'){e.warn=(e.warn||0)+1;e.moral=clamp(e.moral-10,0,100);e.focus=Math.max(e.focus||0,3);logE(e,'Toque por escrito por hurto');toast('⚠️ Devuelve '+fmt(v)+' y se lleva un toque por escrito.','bad');renderAll();return;}
+      fireNow(e,'robo');}});
+}
+/* Despido en el momento (mismo cálculo legal que en la reunión) y la carta en otra escena. */
+function fireNow(e,r){
+  const d=run&&run.duty&&run.duty[e.id];if(d&&(d.busy||(run.away&&run.away.cover===e.id)))pullOff(e);
+  const o=fireCore(e,r);if(run&&run.duty)delete run.duty[e.id];
+  sBad();renderAll();
+  scene({k:'carta:'+e.id,who:'✉️',head:'✉️ CARTA DE DESPIDO',tag:'🔥 '+FIRE[r].t.replace(/^\S+ /,''),name:empTag(e),prio:5,def:'ok',
+    txt:'Recoge tus cosas. Seguridad te acompaña a la puerta.',body:`<div class="sdoc carta">${o.L.join('<br>')}</div>`,
+    choices:[{t:'📁 Archivar',k:'ok',cls:'go',key:'A',stamp:'ARCHIVADO',sc:'ok'}]});
+}
+/* 6 · Petición de aumento a mitad de turno (rara; más los quejicas y los de poco ánimo). */
+function raiseScene(){
+  const ws=meta.emp.filter(e=>!e.real&&inStore(e)&&!(e.trial>0)&&e.days>=3&&e.askD!==meta.day);if(!ws.length)return;
+  const e=pick(ws.flatMap(x=>x.pers==='quejica'||x.moral<45?[x,x,x]:[x])),R=run,nw=Math.round(e.wage*1.05);e.askD=meta.day;
+  scene({k:'aum:'+e.id,who:e.face,sprite:'s'+e.id,role:e.role,head:'☕ SALA DE DESCANSO',tag:'💶 Quiere más',name:empTag(e),prio:1,time:14,def:'later',
+    txt:pick(['Jefe, ¿un minuto? Lo mío… un 5% más.','Con lo que curro, me merezco un 5%, ¿no?','La luz ha subido. Mi sueldo no.']),
+    body:`<div class="sdoc"><h6><span>💶 Nómina</span><span>${mood(e)} · ${e.days} turnos</span></h6><dl><dt>Ahora</dt><dd class="pix">${monthTxt(e.wage)}</dd><dt>Pide</dt><dd class="pix">${monthTxt(nw)}</dd><dt>Valoración</dt><dd>${verdict(e)}</dd></dl></div>`,
+    choices:[{t:'💶 Vale, +5%',k:'yes',cls:'go',key:'S',stamp:'+5%',sc:'ok',fx:'💶'},{t:'✋ Ahora no',k:'no',cls:'no',key:'N'},{t:'📅 En la reunión',k:'later',key:'R'}],
+    alive:()=>run===R&&!R.over&&meta.emp.includes(e),
+    onPick:k=>{if(!meta.emp.includes(e))return;
+      if(k==='yes'){e.wage=nw;e.moral=clamp(e.moral+20,0,100);logE(e,'Aumento del 5% a mitad de turno');toast('💶 '+e.name+': +5% ('+monthTxt(nw)+').','good');}
+      else if(k==='no'){e.moral=clamp(e.moral-(e.pers==='quejica'?20:12),0,100);logE(e,'Le negaste un aumento');toast(e.name+' vuelve a su puesto refunfuñando.','bad');}
+      else e.moral=clamp(e.moral-3,0,100);
+      renderAll();}});
+}
+/* 7 · Inspección por alcohol a menores: el acta con la multa y la reincidencia (la multa ya está cobrada en minorSale). */
+const canInsp=()=>!!(run&&!quiet&&!(room&&room.sim)&&(!room||room.host||run.remote));
+function inspScene(n,f,who){
+  return scene({k:'insp:'+n+':'+Date.now(),who:'👮',head:'🚔 INSPECCIÓN DE CONSUMO',tag:'🛡️ Placa 0451',name:'Inspectora Ruiz',prio:4,...serio(),def:'pay',
+    txt:esc(who.replace(/^h/,'H'))+' alcohol a un menor. Queda levantada acta.',
+    body:`<div class="sdoc acta"><h6><span>📋 Acta de infracción</span><span class="splaca">🛡️</span></h6><dl><dt>Infracción</dt><dd>${n>=3?'Muy grave':'Grave'}</dd><dt>Reincidencia</dt><dd>${n===1?'Primera vez':n+'.ª vez'}</dd><dt>Multa</dt><dd class="sbig neg">${fmt(f)}</dd><dt>Reputación</dt><dd>−1 ★</dd></dl></div>`,
+    choices:[{t:'😬 Pagar',k:'pay',cls:'no',key:'P',stamp:'MULTADO',sc:'bad',fx:'💸'}]});
+}
+/* 8 · Oferta de un comercial: un producto de los que menos quedan al 60 % del PVP si coges 2–4 lotes (pedido de verdad, llega mañana). */
+function offerScene(){
+  const way=id=>(meta.orders||[]).reduce((a,o)=>a+(+((o.items||{})[id])||0),0),qOf=x=>(meta.stock[x.id]||0)+(meta.back[x.id]||0)+way(x.id);
+  const p=pick(CAT.filter(x=>!x.age).sort((a,b)=>qOf(a)-qOf(b)).slice(0,10));if(!p)return;
+  const n=ri(2,4),u=Math.max(1,Math.round(p.p*0.6)),cost=n*6*u,norm=n*6*unitCost(p,'hac'),R=run;
+  if(meta.money<cost*3)return;
+  scene({k:'oferta:'+p.id,who:'🧑‍💼',head:'📞 COMERCIAL · DISTRIBUIDOR',tag:'🏷️ Oferta',name:pick(['Paco, comercial de Chollo Import','Mari, de Hacendado','Un comercial de Reparto Exprés']),prio:1,time:15,def:'no',
+    txt:'Te dejo '+p.e+' <b>'+esc(p.n)+'</b> al 60% si me coges '+n+' lotes. ¿Hace?',
+    body:`<div class="sdoc oferta"><span class="it">${p.e}</span><dl><dt>Lotes</dt><dd>${n} × 6 uds</dd><dt>A Hacendado</dt><dd><s>${fmt(norm)}</s></dd><dt>Oferta</dt><dd class="sbig pos">${fmt(cost)}</dd><dt>Os quedan</dt><dd>${qOf(p)} uds</dd></dl></div>`,
+    choices:[{t:'🤝 Trato hecho',k:'yes',cls:'go',key:'S',stamp:'PEDIDO',sc:'ok',fx:'📦'},{t:'🙅 No, gracias',k:'no',cls:'no',key:'N'}],
+    alive:()=>run===R&&!R.over,
+    onPick:k=>{if(k!=='yes'||run!==R||R.over)return;if(meta.money<cost){toast('No hay bote para eso.','bad');return;}
+      meta.money-=cost;noteBuy(cost);meta.orders.push({day:meta.day+1,sup:'hac',items:{[p.id]:n*6}});
+      toast('🤝 '+n*6+' uds de '+p.n+' a precio de chollo. Llegan el turno '+(meta.day+1)+'.','good');renderAll();}});
+}
+/* 9 · Charla antes de abrir tras un día de récord o un mal día: felicitar, bronca general o nada. */
+function dayTalk(){
+  const H=meta.hist||[],h=H[H.length-1];if(!h||h.d!==meta.day-1||meta.talkD===meta.day||!bossScn())return;
+  const prev=H.slice(0,-1),best=prev.length>=2&&h.n>0&&h.s>Math.max(...prev.map(x=>x.s)),bad=!best&&(h.n<-80000||(prev.length>=2&&h.n<0&&h.n<Math.min(...prev.map(x=>x.n))));
+  if(!best&&!bad)return;meta.talkD=meta.day;
+  const R=run,crew=()=>meta.emp.filter(e=>working(e));
+  scene({k:'charla:'+meta.day,who:'👑',head:'📣 CHARLA ANTES DE ABRIR',tag:best?'🎉 Récord':'📉 Mal día',name:'Tú, ante el equipo',prio:2,time:14,def:'nada',
+    txt:best?'Ayer, récord de ventas en caja. El equipo te mira.':'Ayer perdimos dinero. El equipo te mira.',
+    body:`<div class="sdoc"><h6><span>${best?'🏆 Ventas en caja':'📉 Resultado del día'}</span><span>Turno ${h.d}</span></h6><div class="sbig ${best?'pos':'neg'}">${fmt(best?h.s:h.n)}</div></div>`,
+    choices:[{t:best?'🎉 Felicitar al equipo':'💪 Ánimo, equipo',k:'fel',cls:'go',key:'F',stamp:best?'¡BRAVO!':'¡VAMOS!',sc:'ok',fx:best?'🎉':'💪'},{t:'📢 Bronca general',k:'bronca',cls:'no',key:'B',stamp:'¡ESPABILAD!',sc:'bad'},{t:'🤐 Nada',k:'nada',key:'N'}],
+    alive:()=>run===R&&!R.over,
+    onPick:k=>{if(k==='nada'||run!==R)return;const fel=k==='fel';
+      crew().forEach(e=>{e.moral=clamp(e.moral+(fel?(best?6:3):-6),0,100);if(!fel)e.focus=Math.max(e.focus||0,1);
+        if(e.real)note(e.real,fel?(best?'🎉 El jefe felicita al equipo: ¡ayer, récord de ventas!':'💪 El jefe: «Ayer fue mal día. Hoy, a por ello».'):'📢 Bronca general del jefe: «¡Ayer fue un desastre! Hoy, a espabilar».',!fel,'team');});
+      toast(fel?'El equipo sale con ganas (+ánimo).':'Caras largas, pero hoy van a tope (−ánimo, +rendimiento).',fel?'good':'bad');renderAll();}});
+}
+/* 10 · Dividendo: si hay beneficio repartible y la caja va holgada, como mucho cada 5 turnos, al abrir. */
+function divScene(){
+  if(!bossScn()||!canDiv()||meta.day-(meta.divAsk||-99)<5)return;
+  const d=divData();if(d.max<100000||meta.money-d.max/2<1500000)return;
+  meta.divAsk=meta.day;
+  const B=divYear(),net=p=>{const g=Math.floor(d.max*p/100);return g-irpfAh(B.divY,g);},R=run;
+  scene({k:'div:'+meta.day,who:'💼',head:'👑 TU BOLSILLO · GESTORÍA',tag:'💸 Dividendo',name:'Tu gestor',prio:1,time:16,def:'no',
+    txt:'El negocio da beneficio. ¿Te pagas algo?',
+    body:`<div class="sdoc"><h6><span>💸 Repartible</span><span>sin tocar capital</span></h6><div class="sbig pos">${fmt(d.max)}</div><div class="scn-hint">A tu bolsillo, ya con IRPF: 25% → ${fmt(net(25))} · 50% → ${fmt(net(50))}</div></div>`,
+    choices:[{t:'💶 25%',k:'25',cls:'go',key:'1',stamp:'PAGADO',sc:'ok',fx:'💶'},{t:'💰 50%',k:'50',cls:'go',key:'2',stamp:'PAGADO',sc:'ok',fx:'💰'},{t:'🏦 Reinvertir',k:'no',key:'R'}],
+    alive:()=>run===R&&!R.over,
+    onPick:k=>{if(k==='no'||run!==R||R.over)return;const g=Math.floor(divData().max*(+k)/100);if(g<=0)return;
+      divPay(g);run.div=(run.div||0)+g;run.mo-=g;renderAll();}});
+}
+/* 11 · Notas importantes del jefe en el navegador del empleado real (encima de su pantalla de trabajo). */
+const NOTE_SC={hire:['🪪 FICHA DE PERSONAL','🎉','🙌 ¡A currar!','CONTRATADO','ok','🎉'],fire:['✉️ CARTA DE DESPIDO','✉️','📦 Recoger mis cosas','DESPEDIDO','bad',''],
+  warn:['⚠️ AMONESTACIÓN','⚠️','😬 Entendido','TOQUE','bad',''],raise:['💶 NÓMINA','💶','🤑 ¡Gracias, jefe!','+5%','ok','💶'],
+  praise:['👏 DE PARTE DEL JEFE','👏','😊 ¡Gracias!','¡BIEN HECHO!','ok','⭐'],team:['📣 CHARLA DEL JEFE','📣','👍 Vale','','ok','']};
+function noteScene(v){
+  const S=NOTE_SC[v&&v.k];if(!S)return false;
+  const inf=room.info||{},bn=cleanName(((room.members||{})[inf.host]||{}).name||inf.name||'El jefe'),doc=v.k==='fire'||v.k==='hire';
+  return scene({k:'nota:'+v.ts,over:true,who:S[1],head:S[0],tag:'📻 '+esc(bn),name:doc?'VitchMarket, S.L.':esc(bn),prio:3,def:'ok',
+    txt:doc?(v.k==='fire'?'Lo sentimos. Aquí tienes tu carta.':'¡Bienvenido/a al equipo!'):esc(v.m),body:doc?`<div class="sdoc carta">${esc(v.m)}</div>`:'',
+    choices:[{t:S[2],k:'ok',cls:S[4]==='bad'?'no':'go',key:'A',stamp:S[3]||undefined,sc:S[4],fx:S[5]||undefined}]});
 }
 
 /* ---------- clientes ---------- */
@@ -1998,6 +2189,8 @@ function startDay(){
   if(tab!=='caja')autoTill();
   pubState(true);
   if(!(room&&room.sim))openGuide('j_'+tab,true);
+  /* Escenas de Dirección al abrir: charla tras un récord o un mal día y, de vez en cuando, el dividendo. */
+  try{dayTalk();divScene();}catch(e){console.warn('dirScenes',e);}
 }
 function frontChanged(){run.tray=[];run.card=false;run.pendingId=null;}
 function removeFront(){const c=run.queue.shift();if(run.remote&&c)run.done.push(c.id);frontChanged();}
@@ -2320,9 +2513,7 @@ function endDay(){
     if(!e.real&&working(e)){
       /* Desgaste por encaje: su puesto pide justo lo que peor se le da. */
       if(e[{atc:'trato',rrpp:'trato',rrhh:'trato',alm:'rap',back:'punt'}[e.role]]<0.35)e.moral=clamp(e.moral-2,0,100);
-      /* Merma interna: la poca honestidad (y el poco ánimo o la poca responsabilidad) acaba en hurtos pequeños; a veces se pilla. */
-      if(Math.random()<0.12*(1-(e.hon==null?0.6:e.hon))*(e.moral<40?1.8:1)*(1.3-(e.punt+e.act)/2)){const v=ri(3,40)*100;meta.money-=v;
-        if(Math.random()<0.45){e.st.robo=(e.st.robo||0)+1;logE(e,'Pillado/a llevándose '+fmt(v));toast('🕵️ '+e.name+' se llevaba '+fmt(v)+'. Queda en su ficha.','bad');}}
+      /* (Los hurtos pequeños ya no van aquí: son un evento del turno, ver prepShift y theft.) */
     }
   });
   if(meta.surv>0)meta.surv--;
@@ -2336,7 +2527,8 @@ function endDay(){
      se compensa en los turnos siguientes. Impuesto de sociedades de microempresa (19 %; 21 % pasados 50.000 € de base en el año),
      compensando pérdidas de turnos anteriores. */
   const S=run.sales||0,O=run.offS||0,OC=run.offC||0,F=run.fines||0,B=run.buy||0,K=res.back.cost+res.rrpp.cost+res.alm.cost;
-  const delta=meta.money-(run.m0==null?meta.money:run.m0),oth=delta-(S+O-OC-F-B-payroll-FX-INT-K);
+  /* Un dividendo pagado durante el turno (escena) no es del resultado: sale aparte, como el del cierre. */
+  const DV=run.div||0,delta=meta.money+DV-(run.m0==null?meta.money:run.m0),oth=delta-(S+O-OC-F-B-payroll-FX-INT-K);
   /* Lo comprado es stock (inversión), no gasto: el gasto es el coste de lo vendido (al precio de Hacendado). */
   const cogs=Math.round(S*SUPS[0].cf)+OC;
   const ivaR=Math.round(run.ivaR||0)+Math.round(O*OFF.iva/(1+OFF.iva));
@@ -2346,7 +2538,7 @@ function endDay(){
   let base=bai,is=0;if(base>0&&meta.bin>0){const u=Math.min(base,meta.bin);base-=u;meta.bin-=u;}if(bai<0)meta.bin=(meta.bin||0)-bai;
   if(base>0){const y=meta.isY||0,lo=Math.max(0,Math.min(base,5000000-y));is=Math.round(lo*0.19+(base-lo)*0.21);meta.isY=y+base;}
   meta.money-=iva+is;
-  const fin={S,O,ON:run.offN||0,F,B,P:payroll,PB:payB,FX,INT,K,oth,cogs,iva,ivaR,ivaS,cred:meta.ivaCred||0,bai,is,net:bai-is,cash:delta-iva-is,m0:run.m0};
+  const fin={S,O,ON:run.offN||0,F,B,P:payroll,PB:payB,FX,INT,K,oth,cogs,iva,ivaR,ivaS,cred:meta.ivaCred||0,bai,is,net:bai-is,cash:delta-iva-is,m0:run.m0,div:DV};
   /* Reserva legal (art. 274 LSC): el 10% del beneficio va a reserva hasta llegar al 20% del capital; solo cuando ya no hay pérdidas acumuladas. */
   {const rl=meta.resLeg||0;if(fin.net>0&&rl<CAP0*0.2&&balData().res>0){fin.rl=Math.min(Math.round(fin.net*0.1),CAP0*0.2-rl);meta.resLeg=rl+fin.rl;}}
   meta.hist=(meta.hist||[]).concat([{d:meta.day,s:S,n:fin.net}]).slice(-6);
@@ -2533,11 +2725,16 @@ const divYear=()=>{const B=bossOf(),yr=Math.floor((meta.day-1)/365);if(B.y!==yr)
 function payDiv(pct){
   if(!canDiv()||!run||!run.over)return;
   const d=divData(),g=Math.floor(d.max*pct/100);if(g<=0)return;
+  divPay(g);
+  if(lastEnd&&lastEnd.fin)lastEnd.fin.div=(lastEnd.fin.div||0)+g;
+  saveGame(true);
+  renderHud();rerenderScreen();
+}
+/* Paga g céntimos brutos al socio (la retención va a Hacienda). La escena del dividendo lo usa durante el turno (run.div). */
+function divPay(g){
   const B=divYear(),ret=irpfAh(B.divY,g);
   meta.money-=g;B.divY+=g;B.div+=g;B.ret+=ret;B.cash+=g-ret;
-  if(lastEnd&&lastEnd.fin)lastEnd.fin.div=(lastEnd.fin.div||0)+g;
-  saveGame(true);sOk();toast('👑 Dividendo de '+fmt(g)+': Hacienda retiene '+fmt(ret)+', a tu bolsillo '+fmt(g-ret)+'.','good');
-  renderHud();rerenderScreen();
+  sOk();toast('👑 Dividendo de '+fmt(g)+': Hacienda retiene '+fmt(ret)+', a tu bolsillo '+fmt(g-ret)+'.','good');
 }
 function bossHtml(){
   const B=divYear(),d=divData(),k=(ic,l,v,c)=>`<div class="kpi ${c||''}"><small>${ic} ${l}</small><b>${v}</b></div>`;
@@ -2673,7 +2870,7 @@ async function fillRanking(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.17-71';
+const APPV='2026.11.17-72';
 /* Compara versiones por números («-9» < «-11»), no como texto. */
 const verCmp=(a,b)=>{const x=String(a).split(/[.-]/).map(Number),y=String(b).split(/[.-]/).map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
 try{const vt=document.createElement('div');vt.id='vtag';vt.textContent='v'+APPV;document.body.appendChild(vt);}catch(e){}
@@ -2756,7 +2953,7 @@ function memberSubs(){
   fb.onValue(rRef('notes/'+room.uid),s=>{
     const v=s.val();if(!room||!v||(room.note&&v.ts===room.note.ts))return;
     const first=!room.note;room.note=v;
-    if(!first&&isMember()){toast('📣 '+v.m,v.bad?'bad':'good');v.bad?sBad():sOk();}
+    if(!first&&isMember()){if(!noteScene(v))toast('📣 '+v.m,v.bad?'bad':'good');v.bad?sBad():sOk();}
     if(isMember())renderMember();
   });
 }
@@ -2897,7 +3094,7 @@ function hireReal(u){
   const m=room.members[u];if(!isHost()||!m||!ROLES[m.apply])return;
   if(staffOf(m.apply).length>=ROLES[m.apply].max){toast('Ese puesto está completo.','bad');return;}
   fb.update(rRef('members/'+u),{role:m.apply,apply:null}).catch(e=>console.warn(e));fillVac(m.apply);if(run&&!run.over)run.hires=(run.hires||0)+1;
-  note(u,'¡Contratado/a en '+ROLES[m.apply].n+'! Empiezas ya, en periodo de prueba.');
+  note(u,'¡Contratado/a en '+ROLES[m.apply].n+'! Empiezas ya, en periodo de prueba.',false,'hire');
   sOk();toast('🎮 '+cleanName(m.name)+' contratado/a en '+ROLES[m.apply].n,'good');
 }
 function rejectReal(u){
@@ -2979,7 +3176,8 @@ async function takeOver(){
   toast('👑 Ahora mandas tú. Abre la tienda cuando quieras.','good');
 }
 function roomAct(a){if(isMember())fb.push(rRef('acts'),plain(Object.assign({uid:room.uid,ts:fb.serverTimestamp()},a))).catch(e=>{console.warn(e);toast('No se pudo enviar. ¿Sin conexión?','bad');});}
-function note(u,m,bad){if(isHost()&&u)fb.set(rRef('notes/'+u),{m:String(m).slice(0,200),bad:!!bad,ts:fb.serverTimestamp()}).catch(()=>{});}
+/* k (opcional) = tipo de nota importante (hire, fire, warn, raise, praise, team): en el navegador del empleado sale como escena (noteScene). */
+function note(u,m,bad,k){if(isHost()&&u)fb.set(rRef('notes/'+u),Object.assign({m:String(m).slice(0,k==='fire'?320:200),bad:!!bad,ts:fb.serverTimestamp()},k?{k}:{})).catch(()=>{});}
 async function loadRank(){
   if(Date.now()-rankAt<60000||!fb)return;rankAt=Date.now();
   try{
@@ -3464,10 +3662,11 @@ const keeper=(e,b)=>['Sí','Sí','Dudoso','No'][vIdx(e,b)];
 
 /* Al empezar el turno: quién viene, quién llega tarde, quién falta y qué incidentes tendrá. */
 function prepShift(){
-  const notes=[];
+  const notes=[],quit=[];
   meta.emp.slice().forEach(e=>{
     if(e.real){const m=room&&room.members[e.real],on=!!(m&&m.on);run.duty[e.id]={st:on?'ok':'gone',at:0,busy:0,task:null,slack:null,slackT:0,seen:0,cnt:on?1:0};if(on)e.st.shifts++;return;}
-    if(e.moral<15&&Math.random()<0.4){meta.emp=meta.emp.filter(x=>x!==e);notes.push(e.name+' ha dejado el trabajo');return;}
+    /* Dimisión: si llevas tú la tienda, te lo dice a la cara (escena) y viene a trabajar mientras decides. */
+    if(e.moral<15&&Math.random()<0.4){if(!bossScn()){meta.emp=meta.emp.filter(x=>x!==e);notes.push(e.name+' ha dejado el trabajo');return;}quit.push(e);}
     const d={st:'ok',at:0,busy:0,task:null,slack:null,slackT:0,seen:0};
     if(e.off===meta.day)d.st='off';
     else if(Math.random()<(e.moral<30?0.3:0.03)*(1.3-e.punt)){d.st='abs';e.st.abs++;notes.push(e.name+' no viene hoy');logE(e,'Faltó sin avisar');}
@@ -3476,9 +3675,12 @@ function prepShift(){
       e.st.shifts++;
       if(Math.random()<0.3*(1-e.trato)*(e.moral<50?1.6:1))run.ev.push({t:rnd(20,90),e:e.id,k:'quej'});
       else if(Math.random()<0.25*e.trato)run.ev.push({t:rnd(20,90),e:e.id,k:'fel'});
+      /* Merma interna: la poca honestidad (y el poco ánimo o la poca responsabilidad) acaba en un hurto pequeño durante el turno; a veces se pilla (theft). */
+      if(Math.random()<0.12*(1-(e.hon==null?0.6:e.hon))*(e.moral<40?1.8:1)*(1.3-(e.punt+e.act)/2))run.ev.push({t:rnd(25,85),e:e.id,k:'robo',v:ri(3,40)*100});
     }
     run.duty[e.id]=d;
   });
+  quit.forEach(quitScene);
   const wk=meta.emp.filter(working);
   if(wk.some(e=>e.role==='rrhh'))wk.forEach(o=>{o.moral=clamp(o.moral+2,0,100);});
   wk.forEach(e=>{const d={bromista:2,quejica:-2,capullo:-3}[e.pers];if(d)wk.forEach(o=>{if(o!==e)o.moral=clamp(o.moral+d,0,100);});});
@@ -3517,6 +3719,8 @@ function spawnTask(){
   run.tasks.push(t);
   toast(t.ic+' '+t.txt);beep(660,.12,'triangle',.05);
   renderTasks();
+  if(T.k==='cv'&&!hasRR&&sceneOk('cand',40))candScene(t);
+  if(T.k==='feud'&&sceneOk('feud',60))feudScene(t);
 }
 function assignTask(tid,who){
   if(!run||run.over)return;
@@ -3624,6 +3828,7 @@ function tickStaff(dt){
     if(run.over||t.who||t.k==='tk'||TLIFE-(t.dl-run.t)<3)return;
     /* No se lo quitan al jefe mientras decide: «Voy yo» pendiente o el desplegable de ese aviso abierto. */
     if(pendingLeave&&run.hold===t.id)return;
+    if(sceneHold(t.id))return;
     {const ae=document.activeElement;if(ae&&ae.classList&&ae.classList.contains('force')&&+ae.dataset.t===t.id)return;}
     const c=meta.emp.filter(e=>isFree(e)&&!e.real&&!run.duty[e.id].slack&&t.roles.includes(e.role));if(!c.length)return;
     const sc=e=>(t.lang&&e.langs.includes(t.lang)?2:0)+e.rap;
@@ -3654,10 +3859,15 @@ function tickStaff(dt){
     }
   }
   let dirty=false;
-  meta.emp.forEach(e=>{const d=run.duty[e.id];if(d&&d.st==='late'&&!d.ann&&run.t>=d.at){d.ann=1;dirty=true;toast(e.face+' '+e.name+' llega tarde. «Perdón, el bus…»','bad');}});
+  meta.emp.forEach(e=>{const d=run.duty[e.id];if(d&&d.st==='late'&&!d.ann&&run.t>=d.at){d.ann=1;dirty=true;if(!lateScene(e))toast(e.face+' '+e.name+' llega tarde. «Perdón, el bus…»','bad');}});
+  /* Escenas raras de Dirección y RR.HH.: un aumento que te piden y la oferta de un comercial. */
+  if(bossScn()&&!run.closing&&(run.scnT=(run.scnT||0)+dt)>40){run.scnT=0;
+    if(sceneOk('aum',300)&&Math.random()<0.15)raiseScene();
+    else if(meta.day>=2&&sceneOk('oferta',400)&&Math.random()<0.15)offerScene();}
   run.ev.forEach(v=>{
     if(v.done||run.t<v.t)return;v.done=1;
     const e=empById(v.e);if(!e||!inStore(e))return;
+    if(v.k==='robo'){theft(e,v.v);dirty=true;return;}
     logE(e,v.k==='quej'?'Un cliente se quejó de su trato':'Un cliente le felicitó');
     if(v.k==='quej'){e.st.quej++;meta.rep=clamp(meta.rep-0.2,0,5);addTicket('rrpp','Queja por el trato de '+e.name,0,2,false);toast('Un cliente se queja de cómo le ha hablado '+e.name,'bad');sBad();}
     else{e.st.fel++;e.moral=clamp(e.moral+5,0,100);meta.rep=clamp(meta.rep+0.1,0,5);toast('Un cliente felicita a '+e.name+' por su trato','good');}
@@ -3824,7 +4034,7 @@ function coverServe(c,e){
     if(i.scanned||i.denied)return;
     if(i.age&&c.minor&&Math.random()<p){i.denied=true;ret(i);return;}
     i.scanned=true;
-    if(i.age&&c.minor){c.err++;toast(minorSale(e.name+' ha vendido'),'bad');}
+    if(i.age&&c.minor){c.err++;const m=minorSale(e.name+' ha vendido');if(m)toast(m,'bad');}
   });
   c.bag=Math.random()<p?c.wantsBag:!c.wantsBag;
   if(c.pay==='cash'&&Math.random()<(1-p)*0.6){const loss=ri(50,500);run.fines+=loss;meta.money-=loss;c.err++;toast(e.name+' se ha equivocado con el cambio: −'+fmt(loss),'bad');}
@@ -4718,7 +4928,7 @@ function empAct(id,k){
   }
   else if(k==='raise'){e.wage=Math.round(e.wage*1.05);e.moral=clamp(e.moral+20,0,100);msg='💶 +5% de sueldo: '+monthTxt(e.wage)+'. Ahora te quiere un poquito más.';}
   else if(k==='fire'){meet.firing=id;showMeeting();return;}
-  if(e.real)note(e.real,{praise:'👏 El jefe te ha felicitado en la reunión.',warn:'⚠️ El jefe te ha dado un toque en la reunión.',raise:'💶 ¡Aumento! +5% de sueldo.'}[k],k==='warn');
+  if(e.real)note(e.real,{praise:'👏 El jefe te ha felicitado en la reunión.',warn:'⚠️ El jefe te ha dado un toque en la reunión.',raise:'💶 ¡Aumento! +5% de sueldo.'}[k],k==='warn',k);
   meet.acted[id]=msg;sOk();renderHud();showMeeting();
 }
 /* ---------- despidos: motivo, pruebas, finiquito e indemnización ----------
@@ -4746,13 +4956,20 @@ function minorSale(who){
   meta.rep=clamp(meta.rep-0.3,0,5);
   if(Math.random()<0.12){const n=meta.minorFine=(meta.minorFine||0)+1,f=(n>=3?ri(30001,60000):n===2?ri(9000,30000):ri(3001,6000))*100;
     run.fines+=f;meta.money-=f;meta.rep=clamp(meta.rep-1,0,5);
+    if(canInsp()&&inspScene(n,f,who))return '';
     return '🚔 Inspección: '+who+' alcohol a un menor. Multa '+(n>=3?'muy grave':'grave')+' de '+fmt(f)+(n>1?' (reincidencia)':'')+'.';}
   return '⚠️ '+who.replace(/^h/,'H')+' alcohol a un menor. Nadie lo ha denunciado… esta vez (multa grave: desde 3.001 €).';
 }
 function fireEmp(id,r){
   const e=empById(id),F=FIRE[r];if(!meet||!e||!F||meet.acted[id])return;
   if(r==='trial'&&!(e.trial>0))return;
-  const h=hist(e),fin=finiquito(e),bad=score(e)<0.45;
+  const o=fireCore(e,r);meet.firing=null;if(o.sv)meet.expl=0;
+  meet.gone.push(o.L.join('<br>'));scrTab.meet='gone';pg=0;
+  sBad();renderHud();showMeeting();
+}
+/* El cálculo del despido (liquidación, denuncia, ánimo del resto, nota al real); lo usan la reunión y el hurto pillado (fireNow). */
+function fireCore(e,r){
+  const F=FIRE[r],h=hist(e),fin=finiquito(e),bad=score(e)<0.45;
   const just=r==='trial'||(r!=='none'&&F.ok(e,h));
   let ind=r==='trial'?0:r==='none'?indImp(e):indProc(e),cost=fin+ind,extra=0;
   const L=['<b>Carta de despido de '+e.face+' '+e.name+'.</b> Motivo: '+F.t.replace(/^\S+ /,'')+(F.ev(e,h)?' ('+F.ev(e,h)+')':'')+'.',
@@ -4766,14 +4983,13 @@ function fireEmp(id,r){
       :'⚖️ Te denuncia: el motivo no se sostiene con lo que hay registrado. Despido improcedente: −'+fmt(extra)+' y −0,3 de reputación.');
   }else if(!just&&r!=='none')L.push('😅 El motivo no se sostenía, pero no te ha denunciado. Esta vez.');
   L.push('Total pagado: <b>'+fmt(cost)+'</b>.');
-  meta.money-=cost;meta.emp=meta.emp.filter(x=>x!==e);meet.firing=null;
+  meta.money-=cost;meta.emp=meta.emp.filter(x=>x!==e);
   meta.emp.forEach(x=>{x.moral=clamp(x.moral+(bad?3:-8),0,100);});
   /* Síndrome del superviviente: tras un despido el resto rinde menos (nada si era malo; menos si el despido era justo). */
-  const sv=r==='trial'||bad?0:just?1:2;meta.surv=Math.max(meta.surv||0,sv);if(sv)meet.expl=0;
+  const sv=r==='trial'||bad?0:just?1:2;meta.surv=Math.max(meta.surv||0,sv);
   L.push(bad?'El resto respira aliviado.':'El resto se ha quedado tenso'+(sv?': rendirá menos '+sv+(sv===1?' turno':' turnos'):'')+'.');
-  if(e.real&&isHost()){note(e.real,'Estás despedido/a. Motivo: '+F.t.replace(/^\S+ /,'')+'. Liquidación: '+fmt(fin+ind)+(extra?' (más lo que le ha sacado tu denuncia al jefe: '+fmt(extra)+')':'')+'.',true);fb.update(rRef('members/'+e.real),{role:null}).catch(()=>{});}
-  meet.gone.push(L.join('<br>'));scrTab.meet='gone';pg=0;
-  sBad();renderHud();showMeeting();
+  if(e.real&&isHost()){note(e.real,'Estás despedido/a. Motivo: '+F.t.replace(/^\S+ /,'')+'. Liquidación: '+fmt(fin+ind)+(extra?' (más lo que le ha sacado tu denuncia al jefe: '+fmt(extra)+')':'')+'.',true,'fire');fb.update(rRef('members/'+e.real),{role:null}).catch(()=>{});}
+  return {L,sv};
 }
 function applyReq(i,o){
   const r=meet&&meet.reqs[i];if(!r||r.done!=null)return;
@@ -4875,7 +5091,7 @@ function idDecision(sell){
   c.idOk=sell?'sell':'deny';
   if(sell){
     it.scanned=true;
-    if(c.minor){run.errors++;c.err++;toast(minorSale('has vendido'),'bad');sBad();}
+    if(c.minor){run.errors++;c.err++;const m=minorSale('has vendido');if(m)toast(m,'bad');sBad();}
     else sOk();
   }else{
     it.denied=true;ret(it);
