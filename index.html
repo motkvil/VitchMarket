@@ -1181,6 +1181,13 @@ body.rem .isostore{display:none!important}
 .dscene .gs-zone{position:absolute;left:8px;top:6px;z-index:2}
 @media (max-width:820px){.dscene{max-height:230px;margin-bottom:8px}}
 .dkpis{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.bal{margin-bottom:6px}.balk{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.balk span{background:#fff;border:2px solid #f0c9c9;border-radius:12px;padding:6px 8px;display:flex;flex-direction:column;min-width:0}
+.balk small{font-size:11px;color:var(--mute);white-space:nowrap}.balk b{font-family:var(--pix);font-weight:400;font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.balk .neg b{color:#e5383b}.balk .pos b{color:var(--ok)}.bal .sum{font-size:13px}.bal .sum .neg{color:#e5383b}.bal .sum .pos{color:var(--ok)}
+.balbar{height:6px;background:#eee;border-radius:3px;margin:6px 0 4px;overflow:hidden}.balbar i{display:block;height:100%;background:var(--ok)}.balbar.on i{background:#e5383b}
+.stat.neg b{color:#fff;background:#e5383b;border-radius:6px;padding:0 4px}
+@media (max-width:520px){.balk b{font-size:14px}.balk small{font-size:10px}}
 .dkpi{background:#fff;border:2px solid #f0c9c9;border-radius:12px;padding:6px 8px;display:flex;flex-direction:column;align-items:flex-start;gap:1px;text-align:left;min-width:0;cursor:pointer}
 .dkpi.on{border-color:#e5383b;box-shadow:0 3px 0 #b3141c}
 .dkpi small{font-size:11px;color:var(--mute);white-space:nowrap}.dkpi b{font-family:var(--pix);font-weight:400;font-size:18px;white-space:nowrap}
@@ -1911,6 +1918,21 @@ function orderHtml(per){
     <div class="supd">Pedidos en camino: ${meta.orders.length}. Se muestran los 14 productos con menos existencias.</div>`;
 }
 /* Cuenta de resultados del turno para el jefe. */
+/* Balance de la empresa: caja, stock a coste (estantería + almacén + en camino, a precio Hacendado), IVA a compensar,
+   póliza dispuesta y patrimonio neto frente al capital inicial (30.000 €). A proveedores no se debe nada: se paga al pedir. */
+const CAP0=3000000;
+function balData(){
+  const inc=incoming(),stk=CAT.reduce((t,x)=>t+((meta.stock[x.id]||0)+(meta.back[x.id]||0)+(inc[x.id]||0))*unitCost(x,'hac'),0);
+  const cash=Math.max(0,meta.money),debt=Math.max(0,-meta.money),cred=meta.ivaCred||0,pat=cash+stk+cred-debt;
+  return {cash,debt,stk,cred,pat,res:pat-CAP0,free:CREDIT-debt,int:Math.round(debt*CREDIT_I/365)};
+}
+function balHtml(){
+  const b=balData(),m=v=>(v<0?'−':'')+fmt(Math.abs(v)),pc=Math.min(100,Math.round(b.debt/CREDIT*100));
+  return `<div class="bal"><div class="balk"><span><small>💶 Caja</small><b>${fmt(b.cash)}</b></span><span class="${b.debt?'neg':''}"><small>🏦 Deuda</small><b>${b.debt?'−':''}${fmt(b.debt)}</b></span><span class="${b.pat<0?'neg':'pos'}"><small>📒 Patrimonio</small><b>${m(b.pat)}</b></span></div>
+    <div class="balbar ${b.debt?'on':''}" title="Póliza usada"><i style="width:${pc}%"></i></div>
+    <div class="sum"><span>Stock a coste</span><b>${fmt(b.stk)}</b>${b.cred?`<span>IVA a favor</span><b>${fmt(b.cred)}</b>`:''}<span>Póliza libre</span><b>${fmt(b.free)}</b>${b.int?`<span>Intereses/día</span><b class="neg">−${fmt(b.int)}</b>`:''}<span>Capital inicial</span><b>${fmt(CAP0)}</b><span>Resultado acumulado</span><b class="${b.res<0?'neg':'pos'}">${b.res<0?'−':'+'}${fmt(Math.abs(b.res))}</b></div>
+    <div class="supd">Patrimonio = caja + stock + IVA a favor − póliza (${fmt(CREDIT)} máx.).</div></div>`;
+}
 function finHtml(f){
   if(!f)return '<div class="supd">Sin datos de este turno.</div>';
   const row=(n,v,cls)=>`<span class="${cls||''}">${n}</span><b class="${cls||''}">${v<0?'−'+fmt(-v):fmt(v)}</b>`;
@@ -1926,6 +1948,7 @@ function finHtml(f){
       <span class="hd">CAJA (EL BOTE)</span><b></b>
       ${row('Compras de mercancía (inversión en stock)',-f.B)}${row('Variación del bote',f.cash,f.cash<0?'neg':'pos')}
     </div>
+    <div class="zone-title">🏦 BALANCE</div>${balHtml()}
     <div class="supd">${f.S+(f.O||0)?`Margen neto <b>${mg}%</b> · la nómina se come el <b>${Math.round(f.P/(f.S+(f.O||0))*100)}%</b> de las ventas · a Hacienda <b>${fmt(f.iva+f.is)}</b>.`:'Hoy no se ha vendido nada.'} Las propinas no son de la empresa: van al bote del personal.</div>
     ${h.length>1?`<div class="zone-title">ÚLTIMOS TURNOS (BENEFICIO NETO)</div><div class="trend">${h.map(x=>`<div class="tb ${x.n<0?'neg':''}" title="Turno ${x.d}: ${fmt(x.n)}"><i style="height:${Math.max(4,Math.round(Math.abs(x.n)/mx*100))}%"></i><small>T${x.d}</small></div>`).join('')}</div>`:''}</div>`;
 }
@@ -4349,11 +4372,11 @@ function finish(c,noTip){
 
 /* ---------- render ---------- */
 function renderHud(){
-  if(run&&run.remote){const st=room.state||{};$('#hTill').textContent=run.till;$('#hDay').textContent=st.day||1;$('#hMoney').textContent=fmt(st.money||0);$('#hRep').textContent='★ '+(+st.rep||0).toFixed(1);
+  if(run&&run.remote){const st=room.state||{};$('#hTill').textContent=run.till;$('#hDay').textContent=st.day||1;$('#hMoney').textContent=fmt(st.money||0);$('#hMoney').parentNode.classList.toggle('neg',(st.money||0)<0);$('#hRep').textContent='★ '+(+st.rep||0).toFixed(1);
     $('#hTk').textContent=st.dep&&st.dep.tk?Object.values(st.dep.tk).reduce((a,b)=>a+(+b||0),0):0;$('#hOut').textContent=(st.dep&&st.dep.out)||0;const c=clockOf(st.t,st.dur);$('#hClock').textContent=c;$('#hBar').style.width=Math.min(1,(st.t||0)/(st.dur||100))*100+'%';return;}
   $('#hTill').textContent='3';
   $('#hDay').textContent=meta.day;
-  $('#hMoney').textContent=fmt(meta.money);
+  $('#hMoney').textContent=fmt(meta.money);$('#hMoney').parentNode.classList.toggle('neg',meta.money<0);
   $('#hTk').textContent=run?run.tickets.length:0;
   $('#hOut').textContent=CAT.filter(x=>(meta.stock[x.id]||0)<=0).length;
   $('#hRep').textContent='★ '+meta.rep.toFixed(1);
@@ -5074,7 +5097,7 @@ function dirHtml(){
   const card=(k,ic,n,txt)=>`<button class="dcard" data-act="tab" data-k="${k}"><b>${ic} ${n}</b><span>${txt}</span></button>`;
   const present=role=>staffOf(role).filter(e=>live&&inStore(e)).length+'/'+staffOf(role).length+' trabajando';
   const cv=live&&run.away&&run.away.cover&&empById(run.away.cover);
-  return `<div class="dgrid"><div class="dpanel"><h2>👑 Dirección</h2><div class="zone-title">📊 HOY CONTRA AYER · EN DIRECTO</div><div id="dirlive"></div>
+  return `<div class="dgrid"><div class="dpanel"><h2>👑 Dirección</h2><div class="zone-title">🏦 BALANCE</div>${balHtml()}<div class="zone-title">📊 HOY CONTRA AYER · EN DIRECTO</div><div id="dirlive"></div>
     <div class="sum"><span>Turno</span><b>${meta.day}</b><span>Bote</span><b>${fmt(meta.money)}</b><span>Reputación</span><b>★ ${meta.rep.toFixed(1)}</b><span>Clientes atendidos</span><b>${r.served||0}</b><span>Se fueron enfadados</span><b>${r.angry||0}</b><span>Ventas</span><b>${fmt(r.sales||0)}</b></div>
     <div class="dcards">
       ${card('caja','🧾','Cajas',live?(cv?cv.face+' '+cv.name+' en la Caja 3':run.away?'Caja 3 sin nadie':'Tú en la Caja 3')+' · cola '+run.queue.length+Object.values(run.tills||{}).map(t=>{const e=empById(t.eid);return '<br>Caja '+t.n+': 🎮 '+(e?e.name:'?')+' · cola '+Object.keys(t.out).length;}).join(''):'Cerradas')}
