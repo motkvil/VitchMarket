@@ -1169,6 +1169,12 @@ body.rem .isostore{display:none!important}
 .receipt .rhead small{font-size:12px;color:#8a7466;letter-spacing:0}
 .receipt .ln.mute2{color:#a08f84;font-style:italic}
 
+/* La sala de espera del jefe tiene poca información: ventana pequeña y centrada (en el móvil, a pantalla completa como las demás) */
+@media (min-width:821px){
+  .card.screen.sc-lobby{position:relative;inset:auto;margin:auto;width:100%;max-width:640px;height:auto;max-height:calc(100dvh - 32px)}
+  .card.screen.sc-lobby .scr-body{flex:0 1 auto}
+}
+.card.screen>.scr-head small.sub{color:#ffe1e1;opacity:.9}
 /* ===== Ajustes de móvil (auditoría de diseño) ===== */
 .scr-foot:empty{display:none}
 .alert .who .btn{min-height:34px}
@@ -1834,7 +1840,7 @@ function paged(items,per,empty){
 }
 function screenHtml(kind,title,tabs,body,nav,foot){
   const cur=scrTab[kind];
-  return `<div class="card screen"><div class="scr-head"><h2>${title}</h2><div class="subtabs">${tabs.map(([k,l,b])=>`<button class="stab ${cur===k?'on':''}" data-act="stab" data-s="${kind}" data-k="${k}">${l}${b?`<i>${b}</i>`:''}</button>`).join('')}</div></div>
+  return `<div class="card screen sc-${kind}"><div class="scr-head"><h2>${title}</h2><div class="subtabs">${tabs.map(([k,l,b])=>`<button class="stab ${cur===k?'on':''}" data-act="stab" data-s="${kind}" data-k="${k}">${l}${b?`<i>${b}</i>`:''}</button>`).join('')}</div></div>
     <div class="scr-body">${body}</div><div class="scr-foot">${nav||''}${foot}</div></div>`;
 }
 let scrRender=null;
@@ -2045,7 +2051,7 @@ async function fillRanking(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.16-52';
+const APPV='2026.11.17-53';
 /* Compara versiones por números («-9» < «-11»), no como texto. */
 const verCmp=(a,b)=>{const x=String(a).split(/[.-]/).map(Number),y=String(b).split(/[.-]/).map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
 try{const vt=document.createElement('div');vt.id='vtag';vt.textContent='v'+APPV;document.body.appendChild(vt);}catch(e){}
@@ -2799,7 +2805,7 @@ function renderMember(){
     foot='';
   }
   let h=screenHtml(kind,'<span class="logo">VITCHMARKET</span>',tabs,body,'',bossBtn+foot);
-  if(kind==='work')h=h.replace('<div class="card screen">','<div class="card screen ws-screen">').replace('<div class="scr-foot"></div>','');
+  if(kind==='work')h=h.replace('<div class="card screen sc-work">','<div class="card screen sc-work ws-screen">').replace('<div class="scr-foot"></div>','');
   if(atTill){if($('#overlay').classList.contains('show'))hideOverlay();}
   else if(h!==room.lastHtml){const pv=$('#pname')?$('#pname').value:null;room.lastHtml=h;showOverlay(h);if(pv!=null&&$('#pname'))$('#pname').value=pv;}
   if(mg&&mg.remote&&st&&!stale&&!tasks.some(t=>t.id===mg.t.id&&t.who===room.uid)){mg=null;closeMG();if(run&&run.remote)run.away=null;toast('Se acabó el tiempo para ese aviso.','bad');}
