@@ -1990,8 +1990,8 @@ function finHtml(f){
   const row=(n,v,cls)=>`<span class="${cls||''}">${n}</span><b class="${cls||''}">${v<0?'−'+fmt(-v):fmt(v)}</b>`;
   const mg=f.S+(f.O||0)?Math.round(f.net/(f.S+(f.O||0))*100):0,h=meta.hist||[],mx=Math.max(1,...h.map(x=>Math.abs(x.n)));
   return `<div class="fin"><div class="sum">
-      <span class="hd">INGRESOS</span><b></b>
-      ${row('Ventas de las cajas en juego (IVA incl.)',f.S)}${f.O!=null?row('Ventas de las otras cajas ('+(f.ON||0)+' tickets)',f.O):''}${f.oth>0?row('Otros ingresos (abonos, arqueos)',f.oth):''}
+      <span class="hd">INGRESOS · VENTAS CON IVA</span><b></b>
+      ${row('🧾 Tu Caja 3'+(Object.keys((run&&run.tills)||{}).length||f.R?' y las de jugadores':''),f.S)}${f.O!=null?row('🛒 Cajas de tus cajeros ('+(f.ON||0)+' clientes)',f.O):''}${f.oth>0?row('Otros ingresos (abonos, arqueos)',f.oth):''}
       <span class="hd">GASTOS</span><b></b>
       ${row('Coste de la mercancía vendida (≈'+Math.round(SUPS[0].cf*100)+'%)',-(f.cogs||0))}${f.PB!=null?row('Sueldos brutos',-f.PB)+row('Seguridad Social de la empresa (32,15%)',-(f.P-f.PB)):row('Nómina del personal',-f.P)}${f.FX!=null?row('Alquiler, luz, seguros y gestoría',-f.FX):''}${f.INT?row('Intereses de la póliza de crédito',-f.INT):''}${row('Reclamaciones al cierre',-f.K)}${row('Multas y pérdidas en caja',-f.F)}${f.oth<0?row('Reembolsos, compensaciones y otros',f.oth):''}
       ${row('Resultado antes de impuestos',f.bai+(f.ivaR!=null?f.ivaR-f.ivaS:f.iva),'tot')}
@@ -2161,7 +2161,7 @@ async function fillRanking(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.17-63';
+const APPV='2026.11.17-64';
 /* Compara versiones por números («-9» < «-11»), no como texto. */
 const verCmp=(a,b)=>{const x=String(a).split(/[.-]/).map(Number),y=String(b).split(/[.-]/).map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
 try{const vt=document.createElement('div');vt.id='vtag';vt.textContent='v'+APPV;document.body.appendChild(vt);}catch(e){}
