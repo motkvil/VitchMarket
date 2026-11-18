@@ -1570,6 +1570,30 @@ button.stat{font:inherit;cursor:pointer}
   .hud,.gs-hud,.card.screen .scr-head{border-top-left-radius:0!important;border-top-right-radius:0!important;border-top-width:0;margin-top:0}
   #app{padding-top:0}
 }
+
+/* ===== Logros, carrera y ajustes ===== */
+.achs{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px}
+.ach{display:flex;gap:10px;align-items:center;padding:8px 10px;border:2px solid var(--brand-700);border-radius:12px;background:#fff}
+.ach>i{font-style:normal;font-size:28px;line-height:1;flex:0 0 auto}
+.ach b{display:block;font-size:var(--fs-s)}.ach small{display:block;font-size:var(--fs-xs);color:var(--mute)}
+.ach.off{border-color:#cfd5d2;background:#f3f4f3;color:#6b7470}.ach.off>i{filter:grayscale(1);opacity:.6}
+.ach.on{background:var(--gain-bg)}
+details.achd{margin-top:6px}details.achd>summary{cursor:pointer;font-weight:800;font-size:var(--fs-m);padding:6px 0}
+.perks{display:flex;flex-direction:column;gap:8px}.perk.on{border-color:var(--gain);background:var(--gain-bg)}
+.ajs{display:flex;flex-direction:column;gap:8px}.ajr .t{flex:1}.ajb{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.ajb .btn{min-width:64px}
+#ajw{position:fixed;inset:0;background:rgba(10,24,20,.75);display:none;align-items:center;justify-content:center;padding:12px;z-index:27}
+#ajw.show{display:flex}.ajc{max-width:640px;width:100%;margin:0;max-height:calc(100dvh - 24px);overflow:auto}
+@media (max-width:640px){.ajr{flex-direction:column;align-items:stretch}.ajb{justify-content:flex-start}.achs{grid-template-columns:1fr}}
+/* Movimiento reducido (ajuste): como prefers-reduced-motion */
+body.redmo *,body.redmo *::before,body.redmo *::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+/* Paleta para daltónicos: ganancia azul, pérdida naranja (los símbolos ▲▼ +− siguen) */
+body.cvd{--gain:#1f5fbf;--gain-bg:#eef3fc;--danger:#c25400;--danger-bg:#fff4ea;--ok:#1f5fbf}
+body.cvd .btn.go{background:linear-gradient(180deg,#2a6fd0,#1a4f9c);border-color:#123a75;box-shadow:0 4px 0 #123a75}
+body.cvd .btn.no{background:linear-gradient(180deg,#d9640a,#9a4300);border-color:#6f3000}
+/* Texto grande: un paso más en toda la escala */
+body.bigtx{--fs-xs:14px;--fs-s:16px;--fs-m:20px;--fs-l:26px;--fs-xl:34px;--fs-xxl:42px}
+@media (max-width:640px){body.bigtx{--fs-xs:13px;--fs-s:15px;--fs-m:18px;--fs-l:22px;--fs-xl:28px;--fs-xxl:34px}}
 </style>
 </head>
 <body>
@@ -1585,6 +1609,7 @@ button.stat{font:inherit;cursor:pointer}
     <button class="stat s-week" id="hWeekB" data-act="week" title="Objetivos de la semana" aria-label="Objetivos de la semana" hidden><i>🎯</i><span>Semana</span><b id="hWeek">0/3</b></button>
     <button class="mute" id="muteBtn" data-act="mute" aria-label="Sonido">🔊</button>
     <button class="mute camb" data-act="cams" aria-label="Cámaras de seguridad" title="Cámaras de seguridad">📹</button>
+    <button class="mute ajbtn" data-act="ajopen" aria-label="Ajustes" title="Ajustes">⚙️</button>
     <div class="tlane"></div>
     <div class="daybar"><i id="hBar"></i></div>
   </header>
@@ -1620,7 +1645,7 @@ button.stat{font:inherit;cursor:pointer}
   </div>
   <button class="alertbtn" id="alertBtn" data-act="side" aria-label="Ver avisos">🔔<b>0</b></button>
 </div>
-<div id="toast" role="status"></div><div id="scene" role="dialog" aria-live="polite"></div><div id="overlay"></div>
+<div id="toast" role="status" aria-live="polite"></div><div id="scene" role="dialog" aria-live="polite"></div><div id="overlay"></div>
 <div id="mg" role="dialog" aria-modal="true"></div>
 <div id="guide" role="dialog" aria-modal="true" aria-label="Cómo se trabaja"></div>
 
@@ -1849,7 +1874,7 @@ function weekEnd(){
   if(meta.day<w.d0+6)return;
   const G=weekGoals(),ok=G[0][1]&&G[1][1];
   w.res={ok,sec:G[2][1]};
-  if(ok)w.pend=1;
+  if(ok){w.pend=1;achCheck('week');}
 }
 const weekCash=w=>w.res&&w.res.sec?100000:60000;
 function weekReward(w,k,silent){
@@ -1882,6 +1907,134 @@ function weekInfo(){
     choices:[{t:'👍 A por ello',k:'ok',cls:'go',key:'A'}]});
 }
 
+/* ---------- logros, carrera del jefe y ajustes (fuera de la partida: sobreviven al game over y a wipeGame) ----------
+   Logros en 'vitchmarket.logros.v1' = {got:{k:ts}, c:{contadores}}; achCheck(k,cond) los desbloquea (toast 🏅 y sonido) y achDay() mira los del cierre.
+   Carrera en 'vitchmarket.carrera.v1' = {turns, best, games, xp, own:{perk:1}, act:[perks]}: experiencia = turnos cerrados + estrellas
+   (una vez por turno: meta.xpD); se gasta en ventajas permanentes y se activan 2 como máximo para la PRÓXIMA partida nueva en solitario
+   (carNew en 'start'/'restart' con meta.day 1; nunca en el reto del día ni en la tienda compartida).
+   Ajustes en 'vitchmarket.ajustes' (AJ): ritmo relajado y «sin prisa» solo en solitario y fuera del reto (meta.relax = fuera del ranking);
+   movimiento reducido (body.redmo + redMo), paleta para daltónicos (body.cvd) y texto grande (body.bigtx) para todo. */
+const lsGet=(k,d)=>{try{const v=JSON.parse(localStorage.getItem(k)||'null');return v&&typeof v==='object'?v:d;}catch(e){return d;}};
+const lsSet=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}};
+const ACH_KEY='vitchmarket.logros.v1',CAR_KEY='vitchmarket.carrera.v1',AJ_KEY='vitchmarket.ajustes';
+const ACH=[
+ ['t1','🧾','Primer día','Cierra tu primer turno.'],['t7','📅','Una semana de pie','Aguanta 7 turnos en una partida.'],
+ ['t14','🗓️','Quincena','Aguanta 14 turnos en una partida.'],['t30','🏬','Un mes en el barrio','Aguanta 30 turnos en una partida.'],
+ ['week','🎯','Semana superada','Cumple los dos objetivos principales de una semana.'],['all','🔓','Toda la tienda','Llega al turno 10 con todos los departamentos abiertos.'],
+ ['s3','⭐','Tres estrellas','Cierra un turno con ⭐⭐⭐.'],['s3x3','🌟','Hat-trick','Tres turnos seguidos con ⭐⭐⭐.'],
+ ['combo','⚡','Dedos de pianista','Haz una racha x10 escaneando.'],['rush','🔥','Sangre fría','Atiende 5 clientes en hora punta y cierra sin ningún enfadado.'],
+ ['clean','🧼','Turno impecable','Atiende 10 clientes o más en un turno sin un solo error.'],
+ ['hire','🤝','Primer fichaje','Contrata a alguien.'],['fire','⚖️','Papeles en regla','Despide con motivo (pasada la prueba) sin que te gane una denuncia.'],
+ ['div','💶','El primer dividendo','Págate un dividendo como socio.'],['rich','🏦','Colchón de 40.000','Cierra un turno con más de 40.000 € en el bote.'],
+ ['ups','🛠️','Tienda equipada','Ten las tres mejoras a la vez.'],['thief','🕵️','Ojo de halcón','Pilla a alguien con la mano en el cajón.'],
+ ['diva','💅','Negocios, cariño','Atiende a la diva del barrio sin un solo error.'],['minors','🪪','Aquí no se bebe','Niega alcohol a 5 menores (cuenta entre partidas).'],
+ ['insp','🛡️','Ni una multa','Despide a un inspector sin multa.'],['cuela','👉','Al final, como todos','Manda al final de la cola a uno que se coló.'],
+ ['reg','🫶','De toda la vida','Que un habitual salga contento 3 veces.'],['over','🔒','Persiana abajo','Pierde una partida. Le pasa a los mejores.'],
+ ['minorEnd','🍺','Lección aprendida','Te clausuran por vender alcohol a un menor.'],
+ ['reto','🗓️','Reto cumplido','Termina un reto del día sin cerrar.'],['retoW','📈','En verde','Gana dinero en un reto del día.'],['reto3','🏆','Reto perfecto','Saca ⭐⭐⭐ en un reto del día.']];
+let achS=lsGet(ACH_KEY,{got:{},c:{}});achS.got=achS.got||{};achS.c=achS.c||{};
+const achOn=()=>!(run&&run.remote)&&!(room&&(!room.host||room.sim));
+const achN=()=>ACH.filter(a=>achS.got[a[0]]).length;
+function achCheck(k,cond){
+  if(cond===false||achS.got[k]||!achOn())return;const a=ACH.find(x=>x[0]===k);if(!a)return;
+  achS.got[k]=Date.now();lsSet(ACH_KEY,achS);
+  toast('🏅 Logro: '+a[1]+' '+a[2],'good');
+  if(!quiet){beep(660,.09,'triangle',.06);setTimeout(()=>beep(990,.09,'triangle',.06),90);setTimeout(()=>beep(1320,.16,'triangle',.06),180);}
+}
+const achCount=k=>{if(!achOn())return 0;achS.c[k]=(achS.c[k]||0)+1;lsSet(ACH_KEY,achS);return achS.c[k];};
+/* Lo que se mira al cerrar el turno (endDay), más la experiencia de la carrera. */
+function achDay(){
+  if(!run||run.remote)return;const d=meta.day;
+  achCheck('t1');achCheck('t7',!daily&&d>=7);achCheck('t14',!daily&&d>=14);achCheck('t30',!daily&&d>=30);
+  achCheck('all',!daily&&d>=10&&unl('insp')&&unl('rrhh')&&unl('back'));
+  achCheck('s3',run.stars===3);achCheck('s3x3',!!run.starBonus);
+  achCheck('rush',(run.rushN||0)>=5&&!run.angry);achCheck('clean',run.served>=10&&!run.errors);
+  achCheck('rich',meta.money>4000000);achCheck('ups',UPS.every(u=>meta.up[u.k]));
+  carDay();
+}
+function achGrid(){
+  return `<div class="achs">${ACH.map(([k,ic,t,h])=>{const g=achS.got[k];
+    return `<div class="ach ${g?'on':'off'}" title="${esc(h)}"><i aria-hidden="true">${g?ic:'🔒'}</i><div><b>${t}</b><small>${g?'✅ '+new Date(g).toLocaleDateString('es-ES'):h}</small></div></div>`;}).join('')}</div>`;
+}
+const achHead=()=>`<div class="supd">🏅 <b>${achN()}/${ACH.length}</b> logros. Se guardan en este navegador aunque pierdas la partida.</div>`;
+/* Carrera del jefe */
+const PERKS=[
+ ['cont','📇','Contactos en el barrio',10,'Un candidato bueno de más en la primera reunión de personal.'],
+ ['prov','🤝','Proveedor de confianza',15,'Hacendado Directo, +3 % de fiabilidad en las entregas.'],
+ ['vet','🧓','Cajero veterano',20,'El cajero de la plantilla inicial, con rapidez de 0,7 como mínimo.'],
+ ['scan','📟','Escáner de segunda mano',25,'Empiezas con el escáner láser.'],
+ ['col','🏦','Colchón del banco',30,'Póliza de crédito de 17.500 € en vez de 15.000 €.']];
+let car=lsGet(CAR_KEY,{});['turns','best','games','xp'].forEach(k=>{car[k]=car[k]|0;});car.own=car.own||{};car.act=(car.act||[]).filter(k=>car.own[k]).slice(0,2);
+const carSave=()=>lsSet(CAR_KEY,car);
+const carOn=()=>!room&&!daily;
+/* Partida nueva en solitario: cuenta la partida y aplica las ventajas activas (una sola vez: meta.perks). */
+function carNew(){
+  if(!carOn()||meta.day!==1||meta.perks)return;
+  meta.perks=car.act.slice();car.games++;carSave();
+  meta.perks.forEach(k=>{
+    if(k==='scan')meta.up.scanner=1;
+    else if(k==='col')meta.credit=1750000;
+    else if(k==='prov')meta.provRel=0.03;
+    else if(k==='cont')meta.perkCand=1;
+    else if(k==='vet'){const e=meta.emp.find(x=>x.role==='atc');if(e)e.rap=Math.max(e.rap,Math.round(rnd(0.7,0.82)*100)/100);}
+  });
+  if(meta.perks.length)setTimeout(()=>toast('🎖️ Ventajas de tu carrera: '+meta.perks.map(k=>{const p=PERKS.find(x=>x[0]===k);return p[1]+' '+p[2];}).join(' · '),'good'),600);
+}
+function carDay(){
+  if(!carOn()||meta.day<=(meta.xpD||0))return;
+  const x=1+(run.stars||0);meta.xpD=meta.day;meta.xpRun=(meta.xpRun||0)+x;
+  car.xp+=x;car.turns++;car.best=Math.max(car.best,meta.day);carSave();
+}
+function perkAct(k,op){
+  const p=PERKS.find(x=>x[0]===k);if(!p)return;
+  if(op==='buy'){if(car.own[k]||car.xp<p[3])return;car.xp-=p[3];car.own[k]=1;if(car.act.length<2)car.act.push(k);sOk();}
+  else if(op==='on'){if(!car.own[k]||car.act.includes(k))return;if(car.act.length>=2){toast('Como mucho, 2 ventajas por partida. Quita una antes.','bad');return;}car.act.push(k);sCoin();}
+  else if(op==='off'){car.act=car.act.filter(x=>x!==k);sCoin();}
+  carSave();rerenderScreen();
+}
+function carHtml(){
+  const kp=(ic,l,v)=>`<div class="kpi"><small>${ic} ${l}</small><b>${v}</b></div>`;
+  return `<div class="kpis">${kp('🎖️','Experiencia',car.xp)}${kp('🧾','Turnos jugados',car.turns)}${kp('🏆','Mejor partida',car.best?car.best+(car.best===1?' turno':' turnos'):'—')}${kp('🎮','Partidas',car.games)}</div>
+    <div class="supd">Ganas experiencia con cada turno cerrado (1) y cada estrella (1). Gástala en ventajas que se quedan para siempre y activa <b>2 como máximo</b>: se aplican a la próxima partida <b>nueva</b> en solitario (no en el reto del día ni en la tienda compartida). Nunca dinero.</div>
+    <div class="perks">${PERKS.map(([k,ic,t,c,d])=>{const own=car.own[k],on=car.act.includes(k);
+      const b=!own?`<button class="btn ${car.xp>=c?'go':''}" data-act="perk" data-k="${k}" data-op="buy" ${car.xp>=c?'':'disabled'}>Desbloquear · ${c} 🎖️</button>`
+        :on?`<button class="btn go" data-act="perk" data-k="${k}" data-op="off" aria-pressed="true">✅ Activa</button>`
+        :`<button class="btn" data-act="perk" data-k="${k}" data-op="on" aria-pressed="false">Activar</button>`;
+      return `<div class="up perk ${on?'on':''}"><div class="t"><b>${ic} ${t}</b>${d}</div>${b}</div>`;}).join('')}</div>
+    ${meta.perks&&meta.perks.length&&meta.day>1?'<div class="supd">En esta partida llevas: '+meta.perks.map(k=>{const p=PERKS.find(x=>x[0]===k);return p?p[1]+' '+p[2]:'';}).join(' · ')+'.</div>':''}`;
+}
+/* Lo que sale en las pantallas de fin de partida: experiencia ganada y los logros (plegados). */
+const achEndHtml=()=>`${carOn()&&meta.xpRun?`<div class="supd">🎖️ Experiencia de esta partida: <b>+${meta.xpRun}</b> (llevas ${car.xp}). Gástala en la portada, en «🎖️ Carrera».</div>`:''}
+  <details class="achd"><summary>🏅 Logros · ${achN()}/${ACH.length}</summary>${achGrid()}</details>`;
+/* Ajustes */
+const AJ=Object.assign({ritmo:'norm',calma:0,mov:0,cvd:0,big:0},lsGet(AJ_KEY,{}));
+function ajApply(){const b=document.body;if(!b)return;b.classList.toggle('redmo',!!AJ.mov);b.classList.toggle('cvd',!!AJ.cvd);b.classList.toggle('bigtx',!!AJ.big);}
+ajApply();
+const relaxOn=()=>AJ.ritmo==='rel'&&!room&&!daily;
+const calmaOn=()=>!!AJ.calma&&!room&&!daily;
+let ajw=false;
+function ajHtml(){
+  const opt=(k,v,l)=>`<button class="btn ${AJ[k]===v?'go':''}" data-act="aj" data-k="${k}" data-v="${v}" aria-pressed="${AJ[k]===v}">${l}</button>`;
+  const row=(t,d,btns)=>`<div class="up ajr"><div class="t"><b>${t}</b>${d}</div><div class="ajb">${btns}</div></div>`;
+  const yn=k=>opt(k,0,'No')+opt(k,1,'Sí');
+  return `<div class="ajs">
+    ${row('🐢 Ritmo del turno','Relajado: los clientes aguantan un 40 % más y el turno dura más. La partida queda en «modo relajado», fuera del ranking. Desde el próximo turno.',opt('ritmo','norm','Normal')+opt('ritmo','rel','Relajado'))}
+    ${row('⏸️ Sin prisa','La paciencia de los clientes no baja mientras tienes una escena o una ventana abierta. También cuenta como modo relajado.',yn('calma'))}
+    ${row('🌀 Movimiento reducido','Sin animaciones, temblores ni monedas que vuelan.',yn('mov'))}
+    ${row('🎨 Paleta para daltónicos','Ganancias en azul y pérdidas en naranja (siguen con ▲ ▼, + y −).',yn('cvd'))}
+    ${row('🔠 Texto grande','Un paso más en toda la escala de letra.',yn('big'))}
+    <div class="supd">El ritmo y «sin prisa» solo valen en solitario: no cambian el reto del día ni la tienda compartida. Lo demás vale en todas partes. Se guardan en este navegador.</div></div>`;
+}
+function ajSet(k,v){
+  if(!(k in AJ))return;AJ[k]=k==='ritmo'?(v==='rel'?'rel':'norm'):(+v?1:0);lsSet(AJ_KEY,AJ);ajApply();sCoin();
+  if(ajw)ajRender();else rerenderScreen();
+}
+function ajRender(){
+  let el=$('#ajw');if(!el){el=document.createElement('div');el.id='ajw';el.setAttribute('role','dialog');el.setAttribute('aria-modal','true');el.setAttribute('aria-label','Ajustes');document.body.appendChild(el);}
+  if(!ajw){el.classList.remove('show');el.innerHTML='';return;}
+  el.innerHTML=`<div class="card mgc ajc"><h3>⚙️ Ajustes</h3>${ajHtml()}<div class="row"><button class="btn go" data-act="ajclose">Listo</button></div>${room?'':'<div class="supd">El turno está en pausa mientras miras esto.</div>'}</div>`;
+  el.classList.add('show');
+}
 /* ---------- audio ---------- */
 let ac=null;
 let quiet=false;
@@ -2136,7 +2289,7 @@ function cutScene(nc){
     choices:[{t:'👉 Al final de la cola',k:'end',cls:'go',key:'F',stamp:'AL FINAL',sc:'ok',fx:'👏'},{t:'🤷 Dejarlo',k:'let',key:'D'}],
     alive:()=>run&&!run.over&&run.queue.indexOf(nc)>0,
     onPick:k=>{if(!run||run.over)return;
-      if(k==='end'){const i=run.queue.indexOf(nc);if(i>0){run.queue.splice(i,1);run.queue.push(nc);}repAdd(+0.05,'Mandaste al final a uno que se coló');sOk();toast('Al final de la cola. La gente asiente.','good');}
+      if(k==='end'){const i=run.queue.indexOf(nc);if(i>0){run.queue.splice(i,1);run.queue.push(nc);}repAdd(+0.05,'Mandaste al final a uno que se coló');achCheck('cuela');sOk();toast('Al final de la cola. La gente asiente.','good');}
       else pen();
       renderAll();}});
 }
@@ -2293,6 +2446,7 @@ function lateScene(e){
 function theft(e,v){
   meta.money-=v;
   if(Math.random()>=0.45)return;
+  achCheck('thief');
   const rec=()=>{e.st.robo=(e.st.robo||0)+1;logE(e,'Pillado/a llevándose '+fmt(v));};
   if(!bossScn()||!unl('rrhh')){rec();toast('🕵️ '+e.name+' se llevaba '+fmt(v)+'. Queda en su ficha.','bad');return;}
   const R=run;
@@ -2527,6 +2681,7 @@ function inspVisit(){
     alive:()=>run===R&&!R.over,
     onPick:k=>{if(run!==R||R.over)return;const o=O[k]||O[ks[0]];
       I.req=I.req.filter(r=>!due.includes(r));
+      achCheck('insp',!o.tot);
       if(!n){repAdd(+0.05,'Inspección en regla');if(fixed.length)toast('🛡️ '+A.s+': requerimiento cumplido, expediente archivado.','good');else toast('🛡️ Inspección de '+A.s+': todo en regla.','good');renderAll();return;}
       if(k==='abog')meta.money-=fee;
       if(o.tot){meta.money-=o.tot;run.fines+=o.tot;run.insp=(run.insp||0)+o.tot;repAdd(-Math.min(0.2,0.05*o.fin.length),'Multas del inspector');}
@@ -2628,7 +2783,7 @@ function newCustomer(){
   const age=minor?ri(14,17):ri(18,75);
   const ps=minor?{pk:'normal'}:pickPersona();
   const P=PERS[ps.pk]||PERS.normal;
-  const max=clamp((24+n*3.2-day*1.2)*(P.pat||1)*(ps.memF||1),20,80);
+  const max=clamp((24+n*3.2-day*1.2)*(P.pat||1)*(ps.memF||1),20,80)*(relaxOn()?1.4:1);
   return{id:++cid,face:ps.face||(P.faces?pick(P.faces):pick(FACES)),items,minor,age,birth:birthFor(age),
     wantsBag:Math.random()<(P.bag!=null?P.bag:0.3),bag:false,pay:Math.random()<(P.card!=null?P.card:0.55)?'card':'cash',
     phase:'scan',p:max,max,err:0,given:0,declined:false,talk:rnd(1.5,4),
@@ -2707,7 +2862,7 @@ function pickPersona(){
   const pk=wpick(Object.keys(PERS).map(k=>({k,w:PERS[k].w}))).k;
   return{pk,tour:pk==='turista'?pick(TOUR):null};
 }
-function regVisit(c,ok){if(!c.reg)return;const m=meta.regs[c.reg]||(meta.regs[c.reg]={visits:0,good:0,last:null});m.visits++;m.last=ok;if(ok)m.good++;}
+function regVisit(c,ok){if(!c.reg)return;const m=meta.regs[c.reg]||(meta.regs[c.reg]={visits:0,good:0,last:null});m.visits++;m.last=ok;if(ok)m.good++;achCheck('reg',m.good>=3);}
 const COMPL_P=0.14;
 const COMPL=[
  {title:'Producto en mal estado',t:'Compré «%i%» y estaba pasado de fecha.',dept:'back',refund:true},
@@ -2796,6 +2951,7 @@ function startDay(){
   run={t:0,dur:100,queue:[],next:1.5,served:0,angry:0,errors:0,tips:0,fines:0,closing:false,over:false,tray:[],card:false,pendingId:null,flash:0,tickets:[],sales:0,
     tasks:[],nextTask:6,away:null,tdone:0,tlost:0,duty:{},ev:[],ivaR:0,offS:0,offC:0,offN:0,dstat:{},hires:0,revG:0,revB:0};
   if(isHost())run.dur=room.info.dur||100;
+  if(relaxOn()||calmaOn()){meta.relax=1;if(relaxOn())run.dur=130;}
   ensureMeta();run.rep0=meta.rep;
   unlockCheck();weekCheck();
   if(meta.day>=2&&Math.random()<0.3)run.pressAt=run.dur*rnd(0.2,0.65);
@@ -2847,12 +3003,13 @@ function checkRep(){
     /* Si la multa por alcohol a un menor acaba de hundir la empresa, primero el acta (escena) y luego el cierre. */
     if(mf&&!run.closing&&[sceneCur,...sceneQ].some(x=>x&&/^insp:/.test(x.k)))return;
     run.over=true;run.dead=true;mg=null;pendingLeave=null;closeMG();if(daily){dailyEnd(true);return;}wipeGame();
+    achCheck('over');achCheck('minorEnd',!!mf);
     const days=meta.day;
     if(mf){showOverlay(minorEndHtml(mf,days));submitScore(true).then(fillRanking);return;}
     showOverlay(`<div class="card"><h2>${q?'Concurso de acreedores':'🔒 Cerrado · La clientela te ha dado la espalda'}</h2>
       <p>${q?'Has agotado la póliza de crédito ('+fmt(credLim())+') y no puedes pagar a proveedores, nóminas ni a Hacienda: la empresa entra en concurso de acreedores y cierra.':'Eres el dueño: nadie te despide. Pero con la reputación a <b>★ 0,0</b> el barrio deja de comprar aquí, los proveedores no se fían y bajas la persiana.'} Aguantaste ${days} ${days===1?'turno':'turnos'}.</p>
       ${q?'':repWhyHtml()}
-      ${starsEndHtml()}
+      ${starsEndHtml()}${achEndHtml()}
       ${online()?'<div class="zone-title">🏆 RANKING</div><div id="rank"></div>':''}
       ${retryBtn()}<button class="btn go big" data-act="restart">Volver a empezar</button></div>`);
     submitScore(true).then(fillRanking);
@@ -2866,7 +3023,7 @@ function minorEndHtml(mf,days){
     <p><b>Le vendiste alcohol a un menor.</b> Consumo de la Comunidad de Madrid levantó acta: infracción ${mf.n>=3?'muy grave':'grave'}${mf.n>1?' y reincidente':''}, <b>${fmt(mf.f)}</b> de multa (Ley 5/2002 de Drogodependencias, arts. 30.2 y 59).</p>
     ${scnDoc([['💶 Bote antes de la multa',fmt(mf.m)],['🚔 Multa por vender alcohol a un menor','−'+fmt(mf.f),'neg'],['🏦 Póliza de crédito (lo máximo en rojo)','−'+fmt(lim)],['📉 Bote al cerrar',(meta.money<0?'−':'')+fmt(Math.abs(meta.money)),'neg tot']],'Por debajo de −'+fmt(lim)+' no hay con qué pagar a proveedores, nóminas ni a Hacienda.')}
     <div class="end-why">Un súper de barrio no aguanta una multa así: el banco cierra el grifo, los proveedores dejan de servir y el juzgado declara el <b>concurso de acreedores</b>. Persiana abajo tras ${days} ${days===1?'turno':'turnos'}.</div>
-    ${starsEndHtml()}
+    ${starsEndHtml()}${achEndHtml()}
     <p class="supd">Moraleja: el DNI se pide <b>siempre</b>. Mirarlo cuesta dos segundos; no mirarlo, ${fmt(mf.f)}.</p>
     ${online()?'<div class="zone-title">🏆 RANKING</div><div id="rank"></div>':''}
     ${retryBtn()}<button class="btn go big" data-act="restart">Volver a empezar</button></div>`;
@@ -2911,7 +3068,7 @@ function receiveDeliveries(){
   due.forEach(o=>{
     const sup=SUPS.find(z=>z.k===o.sup)||SUPS[0];
     Object.entries(o.items).forEach(([id,q])=>{
-      const got=Math.random()<sup.rel?q:Math.ceil(q*0.5);
+      const got=Math.random()<sup.rel+(sup.k==='hac'&&meta.provRel||0)?q:Math.ceil(q*0.5);
       rr.arrived+=got;rr.short+=q-got;
       meta.back[id]=(meta.back[id]||0)+got;
       rr.lines.push({id:+id,q,got,sup:sup.k});
@@ -3199,6 +3356,7 @@ function endDay(){
   meta.hist=(meta.hist||[]).concat([{d:meta.day,s:S,n:fin.net}]).slice(-6);
   curveSample(true);meta.prevCurve=run.curve||[];meta.prevDay=meta.day;
   meta.best=Math.max(meta.best,meta.day);
+  try{achDay();}catch(e){console.warn('logros',e);}
   cart={};
   lastEnd={payroll,res,fin,dep:deptPerf(res,payD)};scrTab.shop='sum';pg=0;tipsPer=0;
   try{weekEnd();}catch(e){console.warn('weekEnd',e);}
@@ -3397,6 +3555,7 @@ function payDiv(pct){
 /* Paga g céntimos brutos al socio (la retención va a Hacienda). La escena del dividendo lo usa durante el turno (run.div). */
 function divPay(g){
   const B=divYear(),ret=irpfAh(B.divY,g);
+  achCheck('div');
   meta.money-=g;B.divY+=g;B.div+=g;B.ret+=ret;B.cash+=g-ret;if(meta.week)meta.week.div=(meta.week.div||0)+g;
   sOk();toast('👑 Dividendo de '+fmt(g)+': Hacienda retiene '+fmt(ret)+', a tu bolsillo '+fmt(g-ret)+'.','good');
 }
@@ -3513,10 +3672,10 @@ function showStart(confirmWipe){
   run=null;scrRender=()=>showStart(confirmWipe);
   const cont=hasSave||meta.day>1;
   if(scrTab.start==='rank'&&!online())scrTab.start='how';
-  const k=scrTab.start;
+  const k=scrTab.start,X={ach:()=>achHead()+achGrid(),car:carHtml,aj:ajHtml}[k];
   const HOW=['🛒 Toca cada producto de la cinta para escanearlo. Los de código dañado piden varios toques.','🪪 Productos <b>18+</b>: mira la fecha de nacimiento del DNI y decide si vendes.','🛍️ Si el cliente pide bolsa, añádela. Si no la pide, no la cobres.','💶 Con tarjeta, cobra. En efectivo, da el cambio exacto con billetes y monedas.','📨 <b>Reclamaciones</b>: las dudas, tú. Dinero, a Backoffice. Trato y redes, a RR.PP. Agotados, a Almacén.','📦 Lo que vendes sale de la estantería: pide a los distribuidores y ten gente en Almacén. Empiezas con 30.000 € y una póliza de crédito de 15.000 €: si la agotas, concurso de acreedores.','⭐ La paciencia se agota. Con la reputación a cero, cierras la tienda.','🔓 Empiezas solo en caja: Almacén se abre en el turno 3, Backoffice y RR.PP. en el 5, RR.HH. y Dirección en el 7. Cada semana, objetivos 🎯 con premio.'].map(x=>'<li>'+x+'</li>');
-  const P=k==='rank'?{html:'',nav:''}:paged(HOW,innerHeight<700&&innerWidth<900?3:innerHeight<860&&innerWidth<900?5:7);
-  const body=k==='rank'?'<div id="rank"></div>':`${offline?'<div class="rerr">📴 Sin conexión: juegas en solitario.</div>':''}
+  const P=k==='rank'||X?{html:'',nav:''}:paged(HOW,innerHeight<700&&innerWidth<900?3:innerHeight<860&&innerWidth<900?5:7);
+  const body=X?X():k==='rank'?'<div id="rank"></div>':`${offline?'<div class="rerr">📴 Sin conexión: juegas en solitario.</div>':''}
     <div class="hero" id="herobox"><span class="htag">🛒 Tu súper, tu historia</span></div>
     <p class="lead">Eres la cajera o el cajero de VitchMarket y, entre turnos, quien manda. Cobra rápido y sin fallos.</p>
     <ul class="howto">${P.html}</ul>
@@ -3525,7 +3684,7 @@ function showStart(confirmWipe){
     :confirmWipe?`<span class="supd">Se borra la partida guardada (turno ${meta.day}, ${fmt(meta.money)}). No se puede deshacer.</span>
       <button class="btn no big" data-act="restart">Sí, borrar y empezar de cero</button><button class="btn" data-act="start">No, seguir</button>`
     :`<button class="btn go big" data-act="start">Continuar · turno ${meta.day} · ${fmt(meta.money)}</button><button class="btn" data-act="wipe">Empezar de cero</button>`;
-  showOverlay(screenHtml('start','<span class="logo">VITCHMARKET</span>',[['how','📖 Cómo se juega']].concat(online()?[['rank','🏆 Ranking']]:[]),body,P.nav,foot+(confirmWipe?'':dailyBtn())));
+  showOverlay(screenHtml('start','<span class="logo">VITCHMARKET</span>',[['how','📖 Cómo se juega']].concat(online()?[['rank','🏆 Ranking']]:[],[['ach','🏅 Logros',achN()+'/'+ACH.length],['car','🎖️ Carrera',car.xp||''],['aj','⚙️ Ajustes']]),body,P.nav,foot+(confirmWipe?'':dailyBtn())));
   if(k==='rank')fillRanking();
 }
 
@@ -3552,7 +3711,7 @@ async function fbInit(){
   return fb;
 }
 async function submitScore(final){
-  if(daily)return;
+  if(daily||meta.relax)return;
   const name=playerName(),days=final?meta.day-1:meta.day;
   if(!online()||!name||days<1)return;
   const f=await fbInit();if(!f)return;
@@ -3628,6 +3787,7 @@ function dailyEnd(dead){
   const res={d:daily.d,score,stars,served:R.served||0,angry:R.angry||0,errors:R.errors||0,rep:meta.rep,dead:!!dead,official:daily.official};
   res.txt='VitchMarket · Reto '+retoDM(res.d)+' · 💰 '+(score>0?'+':'')+fmt(score)+' · '+'⭐'.repeat(stars)+'☆'.repeat(3-stars)+' · 😡'+res.angry+' · 🧾'+res.served+(dead?' · 🔒':'')+(res.official?'':' · práctica');
   daily.res=res;scrTab.reto='res';
+  achCheck('reto',!dead);achCheck('retoW',!dead&&score>0);achCheck('reto3',stars===3);
   if(res.official){retoSet(res.d,{d:res.d,score,stars,served:res.served,angry:res.angry,txt:res.txt});daily.sub=dailySubmit(res);}
   showDailyRes();
 }
@@ -3693,7 +3853,7 @@ function dailyExit(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.18-93';
+const APPV='2026.11.18-94';
 /* Compara versiones por números («-9» < «-11»), no como texto. */
 const verCmp=(a,b)=>{const x=String(a).split(/[.-]/).map(Number),y=String(b).split(/[.-]/).map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
 try{const vt=document.createElement('div');vt.id='vtag';vt.textContent='v'+APPV;document.body.appendChild(vt);}catch(e){}
@@ -5408,7 +5568,7 @@ function hireFromCv(c,wage,mine){
   if(!c||!ROLES[c.role])return 'Candidato perdido.';
   if(staffOf(c.role).length>=ROLES[c.role].max)return 'Iba a entrar en '+ROLES[c.role].n+', pero el puesto está completo.';
   if(meta.money<HIRE)return 'No hay bote para contratar ('+fmt(HIRE)+').';
-  meta.money-=HIRE;if(run&&!run.over)run.hires=(run.hires||0)+1;
+  meta.money-=HIRE;if(run&&!run.over)run.hires=(run.hires||0)+1;achCheck('hire');
   const e=newEmp(c.role,meta,{name:cleanName(c.name),face:c.face,rap:c.rap,trato:c.trato,punt:c.punt,act:c.act,hon:c.hon==null?Math.round(rnd(0.15,0.95)*100)/100:+c.hon,mine:mine?1:0,nat:c.nat,langs:toArr(c.langs),pers:c.pers,wage:Math.max(SMI_D,Math.round(wage||c.wage)),trial:3});
   e.moral=clamp(e.moral+(wage<c.wage?-10:wage>c.wage?8:0),0,100);
   meta.emp.push(e);fillVac(e.role);logE(e,'Contratado/a tras la entrevista');
@@ -5715,7 +5875,11 @@ const IV={
 /* En la entrevista mienten un 25% de las veces (siempre para quedar mejor). */
 function interview(k,v){let l=v>0.62?'hi':v<0.38?'lo':'mid';if(Math.random()<0.25)l='hi';return{q:IV[k].q,a:pick(IV[k][l])};}
 function genCands(){
-  const out=[],vr=vacRoles();if(!vr.length)return out;
+  const out=[],vr=vacRoles();
+  /* Ventaja de la carrera «Contactos en el barrio»: uno bueno de más en la primera reunión. */
+  if(meta.perkCand){meta.perkCand=0;const c=newEmp(vr[0]||'atc',meta,{},[]);['rap','trato','punt','act'].forEach(k=>{c[k]=Math.round(rnd(0.75,0.95)*100)/100;});c.hon=Math.round(rnd(0.8,1)*100)/100;
+    c.wage=Math.round(wageOf(c.role)*1.04);c.exp=ri(4,10);c.ref='Te lo recomienda un contacto del barrio';c.qa=['rap','trato'].map(k=>interview(k,c[k]));out.push(c);}
+  if(!vr.length)return out;
   for(let i=0;i<3;i++){
     const c=newEmp(vr[i%vr.length],meta,{},out.map(x=>x.name));
     c.wage=Math.round(wageOf(c.role)*(1+ri(0,4)*0.02));c.exp=ri(0,8);
@@ -5812,6 +5976,7 @@ function fireCore(e,r){
     L.push(just?'⚖️ Te denuncia: nunca le diste un toque antes de despedirle. El juez lo declara improcedente: −'+fmt(extra)+' y −0,3 de reputación.'
       :'⚖️ Te denuncia: el motivo no se sostiene con lo que hay registrado. Despido improcedente: −'+fmt(extra)+' y −0,3 de reputación.');
   }else if(!just&&r!=='none')L.push('😅 El motivo no se sostenía, pero no te ha denunciado. Esta vez.');
+  achCheck('fire',just&&r!=='trial'&&!extra);
   L.push('Total pagado: <b>'+fmt(cost)+'</b>.');
   meta.money-=cost;meta.emp=meta.emp.filter(x=>x!==e);
   meta.emp.forEach(x=>{x.moral=clamp(x.moral+(bad?3:-8),0,100);});
@@ -5837,8 +6002,8 @@ function hireCand(i){
   const c=meet&&meet.cands[i];if(!c||c.hired)return;
   if(staffOf(c.role).length>=ROLES[c.role].max||meta.money<HIRE)return;
   meta.money-=HIRE;
-  const e=Object.assign({},c);delete e.qa;delete e.exp;delete e.hired;delete e.integ;e.trial=3;e.mine=1;e.st=blankSt();
-  meta.emp.push(e);fillVac(e.role);c.hired=1;meet.acted[e.id]='🆕 Recién fichado. Empieza el próximo turno.';
+  const e=Object.assign({},c);delete e.qa;delete e.exp;delete e.hired;delete e.integ;delete e.ref;e.trial=3;e.mine=1;e.st=blankSt();
+  meta.emp.push(e);fillVac(e.role);c.hired=1;achCheck('hire');meet.acted[e.id]='🆕 Recién fichado. Empieza el próximo turno.';
   sOk();renderHud();showMeeting();
 }
 function endMeeting(){
@@ -5882,7 +6047,7 @@ function showMeeting(){
     const qa=c.qa.map(x=>`<div class="qa">${x.q}<i>«${x.a}»</i></div>`).join('');
     const btn=(c.hired?'':c.integ?`<div class="qa">🧪 Integridad: <b>${c.integ}</b> (aprox.)</div>`:`<button class="btn" data-act="integc" data-c="${i}" ${meta.money<INTEG?'disabled':''}>🧪 Test de integridad · ${fmt(INTEG)}</button>`)+(c.hired?'<div class="supd">Fichado. Empieza el próximo turno, en periodo de prueba.</div>'
       :`<button class="btn go" data-act="hirec" data-c="${i}" ${full||meta.money<HIRE?'disabled':''}>${full?'Puesto completo':'Contratar · '+fmt(HIRE)}</button>`);
-    return `<div class="emp"><div class="eh"><span class="ef">${c.face}</span><div class="t"><b>${c.name}</b>${flag(c)} ${(NATS[c.nat]||NATS[0]).c} · para ${ROLES[c.role].n} · habla ${c.langs.map(l=>LANG[l]).join(', ')} ·${c.exp?c.exp+(c.exp===1?' año':' años')+' de experiencia':'sin experiencia'} · pide ${fmt(c.wage)}/día</div></div>${qa}${btn}</div>`;
+    return `<div class="emp">${c.ref?'<div class="qa">🤝 '+c.ref+'</div>':''}<div class="eh"><span class="ef">${c.face}</span><div class="t"><b>${c.name}</b>${flag(c)} ${(NATS[c.nat]||NATS[0]).c} · para ${ROLES[c.role].n} · habla ${c.langs.map(l=>LANG[l]).join(', ')} ·${c.exp?c.exp+(c.exp===1?' año':' años')+' de experiencia':'sin experiencia'} · pide ${fmt(c.wage)}/día</div></div>${qa}${btn}</div>`;
   });
   const duties=Object.keys(ROLES).map(k=>`<div class="up"><div class="t"><b>${ROLES[k].n} · ${staffOf(k).length}/${ROLES[k].max}</b>${ROLES[k].duties.join(' · ')}</div></div>`).join('');
   const ap=isHost()?appsList().length:0,c=cols();
@@ -5925,7 +6090,7 @@ function idDecision(sell){
     else sOk();
   }else{
     it.denied=true;ret(it);
-    if(c.minor){repAdd(+0.1,'Negaste alcohol a un menor');toast('Bien visto. Era menor.','good');sOk();}
+    if(c.minor){repAdd(+0.1,'Negaste alcohol a un menor');achCheck('minors',achCount('minors')>=5);toast('Bien visto. Era menor.','good');sOk();}
     else{repAdd(-0.4,'Negaste alcohol a un adulto');c.p=Math.max(0,c.p-c.max*0.3);run.errors++;c.err++;toast('Era mayor de edad. Cliente molesto.','bad');sBad();}
   }
   renderAll();checkRep();
@@ -5994,7 +6159,8 @@ function finish(c,noTip){
   if(Math.random()<0.5)addReview(c.err>1?2:c.err?3:frac>0.5?5:4,c.face);
   regVisit(c,c.err===0&&frac>0.3);
   if(c.err>0&&Math.random()<0.4)addTicket('back','Error en su compra',ri(100,600),2,false);
-  run.served++;
+  run.served++;if(rushOn())run.rushN=(run.rushN||0)+1;
+  achCheck('diva',c.pk==='diva'&&c.err===0&&tot>0);
   juiceDone(c,tot,frac);
   removeFront();
   renderAll();checkRep();
@@ -6005,12 +6171,13 @@ function finish(c,noTip){
    por escalón (hasta una quinta). Al cobrar, monedas que vuelan de la registradora al bote y la pastilla late; al fallar,
    la registradora tiembla (≤200 ms) con un zumbido grave. Con prefers-reduced-motion no hay movimiento. */
 const CB={gap:1.2,from:3,step:0.05,max:0.25};
-const redMo=()=>{try{return !!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches);}catch(e){return false;}};
+const redMo=()=>{if(AJ.mov)return true;try{return !!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches);}catch(e){return false;}};
 function comboTap(){
   const cb=run.cb||(run.cb={n:0,t:-9,e:run.errors});
   if(run.errors!==cb.e||run.t-cb.t>CB.gap)cb.n=0;
   cb.n++;cb.t=run.t;cb.e=run.errors;cb.at=performance.now();
   const c=front();if(c)c.cbMax=Math.max(c.cbMax||0,cb.n);
+  if(cb.n>=10)achCheck('combo');
   beep(1900*Math.pow(2,Math.min(cb.n-1,7)/12),.07);
 }
 const comboBonus=c=>(c.cbMax||0)>=CB.from?Math.min(CB.max,CB.step*(c.cbMax-CB.from+1)):0;
@@ -7023,7 +7190,7 @@ function step(ts,hid){
   if(room&&(room.waitRelay||room.yieldR||room.stopping))return;
   quiet=!!(room&&room.sim);
   const dt=Math.min(0.1,(ts-last)/1000||0);last=ts;
-  if(run&&!run.over&&!guide&&!scenePaused()){
+  if(run&&!run.over&&!guide&&!(ajw&&!room)&&!scenePaused()){
     run.t+=dt;
     if(!run.closing&&run.t>=run.dur){run.closing=true;renderQueue();}
     if(!run.closing){
@@ -7046,9 +7213,10 @@ function step(ts,hid){
     const helpers=staffOf('atc').filter(e=>isFree(e)&&!run.duty[e.id].slack).length;
     const am=run.away&&!run.away.cover?run.away.mult:0;
     const rate=(meta.up.fan?0.8:1)*(1-0.08*helpers);
+    const frz=calmaOn()&&!!(sceneCur||mg||$('#overlay.show'));
     for(let i=run.queue.length-1;i>=0;i--){
       const c=run.queue[i];
-      c.p-=dt*rate*(i===0?(am||1):(am?1:0.55));
+      if(!frz)c.p-=dt*rate*(i===0?(am||1):(am?1:0.55));
       c.talk-=dt;
       if(c.talk<=0){c.talk=rnd(7,13);if(c.p>0)say(c,i);}
       if(c.p<=0){leaveAngry(i);if(run.over)break;}
@@ -7107,11 +7275,15 @@ function onClick(e){
   if((a==='start'||a==='restart')&&$('#pname'))setPlayerName($('#pname').value);
   if(a==='daily'&&$('#pname')&&$('#pname').value.trim())setPlayerName($('#pname').value);
   if(a==='rapply'&&$('#pname')&&isMember()){if(!nameOk())return;room.renaming=false;fb.update(rRef('members/'+room.uid),{name:playerName()}).catch(()=>{});}
-  if(a==='start'){beep(1200,.05);startDay();}
+  if(a==='start'){beep(1200,.05);carNew();startDay();}
   else if(a==='daily'){beep(1200,.05);startDaily();}
   else if(a==='dcopy')dailyCopy();
   else if(a==='dhome')dailyExit();
-  else if(a==='restart'){meta=defMeta(meta.best);meet=null;startDay();}
+  else if(a==='restart'){meta=defMeta(meta.best);meet=null;carNew();startDay();}
+  else if(a==='perk')perkAct(b.dataset.k,b.dataset.op);
+  else if(a==='aj')ajSet(b.dataset.k,b.dataset.v);
+  else if(a==='ajopen'){ajw=true;ajRender();}
+  else if(a==='ajclose'){ajw=false;ajRender();}
   else if(a==='endover'){run.endOver=false;run.over=false;checkRep();}
   else if(a==='retry'&&turnSnap){const best=meta.best;meta=JSON.parse(turnSnap);ensureMeta();meta.best=Math.max(best||0,meta.best||0);
     meta.runId=Math.random().toString(36).slice(2,10)+Date.now().toString(36);meta.retries=(meta.retries||0)+1;meet=null;startDay();toast('🔁 Repites el turno '+meta.day+'. Esta vez, con cabeza.','good');}
