@@ -1780,11 +1780,13 @@ const TALK={
  capullo:['Si lo hicierais bien, no tendría que hacerlo yo.','Apartad, que así no se hace.']
 };
 /* ===== Economía de una pyme real (España, 2026) =====
-   Sueldos: SMI 2026 (RD 126/2026) = 1.221 €/mes × 14 pagas = 17.094 €/año; los convenios de comercio de alimentación
-   ponen Caja y Almacén en el SMI o poco más, y a administración algo por encima. Un turno = un día natural (salario anual / 365).
+   Sueldos: SMI 2026 (RD 126/2026, BOE 19-02-2026) = 1.221 €/mes × 14 pagas = 17.094 €/año. Convenio de Comercio de Alimentación
+   de la Comunidad de Madrid (BOCM 24-02-2024, tablas 2025, prorrogadas mientras se negocia el nuevo; 15 pagas): grupo I 16.196,55 €,
+   II 17.019,30 €, III 17.523,00 €, IV 19.598,85 €/año. Los grupos I y II quedan por debajo del SMI 2026, así que Caja cobra el SMI;
+   Almacén = grupo III; Backoffice = grupo IV; RR.PP. y RR.HH. algo más (grupo sin comprobar). Un turno = un día natural (salario anual / 365).
    Seguridad Social a cargo de la empresa (Orden PJC/297/2026): contingencias comunes 23,60 % + desempleo 5,50 % + FOGASA 0,20 %
    + formación profesional 0,60 % + MEI 0,75 % + accidentes de trabajo (comercio al por menor de alimentación) 1,50 % = 32,15 %. */
-const SMI_Y=1709400,SS_EMP=0.3215,WAGE_Y={atc:1709400,alm:1740000,back:1920000,rrpp:1980000,rrhh:2100000};
+const SMI_Y=1709400,SS_EMP=0.3215,WAGE_Y={atc:1709400,alm:1752300,back:1959885,rrpp:1980000,rrhh:2100000};
 const dayW=y=>Math.round(y/365),SMI_D=dayW(SMI_Y),wageOf=r=>dayW(WAGE_Y[r]||SMI_Y),WAGE=SMI_D;
 const HIRE=10000; /* contratar: anuncio en un portal de empleo y reconocimiento médico (≈100 €) */
 const monthTxt=w=>fmt(Math.round(w*365/14))+'/mes';
@@ -1793,7 +1795,8 @@ const empCost=w=>Math.round(w*(1+SS_EMP));
    Antes era un local de 400 m² (4.800 €/mes de alquiler), demasiado grande para 4–6 personas y 3 cajas. [nombre, €/día en céntimos, IVA soportado %] */
 const FIXED=[['Alquiler del local',10000,21],['Luz y frío de las neveras',5000,21],['Agua, basuras y limpieza',2000,10],['Seguros (local y responsabilidad civil)',900,0],['Gestoría, TPV y software',1100,21],['Mantenimiento',1500,21]];
 const FIXED_D=FIXED.reduce((a,x)=>a+x[1],0);
-/* Póliza de crédito con el banco: el bote puede bajar hasta −15.000 € pagando un 8,5 % anual de interés; pasado eso, concurso de acreedores. */
+/* Póliza de crédito con el banco: el bote puede bajar hasta −15.000 € pagando un 8,5 % anual de interés; pasado eso, concurso de acreedores.
+   8,5 % ≈ Euríbor a 12 meses (3,239 % de media en octubre de 2026, Banco de España) + diferencial de ~5 puntos, lo normal para una micropyme. */
 const CREDIT=1500000,CREDIT_I=0.085;
 /* Límite e interés de la póliza de esta partida (el banco puede ampliarla: meta.credit/meta.creditI). */
 const credLim=()=>(meta&&meta.credit)||CREDIT,credI=()=>(meta&&meta.creditI)||CREDIT_I;
@@ -2257,7 +2260,7 @@ function sceneSync(){
 function ageWarn(){
   meta.ageWarn=1;
   scene({k:'edad:1',look:'pa',head:'MEGAFONÍA · ENCARGADA',who:'👮',name:'Ojo con el alcohol',tag:'🔞 +18',prio:4,...serio(),def:'ok',
-    txt:'Vender alcohol a un menor en Madrid = desde <b>30.050 €</b> de multa (Ley 5/2002). Con este bote, eso es cerrar.',
+    txt:'Vender alcohol a un menor de 18 años en Madrid es una infracción grave: desde <b>30.050,62 €</b> de multa (Ley 5/2002 de Drogodependencias de la Comunidad de Madrid, arts. 30.2 y 59); si es muy grave, desde 60.101,22 €. Con este bote, eso es cerrar.',
     body:'<div class="scn-hint">🪪 Mira la fecha de nacimiento del DNI contra la de hoy. ¿Menor de 18? 🚫 Negar, y que se enfade.</div>',
     choices:[{t:'🪪 Entendido: DNI siempre',k:'ok',cls:'go',key:'S',stamp:'APUNTADO',sc:'ok'}]});
 }
@@ -2726,7 +2729,7 @@ function offerScene(){
    meta.promos = [{id, t, from, to}] (máx. 3, duran PROMO_LEN turnos y empiezan el turno siguiente). t: '2a' = 2ª unidad −50 % (por pareja),
    '3x2' (cada 3, una gratis), '20' = −20 %. Efecto: el producto pesa ×w en pickProduct, el cliente se lleva k unidades con prob. x
    y las otras cajas venden +2 % por promo con existencias (y tickets con promo que gastan unidades de verdad). El coste sigue siendo
-   el 74 % del PVP: el 3x2 vende por debajo del coste (Ley de la Cadena Alimentaria: venta a pérdidas, la mira Consumo). */
+   el 74 % del PVP: el 3x2 vende por debajo del coste (venta con pérdida: Ley 7/1996 del Comercio Minorista, art. 14, la mira Consumo). */
 const PROMO={'2a':{n:'2ª unidad −50 %',s:'2ª −50%',b:'2ª',k:2,eff:0.75,w:2.2,x:0.7},'3x2':{n:'3x2',s:'3x2',b:'3x2',k:3,eff:2/3,w:2.5,x:0.65},'20':{n:'−20 %',s:'−20%',b:'−20',k:2,eff:0.8,w:1.7,x:0.3}};
 const PROMO_MAX=3,PROMO_LEN=3;let promoSel=0;
 const promoL=()=>(meta.promos=toArr(meta.promos));
@@ -2744,7 +2747,7 @@ function promoAdd(id,t){
   const x=CAT.find(y=>y.id===id),L=promoL();if(!x||!PROMO[t]||L.length>=PROMO_MAX||L.some(p=>p.id===id))return;
   L.push({id,t,from:meta.day+1,to:meta.day+PROMO_LEN});
   const m=promoMg(x,t);sCoin();
-  toast('🏷️ '+x.e+' '+x.n+': '+PROMO[t].n+' del turno '+(meta.day+1)+' al '+(meta.day+PROMO_LEN)+'.'+(m<0?' ⚠️ Vende por debajo del coste: la Ley de la Cadena Alimentaria lo prohíbe.':' Pide existencias, que vuela.'),m<0?'bad':'good');
+  toast('🏷️ '+x.e+' '+x.n+': '+PROMO[t].n+' del turno '+(meta.day+1)+' al '+(meta.day+PROMO_LEN)+'.'+(m<0?' ⚠️ Vende por debajo del coste: venta con pérdida (Ley 7/1996 del Comercio Minorista, art. 14), Consumo la puede multar.':' Pide existencias, que vuela.'),m<0?'bad':'good');
   saveGame(!run||run.over);
 }
 function promoDel(id){meta.promos=promoL().filter(p=>p.id!==id);saveGame(!run||run.over);}
@@ -2762,7 +2765,7 @@ function promoHtml(){
     <div class="prsel"><button class="btn" data-act="promos" data-d="-1" aria-label="Producto anterior">◀</button><div class="prp">${x.e} <b>${esc(x.n)}</b><small>PVP ${fmt(x.p)} · coste ${fmt(cost)} · margen ${fmt(x.p-cost)}/ud · existencias ${qty(x)}</small></div><button class="btn" data-act="promos" data-d="1" aria-label="Producto siguiente">▶</button></div>
     <div class="prbs">${opts}</div>
     ${rows?'<div class="ordlist">'+rows+'</div>':'<div class="supd">Sin promociones. En España, 1 de cada 4 productos se vende en promoción.</div>'}
-    <div class="supd">Duran ${PROMO_LEN} turnos desde el siguiente. Margen por unidad = precio medio con la promo − coste (${Math.round(SUPS[0].cf*100)} % del PVP). Más clientes y más unidades por ticket, pero menos margen y hacen falta existencias. Vender por debajo del coste lo prohíbe la Ley de la Cadena Alimentaria (salvo lo que caduca, con la rebaja de «Caduca hoy»).${f&&f.pu?` Último turno: <b>${f.pu} uds</b> en promo, margen <b class="${f.pv-f.pc<0?'neg':'pos'}">${sg(f.pv-f.pc)}</b>.`:''}</div>`;
+    <div class="supd">Duran ${PROMO_LEN} turnos desde el siguiente. Margen por unidad = precio medio con la promo − coste (${Math.round(SUPS[0].cf*100)} % del PVP). Más clientes y más unidades por ticket, pero menos margen y hacen falta existencias. Vender por debajo del coste es venta con pérdida (Ley 7/1996 del Comercio Minorista, art. 14, y Ley 3/1991 de Competencia Desleal, art. 17): Consumo la puede multar. Lo perecedero a punto de caducar es una excepción legal (la rebaja de «Caduca hoy»).${f&&f.pu?` Último turno: <b>${f.pu} uds</b> en promo, margen <b class="${f.pv-f.pc<0?'neg':'pos'}">${sg(f.pv-f.pc)}</b>.`:''}</div>`;
 }
 /* ===== Competencia del barrio (desde el turno 8–12, Dirección) =====
    meta.riv = {n, ic, drop, d0, len, resp}: las otras cajas venden −drop (×(1 − días/len)) hasta que pasa la novedad. Respuestas:
@@ -2909,15 +2912,17 @@ const INSP_C=[
     bad:r=>!r&&Math.random()<(insWork('alm')?0.12:0.3)?pick(['Carne picada a 5 °C en el mural (máx. 2 °C)','Congelados a −12 °C (mín. −18 °C)','Pollo a 7 °C (máx. 4 °C)']):''},
   {k:'appcc',a:'san',g:'Leve',L:[1,5000],law:'Reg. (CE) 852/2004 art. 5 (APPCC)',form:1,fx:'Ten a alguien de Almacén trabajando: apunta las temperaturas.',
     bad:r=>!insWork('alm')?'Hoja de temperaturas del APPCC sin rellenar':(!r&&Math.random()<0.15)?'Hoja de temperaturas rellenada de golpe':''},
+  /* Ley 1/2025 de desperdicio: el plan de prevención y los acuerdos de donación (art. 6) no obligan a las microempresas (menos de 10
+     trabajadores o 2 M€ de balance) ni a las tiendas de hasta 1.300 m². Esta es una micropyme de 250 m²: donar es voluntario y no hay multa. */
   {k:'desp',a:'san',g:'Leve',L:[1,2000],law:'Ley 1/2025 de prevención del desperdicio alimentario',form:1,fx:'Lo que caduca hoy, dónalo al banco de alimentos en vez de tirarlo.',
-    bad:r=>(r?insAfter('merma',r)&&!insAfter('don',r):insRec('merma')&&!insRec('don'))?'Alimentos aptos tirados a la basura sin plan de donación':''},
+    bad:()=>''},
   {k:'limp',a:'san',g:'Leve',L:[1,5000],law:'Reg. (CE) 852/2004 anexo II',form:1,fx:'Que no caduque ningún aviso de derrame.',
     bad:r=>(r?insAfter('spill',r):insRec('spill'))?'Derrame sin limpiar en la sala':''},
   {k:'hojas',a:'cons',g:'Leve',L:[150,10000],law:'TRLGDCU art. 21 · Madrid: contestar en 15 días',form:1,fx:'Que no se queden reclamaciones sin atender: contrata o resuélvelas.',
     bad:r=>(r?insAfter('late',r):(insRec('late')||(meta.consPend||[]).length))?'Hojas de reclamaciones sin contestar':''},
   {k:'precio',a:'cons',g:'Leve',L:[150,10000],law:'RD 3423/2000 · TRLGDCU',form:1,fx:'Al reponer, la etiqueta del producto correcto.',
     bad:r=>(r?insAfter('lab',r):insRec('lab'))?'Etiqueta del lineal con otro precio que la caja':''},
-  {k:'perdida',a:'cons',g:'Grave',L:[3001,100000],law:'Ley 12/2013 de la Cadena Alimentaria (venta a pérdidas)',fx:'Quita las promociones por debajo del coste (el 3x2 casi siempre lo está).',
+  {k:'perdida',a:'cons',g:'Grave',L:[6001,30000],law:'Ley 7/1996 del Comercio Minorista, art. 14 (venta con pérdida, infracción grave)',fx:'Quita las promociones por debajo del coste (el 3x2 casi siempre lo está).',
     bad:r=>(r?insAfter('loss',r):insRec('loss'))?'Promoción por debajo del precio de compra':''},
   {k:'cartel',a:'cons',g:'Leve',L:[150,10000],law:'Normativa de consumo de Madrid',form:1,fx:'Nada: el cartel se pone al momento.',
     bad:r=>!r&&Math.random()<0.2?'Falta el cartel «Hay hojas de reclamaciones»':''},
@@ -3252,7 +3257,7 @@ function startDay(){
   if(relaxOn()||calmaOn()){meta.relax=1;if(relaxOn())run.dur=130;}
   ensureMeta();run.rep0=meta.rep;
   unlockCheck();weekCheck();
-  /* Promos caducadas fuera; si hoy hay alguna por debajo del coste, Consumo lo puede ver (Ley de la Cadena). */
+  /* Promos caducadas fuera; si hoy hay alguna por debajo del coste, Consumo lo puede ver (venta con pérdida, Ley 7/1996 art. 14). */
   meta.promos=promoL().filter(p=>p.to>=meta.day);
   if(promoOn().some(p=>{const y=CAT.find(z=>z.id===p.id);return y&&PROMO[p.t]&&promoMg(y,p.t)<0;}))meta.ins.loss=meta.day;
   try{rivalPlan();}catch(e){console.warn('rival',e);}
@@ -3502,7 +3507,7 @@ function almLiveScenes(){
 function cadScene(p){
   const n=Math.min(meta.stock[p.id]||0,ri(2,4)),a=aisleOf(p.id),dis=Math.round(p.p*0.7/5)*5;
   almScene({k:'cad:'+p.id,look:'label',who:p.e,head:'🏷️ LINEAL · PASILLO '+a,name:esc(p.n),tag:'⚠️ Caduca hoy',prio:0,time:10,def:'deja',rdef:'donar',
-    txt:'Hay '+n+(n===1?' unidad que caduca':' unidades que caducan')+' hoy. ¿Qué hacemos? La ley contra el desperdicio pide donar lo que aún está bien antes que tirarlo.',
+    txt:'Hay '+n+(n===1?' unidad que caduca':' unidades que caducan')+' hoy. ¿Qué hacemos? La Ley 1/2025 contra el desperdicio pone donar antes que tirar (a una tienda pequeña como esta no la obliga, pero el barrio lo agradece).',
     body:`<div class="cadt"><span class="cadt-d">CAD ${dShort(today0)}</span><span class="cadt-o">${fmt(p.p)}</span><b>${fmt(dis)}</b><span class="cadt-x">−30%</span></div>`,
     choices:[{t:'🗑️ Retirar a merma',k:'merma',cls:'go',key:'M',stamp:'MERMA',sc:'ok'},{t:'🏷️ Rebajar 30%',k:'rebaja',key:'B',stamp:'−30%',sc:'ok',fx:'🏷️'},{t:'🤝 Donar al banco de alimentos',k:'donar',key:'A',stamp:'DONADO',sc:'ok',fx:'🤝'},{t:'🙈 Dejarlo',k:'deja',cls:'no',key:'D',stamp:'¿Y SI…?',sc:'bad'}],
     onPick:k=>{
@@ -4169,7 +4174,7 @@ function dailyExit(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.18-101';
+const APPV='2026.11.18-102';
 /* Compara versiones por números («-9» < «-11»), no como texto. */
 const verCmp=(a,b)=>{const x=String(a).split(/[.-]/).map(Number),y=String(b).split(/[.-]/).map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
 try{const vt=document.createElement('div');vt.id='vtag';vt.textContent='v'+APPV;document.body.appendChild(vt);}catch(e){}

@@ -9,7 +9,8 @@ legal de cada producto del juego. Uso:
     python3 mercadona_precios.py cache.json # usa una descarga guardada
 
 MAP empareja cada id del juego con el id del producto en Mercadona.
-El IVA va por ley (art. 91 Ley 37/1992): 4 % pan común, leche, quesos, huevos,
+El IVA va por ley (art. 91 Ley 37/1992): 4 % pan (común y especial, también el de molde: Resolución
+de la DGT de 24-02-2025), leche, quesos, huevos,
 frutas, verduras, legumbres, cereales, harina panificable y aceite de oliva;
 10 % el resto de alimentos y el agua; 21 % alcohol, refrescos azucarados y droguería.
 """
@@ -27,7 +28,7 @@ MAP = {
  6: ('50543', 'Queso en lonchas', '🧀', 4, 0),
  7: ('20716', 'Mantequilla', '🧈', 10, 0),
  8: ('31505', 'Huevos', '🥚', 4, 0),
- 9: ('13810', 'Pan de molde', '🍞', 10, 0),
+ 9: ('13810', 'Pan de molde', '🍞', 4, 0),
  10: ('83202.1', 'Barra de pan', '🥖', 4, 0),
  11: ('82931', 'Croissants', '🥐', 10, 0),
  12: ('14102', 'Galletas María', '🍪', 10, 0),
