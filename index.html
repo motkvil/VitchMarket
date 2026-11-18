@@ -1515,6 +1515,14 @@ button.stat{font:inherit;cursor:pointer}
 .wk .gl:not(.ok) span{color:inherit}
 .end-why{background:#fff3f3;border:2px solid #e5383b;border-radius:10px;padding:8px 10px;margin:8px 0}
 #overlay .repwhy{margin:4px 0 8px;padding-left:22px}#overlay .repwhy li{display:flex;justify-content:space-between;gap:10px;padding:2px 0;border-bottom:1px dashed #e8c9c9}#overlay .repwhy .neg{color:var(--danger,#b3181b);white-space:nowrap}
+/* Reto del día: resultado grande y texto para compartir */
+.reto-hero{display:flex;flex-direction:column;align-items:center;gap:2px;padding:12px;margin:4px 0 10px;border-radius:12px;background:var(--gain-bg);border:2px solid var(--gain);text-align:center}
+.reto-hero.neg{background:var(--danger-bg);border-color:var(--danger)}
+.reto-hero small{font-size:var(--fs-s)}
+.reto-hero b{font-family:'Pixelify Sans',monospace;font-size:var(--fs-xxl);color:var(--gain)}
+.reto-hero.neg b{color:var(--danger)}
+.reto-st{font-size:var(--fs-l);letter-spacing:2px}
+.dshare{width:100%;box-sizing:border-box;font:var(--fs-m) 'Nunito',sans-serif;padding:8px;border-radius:8px;border:2px solid var(--line);resize:none;background:#fff;color:#222}
 </style>
 </head>
 <body>
@@ -2776,7 +2784,7 @@ function checkRep(){
     const q=meta.money<-credLim(),mf=q&&meta.minorAt&&meta.day-meta.minorAt.d<=1?meta.minorAt:null;
     /* Si la multa por alcohol a un menor acaba de hundir la empresa, primero el acta (escena) y luego el cierre. */
     if(mf&&!run.closing&&[sceneCur,...sceneQ].some(x=>x&&/^insp:/.test(x.k)))return;
-    run.over=true;run.dead=true;mg=null;pendingLeave=null;closeMG();wipeGame();
+    run.over=true;run.dead=true;mg=null;pendingLeave=null;closeMG();if(daily){dailyEnd(true);return;}wipeGame();
     const days=meta.day;
     if(mf){showOverlay(minorEndHtml(mf,days));submitScore(true).then(fillRanking);return;}
     showOverlay(`<div class="card"><h2>${q?'Concurso de acreedores':'🔒 Cerrado · La clientela te ha dado la espalda'}</h2>
@@ -3130,6 +3138,7 @@ function endDay(){
   if(isHost())room.rpt=deptReport();
   if(!(room&&room.sim)&&(meta.rep<=0||meta.money<-credLim())){run.over=false;checkRep();return;}
   meta.liveT=0;saveGame(true);
+  if(daily){dailyEnd(false);return;}
   if(room&&room.sim){weekScene();pubState(true);clearTimeout(room.nextT);room.nextT=setTimeout(relayNextDay,8000);return;}
   submitScore(false);
   showShop();
@@ -3426,9 +3435,9 @@ function showShop(noFit){
    desde su inicio. Si se recarga tras el cierre, se pasa al turno siguiente. */
 const SAVE_KEY='vitchmarket.partida.v1';
 let hasSave=false;
-function saveGame(closed){if(room){meta.closed=!!closed;if(isHost())fb.set(rRef('meta'),plain(meta)).catch(e=>console.warn('No se pudo guardar en la sala:',e));return;}try{meta.closed=!!closed;localStorage.setItem(SAVE_KEY,JSON.stringify(meta));}catch(e){}}
+function saveGame(closed){if(daily)return;if(room){meta.closed=!!closed;if(isHost())fb.set(rRef('meta'),plain(meta)).catch(e=>console.warn('No se pudo guardar en la sala:',e));return;}try{meta.closed=!!closed;localStorage.setItem(SAVE_KEY,JSON.stringify(meta));}catch(e){}}
 function loadGame(){try{const s=localStorage.getItem(SAVE_KEY);if(!s)return null;const m=JSON.parse(s);return m&&typeof m.day==='number'&&Array.isArray(m.emp)?m:null;}catch(e){return null;}}
-function wipeGame(){if(room){if(room.host&&!room.sim)fb.remove(rRef('meta')).catch(()=>{});return;}try{localStorage.removeItem(SAVE_KEY);}catch(e){}hasSave=false;}
+function wipeGame(){if(daily)return;if(room){if(room.host&&!room.sim)fb.remove(rRef('meta')).catch(()=>{});return;}try{localStorage.removeItem(SAVE_KEY);}catch(e){}hasSave=false;}
 
 function showStart(confirmWipe){
   run=null;scrRender=()=>showStart(confirmWipe);
@@ -3446,7 +3455,7 @@ function showStart(confirmWipe){
     :confirmWipe?`<span class="supd">Se borra la partida guardada (turno ${meta.day}, ${fmt(meta.money)}). No se puede deshacer.</span>
       <button class="btn no big" data-act="restart">Sí, borrar y empezar de cero</button><button class="btn" data-act="start">No, seguir</button>`
     :`<button class="btn go big" data-act="start">Continuar · turno ${meta.day} · ${fmt(meta.money)}</button><button class="btn" data-act="wipe">Empezar de cero</button>`;
-  showOverlay(screenHtml('start','<span class="logo">VITCHMARKET</span>',[['how','📖 Cómo se juega']].concat(online()?[['rank','🏆 Ranking']]:[]),body,P.nav,foot));
+  showOverlay(screenHtml('start','<span class="logo">VITCHMARKET</span>',[['how','📖 Cómo se juega']].concat(online()?[['rank','🏆 Ranking']]:[]),body,P.nav,foot+(confirmWipe?'':dailyBtn())));
   if(k==='rank')fillRanking();
 }
 
@@ -3473,6 +3482,7 @@ async function fbInit(){
   return fb;
 }
 async function submitScore(final){
+  if(daily)return;
   const name=playerName(),days=final?meta.day-1:meta.day;
   if(!online()||!name||days<1)return;
   const f=await fbInit();if(!f)return;
@@ -3495,6 +3505,115 @@ async function fillRanking(){
       :'<div class="supd">Aún no hay nadie. Estrénalo tú.</div>';
   }catch(e){console.warn('No se pudo cargar el ranking:',e);if(box())box().innerHTML='<div class="supd">No se pudo cargar el ranking.</div>';}
 }
+/* ---------- 🗓️ Reto del día (como el diario de Spelunky) ----------
+   Un solo turno, igual para todo el mundo ese día (fecha de Madrid): mientras dura el reto, Math.random es un generador
+   con semilla (mulberry32 del hash de la fecha) y al acabar se devuelve el de siempre. Los clientes y su ritmo de llegada
+   salen de un segundo generador propio (daily.cr, custRng) para que no dependan de los fotogramas (lo que se dibuja también
+   tira dados); los tickets de las otras cajas, de un tercero (daily.or). El tiempo de reacción del jugador sigue cambiando el resultado: eso es el reto.
+   Arranque fijo: plantilla inicial de defMeta y turno 3 con Almacén abierto (camión, muelle, caducados y alcohol con DNI
+   ya en juego); Backoffice, RR.PP. y RR.HH. siguen cerrados, como en una partida normal ese turno. La partida guardada
+   no se toca: meta va aparte (daily.saved), saveGame/wipeGame/submitScore no hacen nada y al terminar se vuelve a ella.
+   Puntuación = beneficio neto del turno (lastEnd.fin.net). Un intento oficial al día (vitchmarket.reto.<fecha>, se marca
+   al empezar para que recargar no dé otro); el resto, «de práctica». Con Firebase: /daily/<fecha>/<uid> (una sola vez) y top 10. */
+const RETO_K='vitchmarket.reto.';
+let daily=null;
+const mulb=a=>()=>{a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};
+const hashS=s=>{let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return h>>>0;};
+function madDate(){
+  try{const p={};new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/Madrid',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date()).forEach(x=>{p[x.type]=x.value;});
+    if(p.year&&p.month&&p.day)return p.year+'-'+p.month+'-'+p.day;}catch(e){}
+  return new Date().toISOString().slice(0,10);
+}
+const retoDM=d=>d.slice(8,10)+'/'+d.slice(5,7);
+function retoGet(d){try{const s=localStorage.getItem(RETO_K+d);return s?JSON.parse(s):null;}catch(e){return null;}}
+function retoSet(d,v){try{localStorage.setItem(RETO_K+d,JSON.stringify(v));}catch(e){}}
+/* Corre f con un generador propio del reto (cr = clientes, or = tickets de las otras cajas); fuera del reto, igual que siempre. */
+const custRng=(f,k)=>{const g=daily&&daily[k||'cr'];if(!g)return f();const R=Math.random;Math.random=g;try{return f();}finally{Math.random=R;}};
+function sceneClear(){sceneQ.length=0;sceneCur=null;sceneTok++;const el=$('#scene');if(el){el.classList.remove('show','out','hold');el.innerHTML='';}}
+function dailyBtn(){
+  const r=retoGet(madDate());
+  return `<button class="btn" data-act="daily" title="Un turno, el mismo para todo el mundo hoy">🗓️ Reto del día${r?(r.score!=null?' · hecho: '+(r.score>0?'+':'')+fmt(r.score):' · ya empezado')+' (práctica)':''}</button>`;
+}
+function startDaily(){
+  const d=madDate(),seed=hashS('VitchMarket·reto·'+d),prev=daily;
+  if(prev)Math.random=prev.orig;
+  const done=retoGet(d);
+  daily={d,seed,orig:prev?prev.orig:Math.random,saved:prev?prev.saved:meta,room:prev?prev.room:room,official:!done};
+  if(daily.official)retoSet(d,{d,started:1});
+  room=null;   /* online: la portada y la tienda compartida se apartan mientras dura el reto (sus avisos miran room) */
+  Math.random=mulb(seed);daily.cr=mulb((seed^0x9E3779B9)>>>0);daily.or=mulb((seed^0x85EBCA6B)>>>0);
+  meta=defMeta(1);meta.day=3;meta.unl={caja:1,alm:1};meta.reto=d;
+  meet=null;cart={};lastEnd=null;mg=null;closeMG();sceneClear();
+  tab='caja';document.body.dataset.tab=tab;
+  startDay();
+  toast('🗓️ Reto del día '+retoDM(d)+(daily.official?': intento oficial, ¡a por todas!':': de práctica (el oficial ya lo hiciste)'),'good');
+}
+function dailyEnd(dead){
+  if(!daily||daily.res)return;
+  Math.random=daily.orig;daily.cr=daily.or=null;
+  sceneClear();
+  const R=run||{},f=!dead&&lastEnd&&lastEnd.fin;
+  const score=Math.round(f?f.net:meta.money-(R.m0!=null?R.m0:CAP0));
+  const stars=dead?0:(score>0?1:0)+(!R.angry?1:0)+(!R.errors?1:0);
+  const res={d:daily.d,score,stars,served:R.served||0,angry:R.angry||0,errors:R.errors||0,rep:meta.rep,dead:!!dead,official:daily.official};
+  res.txt='VitchMarket · Reto '+retoDM(res.d)+' · 💰 '+(score>0?'+':'')+fmt(score)+' · '+'⭐'.repeat(stars)+'☆'.repeat(3-stars)+' · 😡'+res.angry+' · 🧾'+res.served+(dead?' · 🔒':'')+(res.official?'':' · práctica');
+  daily.res=res;scrTab.reto='res';
+  if(res.official){retoSet(res.d,{d:res.d,score,stars,served:res.served,angry:res.angry,txt:res.txt});daily.sub=dailySubmit(res);}
+  showDailyRes();
+}
+async function dailySubmit(r){
+  if(!online())return;const f=await fbInit();if(!f)return;
+  try{await f.set(f.ref(f.db,'daily/'+r.d+'/'+f.uid),{name:cleanName(playerName()),score:r.score,stars:r.stars,served:Math.min(1000,r.served),ts:f.serverTimestamp()});}
+  catch(e){console.warn('No se pudo subir el reto:',e);}
+}
+async function dailyRank(d){
+  const box=()=>$('#drank');if(!box())return;
+  if(!online()){box().innerHTML='<div class="supd">Sin conexión no hay ranking: el reto vale igual. Comparte el resultado.</div>';return;}
+  box().innerHTML='<div class="supd">Cargando el ranking de hoy…</div>';
+  if(daily&&daily.sub)await daily.sub;
+  const f=await fbInit();
+  if(!f){if(box())box().innerHTML='<div class="supd">El ranking no está disponible ahora mismo.</div>';return;}
+  try{
+    const s=await f.get(f.query(f.ref(f.db,'daily/'+d),f.orderByChild('score'),f.limitToLast(10)));
+    const rows=[];s.forEach(c=>{rows.push(Object.assign({id:c.key},c.val()));});rows.reverse();
+    if(!box())return;
+    box().innerHTML=rows.length?'<ol class="rank">'+rows.map(r=>`<li class="${r.id===f.uid?'me':''}"><b>${esc(r.name)}</b> · ${r.score>0?'+':''}${fmt(r.score)} · ${'⭐'.repeat(clamp(r.stars|0,0,3))}${'☆'.repeat(3-clamp(r.stars|0,0,3))} · 🧾${r.served|0}</li>`).join('')+'</ol>'
+      :'<div class="supd">Hoy no ha jugado nadie todavía. Estrénalo tú.</div>';
+  }catch(e){console.warn('No se pudo cargar el ranking del reto:',e);if(box())box().innerHTML='<div class="supd">No se pudo cargar el ranking.</div>';}
+}
+function showDailyRes(){
+  if(!daily||!daily.res)return;
+  const r=daily.res;scrRender=showDailyRes;
+  if(scrTab.reto==='rank'&&!online())scrTab.reto='res';
+  const k=scrTab.reto||'res',sg=r.score>0?'+':'',kp=(ic,l,v,c)=>`<div class="kpi ${c||''}"><small>${ic} ${l}</small><b>${v}</b></div>`;
+  const body=k==='rank'?'<div id="drank"></div>':`
+    <div class="reto-hero ${r.score<0?'neg':'pos'}"><small>${r.dead?'🔒 Cerraste antes de acabar · variación del bote':'Beneficio neto del turno'}</small><b>${sg}${fmt(r.score)}</b><span class="reto-st">${'⭐'.repeat(r.stars)}${'☆'.repeat(3-r.stars)}</span></div>
+    <div class="kpis">${kp('🧾','Atendidos en tu caja',r.served)}${kp('😡','Enfadados',r.angry,r.angry?'neg':'')}${kp('❌','Errores',r.errors,r.errors?'neg':'')}${kp('⭐','Reputación','★ '+repT(r.rep),r.rep<2?'neg':'')}</div>
+    <div class="supd">Estrellas: ⭐ ganar dinero · ⭐ ningún cliente enfadado · ⭐ ningún error en caja.</div>
+    <div class="supd">${r.official?'✅ <b>Intento oficial</b> de hoy'+(online()?': ya está en el ranking del día.':'.'):'🔁 <b>De práctica</b>: el oficial de hoy ya lo hiciste y no cuenta para el ranking.'} Mañana, reto nuevo.</div>
+    <div class="zone-title">📤 COMPARTIR</div>
+    <textarea id="dshare" class="dshare" readonly rows="2">${esc(r.txt)}</textarea>`;
+  const tabs=[['res','📋 Resultado']].concat(online()?[['rank','🏆 Hoy']]:[]);
+  showOverlay(screenHtml('reto','🗓️ Reto del día · '+retoDM(r.d),tabs,body,'',
+    '<button class="btn" data-act="dcopy">📋 Copiar</button><button class="btn" data-act="daily">🔁 Repetir (de práctica)</button><button class="btn go big" data-act="dhome">🏠 Volver a la portada</button>'));
+  if(k==='rank')dailyRank(r.d);
+}
+async function dailyCopy(){
+  const ta=$('#dshare'),txt=daily&&daily.res?daily.res.txt:(ta?ta.value:'');
+  try{await navigator.clipboard.writeText(txt);toast('📋 Copiado. Pégalo donde quieras.','good');return;}catch(e){}
+  try{if(ta){ta.focus();ta.select();if(document.execCommand&&document.execCommand('copy')){toast('📋 Copiado.','good');return;}}}catch(e){}
+  toast('No se pudo copiar solo: el texto está seleccionado, cópialo a mano.','bad');
+}
+/* Vuelta a la partida de siempre (y, online, a la portada de la tienda compartida). */
+function dailyExit(){
+  if(!daily)return;
+  Math.random=daily.orig;
+  sceneClear();mg=null;pendingLeave=null;closeMG();
+  const rm=daily.room;meta=daily.saved;daily=null;run=null;lastEnd=null;cart={};
+  room=rm;tab='caja';document.body.dataset.tab=tab;scrTab.reto='res';
+  renderAll();
+  if(room&&isMember()){room.lastHtml='';renderMember();}else showStart();
+}
 /* ---------- tienda compartida (Firebase Realtime Database, sin servidor) ----------
    Hay UNA sola tienda para todo el mundo: /rooms/VITCH. Al entrar, cada persona pone su nombre y solicita
    un cargo. El jefe (el primero que lo pide con el puesto libre) lleva la Caja 3, contrata a quien solicita
@@ -3504,7 +3623,7 @@ async function fillRanking(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.18-83';
+const APPV='2026.11.18-85';
 /* Compara versiones por números («-9» < «-11»), no como texto. */
 const verCmp=(a,b)=>{const x=String(a).split(/[.-]/).map(Number),y=String(b).split(/[.-]/).map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
 try{const vt=document.createElement('div');vt.id='vtag';vt.textContent='v'+APPV;document.body.appendChild(vt);}catch(e){}
@@ -4253,6 +4372,7 @@ function renderMember(){
           const vc=((st&&st.vac)||{})[r]||0;
           return `<button class="job ${vc?'hire':''}" data-act="rapply" data-r="${r}" ${pend===r?'disabled':''}>${vc?`<span class="seb">📢 SE BUSCA${vc>1?' ('+vc+')':''}</span>`:''}<span class="ic">${JOB_IC[r]}</span><b>${ROLES[r].s}</b>${st&&st.cnt?slots(n,ROLES[r].max):''}<small>${ROLES[r].duties.slice(0,2).join(' · ')}${full?'<br><em>Completo</em>':''}</small></button>`;}).join('')+'</div>';
       if(pend)foot='<button class="btn" data-act="rcancel">Retirar la solicitud</button>';
+      foot+=dailyBtn();
     }
   }else{
     kind='work';tabs=[];
@@ -6767,7 +6887,7 @@ function offTick(dt){
   const dem=OFF.dem*(0.2+0.16*meta.rep)*(1-0.6*out)*(1+0.03*Math.min(meta.day,10))*(meta.promo===meta.day?1.15:1);
   const rate=Math.min(dem,n*OFF.cap)/(run.dur||100);
   run.offAcc=(run.offAcc||0)+dt*rate;
-  while(run.offAcc>=1){run.offAcc--;const v=Math.round(OFF.ticket*rnd(0.4,1.6)),c=Math.round(v*(SUPS[0].cf+OFF.merma));
+  while(run.offAcc>=1){run.offAcc--;const v=Math.round(OFF.ticket*custRng(()=>rnd(0.4,1.6),'or')),c=Math.round(v*(SUPS[0].cf+OFF.merma));
     run.offS+=v;run.offC+=c;run.offN++;meta.money+=v-c;}
 }
 function tick(ts){try{step(ts,false);}catch(e){console.warn('tick',e);quiet=false;}requestAnimationFrame(tick);}
@@ -6782,7 +6902,7 @@ function step(ts,hid){
       run.next-=dt;
       if(run.next<=0){
         if(run.queue.length<5||(run.tills&&Object.values(run.tills).some(t=>Object.keys(t.out).length<TILL_MAX))){
-          const nc=newCustomer();
+          const nc=custRng(newCustomer);
           if(sendToTill(nc)){}
           else if(run.queue.length>=5){nc.items.forEach(ret);}
           else if(nc.cut&&run.queue.length>=2){
@@ -6790,7 +6910,7 @@ function step(ts,hid){
             cutScene(nc);
           }else run.queue.push(nc);
           const ia=Math.max(5.5,9.5-meta.day*0.6);
-          run.next=rnd(ia*0.7,ia*1.3);
+          run.next=custRng(()=>rnd(ia*0.7,ia*1.3));
           renderAll();
         }else run.next=2;
       }
@@ -6856,8 +6976,12 @@ function onClick(e){
   const a=b.dataset.act;
   if(run&&run.away&&['scan','idyes','idno','bag','pay','card','den','clear','deliver','route'].includes(a)){toast('Estás en el pasillo. Termina y vuelve a la caja.','bad');return;}
   if((a==='start'||a==='restart')&&$('#pname'))setPlayerName($('#pname').value);
+  if(a==='daily'&&$('#pname')&&$('#pname').value.trim())setPlayerName($('#pname').value);
   if(a==='rapply'&&$('#pname')&&isMember()){if(!nameOk())return;room.renaming=false;fb.update(rRef('members/'+room.uid),{name:playerName()}).catch(()=>{});}
   if(a==='start'){beep(1200,.05);startDay();}
+  else if(a==='daily'){beep(1200,.05);startDaily();}
+  else if(a==='dcopy')dailyCopy();
+  else if(a==='dhome')dailyExit();
   else if(a==='restart'){meta=defMeta(meta.best);meet=null;startDay();}
   else if(a==='next'){if(meta.day%3===1)meta.emp.forEach(closeSt);meta.day++;startDay();}
   else if(a==='div')payDiv(+b.dataset.p);
@@ -6966,7 +7090,7 @@ document.addEventListener('click',e=>{try{onClick(e);}catch(err){console.error(e
 window.addEventListener('unhandledrejection',ev=>{console.error(ev.reason);toast('⚠️ Error: '+errMsg(ev.reason),'bad');});
 
 
-if(window.claude&&window.claude.hot&&window.claude.hot.snapshot)window.claude.hot.snapshot(()=>({meta}));
+if(window.claude&&window.claude.hot&&window.claude.hot.snapshot)window.claude.hot.snapshot(()=>({meta:daily?daily.saved:meta}));
 function boot(d){
   if(d&&d.meta)meta=Object.assign(defMeta(),d.meta);
   else{
