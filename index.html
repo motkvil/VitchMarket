@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>VitchMarket</title>
 <meta name="description" content="Simulador de supermercado: cajero/a y jefe de tu propio súper de barrio.">
 <meta name="theme-color" content="#e5383b">
@@ -1635,6 +1635,11 @@ body.bigtx{--fs-xs:14px;--fs-s:16px;--fs-m:20px;--fs-l:26px;--fs-xl:34px;--fs-xx
 .prbs{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:6px;margin-bottom:6px}.prb{display:flex;flex-direction:column;align-items:center;gap:2px;line-height:1.15}.prb small{font-size:var(--fs-xs)}
 .ord.prow.bad{border-left:4px solid var(--danger)}.ord .neg{color:var(--danger)}.ord .pos{color:var(--gain)}
 .rivind{margin:6px 0;padding:6px 10px;border-radius:8px;background:var(--info-bg);border-left:4px solid var(--info)}.rivind.on{background:var(--warn-bg);border-left-color:var(--danger)}
+/* App instalada a pantalla completa: la franja de la cámara/notch (safe-area) se pinta del rojo de la marca y el juego empieza debajo. En el navegador normal env() vale 0 y no cambia nada. */
+body::before{content:'';position:fixed;top:0;left:0;right:0;height:env(safe-area-inset-top,0px);background:#c81e22;z-index:99999;pointer-events:none}
+#app{padding-top:env(safe-area-inset-top,0px)!important}
+.card.screen{top:env(safe-area-inset-top,0px)!important}
+#scene.top{top:env(safe-area-inset-top,0px)}
 </style>
 </head>
 <body>
@@ -4561,7 +4566,7 @@ function dailyExit(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.18-105';
+const APPV='2026.11.18-106';
 /* Compara versiones por números («-9» < «-11»), no como texto. */
 const verCmp=(a,b)=>{const x=String(a).split(/[.-]/).map(Number),y=String(b).split(/[.-]/).map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
 try{const vt=document.createElement('div');vt.id='vtag';vt.textContent='v'+APPV;document.body.appendChild(vt);}catch(e){}
