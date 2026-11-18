@@ -1514,18 +1514,41 @@ button.stat{font:inherit;cursor:pointer}
 .wk{margin:6px 0}.wk .gl{font-size:13px;padding:2px 0;grid-template-columns:22px 1fr auto}.wk .gl small{font-size:13px}
 .wk .gl:not(.ok) span{color:inherit}
 .end-why{background:#fff3f3;border:2px solid #e5383b;border-radius:10px;padding:8px 10px;margin:8px 0}
+/* ===== Horas punta y estrellas del turno ===== */
+.stat.s-clock{position:relative}
+.rushc{position:absolute;left:50%;bottom:-9px;transform:translateX(-50%);font:800 12px/1 var(--body);font-style:normal;white-space:nowrap;background:#ffd23f;color:#5a1a00;border:2px solid #7a0d12;border-radius:999px;padding:1px 6px;animation:rushp 1.4s ease-in-out infinite}
+.rushc[hidden]{display:none}
+.rushc::after{content:'🔥 Hora punta'}
+@media (max-width:820px){.rushc{left:auto;right:-6px;bottom:-7px;transform:none;animation:none;padding:0 3px}.rushc::after{content:'🔥'}}
+@keyframes rushp{50%{transform:translateX(-50%) scale(1.08)}}
+.stat.s-goal i{background:radial-gradient(circle at 35% 30%,#fff8,transparent 60%),#e0a800}
+.h3stars{background:#fffbea;border:2px solid #e0b21c;border-radius:12px;padding:8px 14px;display:grid;grid-template-columns:auto minmax(0,1fr);grid-template-areas:"l l" "s g" "n n";gap:4px 16px;align-items:center}
+.h3stars .h3l{grid-area:l}.h3stars .st3{grid-area:s}.h3stars .stg{grid-area:g}.h3stars .stn{grid-area:n;font-size:var(--fs-s);color:#6b4b00}
+.st3{display:flex;align-items:center;gap:4px}
+.st3 .st{font-size:40px;line-height:1;color:#cdb67a;display:inline-block}
+.st3 .st.on{animation:stamp .42s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i)*.22s + .15s);filter:drop-shadow(0 2px 0 #b07a00)}
+.st3 b{font-family:var(--pix);font-size:var(--fs-l);margin-left:6px;color:#8a5a00}
+@keyframes stamp{0%{transform:scale(2.6) rotate(-18deg);opacity:0}60%{transform:scale(.9) rotate(4deg);opacity:1}100%{transform:none;opacity:1}}
+.stg{list-style:none;margin:0;padding:0}
+.stg li{display:grid;grid-template-columns:22px minmax(0,1fr) auto;gap:6px;font-size:var(--fs-s);padding:2px 0}
+.stg li i{font-style:normal}.stg li small{font-family:var(--pix);font-size:var(--fs-s)}
+.stg li:not(.ok){color:#7a4a4a}
+.starend{margin:6px 0}
+@media (max-width:640px){.h3stars{grid-template-columns:1fr;grid-template-areas:"l" "s" "g" "n";padding:8px 10px}.st3 .st{font-size:32px}}
+@media (prefers-reduced-motion:reduce){.st3 .st.on,.rushc{animation:none}}
 #overlay .repwhy{margin:4px 0 8px;padding-left:22px}#overlay .repwhy li{display:flex;justify-content:space-between;gap:10px;padding:2px 0;border-bottom:1px dashed #e8c9c9}#overlay .repwhy .neg{color:var(--danger,#b3181b);white-space:nowrap}
 </style>
 </head>
 <body>
 <div id="app">
   <header class="hud">
-    <div class="brand"><i class="logo-cart">🛒</i><div>VITCHMARKET<small>Tu súper, tu historia · CAJA <span id="hTill">3</span> · TURNO <span id="hDay">1</span></small></div></div>
-    <div class="stat s-clock"><i>📅</i><span>Hora</span><b id="hClock">09:00</b></div>
+    <div class="brand"><i class="logo-cart">🛒</i><div>VITCHMARKET<small>Tu súper, tu historia · CAJA <span id="hTill">3</span> · TURNO <span id="hDay">1</span> · <span id="hDowB">LUNES</span></small></div></div>
+    <div class="stat s-clock"><i>📅</i><span id="hDow">Lunes</span><b id="hClock">09:00</b><em class="rushc" id="hRush" role="status" aria-label="Hora punta" title="Hora punta: viene más gente" hidden></em></div>
     <div class="stat s-money"><i>💰</i><span>Bote</span><b id="hMoney">0,00 €</b></div>
     <div class="stat s-rep"><i>⭐</i><span>Reputación</span><b id="hRep">★ 5.0</b></div>
     <div class="stat s-tk"><i>📨</i><span>Reclamac.</span><b id="hTk">0</b></div>
     <div class="stat s-out"><i>📦</i><span>Agotados</span><b id="hOut">0</b></div>
+    <button class="stat s-goal" id="hGoalB" data-act="goals" title="Objetivos del turno" aria-label="Objetivos del turno" hidden><i>🏆</i><span>Turno</span><b id="hGoal">0/3</b></button>
     <button class="stat s-week" id="hWeekB" data-act="week" title="Objetivos de la semana" aria-label="Objetivos de la semana" hidden><i>🎯</i><span>Semana</span><b id="hWeek">0/3</b></button>
     <button class="mute" id="muteBtn" data-act="mute" aria-label="Sonido">🔊</button>
     <button class="mute camb" data-act="cams" aria-label="Cámaras de seguridad" title="Cámaras de seguridad">📹</button>
@@ -2743,6 +2766,7 @@ function startDay(){
   const msg=[];
   if(rr.arrived||rr.pending||rr.shelved)msg.push('🚚 '+(rr.arrived?'Han llegado '+rr.arrived+' uds':'Mercancía en el muelle')+(rr.short?' ('+rr.short+' no llegaron)':'')+(rr.shelved?'; antes de abrir Almacén ha colocado '+rr.shelved:'')+(rr.pending?'; quedan '+rr.pending+' en el muelle':''));
   if(notes.length)msg.push(notes.join('. '));
+  if(dowF(meta.day)!==1)msg.unshift('📅 '+DOW[dowOf(meta.day)]+': hoy viene '+(dowF(meta.day)>1?'más gente (+15 %)':'menos gente (−10 %)'));
   if(msg.length)toast(msg.join(' · '),(rr.pending||notes.length)?'bad':'good');
   if(tab!=='caja')autoTill();
   pubState(true);
@@ -2782,18 +2806,21 @@ function checkRep(){
     showOverlay(`<div class="card"><h2>${q?'Concurso de acreedores':'🔒 Cerrado · La clientela te ha dado la espalda'}</h2>
       <p>${q?'Has agotado la póliza de crédito ('+fmt(credLim())+') y no puedes pagar a proveedores, nóminas ni a Hacienda: la empresa entra en concurso de acreedores y cierra.':'Eres el dueño: nadie te despide. Pero con la reputación a <b>★ 0,0</b> el barrio deja de comprar aquí, los proveedores no se fían y bajas la persiana.'} Aguantaste ${days} ${days===1?'turno':'turnos'}.</p>
       ${q?'':repWhyHtml()}
+      ${starsEndHtml()}
       ${online()?'<div class="zone-title">🏆 RANKING</div><div id="rank"></div>':''}
       <button class="btn go big" data-act="restart">Volver a empezar</button></div>`);
     submitScore(true).then(fillRanking);
   }
 }
 /* Fin de partida por la multa de alcohol a un menor (Ley 5/2002 de Madrid): el porqué, con números. */
+const starsEndHtml=()=>`<div class="supd starend">⭐ Estrellas en toda la partida: <b>${meta.stars||0}</b>${(meta.starsH||[]).length?' · últimos turnos: '+(meta.starsH||[]).slice(-7).map(n=>n+'⭐').join(' '):''}</div>`;
 function minorEndHtml(mf,days){
   const lim=credLim();
   return `<div class="card"><h2>🔒 Clausurado · Concurso de acreedores</h2>
     <p><b>Le vendiste alcohol a un menor.</b> Consumo de la Comunidad de Madrid levantó acta: infracción ${mf.n>=3?'muy grave':'grave'}${mf.n>1?' y reincidente':''}, <b>${fmt(mf.f)}</b> de multa (Ley 5/2002 de Drogodependencias, arts. 30.2 y 59).</p>
     ${scnDoc([['💶 Bote antes de la multa',fmt(mf.m)],['🚔 Multa por vender alcohol a un menor','−'+fmt(mf.f),'neg'],['🏦 Póliza de crédito (lo máximo en rojo)','−'+fmt(lim)],['📉 Bote al cerrar',(meta.money<0?'−':'')+fmt(Math.abs(meta.money)),'neg tot']],'Por debajo de −'+fmt(lim)+' no hay con qué pagar a proveedores, nóminas ni a Hacienda.')}
     <div class="end-why">Un súper de barrio no aguanta una multa así: el banco cierra el grifo, los proveedores dejan de servir y el juzgado declara el <b>concurso de acreedores</b>. Persiana abajo tras ${days} ${days===1?'turno':'turnos'}.</div>
+    ${starsEndHtml()}
     <p class="supd">Moraleja: el DNI se pide <b>siempre</b>. Mirarlo cuesta dos segundos; no mirarlo, ${fmt(mf.f)}.</p>
     ${online()?'<div class="zone-title">🏆 RANKING</div><div id="rank"></div>':''}
     <button class="btn go big" data-act="restart">Volver a empezar</button></div>`;
@@ -2809,6 +2836,7 @@ const unitCost=(x,k)=>Math.max(1,Math.round(x.p*SUPS.find(z=>z.k===k).cf));
 const cartCost=()=>Object.entries(cart).reduce((t,[id,q])=>{const x=CAT.find(y=>String(y.id)===id);return t+(x?q*unitCost(x,ordSup):0);},0);
 function ensureMeta(){
   meta.ins=Object.assign({req:[],next:0,n:0},meta.ins);meta.ins.req=toArr(meta.ins.req);
+  if(meta.starsH&&!Array.isArray(meta.starsH))meta.starsH=toArr(meta.starsH);
   CAT.forEach(x=>{if(meta.stock[x.id]===undefined)meta.stock[x.id]=4;});
   /* Partidas de antes de la economía real: sueldos al convenio (nunca por debajo del SMI) y ampliación de capital hasta 30.000 €. */
   if(!meta.eco2){meta.eco2=1;(meta.emp||[]).forEach(e=>{e.wage=Math.max(e.wage||0,wageOf(e.role));});if(meta.money<3000000)meta.money=3000000;}
@@ -3075,6 +3103,7 @@ function endDay(){
   run.tasks.forEach(t=>{if(!t.who&&t.k!=='tk'){repAdd(-t.pen/2,'Avisos sin atender al cerrar');tStat(t,false);}});
   run.tasks=[];run.away=null;mg=null;pendingLeave=null;closeMG();
   const res=processTickets();
+  try{starsEnd();}catch(e){console.warn('stars',e);}
   /* RR.HH. (NPC) publica vacantes donde falta gente: reclamaciones sin atender, muchos enfadados o muchos agotados. */
   {const hr=staffOf('rrhh').find(e=>!e.real&&working(e));if(hr){const need=[];['back','rrpp','alm'].forEach(k=>{if(res[k].late>0)need.push(k);});
     if(run.angry>=3)need.push('atc');if(CAT.filter(x=>(meta.stock[x.id]||0)<=0).length>=4&&staffOf('alm').length<2)need.push('alm');
@@ -3368,7 +3397,7 @@ function heroTip(e){
 function heroHtml(e){
   const f=e.fin||{},n=f.net||0,dv=(f.cash||0)-(f.div||0),W=heroWhy(f),T=heroTip(e);
   const cls=n>0?'win':n<0?'loss':'even',arr=n>0?'▲':n<0?'▼':'■';
-  return `<div class="hero3 ${cls}">
+  return `<div class="hero3 ${cls}">${starsHtml()}
     <section class="h3q h3res"><div class="h3l"><small>1 · ¿Gané o perdí?</small><button class="h3more" data-act="stab" data-s="shop" data-k="kpi">📊 Ver detalle ▸</button></div>
       <div class="h3big"><span class="h3ic" aria-hidden="true">${arr}</span><b>${n?sgnP(n):fmt(0)}</b><em>${n>0?'Ganaste':n<0?'Perdiste':'Ni ganas ni pierdes'}</em></div>
       <div class="h3sub">💰 Bote <b>${fmt(meta.money)}</b> <span class="${dv<0?'h3dn':'h3up'}">(${dv<0?'▼':'▲'} ${sgnP(dv)} hoy)</span> · ⭐ ${repT(meta.rep)}</div></section>
@@ -3504,7 +3533,7 @@ async function fillRanking(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.18-83';
+const APPV='2026.11.18-84';
 /* Compara versiones por números («-9» < «-11»), no como texto. */
 const verCmp=(a,b)=>{const x=String(a).split(/[.-]/).map(Number),y=String(b).split(/[.-]/).map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
 try{const vt=document.createElement('div');vt.id='vtag';vt.textContent='v'+APPV;document.body.appendChild(vt);}catch(e){}
@@ -5855,6 +5884,9 @@ function juiceTick(){
 /* ---------- render ---------- */
 function renderHud(){
   {const wb=$('#hWeekB'),G=run&&run.remote||isMember()?[]:weekGoals();if(wb){wb.hidden=!G.length;if(G.length)$('#hWeek').textContent=G.filter(g=>g[1]).length+'/3';}}
+  {const gb=$('#hGoalB'),T=run&&!run.remote&&!isMember()?turnGoals():null;if(gb){gb.hidden=!T;if(T)$('#hGoal').textContent=(run.stars!=null?run.stars:T.filter(g=>g[1]>=1).length)+'/3';}}
+  {const rs=$('#hRush'),dw=$('#hDow');if(rs&&dw){if(run&&run.remote){const st=room.state||{};dw.textContent=DOW[dowOf(st.day)].slice(0,3);$('#hDowB').textContent=DOW[dowOf(st.day)];rs.hidden=!((st.t||0)<(st.dur||100)&&rushRaw(9+12*Math.min(1,(st.t||0)/(st.dur||100)))>=1.5);}
+    else{dw.textContent=DOW[dowOf(meta.day)].slice(0,3)+(dowF(meta.day)>1?' 🔥':'');$('#hDowB').textContent=DOW[dowOf(meta.day)]+(dowF(meta.day)>1?' 🔥 +15 %':dowF(meta.day)<1?' · −10 %':'');rs.hidden=!rushOn();}}}
   if(run&&run.remote){const st=room.state||{};$('#hTill').textContent=run.till;$('#hDay').textContent=st.day||1;$('#hMoney').textContent=fmt(st.money||0);$('#hMoney').parentNode.classList.toggle('neg',(st.money||0)<0);$('#hRep').textContent='★ '+(+st.rep||0).toFixed(1);
     $('#hTk').textContent=st.dep&&st.dep.tk?Object.values(st.dep.tk).reduce((a,b)=>a+(+b||0),0):0;$('#hOut').textContent=(st.dep&&st.dep.out)||0;const c=clockOf(st.t,st.dur);$('#hClock').textContent=c;$('#hBar').style.width=Math.min(1,(st.t||0)/(st.dur||100))*100+'%';return;}
   $('#hTill').textContent='3';
@@ -6246,10 +6278,37 @@ function drawIso(){
 }
 /* Debajo de la tienda: reputación, la mascota con lo último que ha pasado y los objetivos del turno. */
 let isoInfoH='';
+/* Objetivos del turno (los de la tienda en directo): cada uno cumplido al cerrar = una ⭐ (run.stars, meta.starsH, meta.stars). */
+function turnGoals(){
+  if(!run)return [];const rep=meta.rep,goal=Math.round(Math.min(7+meta.day,12)*(run.dur||100)/100),sv=run.served||0;
+  return [[`Atiende a ${goal} clientes`,Math.min(sv,goal)/goal,sv+'/'+goal],['Ningún cliente se va enfadado',run.angry?0:1,run.angry?run.angry+(run.angry===1?' enfadado':' enfadados'):'0'],['Reputación de 4 o más',rep>=4?1:rep/4,'★ '+repT(rep)]];
+}
+const starsT=n=>'⭐'.repeat(n)+'☆'.repeat(3-n);
+/* Al cerrar: cuenta las estrellas; tres turnos seguidos con ⭐⭐⭐ = +0,05 de reputación y +3 de ánimo a la plantilla (y vuelve a empezar la racha). */
+function starsEnd(){
+  if(!run||run.remote||run.stars!=null)return;
+  const G=turnGoals(),n=G.filter(g=>g[1]>=1).length;run.stars=n;run.starG=G.map(g=>[g[0],g[1]>=1,g[2]]);
+  meta.stars=(meta.stars||0)+n;meta.starsH=(meta.starsH||[]).concat([n]).slice(-30);
+  meta.starRun=n===3?(meta.starRun||0)+1:0;
+  if(meta.starRun>=3){meta.starRun=0;run.starBonus=1;repAdd(+0.05,'Racha de 3 turnos con ⭐⭐⭐');meta.emp.forEach(e=>{if(!e.real)e.moral=clamp(e.moral+3,0,100);});}
+}
+function starsHtml(){
+  const n=run&&run.stars;if(n==null)return '';const G=run.starG||[],sr=meta.starRun||0;
+  return `<section class="h3stars s${n}"><div class="h3l"><small>⭐ Estrellas del turno</small><small>${meta.stars||0} en total</small></div>
+    <div class="st3">${[0,1,2].map(i=>`<span class="st ${i<n?'on':''}" style="--i:${i}" aria-hidden="true">${i<n?'⭐':'☆'}</span>`).join('')}<b>${n}/3</b></div>
+    <ul class="stg">${G.map(g=>`<li class="${g[1]?'ok':''}"><i>${g[1]?'✅':'❌'}</i><span>${g[0]}</span><small>${g[2]}</small></li>`).join('')}</ul>
+    <div class="stn">${run.starBonus?'🏅 ¡Tres turnos seguidos con ⭐⭐⭐! +0,05 de reputación y +3 de ánimo a la plantilla.':n===3?'Racha de ⭐⭐⭐: '+sr+'/3. A la tercera, premio.':'Tres turnos seguidos con ⭐⭐⭐ tienen premio.'}</div></section>`;
+}
+function goalsInfo(){
+  if(!run||run.remote)return;const G=turnGoals(),n=run.stars!=null?run.stars:G.filter(g=>g[1]>=1).length;
+  scene({k:'tginfo:'+Date.now(),over:true,look:'label',head:'⭐ OBJETIVOS DEL TURNO '+meta.day,tag:starsT(n),who:'🐶',name:'Vitchi',prio:1,time:10,def:'ok',
+    txt:'Cada objetivo cumplido al cerrar es una estrella. Tres turnos seguidos con las tres, premio.',
+    body:`<div class="wk">${G.map(g=>`<div class="gl ${g[1]>=1?'ok':''}"><i>${g[1]>=1?'✅':'⬜'}</i><span>${g[0]}</span><small>${g[2]}</small></div>`).join('')}</div><div class="scn-hint">${DOW[dowOf(meta.day)]}${dowF(meta.day)!==1?' ('+(dowF(meta.day)>1?'+15 % de clientes':'−10 % de clientes')+')':''} · horas punta de 11:30 a 13:00 y de 19:00 a 20:30.</div>`,
+    choices:[{t:'👍 A por ello',k:'ok',cls:'go',key:'A'}]});
+}
 function isoInfo(){
   const el=document.getElementById('isobottom');if(!el||!el.offsetParent||!run||run.remote)return;
-  const rep=meta.rep,pct=Math.round(rep/5*100),goal=8+2*meta.day;
-  const G=[[`Atiende a ${goal} clientes`,Math.min(run.served,goal)/goal,run.served+'/'+goal],['Ningún cliente se va enfadado',run.angry?0:1,run.angry?run.angry+' enfadados':'0'],['Reputación de 4 o más',rep>=4?1:rep/4,'★ '+repT(rep)]];
+  const rep=meta.rep,pct=Math.round(rep/5*100),G=turnGoals();
   const done=G.filter(g=>g[1]>=1).length,lm=run.lastMsg;
   const h=`<div class="ib rep"><div class="ibt">⭐ Reputación</div><div class="ibrow"><span class="bigstar">⭐</span><b class="pct">${repT(rep)}<small>/5</small></b></div><div class="stars5">${'★'.repeat(Math.round(rep))}<i>${'★'.repeat(5-Math.round(rep))}</i></div><small>${rep>=4?'✅ Clientes contentos':rep>=2.5?'😐 Mejorable':'⚠️ Cuidado: te pueden echar'}</small></div>
     <div class="ib pet"><div class="ibt">💬 Vitchi te cuenta</div><div class="petrow"><span class="dog">🐶</span><div class="say ${lm?lm.k:''}">${lm?esc(lm.m):'¡Buenas! Hoy toca vender mucho y sin errores. ¡Tú puedes!'}</div></div></div>
@@ -6761,11 +6820,39 @@ function renderGuide(){
 /* ---------- bucle ---------- */
 /* Las otras cajas: cada cajero/a de la casa libre (máx. 3) despacha clientes que no ves. Entra más gente con buena reputación
    y se vende menos si hay productos agotados. Cada venta trae su coste de mercancía (la repone el proveedor habitual). */
+/* ---------- horas punta: la afluencia sigue la curva de un súper español (9:00–21:00) ----------
+   Tranquilo de 9 a 10:30 y de 14:30 a 17; punta de 11:30 a 13 (la de mediodía) y de 19 a 20:30 (la de la salida del trabajo).
+   RUSH_N normaliza la curva para que la media del día sea 1 (el total diario no cambia). Día de la semana: el turno 1 es lunes;
+   el sábado viene un 15 % más de gente y el domingo un 10 % menos. */
+const RUSH=[[9,0.6],[10.5,0.6],[11.5,1.6],[13,1.6],[14.5,0.6],[17,0.6],[18,1],[19,1.6],[20.5,1.6],[21,1.2]];
+const RUSH_N=(()=>{let a=0;for(let i=1;i<RUSH.length;i++)a+=(RUSH[i][0]-RUSH[i-1][0])*(RUSH[i][1]+RUSH[i-1][1])/2;return a/12;})();
+const RUSH_P=[{n:'de mediodía',a:10.5,h:11.5,e:13},{n:'de la tarde',a:18,h:19,e:20.5}];
+const DOW=['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
+const dowOf=d=>(Math.max(1,d||1)-1)%7,dowF=d=>({5:1.15,6:0.9})[dowOf(d)]||1;
+const hourOf=()=>run?9+12*Math.min(1,run.t/(run.dur||100)):9;
+function rushRaw(h){if(h<=RUSH[0][0])return RUSH[0][1];for(let i=1;i<RUSH.length;i++)if(h<=RUSH[i][0]){const a=RUSH[i-1],b=RUSH[i];return a[1]+(b[1]-a[1])*(h-a[0])/(b[0]-a[0]);}return RUSH[RUSH.length-1][1];}
+const rushF=h=>rushRaw(h==null?hourOf():h)/RUSH_N;
+const rushOn=()=>!!(run&&!run.over&&!run.closing&&rushRaw(hourOf())>=1.5);
+/* Megafonía ~1 h de juego antes de cada punta: «¿abrimos otra caja?». Escena menor y corta (el director de ritmo la puede aplazar o descartar). */
+function rushTick(){
+  if(!run||run.over||run.remote||run.closing)return;const h=hourOf();
+  RUSH_P.forEach((P,i)=>{const k='rp'+i;if(h<P.a||h>=P.h||(run.rushA||{})[k])return;(run.rushA=run.rushA||{})[k]=1;
+    if(!bossScn()){return;}
+    const e=freeTill();
+    scene({k:'punta:'+i,look:'pa',head:'MEGAFONÍA',tag:'🔥 Hora punta',who:'🔔',name:'Megafonía',time:9,def:'no',prio:0,
+      txt:`Ding-dong: se acerca la hora punta ${P.n} (${String(P.h).replace('.5',':30')}${String(P.h).includes('.5')?'':':00'}). ¿Abrimos otra caja?`,
+      body:`<div class="scn-hint">${e?e.face+' '+esc(e.name)+' está libre en Caja: abriría otra caja y se llevaría a la gente de tu cola hasta que pase la punta.':'Ahora mismo no hay nadie de Caja libre: la cola la aguantas tú.'}${dowF(meta.day)!==1?' Hoy es '+DOW[dowOf(meta.day)].toLowerCase()+'.':''}</div>`,
+      choices:[{t:e?'🧾 Abrir otra caja · '+e.name:'🧾 Abrir otra caja (nadie libre)',k:'go',cls:'go',key:'S',stamp:e?'CAJA ABIERTA':'NADIE LIBRE',sc:e?'ok':'bad'},{t:'🤷 Ya se apañarán',k:'no',key:'N'}],
+      onPick:k=>{if(k!=='go')return;const f=freeTill();if(!f){toast('No hay nadie de Caja libre para abrir otra caja.','bad');return;}
+        run.rushHelp={id:f.id,to:run.dur*(P.e-9)/12};f.moral=clamp(f.moral+1,0,100);toast('🧾 '+f.face+' '+f.name+' abre otra caja para la hora punta.','good');}});
+  });
+}
 function offTick(dt){
   const n=Math.min(Math.max(0,2-Object.keys(run.tills||{}).length),staffOf('atc').filter(e=>!e.real&&isFree(e)&&!run.duty[e.id].slack).length);if(!n)return;
   const out=CAT.filter(x=>(meta.stock[x.id]||0)<=0).length/CAT.length;
-  const dem=OFF.dem*(0.2+0.16*meta.rep)*(1-0.6*out)*(1+0.03*Math.min(meta.day,10))*(meta.promo===meta.day?1.15:1);
-  const rate=Math.min(dem,n*OFF.cap)/(run.dur||100);
+  const dem=OFF.dem*(0.2+0.16*meta.rep)*(1-0.6*out)*(1+0.03*Math.min(meta.day,10))*(meta.promo===meta.day?1.15:1)*dowF(meta.day);
+  /* La curva de horas punta reparte el día sin cambiar el total: el tope de las cajas es diario (en la punta van a tope, en el valle se rascan la barriga). */
+  const rate=Math.min(dem,n*OFF.cap)*rushF()/(run.dur||100);
   run.offAcc=(run.offAcc||0)+dt*rate;
   while(run.offAcc>=1){run.offAcc--;const v=Math.round(OFF.ticket*rnd(0.4,1.6)),c=Math.round(v*(SUPS[0].cf+OFF.merma));
     run.offS+=v;run.offC+=c;run.offN++;meta.money+=v-c;}
@@ -6789,7 +6876,7 @@ function step(ts,hid){
             run.queue.splice(1,0,nc);
             cutScene(nc);
           }else run.queue.push(nc);
-          const ia=Math.max(5.5,9.5-meta.day*0.6);
+          const ia=Math.max(5.5,9.5-meta.day*0.6)/(rushF()*dowF(meta.day));
           run.next=rnd(ia*0.7,ia*1.3);
           renderAll();
         }else run.next=2;
@@ -6807,7 +6894,8 @@ function step(ts,hid){
     }
     if(run&&!run.remote&&!run.closing&&!run.over)offTick(dt);
     if(run&&!run.remote&&!run.over)rrppTick();
-    if(run&&!run.remote&&!run.over&&run.queue.length>=2&&run.t-(run.callT||0)>(run.dur||100)/40){const e=freeTill();if(e)sendQueue(e,1,false);else run.callT=run.t-(run.dur||100)/80;}
+    if(run&&!run.remote&&!run.over)rushTick();
+    if(run&&!run.remote&&!run.over&&run.queue.length>=2&&run.t-(run.callT||0)>(run.dur||100)/(run.rushHelp&&run.t<run.rushHelp.to?100:40)){const e=freeTill();if(e)sendQueue(e,1,false);else run.callT=run.t-(run.dur||100)/80;}
     if(run&&run.remote){run.syncT+=dt;if(run.syncT>1){run.syncT=0;tillSync();}}
     else{
     if(run&&!run.over)tickStaff(dt);
@@ -6888,6 +6976,7 @@ function onClick(e){
   else if(a==='meeting')startMeeting();
   else if(a==='endmeet')endMeeting();
   else if(a==='week')weekInfo();
+  else if(a==='goals')goalsInfo();
   else if(a==='emp')empAct(+b.dataset.e,b.dataset.k);
   else if(a==='fire')fireEmp(+b.dataset.e,b.dataset.r);
   else if(a==='integc'){const c=meet&&meet.cands[+b.dataset.c];if(c&&!c.integ&&meta.money>=INTEG){meta.money-=INTEG;c.integ=integBand(c.hon);sCoin();renderHud();showMeeting();}}
