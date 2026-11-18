@@ -286,6 +286,13 @@ button:focus-visible{outline:3px solid var(--tag);outline-offset:2px}
 @keyframes idle{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
 .gs-closed{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:rgba(43,47,46,.92);color:#fff;border-radius:14px;padding:14px 20px;text-align:center;display:flex;flex-direction:column;gap:4px;box-shadow:0 8px 0 rgba(0,0,0,.3);max-width:80%;pointer-events:none}
 .gs-closed b{font-family:var(--display);font-size:18px;letter-spacing:1px}.gs-closed small{font-size:12px;opacity:.9}
+/* tienda cerrada y turno de guardia (empleado real sin jefe ni encargado) */
+.gclosed{display:flex;flex-direction:column;gap:6px;align-items:flex-start;background:#22263a;color:#eef0ff;border-radius:14px;padding:12px 14px;margin:6px 0;font-size:var(--fs-s,14px);line-height:1.4}
+.gclosed b{font-family:var(--display);font-size:var(--fs-m,16px)}.gclosed .btn{align-self:center;margin-top:4px}
+.gban{display:flex;flex-direction:column;gap:4px;background:linear-gradient(90deg,#1d2140,#2d2f5a);color:#eef0ff;border-radius:14px;padding:10px 14px;margin:6px 0;font-size:var(--fs-s,14px);line-height:1.4}
+.gban b{font-family:var(--display)}.gban>b:first-of-type{font-size:var(--fs-m,16px)}
+.gs-guard .gs-scene{filter:saturate(.75) brightness(.92)}.gs-guard .gf.bad{border-left:5px solid #f08c4a}
+.gpart{margin:6px 0 0;padding-left:18px;display:flex;flex-direction:column;gap:4px;font-size:var(--fs-s,14px)}
 .gs-pick{position:absolute;inset:44px 12px 12px;background:#fffaf0;border-radius:16px;border:3px solid var(--thc);box-shadow:0 10px 30px rgba(0,0,0,.35);display:flex;flex-direction:column;z-index:3;min-height:0}
 .pk-head{display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border-bottom:2px dashed #e3dccb}.pk-head b{font-family:var(--display);font-size:15px}
 .pk-body{flex:1;min-height:0;overflow:auto;padding:8px 10px;display:flex;flex-direction:column;gap:6px}
@@ -4170,11 +4177,12 @@ function dailyExit(){
    un cargo. El jefe (el primero que lo pide con el puesto libre) lleva la Caja 3, contrata a quien solicita
    y su navegador mueve la tienda: publica el estado en /state cada segundo y guarda la partida en /meta.
    Los empleados cogen avisos y hacen el minijuego en su navegador; el resultado va a /acts y el jefe lo aplica.
-   Sin jefe conectado la tienda se congela; si lleva más de 2 min fuera, otro puede quedarse el puesto.
+   Sin jefe conectado la tienda se congela (o la lleva un encargado; si no, los conectados pueden hacer un turno de guardia);
+   si lleva más de 2 min fuera, otro puede quedarse el puesto.
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.18-102';
+const APPV='2026.11.18-103';
 /* Compara versiones por números («-9» < «-11»), no como texto. */
 const verCmp=(a,b)=>{const x=String(a).split(/[.-]/).map(Number),y=String(b).split(/[.-]/).map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
 try{const vt=document.createElement('div');vt.id='vtag';vt.textContent='v'+APPV;document.body.appendChild(vt);}catch(e){}
@@ -4276,12 +4284,14 @@ function relayCheck(){
     fb.update(rRef('relay'),{hb:fb.serverTimestamp()}).catch(()=>{});
     const inf=room.info||{},r=room.relay||{};
     if((inf.ret&&r.since&&inf.ret>r.since)||!bossAway())stopRelay('👑 Ha vuelto el jefe: te devuelve la tienda y sigues en tu puesto.');
+    else guardPump();
     return;
   }
+  if(room.host){guardPump();return;}
   if(room.host||room.relayBusy||!bossAway()||relayActive()||(run&&run.remote))return;
   const ms=room.members||{},me=ms[room.uid];if(!me||!RELAY_ROLES.includes(me.role))return;
   const c=Object.entries(ms).filter(([u,m])=>m&&m.on&&RELAY_ROLES.includes(m.role)&&u!==room.info.host).map(([u])=>u).sort();
-  if(c[0]===room.uid)startRelay();
+  if(c[0]===room.uid){if(room.guard)endGuard('👔 Te toca hacer de encargado/a: se acaba la guardia y abres la tienda.');startRelay();}
 }
 async function startRelay(){
   room.relayBusy=true;
@@ -4293,6 +4303,7 @@ async function startRelay(){
     meta=loadRoomMeta(raw);room.sim=true;ensureMeta();
     room.actsOff=fb.onChildAdded(rRef('acts'),s=>{const a=s.val();fb.remove(s.ref).catch(()=>{});quiet=true;try{onAct(a);}finally{quiet=false;}});
     resumeDay(meta.liveT||0);if(run&&!run.away)autoTill();
+    guardWatch();
     toast('👔 El jefe no está: tu navegador lleva la tienda como encargado/a hasta que vuelva. No cierres la app.','good');
     room.lastHtml='';renderMember();
   }catch(e){console.warn('Relevo:',e);room.sim=false;}
@@ -4306,7 +4317,7 @@ function liveMeta(){
   return m;
 }
 function dropSim(msg){
-  if(room.actsOff){room.actsOff();room.actsOff=null;}
+  if(room.actsOff){room.actsOff();room.actsOff=null;}guardUnwatch();
   clearTimeout(room.nextT);room.sim=false;room.stopping=false;run=null;mg=null;pendingLeave=null;
   room.lastHtml='';renderAll();renderMember();if(msg)toast(msg,'bad');
 }
@@ -4314,7 +4325,7 @@ async function stopRelay(msg){
   if(!room.sim||room.relayBusy)return;room.relayBusy=true;room.stopping=true;clearTimeout(room.nextT);
   if(run&&run.tills)Object.keys(run.tills).forEach(u=>closeTill(u,'cambio de encargado'));
   try{if(run&&run.over)meta.closed=true;await fb.set(rRef('meta'),run&&!run.over?liveMeta():plain(meta));}catch(e){console.warn('Relevo: no se pudo guardar',e);}
-  if(room.actsOff){room.actsOff();room.actsOff=null;}
+  if(room.actsOff){room.actsOff();room.actsOff=null;}guardUnwatch();
   room.sim=false;room.stopping=false;run=null;mg=null;pendingLeave=null;
   try{await fb.remove(rRef('relay'));}catch(e){}
   room.relayBusy=false;room.lastHtml='';renderAll();renderMember();if(msg)toast(msg,'good');
@@ -4351,15 +4362,169 @@ async function relayChanged(force){
     }
   }else if(!room.host)renderMember();
 }
+/* ===== Turno de guardia: si no hay jefe ni encargado que muevan la tienda (y a ti no te toca el relevo, p. ej. porque eres
+   cajero/a), la tienda está cerrada al público, pero puedes trabajar a puerta cerrada con una copia local de la partida (/meta):
+   minijuegos de tu puesto sin clientes. Lo que hagas va a tu «parte de guardia» en /rooms/VITCH/guard/{uid}; el jefe (o el
+   encargado) lo lee al volver, aplica los efectos con tope diario (meta.gd) y borra el parte. La partida de verdad no se toca
+   desde el navegador del empleado. */
+const GUARD_N=8,GUARD_U=80,GUARD_R=0.15,GUARD_K=['truck','repo','inv','spill','cash','tk','cv'];
+const GUARD_JOBS={
+ alm:[{k:'truck',ic:'🚚',n:'Colocar el muelle',sub:'Lo que espera en el muelle, a su sitio y a la estantería'},
+  {k:'repo',ic:'📦',n:'Reponer un lineal',sub:'Rellenar lo que más falta, con la rotación bien hecha'},
+  {k:'inv',ic:'📋',n:'Inventario de un pasillo',sub:'Contar lo que queda para pedirlo a primera hora'}],
+ atc:[{k:'repo',ic:'📦',n:'Reponer un lineal',sub:'Rellenar lo que más falta antes de abrir'},
+  {k:'spill',ic:'🧽',n:'Limpieza a fondo',sub:'Fregar un pasillo con la tienda vacía'},
+  {k:'cash',ic:'🧮',n:'Cuadrar un cajón',sub:'Contar el cajón de una caja'}],
+ back:[{k:'cash',ic:'🧮',n:'Arqueo de una caja',sub:'Contar el cajón y ver si cuadra'},
+  {k:'tk',d:'back',ic:'🧾',n:'Revisar un ticket reclamado',sub:'Una reclamación de dinero que quedó en la bandeja'}],
+ rrpp:[{k:'tk',d:'rrpp',ic:'📱',n:'Contestar una queja en redes',sub:'Con la tienda cerrada, sin prisas: a calmar al cliente'}],
+ rrhh:[{k:'cv',ic:'🧑‍💼',n:'Entrevistar a un candidato',sub:'Solo con vacantes publicadas; el jefe decide si entra'}]};
+const GUARD_TX={truck:'Colocar el muelle',repo:'Reponer un lineal',inv:'Inventario de un pasillo',spill:'Limpieza a fondo',cash:'Arqueo de una caja',tk:'Reclamación por escrito',cv:'Entrevista'};
+/* ¿Puede este empleado empezar una guardia? Nadie publica la tienda, no hay encargado y el relevo no le toca a él. */
+const guardAvail=(role,stale)=>!!(room&&role&&stale&&!room.sim&&!relayActive()&&!(RELAY_ROLES.includes(role)&&bossAway()));
+async function startGuard(){
+  if(!room||room.guard||room.gBusy)return;room.gBusy=true;
+  let raw=null;try{raw=(await fb.get(rRef('meta'))).val();}catch(e){console.warn(e);}
+  room.gBusy=false;
+  if(!raw){toast('La tienda aún no tiene partida guardada: hasta que el jefe abra el primer turno no hay nada que hacer de guardia.','bad');return;}
+  room.gBak=meta;meta=loadRoomMeta(raw);try{ensureMeta();}catch(e){}
+  room.guard={items:[],day:meta.day,n:0};room.wpick=null;
+  toast('🌙 Empiezas un turno de guardia. La tienda está cerrada al público: lo que hagas va a tu parte para el jefe.','good');
+  room.lastHtml='';renderMember();
+}
+function guardJob(i){
+  const G=room&&room.guard,role=((room.members||{})[room.uid]||{}).role,j=(GUARD_JOBS[role]||[])[i];
+  if(!G||!j||mg)return;
+  if(G.items.length>=GUARD_N){toast('Tu parte ya tiene '+GUARD_N+' tareas, que es lo que cabe en una guardia. Termínala y descansa.','bad');return;}
+  const t={id:'g'+(++G.n),k:j.k,ic:j.ic,s:j.n,txt:j.sub,roles:[role],remote:1,guard:1,n:ri(1,9),pid:0,bk:[],dept:j.d||'',refund:0,sev:2,mis:false};
+  if(j.k==='truck'){t.bk=Object.keys(meta.back).filter(id=>meta.back[id]>0).map(Number).slice(0,12);if(!t.bk.length){toast('En el muelle no hay nada que colocar. Prueba con otra tarea.','bad');return;}}
+  if(j.k==='repo'){const ps=CAT.filter(p=>(meta.back[p.id]||0)>0).sort((a,b)=>(meta.stock[a.id]||0)-(meta.stock[b.id]||0));
+    if(!ps.length){toast('En el almacén no queda nada que subir a la estantería. Prueba con otra tarea.','bad');return;}t.pid=ps[0].id;t.n=aisleOf(t.pid);}
+  if(j.k==='inv')t.inv=invData(t.n);
+  if(j.k==='tk'&&j.d==='back')t.refund=ri(200,1500);
+  if(j.k==='cv'){if(!vacRoles().length){toast('No hay vacantes publicadas: sin vacante no viene nadie a la entrevista.','bad');return;}t.cand=makeCand();if(!t.cand)return;}
+  startMG(t);
+}
+/* Fin de un minijuego de guardia (desde endMG): se apunta en el parte y se guarda en Firebase. */
+function guardDone(t,sc,x){
+  const G=room&&room.guard;if(!G){if(room){room.lastHtml='';renderMember();}return;}
+  sc=clamp(+sc||0,0,1);x=x||{};
+  const it={k:t.k,sc:Math.round(sc*100)/100};if(t.pid)it.pid=t.pid;if(t.dept)it.d=t.dept;
+  if(t.k==='cv'&&+x.hire&&x.cand&&ROLES[x.cand.role]&&!G.items.some(i=>i.c)){const c=x.cand;
+    it.c={name:cleanName(c.name),face:String(c.face||'🙂').slice(0,8),role:c.role,rap:+c.rap||0.5,trato:+c.trato||0.5,punt:+c.punt||0.5,act:+c.act||0.5,nat:+c.nat||0};}
+  /* en la copia local, para que la sala enseñe lo que ya has hecho */
+  if(sc>=0.6){if(t.k==='truck'){let mv=0;CAT.slice().sort((a,b)=>(meta.stock[a.id]||0)-(meta.stock[b.id]||0)).forEach(p=>{if(mv<40)mv+=moveStock(p.id,Math.min(8,40-mv));});}
+    else if(t.k==='repo')moveStock(t.pid,8);}
+  G.items.push(it);guardSave(G,false);
+  toast(sc>=0.6?'✅ Bien hecho. Queda apuntado en tu parte de guardia.':'😬 Regular… Queda apuntado igual en tu parte de guardia.',sc>=0.6?'good':'bad');sc>=0.6?sOk():sBad();
+  room.lastHtml='';renderMember();
+}
+function guardSave(G,fin){
+  if(!G||!G.items.length||!room)return Promise.resolve();
+  const role=((room.members||{})[room.uid]||{}).role;
+  return fb.set(rRef('guard/'+room.uid),plain({name:cleanName(playerName()),role:ROLES[role]?role:'atc',day:G.day,ts:fb.serverTimestamp(),fin:!!fin,items:G.items.slice(0,GUARD_N)}))
+    .catch(e=>{console.warn('Parte de guardia:',e);toast('No se pudo guardar el parte de guardia ('+errMsg(e)+').','bad');});
+}
+function endGuard(msg){
+  const G=room&&room.guard;if(!G)return;
+  room.guard=null;if(mg&&mg.t&&mg.t.guard){mg=null;closeMG();}
+  if(room.gBak){meta=room.gBak;room.gBak=null;}
+  guardSave(G,true);
+  room.lastHtml='';renderMember();
+  if(msg)toast(msg+(G.items.length?' Tu parte ('+G.items.length+' tarea'+(G.items.length>1?'s':'')+') queda entregado.':''),'good');
+}
+/* Pantalla de la guardia (sustituye a la sala de trabajo mientras dura). */
+function guardScreen(role){
+  const G=room.guard,J=GUARD_JOBS[role]||[],full=G.items.length>=GUARD_N,pend=Object.values(meta.back).reduce((a,v)=>a+(+v||0),0);
+  const low=CAT.filter(p=>(meta.stock[p.id]||0)<=1).length,ms=Object.values(room.members||{}).filter(m=>m&&m.on&&m.name),vr=vacRoles().length;
+  let h=`<div class="gs th-${role} gs-guard">
+   <div class="gs-hud"><div class="gs-id"><span class="gs-ic">${JOB_IC[role]}</span><div><b>${ROLES[role].n.toUpperCase()}</b><small>${esc(playerName())}</small></div></div>
+    <div class="gs-clock"><b class="gled">🌙 GUARDIA</b><small>TURNO ${meta.day}</small></div>
+    <div class="gs-stats"><span><small>BOTE</small><b class="gled">${fmt(meta.money)}</b></span><span><small>REPUTACIÓN</small><b class="gled">★${repT(meta.rep)}</b></span>
+     <button class="gs-mini" data-act="guide" title="Cómo se trabaja">📘</button></div><div class="tlane"></div></div>
+   <div class="gban">🌙 <b>Turno de guardia · la tienda está cerrada al público</b><span>No hay jefe ni encargado conectados, así que no entran clientes. Trabajas a puerta cerrada: cada tarea va a tu <b>parte de guardia</b> y, cuando vuelva el jefe (o un encargado), lo leerá y se aplicará en la tienda. Caben ${GUARD_N} tareas al día.</span></div>
+   <div class="gs-main"><div class="gs-scene sc-${role}"><div class="gs-wall"><span>TIENDA CERRADA · LUCES DE GUARDIA</span></div><div class="gs-objs ${J.length===4?'g4':''}">`;
+  J.forEach((j,i)=>{
+    const why=full?'Parte completo':j.k==='truck'&&!pend?'Muelle vacío':j.k==='repo'&&!pend?'Almacén vacío':j.k==='cv'&&!vr?'Sin vacantes':'';
+    const b=j.k==='truck'&&pend?pend+' uds':j.k==='repo'&&low?low+' bajo mínimos':j.k==='cv'&&vr?vr+' vacante'+(vr>1?'s':''):'';
+    h+=`<button class="obj ${why?'off':'hot'}" data-act="gjob" data-i="${i}" ${why||mg?'disabled':''} title="${esc(j.sub)}">${b?`<span class="obadge">${b}</span>`:''}<span class="oic">${j.ic}</span><b>${j.n}</b><small>${why?'⛔ '+why:j.sub}</small></button>`;
+  });
+  h+=`</div></div><aside class="gs-feed"><h5>📋 TU PARTE DE GUARDIA (${G.items.length}/${GUARD_N})</h5>`
+    +(G.items.map(it=>`<div class="gf ${it.sc>=0.6?'':'bad'}">${it.sc>=0.6?'✅':'😬'} ${GUARD_TX[it.k]||esc(it.k)}${it.c?' · recomienda a <b>'+esc(it.c.name)+'</b>':''}</div>`).join('')||'<div class="gf mute">Aún nada. Elige una tarea de tu sala.</div>')
+    +`<h5>👥 CONECTADOS AHORA</h5><div class="gf mute">${ms.map(m=>(ROLES[m.role]?JOB_IC[m.role]:m.role==='jefe'?'👑':'👤')+' '+esc(cleanName(m.name))).join(' · ')||'Solo tú.'}</div>`
+    +`<h5>👑 ¿Y EL JEFE?</h5><div class="gf mute">En cuanto vuelva el jefe (o se conecte alguien de Almacén, Backoffice, RR.PP. o RR.HH., que hace de encargado), la tienda abre sola y tu parte le llega. Si el jefe lleva más de 2 minutos fuera, puedes quedarte tú con el puesto con el botón de abajo.</div></aside></div>`
+    +`<div class="gs-bar2"><button class="hk" data-act="gend"><i>⏹</i><span>🏁</span><b>Terminar la guardia y entregar el parte</b></button></div></div>`;
+  return h;
+}
+/* --- lado del jefe o del encargado: leer los partes y aplicarlos (con tope diario en meta.gd) --- */
+function guardWatch(){
+  if(!room||room.guardOff)return;
+  room.guardOff=fb.onValue(rRef('guard'),s=>{if(!room)return;room.guardV=s.val()||{};guardPump();});
+}
+function guardUnwatch(){if(room&&room.guardOff){room.guardOff();room.guardOff=null;}}
+function guardPump(){
+  if(!room||!isHost()||!room.guardV||room.waitRelay||room.stopping)return;
+  room.gDone=room.gDone||{};
+  Object.entries(room.guardV).forEach(([u,p])=>{
+    if(!p||!p.items)return;const k=u+':'+p.ts;
+    if(room.gDone[k]||(!p.fin&&srvNow()-(+p.ts||0)<90000))return;
+    room.gDone[k]=1;try{guardApply(u,p);}catch(e){console.warn('Parte de guardia',e);}
+  });
+}
+function guardApply(u,p){
+  const g=meta.gd&&meta.gd.d===meta.day?meta.gd:{d:meta.day,n:0,u:0,r:0,s:(meta.gd&&meta.gd.s)||{}};meta.gd=g;g.s=g.s||{};
+  const ts=+p.ts||0;fb.remove(rRef('guard/'+u)).catch(()=>{});
+  if(g.s[u]&&g.s[u]>=ts)return;g.s[u]=ts;
+  const nm=cleanName(p.name),role=ROLES[p.role]?p.role:null,e=meta.emp.find(x=>x.real===u),lines=[];
+  let ok=0,bad=0,skip=0,cand=null;
+  const rep=v=>{const d=Math.round(Math.min(v,GUARD_R-g.r)*100)/100;if(d>0){g.r+=d;repAdd(+d,'Turno de guardia');}return d>0;};
+  toArr(p.items).slice(0,GUARD_N).forEach(it=>{
+    if(!it||!GUARD_K.includes(it.k))return;
+    if(g.n>=GUARD_N){skip++;return;}g.n++;
+    const sc=clamp(+it.sc||0,0,1),good=sc>=0.6;
+    if(good)ok++;else bad++;
+    if(e){if(good)e.st.tasks++;else e.st.tfail++;}
+    if(!good){lines.push('😬 '+GUARD_TX[it.k]+': le salió regular, no cuenta.');return;}
+    if(it.k==='truck'){const cap=Math.max(0,Math.min(40,GUARD_U-g.u));let mv=0;
+      CAT.slice().sort((a,b)=>(meta.stock[a.id]||0)-(meta.stock[b.id]||0)).forEach(q=>{if(mv<cap)mv+=moveStock(q.id,Math.min(8,cap-mv));});
+      g.u+=mv;lines.push(mv?'🚚 Colocó '+mv+' uds del muelle en la estantería.':'🚚 Ordenó el muelle (hoy ya no quedaba nada que subir).');}
+    else if(it.k==='repo'){const q=CAT.find(x=>x.id===+it.pid),mv=q?moveStock(q.id,Math.max(0,Math.min(8,GUARD_U-g.u))):0;g.u+=mv;
+      lines.push(mv?'📦 Repuso '+mv+' uds de '+esc(q.n)+'.':'📦 Fue a reponer, pero en el almacén ya no quedaba.');}
+    else if(it.k==='inv'){if(run&&!run.over)run.prio=(run.prio||[]).concat(lowList().map(x=>x.id).slice(0,6));lines.push('📋 Hizo el inventario de un pasillo: lo que se acaba va primero en el pedido.');}
+    else if(it.k==='spill')lines.push(rep(0.02)?'🧽 Fregó a fondo un pasillo: la tienda reluce (+reputación).':'🧽 Fregó a fondo un pasillo.');
+    else if(it.k==='cash')lines.push('🧮 Cuadró un cajón: las cuentas quedan al día.');
+    else if(it.k==='tk')lines.push(it.d==='rrpp'?(rep(0.04)?'📱 Contestó una queja en redes y el cliente se calmó (+reputación).':'📱 Contestó una queja en redes.'):(rep(0.02)?'🧾 Resolvió por escrito un ticket reclamado (+reputación).':'🧾 Resolvió por escrito un ticket reclamado.'));
+    else if(it.k==='cv'){const c=it.c;
+      if(c&&ROLES[c.role]&&!cand&&vacOpen(c.role)>0){const f=v=>clamp(Math.round((+v||0.5)*100)/100,0.15,0.85);
+        cand={name:cleanName(c.name),face:String(c.face||'🙂').slice(0,8),role:c.role,rap:f(c.rap),trato:f(c.trato),punt:f(c.punt),act:f(c.act),nat:clamp(Math.round(+c.nat||0),0,NATS.length-1),langs:['es'],pers:null,wage:wageOf(c.role)};
+        lines.push('🧑‍💼 Entrevistó a '+esc(cand.name)+' para '+ROLES[cand.role].n+' y lo recomienda.');}
+      else lines.push('🧑‍💼 Hizo una entrevista; no hay a quién recomendar (o ya no queda la vacante).');}
+  });
+  if(skip)lines.push('⏸️ '+skip+' tarea'+(skip>1?'s':'')+' más no cuenta'+(skip>1?'n':'')+': hoy ya se llegó al tope de '+GUARD_N+' tareas de guardia.');
+  if(!ok&&!bad&&!skip)return;
+  if(e)logE(e,'Turno de guardia: '+ok+' tarea'+(ok===1?'':'s')+' bien'+(bad?', '+bad+' regular':''));
+  if(!run||run.over)saveGame(!!(run&&run.over));
+  note(u,'📋 '+(room.sim?'El encargado':'El jefe')+' ha recibido tu parte de guardia: '+ok+' tarea'+(ok===1?'':'s')+' bien'+(bad?' y '+bad+' regular':'')+'. ¡Gracias por cubrir!',ok<bad);
+  const o={k:'guard:'+u+':'+ts,over:true,who:role?JOB_IC[role]:'🌙',head:'🌙 PARTE DE GUARDIA',tag:role?ROLES[role].n:'',name:'Parte de guardia de '+esc(nm),prio:2,def:'ok',
+    txt:'Mientras la tienda estaba cerrada (sin jefe ni encargado), '+esc(nm)+' ha trabajado a puerta cerrada. Esto es lo que deja hecho:',
+    body:`<div class="sdoc"><h6>Tareas: ${ok} bien${bad?' · '+bad+' regular':''}</h6><ul class="gpart">${lines.map(l=>'<li>'+l+'</li>').join('')}</ul></div>`,
+    choices:[{t:'👍 Bien hecho',k:'ok',cls:'go',key:'A',stamp:'RECIBIDO',sc:'ok'}].concat(cand&&!room.sim?[{t:'🤝 Contratar a '+esc(cand.name)+' ('+fmt(HIRE)+')',k:'hire',key:'C'}]:[]),
+    onPick:k=>{if(k==='hire'&&cand){const m=hireFromCv(cand,cand.wage,false);toast(m,/^Contratad/.test(m)?'good':'bad');renderAll();}}};
+  if(room.sim){quiet=true;try{scene(o);}finally{quiet=false;}toast('📋 Parte de guardia de '+nm+' aplicado ('+ok+' bien).','good');}
+  else scene(o);
+  if(run&&!run.over)renderAll();
+  pubState(true);
+}
 function becomeHost(){
   room.host=true;ensureMeta();if(cam.on)$('#camwin').classList.add('show');
   room.actsOff=fb.onChildAdded(rRef('acts'),s=>{const a=s.val();fb.remove(s.ref).catch(()=>{});onAct(a);});
+  guardWatch();
   if(relayActive()){waitRelay();return;}
   if(meta.liveT>0&&!meta.closed){resumeDay(meta.liveT);toast('▶️ Retomas el turno donde se quedó.','good');}else showLobby();
   pubState(true);
 }
 function demote(msg){
-  if(room.actsOff){room.actsOff();room.actsOff=null;}
+  if(room.actsOff){room.actsOff();room.actsOff=null;}guardUnwatch();
   room.host=false;run=null;mg=null;pendingLeave=null;closeMG();
   fb.update(rRef('members/'+room.uid),{role:null}).catch(()=>{});
   memberSubs();renderAll();room.lastHtml='';renderMember();
@@ -4427,6 +4592,7 @@ function openStore(){if(!isHost())return;room.view=null;fb.update(rRef('info'),{
 /* Dejar el puesto: el jefe deja el puesto libre al momento (latido a 0); el empleado vuelve a la portada. */
 async function resign(){
   if(!room)return;
+  if(room.guard)endGuard('');
   try{
     if(isHost()){saveGame(!!(run&&run.over));await fb.update(rRef('info'),{hb:0,status:'lobby'});await fb.update(rRef('members/'+room.uid),{role:null});demote('Has dejado el puesto de jefe. La tienda queda libre.');}
     else await fb.update(rRef('members/'+room.uid),{role:null,apply:null});
@@ -4465,6 +4631,7 @@ async function applyJob(r){
 }
 async function takeOver(){
   if(!isMember())return;
+  if(room.guard)endGuard('');
   if(room.sim)await stopRelay('');
   hubMsg('👑 Intentando quedarte con el puesto de jefe…');
   try{await fb.set(rRef('info/host'),room.uid);}catch(e){console.warn(e);hubMsg('⚠️ No se puede: el jefe sigue activo o algo ha fallado ('+errMsg(e)+').',true);return;}
@@ -4838,7 +5005,7 @@ function workScreen(o){
     <div class="gs-clock">${st&&!stale?`<b class="gled">${clockOf(st.t,st.dur)}</b><span class="gs-bar"><i style="width:${prog}%"></i></span><small>TURNO ${st.day}</small>`:''}</div>
     <div class="gs-stats">${st&&!stale?`<span><small>BOTE</small><b class="gled">${fmt(st.money)}</b></span><span><small>REPUTACIÓN</small><b class="gled">★${repT(st.rep)}</b></span><span><small>COLA</small><b class="gled">${st.q}</b></span>`:''}
      <button class="gs-mini" data-act="guide" title="Cómo se trabaja">📘</button><button class="gs-mini" data-act="rquit" title="Dejar el trabajo" ${mine?'disabled':''}>🚪</button></div><div class="tlane"></div></div>
-   <div class="gs-status ${relayActive()?'relay':''}">${status}</div>${verMsg}${room.msg?`<div class="${room.msg.bad?'rerr':'rok'}">${esc(room.msg.t)}</div>`:''}
+   <div class="gs-status ${relayActive()?'relay':''}">${status}</div>${o.closed||''}${verMsg}${room.msg?`<div class="${room.msg.bad?'rerr':'rok'}">${esc(room.msg.t)}</div>`:''}
    <div class="gs-main"><div class="gs-scene sc-${role} ${why&&!mine?'shut':''}"><div class="gs-wall"><span>${S.bg.toUpperCase()}</span></div><div class="gs-iso" id="isoslotw"><span class="gs-zone">📍 Tu zona de la tienda, en directo</span></div><div class="gs-objs ${S.objs.length===4?'g4':''}">`;
   S.objs.forEach(ob=>{
     const t=ob.kinds?open.find(x=>ob.kinds.includes(x.k)):null,ok=usable(ob,t),b=badge(ob.k),busy=tasks.find(x=>x.who&&ob.kinds&&ob.kinds.includes(x.k)&&toArr(x.roles).includes(role));
@@ -4892,10 +5059,18 @@ function renderMember(){
   const bossOn=!!inf.host&&srvNow()-(inf.hb||0)<TAKEOVER,bossName=inf.host?esc(cleanName((ms[inf.host]||{}).name||inf.name)):'';
   const whoName=w=>w==='jefe'?'el jefe':ms[w]?'🎮 '+esc(cleanName(ms[w].name)):esc(w);
   const tasks=st&&!stale?toArr(st.tasks):[],mine=tasks.find(t=>t.who===room.uid);
+  /* Turno de guardia: se acaba solo si la tienda vuelve a abrir (jefe o encargado) o si pierdes el puesto. */
+  if(room.guard&&(!role||!stale||relayActive()))endGuard(role?'👑 La tienda vuelve a estar abierta: se acaba tu guardia.':'');
+  const gOk=guardAvail(role,stale),onNow=Object.entries(ms).filter(([u,m])=>m&&m.on&&m.name);
+  const closedHtml=`<div class="gclosed"><b>🔒 No hay jefe ni encargado conectados: la tienda está cerrada.</b>
+    <span>${gOk?'Puedes hacer un <b>turno de guardia</b> (trabajo de tu puesto a puerta cerrada, que el jefe recibe como parte al volver) o esperar.':'Espera un momento: si eres de Almacén, Backoffice, RR.PP. o RR.HH. y el jefe se ha ido a mitad de turno, tu navegador abrirá la tienda como encargado/a.'}</span>
+    <span>👥 Conectados: ${onNow.map(([u,m])=>(u===inf.host?'👑':ROLES[m.role]?JOB_IC[m.role]:'👤')+' '+esc(cleanName(m.name))+(u===room.uid?' (tú)':'')).join(' · ')||'nadie'}.</span>
+    <span>👑 ¿Ser jefe? ${!inf.host?'Deja tu puesto (🚪) y pide el cargo <b>👑 Jefe</b> en la portada: está vacante.':bossOn?'El jefe se fue hace menos de 2 minutos: si no vuelve, podrás quedarte el puesto con el botón de abajo.':'Pulsa «👑 Quedarme con el puesto de jefe» abajo: lleva más de 2 minutos fuera.'}</span>
+    ${gOk?'<button class="btn go big" data-act="gstart">🌙 Empezar turno de guardia</button>':''}</div>`;
   const rl=relayActive()?room.relay:null;
   const status=rl&&!stale?`<span class="live"><i></i>EN DIRECTO</span> 👔 ${rl.uid===room.uid?'<b>Tú</b> llevas la tienda como encargado/a (no cierres la app)':'Encargado/a: <b>'+esc(cleanName(rl.name))+'</b>'} · el jefe no está`
-    :!inf.host?'<span class="live off"><i></i>SIN JEFE</span> Nadie lleva la tienda todavía.'
-    :stale?`<span class="live off"><i></i>EN PAUSA</span> 👑 ${bossName} no tiene el juego abierto.`
+    :!inf.host?'<span class="live off"><i></i>SIN JEFE</span> Nadie lleva la tienda todavía: está cerrada.'
+    :stale?`<span class="live off"><i></i>CERRADA</span> 👑 ${bossName} no tiene el juego abierto y no hay encargado: la tienda está cerrada.`
     :`<span class="live"><i></i>EN DIRECTO</span> 👑 Jefe: <b>${bossName}</b> · turnos de ${durTxt(inf.dur)}`;
   const hud=st&&!stale?`<div class="mhud"><span>Turno <b>${st.day}</b></span><span>🕘 <b>${clockOf(st.t,st.dur)}</b></span><span>Bote <b>${fmt(st.money)}</b></span><span>★ <b>${repT(st.rep)}</b></span><span>Cola <b>${st.q}</b></span></div>`:'';
   scrRender=renderMember;
@@ -4916,6 +5091,7 @@ function renderMember(){
       const cnt=(st&&st.cnt)||{},pend=me.apply&&ROLES[me.apply]?me.apply:null;
       const slots=(n,mx)=>'<span class="slots">'+Array.from({length:mx},(_,i)=>`<i class="${i<n?'on':''}"></i>`).join('')+'</span>';
       body=top+(room.renaming?nameInput('Tu nombre nuevo (se guarda al solicitar un cargo)'):nameField('Tu nombre (no pongas datos personales)'))
+        +(stale&&!relayActive()?`<div class="task"><div>🔒 <b>No hay jefe ni encargado conectados: la tienda está cerrada.</b> ${bossOn?'El jefe acaba de irse; si vuelve, abrirá él.':'Pide el cargo <b>👑 Jefe</b> para abrirla tú, o pide un puesto y, cuando te contraten, podrás hacer turnos de guardia mientras no haya nadie al mando.'}</div></div>`:'')
         +(pend?`<div class="task"><div>📝 Solicitud enviada: <b>${JOB_IC[pend]} ${ROLES[pend].n}</b>. ${bossOn?'El jefe la verá en cuanto pueda.':'No hay jefe conectado: tu solicitud espera.'}</div></div>`:'')
         +'<div class="jobs">'
         +`<button class="job boss" data-act="rapply" data-r="jefe" ${bossOn?'disabled':''}><span class="ic">👑</span><b>Jefe</b><small>${bossOn?'Ocupado por '+bossName:'¡Vacante! Llevas la caja, contratas y despides'}</small></button>`
@@ -4927,7 +5103,7 @@ function renderMember(){
     }
   }else{
     kind='work';tabs=[];
-    body=workScreen({st,role,me,tasks,mine,stale,status,verMsg,whoName});
+    body=room.guard?guardScreen(role):workScreen({st,role,me,tasks,mine,stale,status,verMsg,whoName,closed:stale&&!relayActive()?closedHtml:''});
     foot='';
   }
   let h=screenHtml(kind,'<span class="logo">VITCHMARKET</span>',tabs,body,'',bossBtn+foot);
@@ -6016,6 +6192,7 @@ const TKO={back:[['💶 Comprobar el ticket y devolver lo que toca',1],['💸 De
 function tkOpts(t){const o=(TKO[t.dept]||TKO.back).map(x=>x.slice());if(t.mis){o.forEach(x=>{x[1]=0;});o.push(['↩️ Esto no es de mi departamento: devolverla',1]);}return o.sort(()=>Math.random()-0.5);}
 function endMG(sc){
   const t=mg.t,early=mg.early,remote=mg.remote,x=mg.x||{};mg=null;closeMG();
+  if(t.guard){guardDone(t,sc,x);return;}
   if(t.desk){const r=applyMG(t,sc,early,null,x);toast(r.msg,r.good?'good':'bad');r.good?sOk():sBad();renderAll();checkRep();return;}
   if(remote&&run&&run.remote){run.away=null;renderAll();}
   if(remote){room.done[t.id]=1;roomAct({k:'done',t:t.id,sc,early:!!early,x});toast(sc>=0.6?'Hecho. Se lo cuentas al jefe…':'Regular… Se lo cuentas al jefe.',sc>=0.6?'good':'bad');sc>=0.6?sOk():sBad();room.lastHtml='';renderMember();return;}
@@ -7730,6 +7907,9 @@ function onClick(e){
   else if(a==='wpick'){room.wpick=b.dataset.k||null;room.lastHtml='';renderMember();}
   else if(a==='rhh')roomAct({k:b.dataset.k,u:b.dataset.u});
   else if(a==='rboss')takeOver();
+  else if(a==='gstart')startGuard();
+  else if(a==='gjob')guardJob(+b.dataset.i);
+  else if(a==='gend')endGuard('🏁 Guardia terminada.');
   if(run&&run.over&&!run.dead&&meta.closed)saveGame(true);
 }
 const errMsg=err=>(err&&(err.code||err.message))||String(err);
