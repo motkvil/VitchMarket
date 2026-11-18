@@ -1935,10 +1935,14 @@ function paceGate(s){
 }
 function paceDrop(s,why){paceNote(s,why);if(s.def!=null&&s.onPick)try{s.onPick(s.def);}catch(e){console.warn('scene',e);}}
 /* Se llama en cada fotograma: aplica def a las que ya no van a salir y apunta por qué esperan las demás. */
+/* Reentrante: el def de una escena descartada puede repintar (renderAll → sceneSync → pacePrune) y tocar sceneQ. */
+let paceBusy=false;
 function pacePrune(){
-  for(let i=sceneQ.length-1;i>=0;i--){const s=sceneQ[i];if(!s.qrun||s.paced)continue;
+  if(paceBusy)return;paceBusy=true;
+  try{for(let i=Math.min(sceneQ.length,99)-1;i>=0;i--){if(i>=sceneQ.length)continue;const s=sceneQ[i];if(!s||!s.qrun||s.paced)continue;
     const g=(run&&!run.over&&s.qrun===run)?paceGate(s):'drop:fin';
-    if(g.startsWith('drop')){sceneQ.splice(i,1);paceDrop(s,g);}else if(g!=='ok')paceNote(s,g);}
+    if(g.startsWith('drop')){sceneQ.splice(i,1);paceDrop(s,g);}else if(g!=='ok')paceNote(s,g);}}
+  finally{paceBusy=false;}
 }
 function paceShown(s){
   if(s.paced||!run||run.over)return;s.paced=1;const P=paceRun(),t=run.t;
@@ -3500,7 +3504,7 @@ async function fillRanking(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.18-82';
+const APPV='2026.11.18-83';
 /* Compara versiones por números («-9» < «-11»), no como texto. */
 const verCmp=(a,b)=>{const x=String(a).split(/[.-]/).map(Number),y=String(b).split(/[.-]/).map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
 try{const vt=document.createElement('div');vt.id='vtag';vt.textContent='v'+APPV;document.body.appendChild(vt);}catch(e){}
