@@ -1629,7 +1629,7 @@ body.bigtx{--fs-xs:14px;--fs-s:16px;--fs-m:20px;--fs-l:26px;--fs-xl:34px;--fs-xx
     <div class="stat s-rep"><i>⭐</i><span>Reputación</span><b id="hRep">★ 5.0</b></div>
     <div class="stat s-tk"><i>📨</i><span>Reclamac.</span><b id="hTk">0</b></div>
     <div class="stat s-out"><i>📦</i><span>Agotados</span><b id="hOut">0</b></div>
-    <button class="stat s-goal" id="hGoalB" data-act="goals" title="Objetivos del turno" aria-label="Objetivos del turno" hidden><i>🏆</i><span>Turno</span><b id="hGoal">0/3</b></button>
+    <button class="stat s-staff" id="hStaffB" data-act="staffinfo" title="Plantilla: en tienda / total" aria-label="Plantilla" hidden><i>👥</i><span>Plantilla</span><b id="hStaff">0/0</b></button><button class="stat s-goal" id="hGoalB" data-act="goals" title="Objetivos del turno" aria-label="Objetivos del turno" hidden><i>🏆</i><span>Turno</span><b id="hGoal">0/3</b></button>
     <button class="stat s-week" id="hWeekB" data-act="week" title="Objetivos de la semana" aria-label="Objetivos de la semana" hidden><i>🎯</i><span>Semana</span><b id="hWeek">0/3</b></button>
     <button class="mute" id="muteBtn" data-act="mute" aria-label="Sonido">🔊</button>
     <button class="mute camb" data-act="cams" aria-label="Cámaras de seguridad" title="Cámaras de seguridad">📹</button>
@@ -1830,18 +1830,15 @@ let run=null,last=0,muted=false,uid=0,cid=Date.now()%1e9,toastQ=[];
    Turnos 1–2 solo Caja; 3 Almacén; 5 Backoffice y RR.PP.; 7 RR.HH., Dirección y la reunión de personal; 10 el inspector.
    Mientras tanto la plantilla trabaja igual (NPC): el jefe no ve esas pestañas, avisos ni escenas (se aplica su def).
    meta.unl = {k:1} lo ya abierto (con su escena de bienvenida, una vez). Partidas de antes (sin meta.unl y turno >1): todo abierto. ?unl=1 abre todo. */
-const UNLOCK=[['alm',3,'📦','Almacén','Pedidos a distribuidores, el camión y el muelle. Si se acaba algo, ya no es culpa de nadie más.'],
- ['back',5,'💼','Backoffice','Reclamaciones de dinero, arqueos y cartas de Hacienda. Aquí se cuenta cada céntimo.'],
- ['rrpp',5,'📣','RR.PP.','Reseñas, redes y prensa. Una reseña viral sin contestar hunde la reputación.'],
- ['rrhh',7,'🗂️','RR.HH.','Entrevistas, broncas y la reunión de personal: desde hoy contratas, subes sueldos y despides tú.'],
- ['dir',7,'👑','Dirección','Hoy contra ayer en directo, el balance y tus dividendos. Bienvenido/a al despacho.'],
- ['ladron',3,'🕵️','Ladrones','Hay quien entra a llevarse cosas: capucha, gafas de sol y mucho rato en Bebidas o Droguería. Tócale en la tienda en directo o en las cámaras.','En España la pérdida desconocida ronda el <b>1,1 %</b> de lo que se factura, y el <b>63 %</b> es hurto externo.'],
+const UNLOCK=[['ladron',3,'🕵️','Ladrones','Hay quien entra a llevarse cosas: capucha, gafas de sol y mucho rato en Bebidas o Droguería. Tócale en la tienda en directo o en las cámaras.','En España la pérdida desconocida ronda el <b>1,1 %</b> de lo que se factura, y el <b>63 %</b> es hurto externo.'],
  ['falso',4,'💶','Billetes falsos','Norma nueva en caja: los billetes de 20 y 50 € se revisan. Toca el billete (o pulsa <b>L</b>) para mirarlo con la lupa.','Serie Europa: holograma con el retrato de Europa, marca de agua al trasluz, número verde esmeralda que cambia a azul y tacto en relieve.'],
  ['cupon',6,'🎟️','Cupones','Norma nueva en caja: llegan clientes con cupones de descuento. Antes de aplicarlo, mira la fecha, en qué súper vale y si lleva ese producto.','Cupón bueno rechazado = cliente enfadado. Cupón malo aplicado = dinero regalado.'],
  ['insp',10,'🛡️','Inspecciones','Trabajo, Sanidad, Consumo y PRL pueden presentarse sin avisar. Papeles en regla y suelo seco.']];
 const UNL_ALL=(()=>{try{return new URLSearchParams(location.search).get('unl')==='1';}catch(e){return false;}})();
 const unlDay=k=>(UNLOCK.find(x=>x[0]===k)||[0,1])[1];
-const unl=k=>UNL_ALL||k==='caja'||k==='atc'||!meta||!meta.unl||!!meta.unl[k];
+/* Los departamentos (pestañas, avisos, RR.HH., reunión) están abiertos desde el turno 1: el jefe manda en todo. Solo se desbloquean mecánicas. */
+const DEPT_OPEN=['caja','atc','alm','back','rrpp','rrhh','dir'];
+const unl=k=>UNL_ALL||DEPT_OPEN.includes(k)||!meta||!meta.unl||!!meta.unl[k];
 /* ¿Lo ve el jefe? Un aviso sin dueño se enseña si alguno de sus departamentos está abierto. */
 const tVis=t=>!t.roles||toArr(t.roles).some(unl);
 /* Al empezar el turno: abre lo que toca y presenta cada sección con su jefe/a de departamento (escena). */
@@ -2151,7 +2148,7 @@ const scenePaused=()=>!!(sceneCur&&sceneCur.pause&&(!room||room.host)&&!sceneBlo
    · pico (cola ≥ peakQ o burstN escenas en burstW s) → calm s sin escenas que no sean core;
    · las serias prefieren win (40–75 % del turno): antes, esperan como mucho prefW·dur;
    · una escena aplazada que espera más de waitS·dur (serias) o waitM s (menores), o que sigue en cola al cerrar, aplica def. */
-const PACE={core:['dni','rec','tarj','carta','nota','bill','cupon','sosp'],ser:['robo','dimite','insp','ins','bank','hac','cons','arq','press','viral','riv'],must:['insp','riv'],
+const PACE={core:['dni','rec','tarj','carta','nota','bill','cupon','sosp','dimite'],ser:['robo','insp','ins','bank','hac','cons','arq','press','viral','riv'],must:['insp','riv'],
   gap:25,maxSer:3,peakQ:4,burstN:2,burstW:20,calm:10,win:[0.4,0.75],prefW:0.3,waitS:0.5,waitM:25};
 const paceLog=[];window.__pace=paceLog;
 const paceCls=s=>{const k=sceneKind(s.k);return PACE.core.includes(k)?'core':(PACE.ser.includes(k)||s.pause)?'ser':'min';};
@@ -2583,10 +2580,17 @@ function bScene(o){if(bossScn()&&unl(o.dep||'rrhh'))return scene(o);if(o.onPick&
 const sceneHold=id=>!!(sceneCur&&sceneCur.tid===id);
 const empTag=e=>esc(e.name)+' '+flag(e);
 /* Sacar a alguien de la tienda a mitad de turno (dimisión o despido): suelta su aviso o la Caja 3. */
-function dropEmp(e){
+/* Bajas: nadie se va sin que el jefe se entere. meta.bajas = últimas 15 con motivo (RR.HH., 👥 y cierre). */
+function baja(e,why,silent){
+  meta.bajas=[{d:meta.day,f:e.face,n:e.name,r:e.role,real:!!e.real,why}].concat(meta.bajas||[]).slice(0,15);
+  if(run&&run.bajas)run.bajas.push(e.name);else if(run)run.bajas=[e.name];
+  if(!silent&&!(room&&room.sim))toast('🚪 Baja: '+e.face+' '+e.name+' ('+(ROLES[e.role]?ROLES[e.role].n:'')+') · '+why+'. Te quedan '+meta.emp.length+' en plantilla.','bad');
+}
+function dropEmp(e,why){
   const d=run&&run.duty&&run.duty[e.id];
   if(d&&(d.busy||(run.away&&run.away.cover===e.id)))pullOff(e);
   meta.emp=meta.emp.filter(x=>x!==e);if(run&&run.duty)delete run.duty[e.id];
+  if(why)baja(e,why,true);
 }
 /* 1 · Candidato en la puerta (entrevista sin nadie de RR.HH.): entrevistarle ya, que espere o hoy no. */
 function mgN(){return parseInt(String(mg&&mg.t&&mg.t.id||'').replace(/\D/g,''),10)||0;}
@@ -2630,7 +2634,7 @@ function quitScene(e){
     onPick:k=>{if(run!==R||!meta.emp.includes(e))return;
       if(k==='raise'&&Math.random()<0.35+e.moral/40-(e.pers==='quejica'?0.1:0)){
         e.wage=Math.round(e.wage*1.05);e.moral=clamp(e.moral+20,0,100);logE(e,'Quería irse; se queda con +5%');sOk();toast('💶 '+e.name+' se queda ('+monthTxt(e.wage)+').','good');renderAll();return;}
-      dropEmp(e);toast(k==='raise'?'Ni con +5%: '+e.name+' se va.':'👋 '+e.name+' ha dejado el trabajo.','bad');sBad();renderAll();}});
+      dropEmp(e,k==='raise'?'Dimitió (ni con +5 % se quedó; ánimo por los suelos)':'Dimitió (ánimo por los suelos) y le dejaste ir');toast(k==='raise'?'Ni con +5%: '+e.name+' se va. Lo tienes en 👥 Plantilla.':'👋 '+e.name+' ha dejado el trabajo. Lo tienes en 👥 Plantilla.','bad');sBad();renderAll();}});
 }
 /* 4 · Retraso: tarjeta de fichaje. Tranquilo (+ánimo) o toque (cuenta como amonestación para un despido). */
 function lateScene(e){
@@ -4158,7 +4162,7 @@ function dailyExit(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.18-96';
+const APPV='2026.11.18-97';
 /* Compara versiones por números («-9» < «-11»), no como texto. */
 const verCmp=(a,b)=>{const x=String(a).split(/[.-]/).map(Number),y=String(b).split(/[.-]/).map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
 try{const vt=document.createElement('div');vt.id='vtag';vt.textContent='v'+APPV;document.body.appendChild(vt);}catch(e){}
@@ -4606,7 +4610,7 @@ function releaseReal(e){
   run.tasks.forEach(t=>{if(t.who===e.id){t.who=null;t.real=0;t.dl=Math.max(t.dl,run.t+10);}});
   const d=run.duty&&run.duty[e.id];if(d){d.busy=0;d.task=null;}
 }
-function dropReal(e){releaseReal(e);meta.emp=meta.emp.filter(x=>x!==e);if(run&&run.duty)delete run.duty[e.id];}
+function dropReal(e){releaseReal(e);meta.emp=meta.emp.filter(x=>x!==e);if(run&&run.duty)delete run.duty[e.id];baja(e,'Jugador/a: dejó el puesto o cambió de cargo');}
 /* Herramientas del puesto de trabajo del empleado real: se piden con un act «take» de t negativo
    (−1 inventario, −2 pedido, −3 arqueo, −4 entrevista, −(1000+pid) reponer, −(5000+id) responder una reseña).
    El jefe crea el aviso y se lo da a quien lo ha pedido. */
@@ -4955,7 +4959,7 @@ function prepShift(){
   meta.emp.slice().forEach(e=>{
     if(e.real){const m=room&&room.members[e.real],on=!!(m&&m.on);run.duty[e.id]={st:on?'ok':'gone',at:0,busy:0,task:null,slack:null,slackT:0,seen:0,cnt:on?1:0};if(on)e.st.shifts++;return;}
     /* Dimisión: si llevas tú la tienda, te lo dice a la cara (escena) y viene a trabajar mientras decides. */
-    if(e.moral<15&&Math.random()<0.4){if(!bossScn()){meta.emp=meta.emp.filter(x=>x!==e);notes.push(e.name+' ha dejado el trabajo');return;}quit.push(e);}
+    if(e.moral<15&&Math.random()<0.4){if(!bossScn()){meta.emp=meta.emp.filter(x=>x!==e);baja(e,'Dimitió con el ánimo por los suelos (estaba el encargado)',true);notes.push(e.name+' ha dejado el trabajo');return;}quit.push(e);}
     const d={st:'ok',at:0,busy:0,task:null,slack:null,slackT:0,seen:0};
     if(e.off===meta.day)d.st='off';
     else if(Math.random()<(e.moral<30?0.3:0.03)*(1.3-e.punt)){d.st='abs';e.st.abs++;notes.push(e.name+' no viene hoy');logE(e,'Faltó sin avisar');}
@@ -5216,12 +5220,7 @@ function renderTasks(){
     const e=t.who==='me'?null:empById(t.who);
     return `<div class="task"><div>${t.ic} ${t.s}</div><div class="tb"><i data-tid="${t.id}"></i></div><div class="supd">${e?e.face+' '+e.name+(e.real?' 🎮':'')+' está en ello…':'Vas tú. La caja está cerrada.'}</div></div>`;
   }).join('');
-  const crew=meta.emp.map(e=>{
-    const d=run.duty[e.id];let s;
-    if(!d)s='—';else if(d.st==='gone')s='desconectado/a';else if(d.st==='abs')s='falta hoy';else if(d.st==='off')s='libra hoy';else if(run.t<d.at)s='no ha llegado';
-    else if(d.busy)s='en un aviso';else if(run.tills&&e.real&&run.tills[e.real])s='en la Caja '+run.tills[e.real].n+' ('+Object.keys(run.tills[e.real].out).length+' en cola)';else s=e.role==='atc'?'en caja de apoyo':'en su puesto';
-    return `<div>${e.face} ${e.real?'🎮':flag(e)} ${e.name} · ${ROLES[e.role].s} · ${s}</div>`;
-  }).join('');
+  const crew=meta.emp.map(e=>`<div>${e.face} ${e.real?'🎮':flag(e)} ${e.name} · ${ROLES[e.role].s} · ${staffState(e)}</div>`).join('');
   el.innerHTML=`<div class="zone-title">AVISOS EN CURSO</div>${tk||'<div class="supd">Nadie está con ningún aviso.</div>'}
     <div class="zone-title">PERSONAL EN TIENDA</div><div class="crew">${crew||'Nadie. Tú contra el mundo.'}</div>`;
   updateTaskBars();
@@ -6223,7 +6222,7 @@ function empAct(id,k){
   if(k==='praise'){e.moral=clamp(e.moral+12,0,100);msg='👏 Felicitado. Se le nota en la cara.';}
   else if(k==='warn'){
     e.warn++;e.moral=clamp(e.moral-12,0,100);e.focus=3;msg='⚠️ Toque dado (lleva '+e.warn+'). Va a espabilar… o no.';
-    if(!e.real&&e.moral<20&&Math.random()<0.3){meta.emp=meta.emp.filter(x=>x!==e);meet.gone.push(e.face+' '+e.name+' se lo tomó fatal y se fue dando un portazo.');scrTab.meet='gone';pg=0;sBad();renderHud();showMeeting();return;}
+    if(!e.real&&e.moral<20&&Math.random()<0.3){meta.emp=meta.emp.filter(x=>x!==e);baja(e,'Se fue tras el toque en la reunión (ánimo muy bajo)',true);meet.gone.push(e.face+' '+e.name+' se lo tomó fatal y se fue dando un portazo.');scrTab.meet='gone';pg=0;sBad();renderHud();showMeeting();return;}
   }
   else if(k==='raise'){e.wage=Math.round(e.wage*1.05);e.moral=clamp(e.moral+20,0,100);msg='💶 +5% de sueldo: '+monthTxt(e.wage)+'. Ahora te quiere un poquito más.';}
   else if(k==='fire'){meet.firing=id;showMeeting();return;}
@@ -6286,7 +6285,7 @@ function fireCore(e,r){
   }else if(!just&&r!=='none')L.push('😅 El motivo no se sostenía, pero no te ha denunciado. Esta vez.');
   achCheck('fire',just&&r!=='trial'&&!extra);
   L.push('Total pagado: <b>'+fmt(cost)+'</b>.');
-  meta.money-=cost;meta.emp=meta.emp.filter(x=>x!==e);
+  meta.money-=cost;meta.emp=meta.emp.filter(x=>x!==e);baja(e,'Despedido/a por ti: '+((FIRE[r]&&FIRE[r].t)||r||'sin motivo'),true);
   meta.emp.forEach(x=>{x.moral=clamp(x.moral+(bad?3:-8),0,100);});
   /* Síndrome del superviviente: tras un despido el resto rinde menos (nada si era malo; menos si el despido era justo). */
   const sv=r==='trial'||bad?0:just?1:2;meta.surv=Math.max(meta.surv||0,sv);
@@ -6526,6 +6525,7 @@ function juiceTick(){
 /* ---------- render ---------- */
 function renderHud(){
   {const wb=$('#hWeekB'),G=run&&run.remote||isMember()?[]:weekGoals();if(wb){wb.hidden=!G.length;if(G.length)$('#hWeek').textContent=G.filter(g=>g[1]).length+'/3';}}
+  {const sb=$('#hStaffB'),ok=run&&!run.remote&&!isMember();if(sb){sb.hidden=!ok;if(ok)$('#hStaff').textContent=meta.emp.filter(onFloor).length+'/'+meta.emp.length;}}
   {const gb=$('#hGoalB'),T=run&&!run.remote&&!isMember()?turnGoals():null;if(gb){gb.hidden=!T;if(T)$('#hGoal').textContent=(run.stars!=null?run.stars:T.filter(g=>g[1]>=1).length)+'/3';}}
   {const rs=$('#hRush'),dw=$('#hDow');if(rs&&dw){if(run&&run.remote){const st=room.state||{};dw.textContent=DOW[dowOf(st.day)].slice(0,3);$('#hDowB').textContent=DOW[dowOf(st.day)];rs.hidden=!((st.t||0)<(st.dur||100)&&rushRaw(9+12*Math.min(1,(st.t||0)/(st.dur||100)))>=1.5);}
     else{dw.textContent=DOW[dowOf(meta.day)].slice(0,3)+(dowF(meta.day)>1?' 🔥':'');$('#hDowB').textContent=DOW[dowOf(meta.day)]+(dowF(meta.day)>1?' 🔥 +15 %':dowF(meta.day)<1?' · −10 %':'');rs.hidden=!rushOn();}}}
@@ -6945,6 +6945,31 @@ function starsHtml(){
     <ul class="stg">${G.map(g=>`<li class="${g[1]?'ok':''}"><i>${g[1]?'✅':'❌'}</i><span>${g[0]}</span><small>${g[2]}</small></li>`).join('')}</ul>
     <div class="stn">${run.starBonus?'🏅 ¡Tres turnos seguidos con ⭐⭐⭐! +0,05 de reputación y +3 de ánimo a la plantilla.':n===3?'Racha de ⭐⭐⭐: '+sr+'/3. A la tercera, premio.':'Tres turnos seguidos con ⭐⭐⭐ tienen premio.'}</div></section>`;
 }
+/* Dónde está cada uno ahora mismo (lo mismo para la lista lateral y la 👥 Plantilla). */
+function staffState(e){
+  const d=run&&run.duty&&run.duty[e.id];
+  if(!run||run.over||!d)return 'fuera de turno';
+  if(d.st==='gone')return 'desconectado/a';if(d.st==='abs')return '❌ falta hoy';if(d.st==='off')return '🏖️ libra hoy';if(run.t<d.at)return '⏰ aún no ha llegado';
+  if(run.away&&run.away.cover===e.id)return '🧾 en tu Caja 3';
+  if(d.busy){const t=run.tasks.find(x=>x.who===e.id);return '🔧 '+(t?t.s:'en un aviso');}
+  if(run.tills&&e.real&&run.tills[e.real])return '🧾 en la Caja '+run.tills[e.real].n;
+  if(d.slack)return '😴 se escaquea';
+  return e.role==='atc'?'🧾 en caja de apoyo':'✅ en su puesto';
+}
+const onFloor=e=>{const d=run&&run.duty&&run.duty[e.id];return !!d&&!['gone','abs','off'].includes(d.st)&&run.t>=d.at;};
+/* 👥 Plantilla: quién hay, dónde está, cuánto cuesta y quién se ha ido y por qué. */
+function staffInfo(){
+  if(!run||run.remote)return;
+  const E=meta.emp,cnt={};E.forEach(e=>{cnt[e.role]=(cnt[e.role]||0)+1;});
+  const rows=E.map(e=>`<dt>${e.face} ${esc(e.name)}${e.real?' 🎮':''}${e.trial>0?' 🧪':''}</dt><dd>${ROLES[e.role].s} · ${staffState(e)}</dd>`).join('');
+  const B=(meta.bajas||[]).slice(0,5).map(b=>`<dt>${b.f} ${esc(b.n)} · T${b.d}</dt><dd>${esc(b.why)}</dd>`).join('');
+  scene({k:'plant:'+Date.now(),over:true,head:'👥 PLANTILLA · TURNO '+meta.day,tag:E.filter(onFloor).length+' en tienda / '+E.length,who:'👑',name:'Tu equipo',prio:1,time:20,def:'ok',
+    txt:Object.keys(ROLES).map(k=>ROLES[k].s+' '+(cnt[k]||0)).join(' · ')+'. Nómina: '+fmt(E.reduce((s,e)=>s+empCost(e.wage),0))+'/día con Seguridad Social.',
+    body:`<div class="sdoc"><h6><span>Quién hay</span><span>${E.length}</span></h6><dl>${rows||'<dt>Nadie</dt><dd>Tú contra el mundo</dd>'}</dl></div>`
+      +(B?`<div class="sdoc"><h6><span>🚪 Últimas bajas</span><span>${(meta.bajas||[]).length}</span></h6><dl>${B}</dl></div>`:''),
+    choices:[{t:'🗂️ Ir a RR.HH.',k:'rrhh',cls:'go',key:'R'},{t:'👍 Vale',k:'ok',key:'V'}],
+    onPick:k=>{if(k==='rrhh')setTab('rrhh');}});
+}
 function goalsInfo(){
   if(!run||run.remote)return;const G=turnGoals(),n=run.stars!=null?run.stars:G.filter(g=>g[1]>=1).length;
   scene({k:'tginfo:'+Date.now(),over:true,look:'label',head:'⭐ OBJETIVOS DEL TURNO '+meta.day,tag:starsT(n),who:'🐶',name:'Vitchi',prio:1,time:10,def:'ok',
@@ -7289,7 +7314,7 @@ function rrhhHtml(){
     <div class="zone-title">📢 VACANTES</div><div class="supd">${rr.some(e=>!e.real)&&!realRR?'Tu gente de RR.HH. las publica sola cuando falta personal; tú también puedes.':realRR?realRR.name+' (RR.HH.) también las publica desde su puesto.':'Sin nadie en RR.HH., las publicas tú y entrevistas tú: cuando llega un candidato sale el aviso 🧑‍💼 «Entrevista» y vas con «Voy yo».'} Solo se presentan candidatos a puestos con vacante.</div>
     <div class="vacs">${Object.keys(ROLES).map(k=>{const v=vacOpen(k),n=staffOf(k).length,mx=ROLES[k].max;return `<div class="vac ${v?'on':''}"><span class="vn"><i>${JOB_IC[k]}</i><b>${ROLES[k].n}</b><small>${n}/${mx} en plantilla${v?' · se busca'+(v>1?' ('+v+')':''):''}</small></span><span class="vbtn"><button class="btn mini" data-act="vac" data-r="${k}" data-d="-1" ${v?'':'disabled'}>−</button><b>${v}</b><button class="btn mini go" data-act="vac" data-r="${k}" data-d="1" ${n+v<mx?'':'disabled'}>＋</button></span></div>`;}).join('')}</div>
     <div class="supd">Próxima reunión de personal (valorar, aumentos, contratar y despedir): al cerrar el turno ${meta.day%3===1&&!(run&&!run.over)?meta.day:nm}.</div></div>
-    <div class="dpanel"><div class="zone-title">PLANTILLA Y CONTRATOS</div><div class="shop">${rows}</div></div></div>`;
+    <div class="dpanel"><div class="zone-title">PLANTILLA Y CONTRATOS · ${meta.emp.length} PERSONAS</div><div class="shop">${rows}</div></div>${(meta.bajas||[]).length?`<div class="dpanel"><div class="zone-title">🚪 BAJAS RECIENTES</div>${meta.bajas.slice(0,8).map(b=>`<div class="supd">${b.f} <b>${esc(b.n)}</b> · ${ROLES[b.r]?ROLES[b.r].n:""} · turno ${b.d}: ${esc(b.why)}</div>`).join("")}</div>`:""}</div>`;
 }
 function dirHtml(){
   const r=run||{},live=run&&!run.over;
@@ -7650,6 +7675,7 @@ function onClick(e){
   else if(a==='endmeet')endMeeting();
   else if(a==='week')weekInfo();
   else if(a==='goals')goalsInfo();
+  else if(a==='staffinfo')staffInfo();
   else if(a==='emp')empAct(+b.dataset.e,b.dataset.k);
   else if(a==='fire')fireEmp(+b.dataset.e,b.dataset.r);
   else if(a==='integc'){const c=meet&&meet.cands[+b.dataset.c];if(c&&!c.integ&&meta.money>=INTEG){meta.money-=INTEG;c.integ=integBand(c.hon);sCoin();renderHud();showMeeting();}}
