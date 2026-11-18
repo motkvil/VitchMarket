@@ -1329,6 +1329,22 @@ body.rem .isostore{display:none!important}
 .dnic-k{font-family:var(--pix);font-size:19px!important;color:#0d2f40}
 .dnic-today{font-size:13px;color:#4a1414}.dnic-today b{font-family:var(--pix);font-size:17px}
 .tpv{display:flex;justify-content:space-between;align-items:center;background:#1b2b22;color:#ff6b6b;border:3px solid #444;border-radius:8px;padding:6px 10px;font-family:var(--pix);font-size:16px}.tpv b{color:#b9f5c9;font-size:20px}
+/* Normas de caja: billete con lupa, cupón y sospechoso */
+.bill{display:flex;align-items:center;gap:8px;width:100%;margin:4px 0;padding:6px 8px;border:2px dashed #b3141c;border-radius:8px;background:#fff8e6;font:inherit;font-size:14px;color:#4a1414;cursor:pointer;text-align:left}
+.bill b{margin-left:auto;white-space:nowrap;color:#b3141c}.bill .bt{font-style:italic;flex:1;min-width:0}
+.bill.done{border-style:solid;border-color:#2e8b57;background:#eefaf1;cursor:default}.bill.done b{color:#2e8b57}
+.bn{font-family:var(--pix);font-size:16px;padding:3px 8px;border-radius:4px;color:#fff;white-space:nowrap}.bn.b20{background:#2f6db5}.bn.b50{background:#e07b20}
+.lupa{display:flex;gap:10px;align-items:flex-start;margin-top:6px}
+.bnote{flex:0 0 74px;height:46px;border-radius:5px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;box-shadow:inset 0 0 0 3px rgba(255,255,255,.35)}
+.bnote.b20{background:linear-gradient(135deg,#2f6db5,#7fb0e6)}.bnote.b50{background:linear-gradient(135deg,#e07b20,#f6c27a)}
+.bnote b{font-family:var(--pix);font-size:22px;line-height:1}.bnote span{font-size:12px;letter-spacing:2px}
+.lupa ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px;font-size:13px;color:#4a1414;line-height:1.3}
+.lupa li{display:flex;gap:6px}.lupa li b{display:block;font-size:12px;text-transform:uppercase;color:#b3141c}
+.cupon{border:2px dashed #b3141c;border-radius:8px;background:#fffdf3;padding:6px 10px;margin-top:6px;color:#4a1414}
+.cup-h{font-size:12px;font-weight:800;letter-spacing:1px;color:#b3141c}.cup-o{font-family:var(--pix);font-size:24px;line-height:1.1;color:#b3141c}.cup-p{font-size:15px;font-weight:700}
+.cupon dl{display:grid;grid-template-columns:auto 1fr;gap:0 8px;margin:4px 0 0;font-size:13px}.cupon dt{color:#7a5a5a}.cupon dd{margin:0;font-weight:700}
+.cup-cart{font-size:12px;color:#4a1414;margin:6px 0 2px;line-height:1.35}
+.sobs{margin:6px 0 4px;padding-left:4px;list-style:none;font-size:14px;color:#4a1414;display:flex;flex-direction:column;gap:3px}
 .alb{background:#fff repeating-linear-gradient(180deg,transparent 0 23px,#f3e8e8 23px 24px);border:1px solid #d9c9c9;border-left:4px solid #c51d22;border-radius:3px;padding:4px 10px 6px;font-size:13px;color:#3a2323;box-shadow:2px 3px 0 #e3cccc;transform:rotate(-.6deg)}
 .alb-h{display:flex;justify-content:space-between;gap:8px;font-family:var(--display);font-weight:700;font-size:11px;letter-spacing:.4px;color:#c51d22;border-bottom:2px dashed #e3cccc;padding-bottom:2px;margin-bottom:2px}
 .alb-l{display:flex;gap:6px;align-items:center;line-height:24px;min-width:0}.alb-n{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.alb-l .scn-it{font-size:18px}
@@ -1699,7 +1715,8 @@ const DENOMS=[[5000,'50 €','bill'],[2000,'20 €','bill'],[1000,'10 €','bill
 const UPS=[
  {k:'scanner',n:'Escáner láser',d:'Los códigos dañados se leen con 2 toques en vez de 3.',c:18000},
  {k:'fan',n:'Climatización en cajas',d:'Los clientes se impacientan un 20% más despacio.',c:90000},
- {k:'coffee',n:'Cafetera para la plantilla',d:'Propinas ×1,5. Estás de mejor humor.',c:12000}
+ {k:'coffee',n:'Cafetera para la plantilla',d:'Propinas ×1,5. Estás de mejor humor.',c:12000},
+ {k:'arco',n:'Arco antirrobo',d:'Pita en la puerta cuando alguien sale con algo sin pagar (8 de cada 10) y espanta: menos ladrones.',c:120000}
 ];
 const TODAY=new Date();
 const dmy=d=>String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear();
@@ -1810,6 +1827,9 @@ const UNLOCK=[['alm',3,'📦','Almacén','Pedidos a distribuidores, el camión y
  ['rrpp',5,'📣','RR.PP.','Reseñas, redes y prensa. Una reseña viral sin contestar hunde la reputación.'],
  ['rrhh',7,'🗂️','RR.HH.','Entrevistas, broncas y la reunión de personal: desde hoy contratas, subes sueldos y despides tú.'],
  ['dir',7,'👑','Dirección','Hoy contra ayer en directo, el balance y tus dividendos. Bienvenido/a al despacho.'],
+ ['ladron',3,'🕵️','Ladrones','Hay quien entra a llevarse cosas: capucha, gafas de sol y mucho rato en Bebidas o Droguería. Tócale en la tienda en directo o en las cámaras.','En España la pérdida desconocida ronda el <b>1,1 %</b> de lo que se factura, y el <b>63 %</b> es hurto externo.'],
+ ['falso',4,'💶','Billetes falsos','Norma nueva en caja: los billetes de 20 y 50 € se revisan. Toca el billete (o pulsa <b>L</b>) para mirarlo con la lupa.','Serie Europa: holograma con el retrato de Europa, marca de agua al trasluz, número verde esmeralda que cambia a azul y tacto en relieve.'],
+ ['cupon',6,'🎟️','Cupones','Norma nueva en caja: llegan clientes con cupones de descuento. Antes de aplicarlo, mira la fecha, en qué súper vale y si lleva ese producto.','Cupón bueno rechazado = cliente enfadado. Cupón malo aplicado = dinero regalado.'],
  ['insp',10,'🛡️','Inspecciones','Trabajo, Sanidad, Consumo y PRL pueden presentarse sin avisar. Papeles en regla y suelo seco.']];
 const UNL_ALL=(()=>{try{return new URLSearchParams(location.search).get('unl')==='1';}catch(e){return false;}})();
 const unlDay=k=>(UNLOCK.find(x=>x[0]===k)||[0,1])[1];
@@ -1824,10 +1844,10 @@ function unlockCheck(){
 }
 function unlockScene(u){
   if(!bossScn())return;
-  const [k,,ic,n,t]=u,rk=k==='insp'?'back':k,e=ROLES[rk]?staffOf(rk).find(x=>!x.real):null,R=run,tabk=TABS.some(x=>x[0]===k);
+  const [k,,ic,n,t,hint]=u,rk=k==='insp'?'back':k==='ladron'?'alm':k==='falso'||k==='cupon'?'atc':k,e=ROLES[rk]?staffOf(rk).find(x=>!x.real):null,R=run,tabk=TABS.some(x=>x[0]===k);
   scene({k:'unl:'+k,look:'label',head:'🔓 NUEVO · '+n.toUpperCase(),tag:'Turno '+meta.day,who:e?e.face:ic,sprite:e?'s'+e.id:null,role:e&&e.role,
     name:e?esc(e.name)+' · '+ROLES[rk].n:'Tu gestor',prio:2,time:16,def:'later',
-    txt:(tabk?'Jefe, desde hoy llevas tú <b>'+ic+' '+n+'</b>. ':'Jefe, una cosa: ')+esc(t),
+    txt:(tabk?'Jefe, desde hoy llevas tú <b>'+ic+' '+n+'</b>. ':'Jefe, una cosa: ')+t,body:hint?'<div class="scn-hint">'+hint+'</div>':'',
     choices:tabk?[{t:ic+' Ver '+n,k:'go',cls:'go',key:'V',stamp:'¡ABIERTO!',sc:'ok',fx:'🔓'},{t:'⏳ Luego',k:'later',key:'L'}]
       :[{t:'😬 Entendido',k:'later',cls:'go',key:'V',stamp:'APUNTADO',sc:'ok'}],
     onPick:c=>{if(c==='go'&&run===R&&!R.over&&!mg)setTab(k);renderTabs();}});
@@ -2123,7 +2143,7 @@ const scenePaused=()=>!!(sceneCur&&sceneCur.pause&&(!room||room.host)&&!sceneBlo
    · pico (cola ≥ peakQ o burstN escenas en burstW s) → calm s sin escenas que no sean core;
    · las serias prefieren win (40–75 % del turno): antes, esperan como mucho prefW·dur;
    · una escena aplazada que espera más de waitS·dur (serias) o waitM s (menores), o que sigue en cola al cerrar, aplica def. */
-const PACE={core:['dni','rec','tarj','carta','nota'],ser:['robo','dimite','insp','ins','bank','hac','cons','arq','press','viral'],must:['insp'],
+const PACE={core:['dni','rec','tarj','carta','nota','bill','cupon','sosp'],ser:['robo','dimite','insp','ins','bank','hac','cons','arq','press','viral'],must:['insp'],
   gap:25,maxSer:3,peakQ:4,burstN:2,burstW:20,calm:10,win:[0.4,0.75],prefW:0.3,waitS:0.5,waitM:25};
 const paceLog=[];window.__pace=paceLog;
 const paceCls=s=>{const k=sceneKind(s.k);return PACE.core.includes(k)?'core':(PACE.ser.includes(k)||s.pause)?'ser':'min';};
@@ -2266,7 +2286,7 @@ function cajaScenes(){
 }
 /* Tarjeta rechazada: pagar en efectivo (por defecto) o probar otra vez (35 %, y tarda). */
 function cardScene(c){
-  const cash=msg=>{if(front()!==c||c.phase!=='pay')return;c.cardNo=0;run.card=false;c.pay='cash';c.given=cashGiven(totalOf(c));if(msg)toast(msg,'bad');renderAll();};
+  const cash=msg=>{if(front()!==c||c.phase!=='pay')return;c.cardNo=0;run.card=false;c.pay='cash';c.given=cashGiven(totalOf(c));noteFor(c);if(msg)toast(msg,'bad');renderAll();};
   if(!scene({k:'tarj:'+c.id,who:c.face,sprite:c.id,head:'💳 DATÁFONO · CAJA '+(run.remote?run.till:3),name:c.lab?esc(c.lab.replace(/<[^>]+>/g,'')):'',tag:'Rechazada',prio:2,txt:'Ups, no pasa… 😬',
     body:`<div class="tpv"><span>DENEGADA</span><b>${fmt(totalOf(c))}</b></div>`,time:8,def:'cash',
     choices:[{t:'💶 En efectivo',k:'cash',cls:'go',key:'E',stamp:'EFECTIVO',sc:'ok',fx:'💶'},{t:'🔁 Probar otra vez',k:'retry',key:'R'}],
@@ -2291,6 +2311,181 @@ function cutScene(nc){
     onPick:k=>{if(!run||run.over)return;
       if(k==='end'){const i=run.queue.indexOf(nc);if(i>0){run.queue.splice(i,1);run.queue.push(nc);}repAdd(+0.05,'Mandaste al final a uno que se coló');achCheck('cuela');sOk();toast('Al final de la cola. La gente asiente.','good');}
       else pen();
+      renderAll();}});
+}
+
+/* ===== Normas nuevas en caja (estilo «Papers, Please»: una regla más cada pocos turnos; UNLOCK 'falso' T4, 'cupon' T6) =====
+   ruleOn(k): en la caja del cajero real (run.remote) vale el turno de la tienda (meta.day); si no, lo desbloqueado (unl).
+   Billetes falsos: quien paga en efectivo con 20 o 50 € puede dar uno falso (fakeP: 3 % + 0,6 %/turno, máx. 15 %). El billete sale en la
+   registradora con lo que se nota a simple vista (los buenos a veces también tienen «algo raro»); al tocarlo (o L), lupa con 3 medidas de
+   seguridad de la serie Europa. Aceptar uno falso = su valor a pérdidas al dar el cambio (run.fines y run.fakes); rechazar uno bueno =
+   −15 % de paciencia y −0,1 de reputación. Cupones (CUP_P = 10 % de los clientes): al cobrar, escena con el cupón, lo que lleva y la fecha
+   de hoy; buenos o malos (caducado, de otro súper o de un producto que no lleva). Aplicar uno malo = descuento regalado (run.cupL);
+   rechazar uno bueno = −0,12 de reputación y −15 % de paciencia. Las dos van también en la caja del cajero real (las pérdidas, por fines). */
+const ruleOn=k=>run&&run.remote?meta.day>=unlDay(k):unl(k);
+/* Pruebas: ?norma=billete (todos los billetes falsos), cupon (todos con cupón) o ladron (un ladrón a los 3 s y siempre avisa la plantilla). */
+const NORMA=(()=>{try{return new URLSearchParams(location.search).get('norma')||'';}catch(e){return '';}})();
+const fakeP=()=>NORMA==='billete'?1:Math.min(0.15,0.03+0.006*(meta.day||1));
+const NOTE_F=[['Holograma','Al moverlo sale el retrato de Europa y la cifra','Plateado y plano: al moverlo no cambia nada'],
+ ['Marca de agua','Al trasluz, el retrato de Europa y la cifra, suaves','Al trasluz no se ve nada: está pintada encima'],
+ ['Número esmeralda','La cifra brilla y pasa de verde esmeralda a azul','Verde fijo: no cambia de color al inclinarlo'],
+ ['Tacto en relieve','Rugoso en los bordes y en las letras grandes','Liso del todo, tacto de papel de folio'],
+ ['Hilo de seguridad','Al trasluz, una línea oscura con «€» y la cifra','No hay línea; si acaso, una raya dibujada']];
+const NOTE_T={fake:['tacto de papel','el número no cambia de color','sin holograma','colores apagados'],real:['muy arrugado','huele a tabaco','una esquina rota','doblado en cuatro']};
+function noteFor(c){
+  c.note=null;if(!ruleOn('falso')||c.given<2000)return;
+  const v=c.given>=5000?5000:2000,fake=Math.random()<fakeP();
+  const fs=NOTE_F.map((f,i)=>i).sort(()=>Math.random()-0.5).slice(0,3),bad=fake?fs.slice(0,ri(1,2)):[];
+  c.note={v,fake,f:fs.sort((a,b)=>a-b).map(i=>[i,bad.includes(i)?1:0]),tell:fake?(Math.random()<0.6?pick(NOTE_T.fake):''):(Math.random()<0.25?pick(NOTE_T.real):''),d:null};
+}
+function billHtml(c){
+  const n=c.note;if(!n)return '';
+  return n.d==null?`<button class="bill" data-act="bill" title="Mirar el billete con la lupa (L)"><span class="bn b${n.v/100}">${n.v/100} €</span><span class="bt">${n.tell?'«'+n.tell+'»':'Parece normal'}</span><b>🔍 Revisar</b></button>`
+    :`<div class="bill done"><span class="bn b${n.v/100}">${n.v/100} €</span><span class="bt">${n.swap?'Te ha dado otro billete':'Billete aceptado'}</span><b>✅</b></div>`;
+}
+function billScene(c){
+  const n=c.note;if(!n)return;
+  scene({k:'bill:'+c.id,who:c.face,sprite:c.id,head:'🔍 LUPA · CAJA '+(run.remote?run.till:3),tag:'💶 '+n.v/100+' €',name:'Billete de '+n.v/100+' €',prio:3,time:15,def:'ok',
+    txt:'Toma, cóbrate de aquí.'+(n.tell?' <span class="scn-hint">A simple vista: «'+n.tell+'»</span>':''),
+    body:`<div class="lupa"><div class="bnote b${n.v/100}"><b>${n.v/100}</b><span>EURO</span></div><ul>${n.f.map(([i,b])=>`<li><i>🔍</i><span><b>${NOTE_F[i][0]}</b>${NOTE_F[i][b?2:1]}</span></li>`).join('')}</ul></div>`,
+    choices:[{t:'✅ Aceptar',k:'ok',cls:'go',key:'A',stamp:'ACEPTADO',sc:'ok'},{t:'🚫 Rechazar',k:'no',cls:'no',key:'R',stamp:'RECHAZADO',sc:'bad'}],
+    alive:()=>front()===c&&c.phase==='pay'&&c.note===n&&n.d==null,
+    onPick:k=>{if(!run||front()!==c||c.note!==n||n.d!=null)return;
+      if(k!=='no')n.d='ok';
+      else if(n.fake){c.note={v:n.v,fake:false,f:[],tell:'',d:'ok',swap:1};run.fakeOut=(run.fakeOut||0)+1;sOk();
+        toast('🕵️ ¡Era falso! Buen ojo. Te da otro billete.','good');run.chat={face:c.face,text:'«Uy… pues me lo dieron en el cambio de otro sitio.»',angry:false,until:run.t+3};renderChat();}
+      else{n.d='ok';n.bad=1;c.p=Math.max(1,c.p-c.max*0.15);repAdd(-0.1,'Billete bueno rechazado');sBad();
+        toast('El billete era bueno. Te lo da igual, de mala gana.','bad');run.chat={face:c.face,text:'«¿Me estás llamando falsificador?»',angry:true,until:run.t+3};renderChat();}
+      renderRegister();}});
+}
+/* Al dar el cambio: si el billete era falso y se aceptó, su valor va a pérdidas. */
+function noteLoss(c){
+  const n=c.note;if(!n||!n.fake)return;
+  run.fines+=n.v;meta.money-=n.v;run.fakes=(run.fakes||0)+n.v;run.fakeIn=(run.fakeIn||0)+1;
+  toast('💶 El billete de '+n.v/100+' € era falso (lo pilla el detector de la oficina): −'+fmt(n.v),'bad');sBad();
+}
+const CUP_P=0.1,CUP_SH=['Supermercados El Ahorro','HiperPrecio','Súper Lolo'];
+function mkCup(items){
+  const ok0=items.filter(i=>!i.age);if(!ok0.length)return null;const it=pick(ok0);
+  const ok=Math.random()<0.5,why=ok?'':pick(['cad','otro','prod']),pct=Math.random()<0.5;
+  let pr=it;if(why==='prod'){const o=CAT.filter(x=>!x.age&&!items.some(i=>i.pid===x.id));if(o.length){const x=pick(o);pr={pid:x.id,e:x.e,n:x.n,p:x.p};}}
+  const off=pct?Math.max(5,Math.round(pr.p*0.2/5)*5):Math.min(100,Math.round(pr.p*0.5/5)*5);
+  const d=new Date(TODAY);d.setDate(d.getDate()+(why==='cad'?-ri(1,30):ri(1,25)));
+  return {pid:pr.pid,e:pr.e,n:pr.n,off,t:pct?'−20 %':'−'+fmt(off),exp:d.getTime(),shop:why==='otro'?pick(CUP_SH):'VitchMarket',ok,why,d:null};
+}
+const CUP_WHY={cad:'está caducado',otro:'es de otro súper',prod:'no lleva ese producto'};
+function cupScene(c){
+  const u=c.cup,R=run;
+  scene({k:'cupon:'+c.id,look:'label',head:'🎟️ CUPÓN · CAJA '+(run.remote?run.till:3),who:c.face,sprite:c.id,name:c.lab?esc(c.lab.replace(/<[^>]+>/g,'')):'Cliente',tag:'Norma de caja',prio:3,time:15,def:'ok',
+    txt:'¡Ah! Y tengo este cupón, ¿eh?',
+    body:`<div class="cupon"><div class="cup-h">🎟️ CUPÓN DESCUENTO</div><div class="cup-o">${u.t}</div><div class="cup-p">${u.e} ${esc(u.n)}</div>
+      <dl><dt>Válido hasta</dt><dd>${dmy(new Date(u.exp))}</dd><dt>Solo en</dt><dd>${esc(u.shop)}</dd></dl></div>
+      <div class="cup-cart">🛒 Lleva: ${c.items.filter(i=>i.scanned).map(i=>i.e+' '+esc(i.n)).join(' · ')}</div><div class="dnic-today">📅 Hoy: <b>${dmy(TODAY)}</b></div>`,
+    choices:[{t:'✅ Aplicar',k:'ok',cls:'go',key:'A',stamp:'APLICADO',sc:'ok',fx:'🎟️'},{t:'🚫 Rechazar',k:'no',cls:'no',key:'R',stamp:'RECHAZADO',sc:'bad'}],
+    alive:()=>run===R&&front()===c&&c.phase==='scan'&&c.cup===u&&u.d==null,
+    onPick:k=>{if(run!==R||c.cup!==u||u.d!=null)return;cupPick(c,k);if(front()===c&&c.phase==='scan')goPay();}});
+}
+function cupPick(c,k,npc){
+  const u=c.cup;if(!u||u.d!=null)return;u.d=k;
+  if(k==='ok'){c.disc=u.off;
+    if(u.ok){c.p=Math.min(c.max,c.p+c.max*0.05);if(!npc)toast('🎟️ Cupón aplicado: −'+fmt(u.off)+'.','good');}
+    else{run.cupL=(run.cupL||0)+u.off;toast('🎟️ Ese cupón no valía ('+CUP_WHY[u.why]+'): regalas '+fmt(u.off)+'.','bad');if(!npc)sBad();}}
+  else if(u.ok){c.p=Math.max(1,c.p-c.max*0.15);repAdd(-0.12,'Cupón válido rechazado');toast('🎟️ El cupón era bueno. «¡Pues vaya estafa de súper!»','bad');if(!npc)sBad();}
+  else{run.cupOut=(run.cupOut||0)+1;if(!npc){toast('🎟️ Bien visto: '+CUP_WHY[u.why]+'. Se lo guarda refunfuñando.','good');sOk();}}
+  if(!npc)renderAll();
+}
+
+/* ===== Ladrones visibles (UNLOCK 'ladron', turno 3; solo quien lleva la tienda, no la caja del cajero real) =====
+   thiefPlan (startDay) programa 0–2 ladrones por turno (menos con el arco) y, a veces, un cliente con capucha que no roba (señuelo).
+   Entran como compradores del decorado (cam.shop con s.th): capucha y gafas de sol, y se quedan ~20 s en un pasillo de Bebidas,
+   Droguería o lo caro. Luego se llevan 1–3 uds (loseUnits) y van a la puerta. Tocarles en la tienda en directo o en las cámaras =
+   escena «👀 Sospechoso» (core: la abres tú); a veces avisa alguien de la plantilla (menor). Seguridad 40 € (recupera o espanta),
+   pararle tú (65 %; si era inocente, −0,2 de reputación y reseña de 1★) o dejarlo. Con el arco antirrobo (UPS) pita a la salida (80 %;
+   a veces da falsa alarma con un inocente): «Pedirle el ticket». Lo perdido va a run.hx (uds, PVP, coste) y sale en el cierre. */
+const THF={look:[16,26],out:6,seg:4000,stop:0.65,arco:0.8,arcoT:0.85,obs:['🧥 Capucha y gafas de sol dentro de la tienda','🧺 Sin cesta ni carro'],
+  inno:['🧥 Capucha y gafas de sol','🧺 Lleva la cesta con cosas','📱 Mirando el móvil, comparando precios']};
+function thiefPlan(){
+  run.th=[];run.thPlan=[];run.hx={lost:0,v:0,c:0,rec:0,stop:0,seg:0,n:0};
+  cam.shop=cam.shop.filter(s=>!s.th);
+  if(run.remote||!ruleOn('ladron'))return;
+  if(NORMA==='ladron')run.thPlan.push({at:3});
+  const k=Math.max(1,Math.min(4,Math.round((run.dur||100)/100)));
+  for(let j=0;j<k;j++){
+    if(Math.random()<(meta.up.arco?0.45:0.7))run.thPlan.push({at:run.dur*rnd(0.08,0.75)});
+    if(Math.random()<(meta.up.arco?0.15:0.3))run.thPlan.push({at:run.dur*rnd(0.1,0.8)});
+    if(Math.random()<0.35)run.thPlan.push({at:run.dur*rnd(0.1,0.8),inno:1});
+  }
+}
+function thiefPid(){
+  const a=CAT.filter(x=>(meta.stock[x.id]||0)+(meta.back[x.id]||0)>0);if(!a.length)return null;
+  return wpick(a.map(x=>({x,w:(x.age?4:1)*(x.p>=500?2:1)*(aisleOf(x.id)===8?2:1)}))).x;
+}
+function thiefTick(){
+  if(!run.th)return;
+  if(!run.closing)for(let i=run.thPlan.length-1;i>=0;i--){const p=run.thPlan[i];if(run.t<p.at)continue;run.thPlan.splice(i,1);
+    const x=thiefPid();if(!x)continue;const n=x.age||x.p>=500?ri(1,3):ri(2,3),a=aisleOf(x.id);
+    const th={id:'th'+(++uid),pid:x.id,e:x.e,nm:x.n,p:x.p,n,a,inno:!!p.inno,ph:'look',t0:run.t,lt:rnd(THF.look[0],THF.look[1]),y:rnd(50,125),got:0};
+    run.th.push(th);run.hx.n+=th.inno?0:1;
+    cam.shop.push({x:SPOT.door[0],y:SPOT.door[1],tx:SPOT.door[0],ty:SPOT.door[1],f:'😎',w:1e9,th:th.id,info:'😎 Cliente con capucha · pasillo '+a});}
+  run.th.forEach(th=>{
+    const s=cam.shop.find(z=>z.th===th.id);
+    if(s)s.info=th.ph==='look'?'😎 Cliente con capucha · lleva '+Math.round(run.t-th.t0)+' s en el pasillo '+th.a:'😎 Cliente con capucha · va hacia la salida';
+    if(th.ph==='look'){
+      if(!th.ojo&&run.t-th.t0>10){th.ojo=1;const e=staffOf('alm').concat(staffOf('rrpp'),staffOf('atc')).find(x=>!x.real&&inStore(x)&&isFree(x));
+        if(e&&!th.inno&&(NORMA==='ladron'||Math.random()<0.35)&&bossScn())sospScene(th,e);}
+      if(run.t-th.t0>=th.lt){th.ph='out';th.t1=run.t;if(!th.inno)th.got=loseUnits(th.pid,th.n);}
+    }else if(th.ph==='out'&&run.t-th.t1>=THF.out){th.ph='gone';thiefExit(th);}
+  });
+  /* El sprite se va cuando el ladrón ya no está en la tienda; sin cámaras ni tienda en directo, se borra aquí. */
+  cam.shop.forEach(s=>{if(!s.th||s.gone)return;const th=run.th.find(x=>x.id===s.th);if(!th||th.ph==='done'||th.ph==='gone'){s.gone=1;s.tx=SPOT.door[0];s.ty=SPOT.door[1]+12;s.gt=run.t;}});
+  cam.shop=cam.shop.filter(s=>!(s.th&&s.gone&&run.t-(s.gt||0)>15));
+}
+function thiefExit(th){
+  if(meta.up.arco&&((!th.inno&&th.got>0&&Math.random()<THF.arco)||(th.inno&&Math.random()<0.25))){arcoScene(th);return;}
+  if(!th.inno&&th.got>0)thLost(th);
+  th.ph='done';
+}
+function thLost(th){
+  const h=run.hx;h.lost+=th.got;h.v+=th.got*th.p;h.c+=Math.round(th.got*th.p*SUPS[0].cf);th.ph='done';
+  if(Math.random()<0.3){const e=staffOf('alm').find(x=>!x.real&&inStore(x));if(e)toast('🕵️ '+e.name+': «Jefe, faltan '+th.got+' × '+th.nm+' en el pasillo '+th.a+'. Se lo han llevado sin pagar.»','bad');}
+}
+function thRecover(th){if(th.got>0){meta.stock[th.pid]=(meta.stock[th.pid]||0)+th.got;run.hx.rec+=th.got;}th.ph='done';}
+function thiefClick(id){
+  const th=run&&!run.over&&run.th&&run.th.find(x=>x.id===id);
+  if(!th||th.ph==='done'||th.ph==='gone'){toast('😎 Ya se ha ido.');return;}
+  if(!bossScn()){toast('😎 Cliente con capucha en el pasillo '+th.a+'.');return;}
+  sospScene(th,null);
+}
+function sospScene(th,e){
+  const obs=th.inno?THF.inno:THF.obs.concat([th.ph==='out'?'🎒 Va hacia la salida con la mochila abultada':'⏱️ Lleva '+Math.max(5,Math.round(run.t-th.t0))+' s en '+(AISLES.find(a=>a[0]===th.a)||[0,'el pasillo'])[1]+' sin coger nada']);
+  scene({k:(e?'ojo:':'sosp:')+th.id,look:'pa',head:'👀 SOSPECHOSO EN EL PASILLO '+th.a,tag:'🕵️ Hurto',who:e?e.face:'😎',sprite:e?'s'+e.id:null,role:e&&e.role,
+    name:e?esc(e.name)+' · '+ROLES[e.role].n:'Cliente con capucha',prio:2,time:12,def:'no',
+    txt:e?'«Jefe, ese de la capucha lleva un rato en el pasillo '+th.a+' sin coger nada…»':'¿Qué hacemos con este?',
+    body:`<ul class="sobs">${obs.map(o=>`<li>${o}</li>`).join('')}</ul><div class="scn-hint">👮 Seguridad: ${fmt(THF.seg)} el servicio. ✋ Si le paras tú y es inocente, −reputación.</div>`,
+    choices:[{t:'👮 Avisar a seguridad · '+fmt(THF.seg),k:'seg',cls:'go',key:'S',stamp:'AVISADO',sc:'ok'},{t:'✋ Pararle yo',k:'yo',key:'P'},{t:'🙈 Dejarlo',k:'no',cls:'no',key:'D'}],
+    alive:()=>run&&!run.over&&(th.ph==='look'||th.ph==='out'),
+    onPick:k=>{if(!run||run.over||(th.ph!=='look'&&th.ph!=='out'))return;
+      if(k==='seg'){meta.money-=THF.seg;run.hx.seg+=THF.seg;
+        if(th.inno){th.ph='done';th.t1=run.t;toast('👮 El vigilante le mira la bolsa con educación: nada. '+fmt(THF.seg)+' del servicio.');}
+        else if(th.ph==='look'||Math.random()<0.9){const g=th.got;thRecover(th);th.t1=run.t;run.hx.stop++;sOk();toast(g?'👮 Pillado en la puerta con '+g+' × '+th.nm+'. Vuelve a la estantería.':'👮 Al ver al vigilante, deja la mochila y se va sin nada.','good');}
+        else{th.ph='gone';thLost(th);toast('👮 Se ha escapado corriendo antes de que llegara el vigilante.','bad');}}
+      else if(k==='yo'){
+        if(th.inno){th.ph='done';th.t1=run.t;repAdd(-0.2,'Acusaste a un cliente inocente');addReview(1,'😎');sBad();toast('✋ No llevaba nada. «¡Me habéis tratado como a un ladrón!» Una reseña de 1★ en camino.','bad');}
+        else if(Math.random()<THF.stop){const g=th.got;thRecover(th);th.t1=run.t;run.hx.stop++;repAdd(+0.03,'Paraste un hurto');sOk();toast(g?'✋ Le pides con calma que abra la mochila: '+g+' × '+th.nm+'. Recuperado.':'✋ Te acercas, le saludas y se va sin nada.','good');}
+        else{if(th.ph==='look')th.got=loseUnits(th.pid,th.n);th.ph='gone';thLost(th);sBad();toast('✋ Sale corriendo con '+th.got+' × '+th.nm+'. No le persigas: no merece la pena.','bad');}}
+      renderAll();}});
+}
+function arcoScene(th){
+  if(!bossScn()){if(!th.inno&&th.got>0)thLost(th);th.ph='done';return;}
+  scene({k:'arco:'+th.id,look:'pa',head:'🚨 PITA EL ARCO ANTIRROBO',tag:'Puerta',who:'😎',name:'Un cliente en la puerta',prio:2,time:9,def:'no',
+    txt:'¡Piii-piii-piii! Ha pitado el arco al salir alguien con capucha.',
+    body:'<div class="scn-hint">A veces es una etiqueta sin desactivar. Pedir el ticket con educación no es acusar.</div>',
+    choices:[{t:'🧾 Pedirle el ticket',k:'tk',cls:'go',key:'T',stamp:'REVISADO',sc:'ok'},{t:'🤷 Dejarle ir',k:'no',key:'D'}],
+    onPick:k=>{if(!run||th.ph==='done')return;
+      if(k==='tk'&&th.inno){th.ph='done';repAdd(-0.03,'Falsa alarma del arco');toast('🧾 Era una etiqueta sin desactivar. Disculpas y a casa.');}
+      else if(k==='tk'&&Math.random()<THF.arcoT){const g=th.got;thRecover(th);run.hx.stop++;sOk();toast('🧾 Llevaba '+g+' × '+th.nm+' sin pagar. Recuperado.','good');}
+      else if(!th.inno){thLost(th);if(k==='tk')toast('🏃 Ha salido corriendo con la mochila.','bad');}
+      else th.ph='done';
       renderAll();}});
 }
 
@@ -2784,7 +2979,8 @@ function newCustomer(){
   const ps=minor?{pk:'normal'}:pickPersona();
   const P=PERS[ps.pk]||PERS.normal;
   const max=clamp((24+n*3.2-day*1.2)*(P.pat||1)*(ps.memF||1),20,80)*(relaxOn()?1.4:1);
-  return{id:++cid,face:ps.face||(P.faces?pick(P.faces):pick(FACES)),items,minor,age,birth:birthFor(age),
+  const cup=!minor&&ruleOn('cupon')&&(NORMA==='cupon'||Math.random()<CUP_P)?mkCup(items):null;
+  return{id:++cid,cup,face:ps.face||(P.faces?pick(P.faces):pick(FACES)),items,minor,age,birth:birthFor(age),
     wantsBag:Math.random()<(P.bag!=null?P.bag:0.3),bag:false,pay:Math.random()<(P.card!=null?P.card:0.55)?'card':'cash',
     phase:'scan',p:max,max,err:0,given:0,declined:false,talk:rnd(1.5,4),
     pk:ps.pk,lab:ps.lab||P.lab||'',reg:ps.reg||null,mem:ps.mem||'',tour:ps.tour||null,cut:!!P.cut};
@@ -2936,7 +3132,7 @@ function renderChat(){
 }
 const front=()=>run&&run.queue[0];
 const sumItems=c=>c.items.filter(i=>i.scanned).reduce((s,i)=>s+i.p,0);
-const totalOf=c=>sumItems(c)+(c.bag?BAG:0);
+const totalOf=c=>Math.max(0,sumItems(c)+(c.bag?BAG:0)-(c.disc||0));
 const traySum=()=>run.tray.reduce((s,v)=>s+v,0);
 function cashGiven(t){
   if(t<=2000&&Math.random()<0.2)return Math.ceil(t/50)*50;
@@ -2955,7 +3151,7 @@ function startDay(){
   ensureMeta();run.rep0=meta.rep;
   unlockCheck();weekCheck();
   if(meta.day>=2&&Math.random()<0.3)run.pressAt=run.dur*rnd(0.2,0.65);
-  inspPlan();
+  inspPlan();thiefPlan();
   run.buy=meta.buyNext||0;meta.buyNext=0;run.m0=meta.money+run.buy;run.mo=meta.money;run.curve=[];
   meta.liveT=0;saveGame(false);
   const notes=prepShift();
@@ -3350,7 +3546,7 @@ function endDay(){
   meta.money-=iva+is;
   /* Para la carta trimestral de Hacienda (backScenes): lo declarado y pagado desde la última. */
   {const q=meta.taxQ=meta.taxQ||{r:0,s:0,iva:0,is:0,n:0};q.r+=ivaR;q.s+=ivaS;q.iva+=iva;q.is+=is;q.n++;}
-  const fin={S,O,ON:run.offN||0,F,B,P:payroll,PB:payB,FX,INT,K,oth,cogs,iva,ivaR,ivaS,cred:meta.ivaCred||0,bai,is,net:bai-is,cash:delta-iva-is,m0:run.m0,div:DV};
+  const fin={hx:run.hx&&(run.hx.n||run.hx.seg)?run.hx:null,fk:run.fakes||0,fkN:run.fakeIn||0,fkO:run.fakeOut||0,cupL:run.cupL||0,cupO:run.cupOut||0,S,O,ON:run.offN||0,F,B,P:payroll,PB:payB,FX,INT,K,oth,cogs,iva,ivaR,ivaS,cred:meta.ivaCred||0,bai,is,net:bai-is,cash:delta-iva-is,m0:run.m0,div:DV};
   /* Reserva legal (art. 274 LSC): el 10% del beneficio va a reserva hasta llegar al 20% del capital; solo cuando ya no hay pérdidas acumuladas. */
   {const rl=meta.resLeg||0;if(fin.net>0&&rl<CAP0*0.2&&balData().res>0){fin.rl=Math.min(Math.round(fin.net*0.1),CAP0*0.2-rl);meta.resLeg=rl+fin.rl;}}
   meta.hist=(meta.hist||[]).concat([{d:meta.day,s:S,n:fin.net}]).slice(-6);
@@ -3449,9 +3645,17 @@ function finHtml(f){
       <span class="hd">CAJA (EL BOTE)</span><b></b>
       ${row('Compras de mercancía (inversión en existencias)',-f.B)}${f.div?row('Dividendos al socio (no es gasto)',-f.div):''}${f.ivaR!=null?row('IVA pagado hoy a Hacienda'+(f.cred?' · te debe '+fmt(f.cred)+', se descuenta del próximo':''),-f.iva):row('IVA a Hacienda',-f.iva)}${row('Variación del bote',f.cash-(f.div||0),f.cash-(f.div||0)<0?'neg':'pos')}${f.rl?`<span class="sm">A reserva legal (10%)</span><b class="sm">${fmt(f.rl)}</b>`:''}
     </div>
-    <div class="zone-title">🏦 BALANCE</div>${balHtml()}
+    ${normHtml(f)}<div class="zone-title">🏦 BALANCE</div>${balHtml()}
     <div class="supd">${f.S+(f.O||0)?`Margen neto <b>${mg}%</b> · la nómina se come el <b>${Math.round(f.P/(f.S+(f.O||0))*100)}%</b> de las ventas · a Hacienda <b>${fmt(f.iva+f.is)}</b>.`:'Hoy no se ha vendido nada.'} Las propinas no son de la empresa: van al bote del personal.</div>
     ${h.length>1?`<div class="zone-title">ÚLTIMOS TURNOS (BENEFICIO NETO)</div><div class="trend">${h.map(x=>`<div class="tb ${x.n<0?'neg':''}" title="Turno ${x.d}: ${fmt(x.n)}"><i style="height:${Math.max(4,Math.round(Math.abs(x.n)/mx*100))}%"></i><small>T${x.d}</small></div>`).join('')}</div>`:''}</div>`;
+}
+/* Normas de caja y hurto externo del turno (billetes falsos, cupones, ladrones), con el contexto real de la pérdida desconocida. */
+function normHtml(f){
+  const h=f.hx,a=[];
+  if(f.fkN||f.fkO)a.push('💶 Billetes falsos: '+(f.fkN?f.fkN+' colado'+(f.fkN>1?'s':'')+' (−'+fmt(f.fk)+', en «Multas y pérdidas»)':'ninguno colado')+(f.fkO?' · '+f.fkO+' cazado'+(f.fkO>1?'s':''):''));
+  if(f.cupL||f.cupO)a.push('🎟️ Cupones: '+(f.cupL?'−'+fmt(f.cupL)+' regalados en cupones que no valían':'ninguno mal aplicado')+(f.cupO?' · '+f.cupO+' rechazado'+(f.cupO>1?'s':'')+' con razón':''));
+  if(h){const sv=(f.S||0)+(f.O||0);a.push('🕵️ Hurto externo: '+(h.lost?h.lost+' uds (≈'+fmt(h.v)+' a precio de venta, '+fmt(h.c)+' a coste, ya fuera de tus existencias)':'nada')+(h.stop?' · '+h.stop+' parado'+(h.stop>1?'s':''):'')+(h.seg?' · seguridad '+fmt(h.seg):'')+(sv&&h.v?' = '+(h.v/sv*100).toFixed(1).replace('.',',')+' % de lo vendido':'')+'. En España la pérdida desconocida ronda el 1,1 % de la facturación y el 63 % es hurto externo.');}
+  return a.length?'<div class="zone-title">🛡️ NORMAS DE CAJA Y HURTOS</div><div class="supd">'+a.join('<br>')+'</div>':'';
 }
 /* Consejos para el jefe: a quién contratar o echar, qué mejoras compensan, qué falta y cómo va el dinero. */
 function adviceList(le){
@@ -3485,7 +3689,8 @@ function adviceList(le){
   UPS.filter(u=>!meta.up[u.k]).forEach(u=>{
     const why=u.k==='fan'&&run.angry>=2?run.angry+' clientes se fueron enfadados: con el ventilador se impacientan un 20% más despacio.'
       :u.k==='coffee'&&run.tips>=300?'Hoy has sacado '+fmt(run.tips)+' en propinas: con el termo serían '+fmt(Math.round(run.tips*1.5))+'.'
-      :u.k==='scanner'&&run.errors+run.angry>=3?'Los códigos dañados te hacen perder tiempo: el láser los lee con 2 toques.':'';
+      :u.k==='scanner'&&run.errors+run.angry>=3?'Los códigos dañados te hacen perder tiempo: el láser los lee con 2 toques.'
+      :u.k==='arco'&&run.hx&&run.hx.lost>0?'Hoy se han llevado '+run.hx.lost+' uds sin pagar ('+fmt(run.hx.v)+' a precio de venta). El arco pita en la puerta y espanta a los que vienen a eso.':'';
     if(why)(meta.money>=u.c*2?hot:tip)('⭐','Compra: '+u.n+' ('+fmt(u.c)+')',why+(meta.money<u.c?' Aún no te llega el bote.':''),'ups');
   });
   if(run.vacNote)tip('📢','RR.HH. ha publicado vacantes',run.vacNote.join(' · '));
@@ -3853,7 +4058,7 @@ function dailyExit(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.18-94';
+const APPV='2026.11.18-95';
 /* Compara versiones por números («-9» < «-11»), no como texto. */
 const verCmp=(a,b)=>{const x=String(a).split(/[.-]/).map(Number),y=String(b).split(/[.-]/).map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
 try{const vt=document.createElement('div');vt.id='vtag';vt.textContent='v'+APPV;document.body.appendChild(vt);}catch(e){}
@@ -5022,6 +5227,9 @@ function coverServe(c,e){
     if(i.age&&c.minor){c.err++;const m=minorSale(e.name+' ha vendido');if(m)toast(m,'bad');}
   });
   c.bag=Math.random()<p?c.wantsBag:!c.wantsBag;
+  /* Normas de caja: el que te cubre acierta con el cupón y con el billete falso según su rendimiento. */
+  if(c.cup&&c.cup.d==null)cupPick(c,(Math.random()<p)===!!c.cup.ok?'ok':'no',true);
+  if(c.pay==='cash'&&ruleOn('falso')&&totalOf(c)>=1000&&Math.random()<fakeP()&&Math.random()>p){const v=totalOf(c)>2000?5000:2000;run.fines+=v;meta.money-=v;run.fakes=(run.fakes||0)+v;run.fakeIn=(run.fakeIn||0)+1;toast('💶 '+e.name+' ha aceptado un billete falso de '+v/100+' €: −'+fmt(v),'bad');}
   if(c.pay==='cash'&&Math.random()<(1-p)*0.6){const loss=ri(50,500);run.fines+=loss;meta.money-=loss;c.err++;toast(e.name+' se ha equivocado con el cambio: −'+fmt(loss),'bad');}
   if(c.err||c.bag!==c.wantsBag)e.st.cvErr++;
   finish(c,false);
@@ -6104,13 +6312,15 @@ function goPay(){
   if(c.items.some(i=>!i.scanned&&!i.denied)){toast('Quedan productos sin escanear','bad');return;}
   /* Si no se lleva nada (menor al que se le negó todo), se va sin pagar y sin cuenta de bolsa. */
   if(c.items.every(i=>i.denied)){c.bag=c.wantsBag=false;toast('No se lleva nada. Siguiente.');finish(c,true);return;}
+  /* Cupón (norma de caja del turno 6): primero se decide si se aplica. */
+  if(c.cup&&c.cup.d==null){cupScene(c);return;}
   const t=totalOf(c);
   if(t===0){finish(c,true);return;}
   c.phase='pay';
   if(c.pay==='cash'){
     const P=PERS[c.pk]||{};
     if(P.exact&&Math.random()<P.exact){c.given=t;toast('Te paga con los céntimos justos 🪙. No hay cambio.','good');sCoin();finish(c,false);return;}
-    else c.given=cashGiven(t);
+    else{c.given=cashGiven(t);noteFor(c);}
   }
   renderAll();
 }
@@ -6135,6 +6345,7 @@ function deliver(){
     const loss=got-need;run.fines+=loss;meta.money-=loss;run.errors++;c.err++;
     toast('Te pasaste de cambio: −'+fmt(loss),'bad');sBad();
   }else sOk();
+  noteLoss(c);
   finish(c,false);
 }
 function finish(c,noTip){
@@ -6307,7 +6518,7 @@ function renderRegister(){
       const n=run.tray.filter(x=>x===v).length;
       return `<button class="dn ${k}" data-act="den" data-v="${v}">${l}${n?`<span class="cnt">${n}</span>`:''}</button>`;
     }).join('');
-    h+=`<div class="cashrow"><span>Cliente entrega</span><b>${fmt(c.given)}</b></div>
+    h+=billHtml(c)+`<div class="cashrow"><span>Cliente entrega</span><b>${fmt(c.given)}</b></div>
       <div class="cashrow due"><span>Cambio a dar</span><b>${fmt(c.given-t)}</b></div>
       <div class="cashrow tray"><span>Cambio en bandeja</span><b>${fmt(traySum())}</b></div>
       <div class="denoms">${d}</div>
@@ -6390,12 +6601,15 @@ function camStep(m,dt){
   });
   /* Gente comprando por los pasillos (decorado: más cuanto más avanzan los días). */
   const want=m&&m.open?clamp(2+(m.d||1),3,8):0;
-  while(cam.shop.length<want){const p=SPOT.door;cam.shop.push({x:p[0],y:p[1],tx:p[0],ty:p[1],f:pick(FACES),w:0});}
-  cam.shop.forEach((s,i)=>{
-    if(i>=want&&!s.gone){s.gone=1;s.tx=SPOT.door[0];s.ty=SPOT.door[1]+12;}
+  while(cam.shop.filter(s=>!s.th).length<want){const p=SPOT.door;cam.shop.push({x:p[0],y:p[1],tx:p[0],ty:p[1],f:pick(FACES),w:0});}
+  let di=0;
+  cam.shop.forEach(s=>{
+    /* Ladrón (thiefTick): se queda en su pasillo hasta que sale hacia la puerta. */
+    if(s.th){const th=run&&run.th&&run.th.find(x=>x.id===s.th);if(th&&th.ph==='look'&&!s.gone){s.tx=laneX(th.a)+(Math.sin(performance.now()/1500+th.y)>0?14:-4);s.ty=th.y;s.w=1e9;}else if(!s.gone){s.tx=SPOT.door[0];s.ty=SPOT.door[1]+12;}}
+    else if(di++>=want&&!s.gone){s.gone=1;s.tx=SPOT.door[0];s.ty=SPOT.door[1]+12;}
     const dx=s.tx-s.x,dy=s.ty-s.y,dd=Math.hypot(dx,dy),v=sp*0.7;
     s.mv=dd>1;
-    if(dd<=v){s.x=s.tx;s.y=s.ty;if(s.gone)s.dead=1;else if((s.w-=dt)<=0){const p=aislePt();s.tx=p[0];s.ty=p[1];s.w=rnd(1,4);}}
+    if(dd<=v){s.x=s.tx;s.y=s.ty;if(s.gone)s.dead=1;else if(!s.th&&(s.w-=dt)<=0){const p=aislePt();s.tx=p[0];s.ty=p[1];s.w=rnd(1,4);}}
     else{s.x+=dx/dd*v;s.y+=dy/dd*v;}
   });
   cam.shop=cam.shop.filter(s=>!s.dead);
@@ -6734,6 +6948,7 @@ function pixStore(slot,m,zone,cover){
   ppl.forEach(({id,s})=>{const dx=(s.tx==null?0:s.tx-s.x),dy=(s.ty==null?0:s.ty-s.y);const dir=Math.abs(dx)>Math.abs(dy)?(dx>0?'r':'l'):(dy<0?'u':'d');
     const staff=id[0]==='s',boss=id==='me';
     pPerson(c,s.x,s.y+6,{ch:staff&&s.r==='alm'?PWORK:pChar(id),dir:s.mv?dir:'d',mv:s.mv,t:now,staff,role:s.r,boss,hl:s.hl});
+    if(s.th){const hx=Math.round(s.x),hy=Math.round(s.y+6-15);c.fillStyle='#2b2d42';c.fillRect(hx-5,hy+1,10,3);c.fillRect(hx-5,hy+3,2,5);c.fillRect(hx+3,hy+3,2,5);c.fillStyle='#000';c.fillRect(hx-3,hy+6,6,1);}
     pst.hits.push({x:s.x,y:s.y-2,s});
     if(s.b){c.font='10px sans-serif';c.textAlign='center';c.textBaseline='bottom';c.fillText(s.b,s.x,s.y-11);}
   });
@@ -6749,7 +6964,7 @@ function pixStore(slot,m,zone,cover){
 function pixStoreClick(ev){
   const cv=ev.currentTarget,r=cv.getBoundingClientRect(),k=cv.width/r.width,v=pst.view;if(!v)return;
   const wx=((ev.clientX-r.left)*k-v.ox)/v.k+v.sx,wy=((ev.clientY-r.top)*k-v.oy)/v.k+v.sy;
-  let best=null,bd=14;pst.hits.forEach(h=>{const d=Math.hypot(h.x-wx,h.y-wy);if(d<bd&&h.s.info){bd=d;best=h.s;}});if(best)toast(best.info);
+  let best=null,bd=14;pst.hits.forEach(h=>{const d=Math.hypot(h.x-wx,h.y-wy);if(d<bd&&h.s.info){bd=d;best=h.s;}});if(best&&best.th)thiefClick(best.th);else if(best)toast(best.info);
 }
 
 /* fondo de la caja: neveras, congelador, fruta, pan, latas y bebidas, variado */
@@ -6866,7 +7081,7 @@ function till3d(){
 function isoClick(ev){
   const r=iso.cv.getBoundingClientRect(),k=iso.cv.width/r.width,x=(ev.clientX-r.left)*k,y=(ev.clientY-r.top)*k;
   let best=null,bd=18*k;iso.hits.forEach(h=>{const d=Math.hypot(h.x-x,h.y-y);if(d<bd&&h.s.info){bd=d;best=h.s;}});
-  if(best)toast(best.info);
+  if(best&&best.th)thiefClick(best.th);else if(best)toast(best.info);
 }
 function camClick(ev){
   const r=cam.cv.getBoundingClientRect(),x=ev.clientX-r.left,y=ev.clientY-r.top;
@@ -6874,8 +7089,8 @@ function camClick(ev){
   if(cam.zoom<0){cam.zoom=h.ci;return;}
   const wx=(x-h.ox)/h.sc+h.cx,wy=(y-h.oy)/h.sc+h.cy;
   let best=null,bd=12;
-  Object.values(cam.spr).forEach(s=>{const d=Math.hypot(s.x-wx,s.y-wy);if(d<bd&&s.info){bd=d;best=s;}});
-  if(best)toast(best.info);else cam.zoom=-1;
+  Object.values(cam.spr).concat(cam.shop.filter(s=>s.th)).forEach(s=>{const d=Math.hypot(s.x-wx,s.y-wy);if(d<bd&&s.info){bd=d;best=s;}});
+  if(best&&best.th)thiefClick(best.th);else if(best)toast(best.info);else cam.zoom=-1;
 }
 
 /* ---------- departamentos: una pestaña con la gestión de cada uno ----------
@@ -7223,6 +7438,7 @@ function step(ts,hid){
     }
     if(run&&!run.remote&&!run.closing&&!run.over)offTick(dt);
     if(run&&!run.remote&&!run.over)rrppTick();
+    if(run&&!run.remote&&!run.over)thiefTick();
     if(run&&!run.remote&&!run.over)rushTick();
     if(run&&!run.remote&&!run.over&&run.queue.length>=2&&run.t-(run.callT||0)>(run.dur||100)/(run.rushHelp&&run.t<run.rushHelp.to?100:40)){const e=freeTill();if(e)sendQueue(e,1,false);else run.callT=run.t-(run.dur||100)/80;}
     if(run&&run.remote){run.syncT+=dt;if(run.syncT>1){run.syncT=0;tillSync();}}
@@ -7295,6 +7511,7 @@ function onClick(e){
     }
   }
   else if(a==='route')route(b.dataset.d);
+  else if(a==='bill'){const c=front();if(c&&c.note&&c.note.d==null)billScene(c);}
   else if(a==='sup'){ordSup=b.dataset.k;refreshView();}
   else if(a==='ordp'){cart[b.dataset.id]=(cart[b.dataset.id]||0)+6;refreshView();}
   else if(a==='ordm'){const q=(cart[b.dataset.id]||0)-6;if(q<=0)delete cart[b.dataset.id];else cart[b.dataset.id]=q;refreshView();}
@@ -7364,7 +7581,7 @@ function onClick(e){
 const errMsg=err=>(err&&(err.code||err.message))||String(err);
 /* Atajos de teclado en la caja (solo con ratón y teclado): Espacio escanea, B bolsa, Intro cobra o da el cambio,
    S/N en el DNI, Retroceso quita la última moneda, 1–5 deriva una reclamación y Esc cancela una ventana. */
-const KBD='<div class="kbd">⌨️ <b>Espacio</b> escanear · <b>B</b> bolsa · <b>Intro</b> cobrar / dar cambio · <b>S</b>/<b>N</b> DNI · <b>⌫</b> quitar moneda · <b>1–5</b> reclamación</div>';
+const KBD='<div class="kbd">⌨️ <b>Espacio</b> escanear · <b>B</b> bolsa · <b>Intro</b> cobrar / dar cambio · <b>S</b>/<b>N</b> DNI · <b>⌫</b> quitar moneda · <b>L</b> lupa del billete · <b>1–5</b> reclamación</div>';
 document.addEventListener('keydown',ev=>{
   const tg=ev.target;if(tg&&(tg.tagName==='INPUT'||tg.tagName==='TEXTAREA'||tg.tagName==='SELECT'||tg.isContentEditable))return;
   if(ev.ctrlKey||ev.metaKey||ev.altKey)return;
@@ -7388,6 +7605,7 @@ document.addEventListener('keydown',ev=>{
   else if(k==='s')el=q('[data-act=idyes]');
   else if(k==='n')el=q('[data-act=idno]');
   else if(k==='backspace')el=q('[data-act=undo]');
+  else if(k==='l')el=q('[data-act=bill]');
   else if(/^[1-5]$/.test(k))el=q('[data-act=route][data-d="'+['atc','back','rrpp','alm','no'][+k-1]+'"]');
   if(el){ev.preventDefault();if(document.activeElement&&document.activeElement.blur)document.activeElement.blur();el.click();}
 });
