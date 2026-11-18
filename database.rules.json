@@ -197,6 +197,40 @@
             }
           }
         },
+        "guard": {
+          "$uid": {
+            ".write": "auth != null && ((auth.uid === $uid && root.child('rooms/'+$code+'/members/'+auth.uid+'/role').exists() && root.child('rooms/'+$code+'/info/host').val() !== auth.uid) || (!newData.exists() && (root.child('rooms/'+$code+'/info/host').val() === auth.uid || (root.child('rooms/'+$code+'/relay/uid').val() === auth.uid && now - root.child('rooms/'+$code+'/info/hb').val() > 20000))))",
+            ".validate": "!newData.exists() || newData.hasChildren(['name', 'role', 'ts', 'items'])",
+            "name": { ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 20" },
+            "role": { ".validate": "newData.val() === 'atc' || newData.val() === 'alm' || newData.val() === 'back' || newData.val() === 'rrpp' || newData.val() === 'rrhh'" },
+            "day": { ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 100000" },
+            "ts": { ".validate": "newData.val() === now" },
+            "fin": { ".validate": "newData.isBoolean()" },
+            "items": {
+              "$i": {
+                ".validate": "$i.matches(/^[0-7]$/) && newData.hasChildren(['k', 'sc'])",
+                "k": { ".validate": "newData.val() === 'truck' || newData.val() === 'repo' || newData.val() === 'inv' || newData.val() === 'spill' || newData.val() === 'cash' || newData.val() === 'tk' || newData.val() === 'cv'" },
+                "sc": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 1" },
+                "pid": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 10000" },
+                "d": { ".validate": "newData.val() === 'back' || newData.val() === 'rrpp' || newData.val() === 'alm'" },
+                "c": {
+                  ".validate": "newData.hasChildren(['name', 'role'])",
+                  "name": { ".validate": "newData.isString() && newData.val().length <= 20" },
+                  "face": { ".validate": "newData.isString() && newData.val().length <= 8" },
+                  "role": { ".validate": "newData.val() === 'atc' || newData.val() === 'alm' || newData.val() === 'back' || newData.val() === 'rrpp' || newData.val() === 'rrhh'" },
+                  "rap": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 1" },
+                  "trato": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 1" },
+                  "punt": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 1" },
+                  "act": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 1" },
+                  "nat": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 50" },
+                  "$other": { ".validate": false }
+                },
+                "$other": { ".validate": false }
+              }
+            },
+            "$other": { ".validate": false }
+          }
+        },
         "till": {
           "$uid": {
             ".write": "auth != null && (auth.uid === $uid || root.child('rooms/'+$code+'/info/host').val() === auth.uid || (root.child('rooms/'+$code+'/relay/uid').val() === auth.uid && now - root.child('rooms/'+$code+'/info/hb').val() > 20000))"

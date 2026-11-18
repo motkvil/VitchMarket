@@ -2,6 +2,7 @@
 // Prueba de salas sin red: dos navegadores jsdom (jefe y empleada) comparten una Firebase falsa en memoria.
 // El jefe crea la sala y juega en caja; la empleada entra con el enlace, elige Almacén y hace avisos.
 // Al final la empleada toma el mando (con el latido del jefe caducado) y el jefe pasa a ser empleado.
+// Luego se va también ella: una cajera sola (sin jefe ni relevo posible) hace un turno de guardia y, al volver el jefe, se aplica su parte.
 const {JSDOM}=require('jsdom');const fs=require('fs');
 
 /* ---------- Firebase falsa (subconjunto de la API modular que usa el juego) ---------- */
@@ -51,7 +52,7 @@ function client(){
     get:async r=>snap(r.path),
     set:async(r,v)=>{if(dead.has(uid))return;setAt(r.path,v);notify(r.path);},
     update:async(r,o)=>{if(dead.has(uid))return;Object.keys(o).forEach(k=>setAt(r.path+'/'+k,o[k]));notify(r.path);},
-    remove:async r=>{setAt(r.path,null);notify(r.path);},
+    remove:async r=>{if(dead.has(uid))return;setAt(r.path,null);notify(r.path);},
     push:async(r,v)=>{if(v&&v.k)acts[v.k]=(acts[v.k]||0)+1;if(v&&v.k==="till"&&v.d){tillSum.served+=(+v.d.served||0);tillSum.sales+=(+v.d.sales||0);}const k='a'+(++pushN);setAt(r.path+'/'+k,v);notify(r.path+'/'+k);return{key:k};},
     onValue(r,cb){if(r.path==='.info/serverTimeOffset'){setTimeout(()=>cb({val:()=>skew}),0);return()=>{};}
       const L={type:'value',path:r.path,cb};listeners.push(L);setTimeout(()=>{if(!L.off)cb(snap(r.path));},0);return()=>{L.off=1;};},
@@ -174,6 +175,46 @@ function memberBot(d){
     cl(db.querySelector('[data-act=ropen]'));await sleep(1500);
     st.bRunning=!!db.querySelector('#register');
     st.realLeftInB=JSON.stringify((getAt('rooms/'+code+'/members')||{}));
+    // --- cajera sola: sin jefe ni encargado posible → turno de guardia; al volver el jefe, se aplica el parte ---
+    const P='rooms/'+code;
+    const hostNow=getAt(P+'/info/host');dead.add(hostNow);B.close();await sleep(200);
+    setAt(P+'/relay',null);notify(P+'/relay');
+    Object.keys(getAt(P+'/members')||{}).forEach(u=>setAt(P+'/members/'+u+'/on',false));
+    setAt(P+'/members/uid3',{name:'Cajera Sola',role:'atc',on:true});notify(P+'/members');
+    setAt(P+'/info/hb',Date.now()-60000);setAt(P+'/info/status','open');notify(P+'/info');
+    setAt(P+'/state/ts',Date.now()-30000);notify(P+'/state');
+    const C=browser('cajera','http://localhost/');await sleep(500);
+    const dc=C.document;
+    if(dc.querySelector('#pname'))dc.querySelector('#pname').value='Cajera Sola';
+    cl(dc.querySelector('[data-act=rreg]'));await sleep(2500);
+    st.guardClosedTxt=/No hay jefe ni encargado conectados/.test((dc.querySelector('#overlay')||{textContent:''}).textContent);
+    st.guardBtn=!!dc.querySelector('[data-act=gstart]');
+    cl(dc.querySelector('[data-act=gstart]'));await sleep(500);
+    st.guardScreen=/Turno de guardia · la tienda está cerrada al público/.test((dc.querySelector('#overlay')||{textContent:''}).textContent);
+    st.guardMg=0;
+    const hC=setInterval(()=>{try{
+      const g=dc.querySelector('#guide.show [data-act=gclose],#guide.show [data-act=gpg][data-d="1"]');if(g){g.click();return;}
+      const m=dc.querySelector('#mg.show');if(m){const x=any(m,'button:not([disabled])');if(x){st.guardMg++;cl(x);}return;}
+      const j=any(dc,'[data-act=gjob]:not([disabled])');if(j)cl(j);
+    }catch(e){errs.push('BOT cajera '+e.message);}},60);
+    await sleep(20000);clearInterval(hC);
+    const gp=getAt(P+'/guard/uid3');st.guardItems=gp&&gp.items?Object.keys(gp.items).length:0;
+    st.gendBtn=!!dc.querySelector('[data-act=gend]');st.mgOpen=!!dc.querySelector('#mg.show');cl(dc.querySelector('[data-act=gend]'));await sleep(400);
+    st.guardFin=!!(getAt(P+'/guard/uid3')||{}).fin;st.gAfter=JSON.stringify(getAt(P+'/guard')).slice(0,200);st.cGuardTxt=(dc.querySelector('#overlay')||{textContent:''}).textContent.slice(0,200);
+    st.relayWithCashier=getAt(P+'/relay');
+    // vuelve el jefe (otro navegador con el uid que figura como jefe)
+    setAt(P+'/members/uid4',{name:'Jefa Vuelve',role:'jefe',on:true});
+    setAt(P+'/info/host','uid4');setAt(P+'/info/hb',Date.now()-60000);notify(P+'/info');
+    const E=browser('jefa vuelve','http://localhost/');await sleep(300);
+    const de=E.document;st.guardScene=false;
+    const hE=setInterval(()=>{try{
+      const sc=de.querySelector('#scene.show');if(sc&&/PARTE DE GUARDIA/.test(sc.textContent))st.guardScene=true;const nt=(getAt(P+'/notes/uid3')||{}).m||'';if(/parte de guardia/.test(nt))st.guardNoteSeen=nt.slice(0,100);
+      hostBot(de);
+    }catch(e){errs.push('BOT jefa '+e.message);}},60);
+    await sleep(5000);clearInterval(hE);
+    st.guardLeft=getAt(P+'/guard/uid3');
+    st.guardNote=((getAt(P+'/notes/uid3')||{}).m||'').slice(0,90);
+    st.cashierAfter=/EN DIRECTO/.test((dc.querySelector('#overlay')||{textContent:''}).textContent)||!!(dc.querySelector('#hTill')&&dc.querySelector('#hTill').textContent!=='3');st.cAfterTxt=(dc.querySelector('#overlay.show')||{textContent:'(sin overlay: en su caja)'}).textContent.replace(/\s+/g,' ').slice(0,160);
   }catch(e){errs.push('TEST '+e.stack);}
   console.log(JSON.stringify(st,null,1));
   console.log('errors:',errs.slice(0,8));
