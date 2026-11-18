@@ -1,5 +1,5 @@
 {
- "fuente": "tienda.mercadona.es (mad1) 2026-11-16",
+ "fuente": "tienda.mercadona.es (mad1) 2026-11-18",
  "verificado": true,
  "productos": [
   {
@@ -80,7 +80,7 @@
    "f": "Paquete 460 g",
    "p": 80,
    "e": "🍞",
-   "iva": 10,
+   "iva": 4,
    "mid": "13810"
   },
   {
@@ -276,7 +276,7 @@
    "id": 31,
    "n": "Muslos de pollo",
    "f": "Bandeja 500 g",
-   "p": 278,
+   "p": 293,
    "e": "🍗",
    "iva": 10,
    "mid": "2788"
