@@ -1514,6 +1514,7 @@ button.stat{font:inherit;cursor:pointer}
 .wk{margin:6px 0}.wk .gl{font-size:13px;padding:2px 0;grid-template-columns:22px 1fr auto}.wk .gl small{font-size:13px}
 .wk .gl:not(.ok) span{color:inherit}
 .end-why{background:#fff3f3;border:2px solid #e5383b;border-radius:10px;padding:8px 10px;margin:8px 0}
+#overlay .repwhy{margin:4px 0 8px;padding-left:22px}#overlay .repwhy li{display:flex;justify-content:space-between;gap:10px;padding:2px 0;border-bottom:1px dashed #e8c9c9}#overlay .repwhy .neg{color:var(--danger,#b3181b);white-space:nowrap}
 </style>
 </head>
 <body>
@@ -1579,6 +1580,29 @@ const rnd=(a,b)=>a+Math.random()*(b-a);
 const ri=(a,b)=>Math.floor(rnd(a,b+1));
 const pick=a=>a[Math.floor(Math.random()*a.length)];
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+/* Contabilidad de la reputación: cada cambio con su motivo (run.repL en el turno, meta.repH los 3 anteriores).
+   Sirve para explicar el cierre por reputación y avisar antes de llegar a cero. */
+function repAdd(x,why){
+  const b=meta.rep;meta.rep=clamp(b+(+x||0),0,5);const d=meta.rep-b;
+  if(!d||!run||run.remote)return;
+  const L=run.repL||(run.repL={}),o=L[why]||(L[why]={d:0,n:0});o.d+=d;o.n++;
+  for(const lim of [1.5,0.75])if(b>=lim&&meta.rep<lim&&!(room&&room.sim)){
+    const w=repWhy(1)[0];toast('⚠️ Reputación ★ '+repT(meta.rep)+'. Si llega a cero, cierras la tienda.'+(w?' Lo que más te resta: '+w.k.toLowerCase()+'.':''),'bad');}
+}
+function repWhy(neg){
+  const T={},add=L=>{for(const k in L){const o=T[k]||(T[k]={k,d:0,n:0});o.d+=L[k].d;o.n+=L[k].n;}};
+  ((meta&&meta.repH)||[]).forEach(h=>add(h.L));if(run&&run.repL)add(run.repL);
+  return Object.values(T).filter(o=>neg?o.d<0:o.d>0).sort((a,b)=>neg?a.d-b.d:b.d-a.d);
+}
+const REP_FIX={'Clientes que se fueron enfadados (paciencia a cero)':'Más gente en Caja o «¡Pasen a la otra caja!» cuando hay cola.','Avisos que caducaron sin atender':'Contrata en el departamento que deja avisos colgados o usa «⚡ Asignar todo».','Reclamaciones sin atender (falta personal)':'Falta gente en Backoffice o RR.PP. para las reclamaciones.','Reclamaciones mal resueltas por el equipo':'Quien las resuelve flojea: toque, formación o cambio.','Errores de cobro y bolsa':'Mira si el cliente pidió bolsa antes de cobrar.','Alcohol vendido a un menor':'Mira la fecha del DNI contra la de hoy.','Avisos que salieron mal':'Manda cada aviso a quien sabe hacerlo.'};
+function repWhyHtml(){
+  const N=repWhy(1).slice(0,5),P=repWhy(0).slice(0,2),f=o=>(o.d<0?'−':'+')+Math.abs(o.d).toFixed(2).replace('.',',');
+  if(!N.length)return '';
+  const fx=N.map(o=>REP_FIX[o.k]).filter(Boolean)[0];
+  return `<div class="zone-title">⭐ POR QUÉ SE HUNDIÓ LA REPUTACIÓN · ÚLTIMOS TURNOS</div><ol class="repwhy">${N.map(o=>`<li><span>${o.k}${o.n>1?' ×'+o.n:''}</span><b class="neg">${f(o)}</b></li>`).join('')}</ol>`
+    +(P.length?`<p class="supd">Lo que sumó: ${P.map(o=>o.k.toLowerCase()+' '+f(o)).join(' · ')}.</p>`:'')
+    +(fx?`<p class="supd">💡 La próxima vez: ${fx}</p>`:'');
+}
 const BAG=15;
 
 const CAT=(window.CATALOGO&&window.CATALOGO.length)?window.CATALOGO:[{n:'Pan',f:'',p:120,e:'🍞'}];
@@ -1770,7 +1794,7 @@ const weekCash=w=>w.res&&w.res.sec?100000:60000;
 function weekReward(w,k,silent){
   if(!w.pend)return;w.pend=0;const u=UPS.find(x=>!meta.up[x.k]);
   if(k==='up'&&u){meta.up[u.k]=1;w.got='🎁 '+u.n;}
-  else if(k==='rep'){meta.rep=clamp(meta.rep+0.3,0,5);w.got='⭐ +0,3 de reputación';}
+  else if(k==='rep'){repAdd(+0.3,'Premio de la semana');w.got='⭐ +0,3 de reputación';}
   else{meta.money+=weekCash(w);w.got='🏛️ Ayuda del Ayuntamiento: '+fmt(weekCash(w));}
   if(!silent){toast('🏆 Premio de la semana '+w.n+': '+w.got,'good');sCoin();saveGame(true);renderHud();rerenderScreen();}
 }
@@ -2047,7 +2071,7 @@ function cutScene(nc){
     choices:[{t:'👉 Al final de la cola',k:'end',cls:'go',key:'F',stamp:'AL FINAL',sc:'ok',fx:'👏'},{t:'🤷 Dejarlo',k:'let',key:'D'}],
     alive:()=>run&&!run.over&&run.queue.indexOf(nc)>0,
     onPick:k=>{if(!run||run.over)return;
-      if(k==='end'){const i=run.queue.indexOf(nc);if(i>0){run.queue.splice(i,1);run.queue.push(nc);}meta.rep=clamp(meta.rep+0.05,0,5);sOk();toast('Al final de la cola. La gente asiente.','good');}
+      if(k==='end'){const i=run.queue.indexOf(nc);if(i>0){run.queue.splice(i,1);run.queue.push(nc);}repAdd(+0.05,'Mandaste al final a uno que se coló');sOk();toast('Al final de la cola. La gente asiente.','good');}
       else pen();
       renderAll();}});
 }
@@ -2072,10 +2096,10 @@ function viralScene(r){
   run.viralN=(run.viralN||0)+1;
   const h=pick(HANDLES),l0=ri(40,140),hue=(h.length*47)%360,s0=performance.now();
   const likes=()=>l0*Math.pow(1.32,Math.min(30,(performance.now()-s0)/1000));
-  const mute=()=>{rrLater(15,()=>{if(run.over)return;meta.rep=clamp(meta.rep-0.2,0,5);toast('🔥 La reseña de '+h+' ya va por '+kfmt(likes()*4)+' ❤️. Nadie contestó: −reputación.','bad');sBad();renderAll();checkRep();});};
+  const mute=()=>{rrLater(15,()=>{if(run.over)return;repAdd(-0.2,'Reseña viral sin contestar');toast('🔥 La reseña de '+h+' ya va por '+kfmt(likes()*4)+' ❤️. Nadie contestó: −reputación.','bad');sBad();renderAll();checkRep();});};
   const team=e=>{r.ans=1;const ok=Math.random()<perf(e,true);
-    if(ok){meta.rep=clamp(meta.rep+0.05,0,5);e.st.ok++;e.moral=clamp(e.moral+3,0,100);logE(e,'Apagó una reseña viral en redes');toast('📱 '+e.face+' '+e.name+' contesta a '+h+' a tiempo. Se calma la cosa.','good');sOk();}
-    else{meta.rep=clamp(meta.rep-0.15,0,5);e.st.fail++;logE(e,'Contestó mal a una reseña viral');toast('📱 '+e.name+' contesta a '+h+'… y lo empeora. −reputación.','bad');sBad();}
+    if(ok){repAdd(+0.05,'Reseña viral bien contestada');e.st.ok++;e.moral=clamp(e.moral+3,0,100);logE(e,'Apagó una reseña viral en redes');toast('📱 '+e.face+' '+e.name+' contesta a '+h+' a tiempo. Se calma la cosa.','good');sOk();}
+    else{repAdd(-0.15,'Reseña viral mal contestada');e.st.fail++;logE(e,'Contestó mal a una reseña viral');toast('📱 '+e.name+' contesta a '+h+'… y lo empeora. −reputación.','bad');sBad();}
     renderAll();checkRep();};
   const me=()=>{if(mg||$('#overlay').classList.contains('show'))return mute();r.ans=1;
     const tk={id:++uid,dept:'rrpp',t:r.t+' (reseña viral)',refund:0,sev:3,mis:false};run.tickets.push(tk);
@@ -2108,10 +2132,10 @@ function pressScene(){
         if(e){d.busy=1;d.task='prensa';p=perf(e,true);toast(e.face+' '+e.name+(tv?' atiende a la tele.':' enseña la tienda en directo.'));}
         else{run.queue.forEach(c=>{c.p=Math.max(1,c.p-c.max*0.15);});toast(tv?'Te pones delante de la cámara. La cola espera…':'Le enseñas tú la tienda. La cola espera…','bad');}
         rrLater(12,()=>{if(d&&d.task==='prensa'){d.busy=0;d.task=null;}if(run.over)return;const ok=Math.random()<p;
-          meta.rep=clamp(meta.rep+(ok?0.15:-0.1),0,5);if(e){ok?e.st.ok++:e.st.fail++;logE(e,ok?'Lo bordó delante de la cámara':'Se trabó delante de la cámara');if(ok)e.moral=clamp(e.moral+5,0,100);}
+          repAdd(+(ok?0.15:-0.1),'Entrevista en la tele');if(e){ok?e.st.ok++:e.st.fail++;logE(e,ok?'Lo bordó delante de la cámara':'Se trabó delante de la cámara');if(ok)e.moral=clamp(e.moral+5,0,100);}
           toast(ok?(tv?'📺 Salís en el informativo: «un súper de los de antes». +reputación':'📱 El vídeo gusta: «qué majos en VitchMarket». +reputación')
             :(tv?'📺 Os sacan con la cola de fondo y un cliente quejándose. −reputación':'📱 El vídeo sale raro y los comentarios, peor. −reputación'),ok?'good':'bad');ok?sOk():sBad();renderAll();checkRep();});}
-      else if(k==='paid'){meta.money-=cost;meta.rep=clamp(meta.rep+0.1,0,5);meta.promo=meta.day+1;sCoin();
+      else if(k==='paid'){meta.money-=cost;repAdd(+0.1,'Colaboración pagada');meta.promo=meta.day+1;sCoin();
         toast('📸 Colaboración pagada (−'+fmt(cost)+'). +reputación y mañana viene más gente.','good');renderAll();checkRep();}
     }});
 }
@@ -2124,7 +2148,7 @@ function praiseScene(e,t){
     body:`<div class="scn-badge"><i>VITCHMARKET</i><span>${e.face}</span><div><b>${esc(e.name)}</b><small>${esc(ROLES[e.role].s)} · ${mood(e)}</small></div></div>`,
     choices:[{t:'📣 Decírselo',k:'tell',cls:'go',key:'D',stamp:'¡BRAVO!',sc:'ok',fx:'👏'},{t:'👍 Vale',k:'ok',key:'V'}],
     onPick:k=>{if(!run||run.over||!meta.emp.includes(e))return;
-      if(k==='tell'){e.moral=clamp(e.moral+8,0,100);e.st.fel++;meta.rep=clamp(meta.rep+0.03,0,5);logE(e,'Un cliente le felicitó y se lo dijiste');toast(e.face+' '+e.name+' se viene arriba 😄','good');sOk();}
+      if(k==='tell'){e.moral=clamp(e.moral+8,0,100);e.st.fel++;repAdd(+0.03,'Felicitaste a un empleado');logE(e,'Un cliente le felicitó y se lo dijiste');toast(e.face+' '+e.name+' se viene arriba 😄','good');sOk();}
       else{e.moral=clamp(e.moral+2,0,100);logE(e,'Un cliente le felicitó');}
       renderAll();}});
 }
@@ -2438,10 +2462,10 @@ function inspVisit(){
     alive:()=>run===R&&!R.over,
     onPick:k=>{if(run!==R||R.over)return;const o=O[k]||O[ks[0]];
       I.req=I.req.filter(r=>!due.includes(r));
-      if(!n){meta.rep=clamp(meta.rep+0.05,0,5);if(fixed.length)toast('🛡️ '+A.s+': requerimiento cumplido, expediente archivado.','good');else toast('🛡️ Inspección de '+A.s+': todo en regla.','good');renderAll();return;}
+      if(!n){repAdd(+0.05,'Inspección en regla');if(fixed.length)toast('🛡️ '+A.s+': requerimiento cumplido, expediente archivado.','good');else toast('🛡️ Inspección de '+A.s+': todo en regla.','good');renderAll();return;}
       if(k==='abog')meta.money-=fee;
-      if(o.tot){meta.money-=o.tot;run.fines+=o.tot;run.insp=(run.insp||0)+o.tot;meta.rep=clamp(meta.rep-Math.min(0.2,0.05*o.fin.length),0,5);}
-      if(k==='disc'&&!win)meta.rep=clamp(meta.rep-0.1,0,5);
+      if(o.tot){meta.money-=o.tot;run.fines+=o.tot;run.insp=(run.insp||0)+o.tot;repAdd(-Math.min(0.2,0.05*o.fin.length),'Multas del inspector');}
+      if(k==='disc'&&!win)repAdd(-0.1,'Discutiste con el inspector');
       o.req.forEach(([x,p])=>I.req.push({k:x.c.k,a,d:meta.day,by:meta.day+p,t:x.d}));
       (I.hist=I.hist||[]).push({d:meta.day,a,f:o.tot,r:o.req.length});I.hist=I.hist.slice(-12);
       toast('🛡️ '+A.s+': '+(o.tot?'multa de '+fmt(o.tot):'sin multa')+(o.req.length?' · '+o.req.length+(o.req.length===1?' requerimiento':' requerimientos')+', vuelve en '+o.req[0][1]+' turnos':'')+(k==='disc'?(win?' · se va refunfuñando':' · y no le ha gustado nada el tono'):'')+'.',o.tot?'bad':'');
@@ -2648,13 +2672,13 @@ function route(d){
   const c=front();if(!c||c.phase!=='complaint')return;
   const q=c.complaint;
   if(d==='no'){
-    meta.rep=clamp(meta.rep-0.4,0,5);run.errors++;run.angry++;
+    repAdd(-0.4,'Rechazaste una reclamación');run.errors++;run.angry++;
     if(Math.random()<0.4)addTicket('rrpp','Amenaza con publicarlo en redes',0,2,false);
     toast('Rechazaste la reclamación. Se va echando humo.','bad');sBad();
     removeFront();renderAll();checkRep();return;
   }
   if(d==='atc'){
-    if(q.dept==='atc'){sOk();meta.rep=clamp(meta.rep+0.1,0,5);run.served++;toast('Resuelto en el momento','good');removeFront();renderAll();return;}
+    if(q.dept==='atc'){sOk();repAdd(+0.1,'Reclamación resuelta en caja');run.served++;toast('Resuelto en el momento','good');removeFront();renderAll();return;}
     c.p=Math.max(0,c.p-c.max*0.35);c.err++;run.errors++;
     toast('Eso no se resuelve en caja: es de '+({back:'Backoffice',rrpp:'RR.PP.',alm:'Almacén'}[q.dept]||'otro departamento')+'.','bad');sBad();renderQueue();return;
   }
@@ -2729,14 +2753,14 @@ function leaveAngry(idx){
   const c=run.queue[idx];
   c.items.forEach(ret);
   regVisit(c,false);
-  if((PERS[c.pk]||{}).influ)meta.rep=clamp(meta.rep-0.3,0,5);
+  if((PERS[c.pk]||{}).influ)repAdd(-0.3,'Influencer que se fue enfadado');
   run.queue.splice(idx,1);
   if(run.remote)run.done.push(c.id);
   if(idx===0)frontChanged();
   run.angry++;
   if(Math.random()<0.7)addReview(1,c.face);
   if(Math.random()<0.35)addTicket('rrpp','Se marchó enfadado de la cola',0,2,false);
-  meta.rep=clamp(meta.rep-(idx===0?0.5:0.3),0,5);
+  repAdd(-(idx===0?0.5:0.3),'Clientes que se fueron enfadados (paciencia a cero)');
   toast('Un cliente se ha ido harto de esperar','bad');sBad();
   renderAll();checkRep();
 }
@@ -2751,8 +2775,9 @@ function checkRep(){
     run.over=true;run.dead=true;mg=null;pendingLeave=null;closeMG();wipeGame();
     const days=meta.day;
     if(mf){showOverlay(minorEndHtml(mf,days));submitScore(true).then(fillRanking);return;}
-    showOverlay(`<div class="card"><h2>${q?'Concurso de acreedores':'Te han despedido'}</h2>
-      <p>${q?'Has agotado la póliza de crédito ('+fmt(credLim())+') y no puedes pagar a proveedores, nóminas ni a Hacienda: la empresa entra en concurso de acreedores y cierra.':'La reputación llegó a cero.'} Sobreviviste ${days} ${days===1?'turno':'turnos'}.</p>
+    showOverlay(`<div class="card"><h2>${q?'Concurso de acreedores':'🔒 Cerrado · La clientela te ha dado la espalda'}</h2>
+      <p>${q?'Has agotado la póliza de crédito ('+fmt(credLim())+') y no puedes pagar a proveedores, nóminas ni a Hacienda: la empresa entra en concurso de acreedores y cierra.':'Eres el dueño: nadie te despide. Pero con la reputación a <b>★ 0,0</b> el barrio deja de comprar aquí, los proveedores no se fían y bajas la persiana.'} Aguantaste ${days} ${days===1?'turno':'turnos'}.</p>
+      ${q?'':repWhyHtml()}
       ${online()?'<div class="zone-title">🏆 RANKING</div><div id="rank"></div>':''}
       <button class="btn go big" data-act="restart">Volver a empezar</button></div>`);
     submitScore(true).then(fillRanking);
@@ -2948,9 +2973,9 @@ function cadScene(p){
       const m=Math.min(n,meta.stock[p.id]||0);
       if(k==='merma'){meta.stock[p.id]-=m;toast('🗑️ '+m+' '+p.e+' a merma. Lineal limpio.','good');}
       else if(k==='rebaja'){meta.stock[p.id]-=m;const v=m*dis,iv=p.iva||10;meta.money+=v;run.sales=(run.sales||0)+v;run.ivaR=(run.ivaR||0)+v*iv/(100+iv);
-        if(Math.random()<0.2){meta.rep=clamp(meta.rep-0.05,0,5);addReview(2,'🧐');toast('🏷️ Vendidas '+m+' '+p.e+' rebajadas (+'+fmt(v)+'), pero a alguien le ha parecido cutre.','bad');}
+        if(Math.random()<0.2){repAdd(-0.05,'Rebaja de caducados que pareció cutre');addReview(2,'🧐');toast('🏷️ Vendidas '+m+' '+p.e+' rebajadas (+'+fmt(v)+'), pero a alguien le ha parecido cutre.','bad');}
         else toast('🏷️ Vuelan: '+m+' '+p.e+' rebajadas, +'+fmt(v),'good');}
-      else if((meta.ins.cad=meta.day)&&Math.random()<0.5){addTicket('rrpp','Ha encontrado '+p.n+' caducado en la estantería',0,2,false);meta.rep=clamp(meta.rep-0.15,0,5);toast('🙈 Un cliente ha pillado '+p.e+' caducado y se queja.','bad');sBad();}
+      else if((meta.ins.cad=meta.day)&&Math.random()<0.5){addTicket('rrpp','Ha encontrado '+p.n+' caducado en la estantería',0,2,false);repAdd(-0.15,'Caducado a la vista');toast('🙈 Un cliente ha pillado '+p.e+' caducado y se queja.','bad');sBad();}
       renderAll();checkRep();
     }});
 }
@@ -3018,7 +3043,7 @@ function processTickets(){
     run.tickets.filter(t=>t.dept===d).sort((x,y)=>y.sev-x.sev).forEach((t,i)=>{
       r.in++;
       const e=slots[i];
-      if(!e){r.late++;meta.rep=clamp(meta.rep-0.15,0,5);meta.ins.late=meta.day;
+      if(!e){r.late++;repAdd(-0.15,'Reclamaciones sin atender (falta personal)');meta.ins.late=meta.day;
         /* Hoja de reclamaciones sin contestar: Consumo puede sancionar (infracción leve, hasta 10.000 €). */
         if(Math.random()<0.08){const f=ri(300,1500)*100;meta.consPend=(meta.consPend||[]).concat([{f,d:meta.day,t:t.t||''}]).slice(-3);}
         return;}
@@ -3026,10 +3051,10 @@ function processTickets(){
       const p=t.mis?0.3:clamp(perf(e,true)+(dd.seen?0.05:0)-((dd.slackT||0)>15?0.1:0),0.1,0.97);
       if(Math.random()<p){
         const cost=d==='back'?t.refund:d==='rrpp'?500:0;
-        r.ok++;r.cost+=cost;meta.rep=clamp(meta.rep+0.1,0,5);e.st.ok++;
+        r.ok++;r.cost+=cost;repAdd(+0.1,'Reclamaciones bien resueltas por el equipo');e.st.ok++;
       }else{
         const cost=d==='back'?t.refund*2:0;
-        r.fail++;r.cost+=cost;meta.rep=clamp(meta.rep-(d==='rrpp'?0.5:0.3),0,5);e.st.fail++;
+        r.fail++;r.cost+=cost;repAdd(-(d==='rrpp'?0.5:0.3),'Reclamaciones mal resueltas por el equipo');e.st.fail++;
       }
     });
     if(r.late)ws.forEach(e=>{e.moral=clamp(e.moral-4,0,100);});
@@ -3040,9 +3065,10 @@ function processTickets(){
   return res;
 }
 function endDay(){
+  if(run&&!run.remote){meta.repH=(meta.repH||[]).concat([{d:meta.day,L:run.repL||{}}]).slice(-2);}
   if(run.tills)Object.keys(run.tills).forEach(u=>closeTill(u));
   run.over=true;
-  run.tasks.forEach(t=>{if(!t.who&&t.k!=='tk'){meta.rep=clamp(meta.rep-t.pen/2,0,5);tStat(t,false);}});
+  run.tasks.forEach(t=>{if(!t.who&&t.k!=='tk'){repAdd(-t.pen/2,'Avisos sin atender al cerrar');tStat(t,false);}});
   run.tasks=[];run.away=null;mg=null;pendingLeave=null;closeMG();
   const res=processTickets();
   /* RR.HH. (NPC) publica vacantes donde falta gente: reclamaciones sin atender, muchos enfadados o muchos agotados. */
@@ -3474,7 +3500,7 @@ async function fillRanking(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.18-80';
+const APPV='2026.11.18-81';
 /* Compara versiones por números («-9» < «-11»), no como texto. */
 const verCmp=(a,b)=>{const x=String(a).split(/[.-]/).map(Number),y=String(b).split(/[.-]/).map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
 try{const vt=document.createElement('div');vt.id='vtag';vt.textContent='v'+APPV;document.body.appendChild(vt);}catch(e){}
@@ -3835,7 +3861,7 @@ function sendToTill(c){
 /* Lo que manda el cajero real cada segundo. */
 function applyTill(e,a){
   const t=run.tills&&run.tills[e.real],d=a.d||{};
-  meta.money+=Math.round(+d.money||0);meta.rep=clamp(meta.rep+(+d.rep||0),0,5);
+  meta.money+=Math.round(+d.money||0);repAdd(+(+d.rep||0),'Cajas de los cajeros reales');
   ['served','angry','errors','tips','sales','fines'].forEach(k=>{run[k]=(run[k]||0)+Math.round(+d[k]||0);});
   run.ivaR=(run.ivaR||0)+Math.round(+d.sales||0)*OFF.iva/(1+OFF.iva);
   e.st.cv+=Math.round(+d.served||0);e.st.cvErr+=Math.round(+d.errors||0);
@@ -3933,7 +3959,7 @@ function toolTask(e,code){
   if(code<=-5000&&code>-7000&&r==='rrpp'){
     const id=-code-5000,rv=run.reviews&&run.reviews.find(x=>x.id===id);
     if(!rv||rv.ans){note(e.real,'Esa reseña ya está contestada.',true);return;}
-    rv.ans=1;const good=Math.random()<perf(e,true);meta.rep=clamp(meta.rep+(good?0.05:-0.03),0,5);if(good)e.st.tasks++;else e.st.tfail++;
+    rv.ans=1;const good=Math.random()<perf(e,true);repAdd(+(good?0.05:-0.03),'Reseñas contestadas por RR.PP.');if(good)e.st.tasks++;else e.st.tfail++;
     logE(e,'Contestó una reseña de '+rv.st+' estrellas');note(e.real,good?'💬 Respuesta publicada: el cliente se ha quedado más tranquilo (+reputación).':'💬 Tu respuesta ha sentado regular: más tacto la próxima vez.',!good);return;
   }
   if(code<=-1000&&r==='alm'){
@@ -3949,7 +3975,7 @@ function toolTask(e,code){
   else if(code===-7&&r==='rrpp'){
     if(run.t-(run.promoT||-99)<45){note(e.real,'Ya hay una campaña en marcha: espera un poco.',true);return;}
     if(meta.money<1000){note(e.real,'No hay bote para pagar la campaña.',true);return;}
-    run.promoT=run.t;meta.money-=1000;const good=Math.random()<perf(e,true);meta.rep=clamp(meta.rep+(good?0.1:0.02),0,5);if(good)e.st.tasks++;else e.st.tfail++;
+    run.promoT=run.t;meta.money-=1000;const good=Math.random()<perf(e,true);repAdd(+(good?0.1:0.02),'Campaña en redes');if(good)e.st.tasks++;else e.st.tfail++;
     logE(e,'Lanzó una campaña en redes');note(e.real,good?'📣 La campaña ha funcionado: más gente habla bien de la tienda (+reputación, −10 €).':'📣 La campaña ha pasado sin pena ni gloria (−10 €).',!good);return;
   }
   else if(code<=-8000&&code>-9000&&r==='rrhh'){
@@ -4011,7 +4037,7 @@ function realFail(t){
   const e=empById(t.who);run.tasks=run.tasks.filter(x=>x!==t);
   if(e){const d=run.duty[e.id];if(d){d.busy=0;d.task=null;}}
   if(t.k==='tk'){if(e)note(e.real,'Se te pasó el tiempo con la reclamación. Se queda en la bandeja.',true);renderAll();return;}
-  meta.rep=clamp(meta.rep-t.pen/2,0,5);tStat(t,false,e);
+  repAdd(-t.pen/2,'Avisos que salieron mal');tStat(t,false,e);
   if(e){e.st.tfail++;logE(e,'Dejó a medias un aviso: '+t.s);note(e.real,'Se te pasó el tiempo: '+t.s,true);toast('🎮 '+e.name+' no ha terminado a tiempo: '+t.s,'bad');}
   if(t.chk)albApply(false);
   sBad();renderAll();checkRep();
@@ -4377,7 +4403,7 @@ function assignAll(){
 /* Avisos hechos/perdidos por departamento (para el cierre): cuenta el puesto de quien lo hizo o el del aviso. */
 function tStat(t,ok,e){if(ok)run.tdone++;else run.tlost++;const r=(e&&e.role)||(t.roles&&t.roles[0])||'alm',D=run.dstat=run.dstat||{},d=D[r]=D[r]||{ok:0,ko:0};d[ok?'ok':'ko']++;}
 /* Palé acordonado (rotScene): mientras nadie lo limpia, alguien pasa la cinta. 20 %: caída, reclamación a Backoffice y −0,2. */
-function cordFall(t,silent){if(Math.random()>=0.2)return false;addTicket('back','Un cliente pasó la cinta del pasillo '+t.n+' y se resbaló',ri(1500,4000),3,false);meta.rep=clamp(meta.rep-0.2,0,5);if(!silent)toast('🚧 Alguien ha pasado la cinta del pasillo '+t.n+' y se ha caído. Reclamación a Backoffice.','bad');return true;}
+function cordFall(t,silent){if(Math.random()>=0.2)return false;addTicket('back','Un cliente pasó la cinta del pasillo '+t.n+' y se resbaló',ri(1500,4000),3,false);repAdd(-0.2,'Caída en un pasillo acordonado');if(!silent)toast('🚧 Alguien ha pasado la cinta del pasillo '+t.n+' y se ha caído. Reclamación a Backoffice.','bad');return true;}
 function moveStock(id,max){const mv=Math.min(max,meta.back[id]||0);if(mv>0){meta.back[id]-=mv;meta.stock[id]=(meta.stock[id]||0)+mv;}return mv;}
 function finishTask(t){
   run.tasks=run.tasks.filter(x=>x!==t);
@@ -4390,7 +4416,7 @@ function finishTask(t){
     if(e)logE(e,'Hizo inventario del pasillo '+t.n);
     toast('📋 Inventario del pasillo '+t.n+(ok?': '+ps.length+' productos, '+(out.length?out.length+' agotados ('+out.slice(0,3).map(x=>x.e).join('')+')':'ninguno agotado')+(low.length?', '+low.length+' a punto de acabarse':''):' a medias: '+(e?e.name:'')+' se ha liado contando.'),ok?'good':'bad');
     if(ok)run.ordAt=-99;renderAll();return;}
-  if(!ok){meta.rep=clamp(meta.rep-t.pen/2,0,5);tStat(t,false,empById(t.who));if(t.chk)albApply(false);
+  if(!ok){repAdd(-t.pen/2,'Avisos que salieron mal');tStat(t,false,empById(t.who));if(t.chk)albApply(false);
     if(t.cord)cordFall(t);
     const why=t.lang?'. No se han entendido':(t.match?'':'. No es su puesto');
     toast((t.who==='me'?'Te ha salido regular en el pasillo '+t.n:nm+' lo ha dejado a medias en el pasillo '+t.n)+why,'bad');sBad();renderAll();checkRep();return;}
@@ -4399,7 +4425,7 @@ function finishTask(t){
   else if(t.k==='truck'){let cap=40,tot=0;Object.keys(meta.back).sort((x,y)=>(meta.stock[x]||0)-(meta.stock[y]||0)).forEach(id=>{if(cap>0){const mv=moveStock(id,cap);cap-=mv;tot+=mv;}});extra=' (+'+tot+' uds)';if(t.chk)albApply(true,nm);}
   else if(t.k==='cv'){const c=t.cand,q=c?(c.rap+c.trato+c.punt+c.act)/4:0;extra=q>=0.55?' · '+hireFromCv(c,c.wage):' · no le ha convencido';}
   else if(t.k==='feud'&&t.fd)extra=' · '+applyFeud({a:t.fd.a.id,b:t.fd.b.id,truth:t.fd.truth},true);
-  else{meta.rep=clamp(meta.rep+0.05,0,5);if(t.cord)cordFall(t);}
+  else{repAdd(+0.05,'Avisos bien hechos');if(t.cord)cordFall(t);}
   toast((t.who==='me'?'Hecho. Vuelves a la caja':nm+' ha terminado en el pasillo '+t.n)+extra,'good');
   if(t.who!=='me')praiseScene(empById(t.who),t);
   renderAll();
@@ -4409,7 +4435,7 @@ function expireTask(t){
   if(t.k==='tk'){renderAll();return;}
   if(t.k==='inv'||t.k==='order'){toast('Nadie de Almacén pudo con: '+t.ic+' '+t.s,'bad');renderAll();return;}
   tStat(t,false);if(t.chk)albApply(false);
-  if(tVis(t))meta.rep=clamp(meta.rep-t.pen,0,5);
+  if(tVis(t))repAdd(-t.pen,'Avisos que caducaron sin atender');
   if(t.k==='spill')meta.ins.spill=meta.day;
   if(t.k==='spill'&&Math.random()<0.3){addTicket('back','Un cliente se resbaló en el pasillo '+t.n,ri(1000,3000),3,false);toast('Nadie limpió el pasillo '+t.n+' y alguien se ha caído','bad');}
   else toast('Nadie atendió: '+t.ic+' '+t.s,'bad');
@@ -4474,8 +4500,8 @@ function tickStaff(dt){
     const e=empById(v.e);if(!e||!inStore(e))return;
     if(v.k==='robo'){theft(e,v.v);dirty=true;return;}
     logE(e,v.k==='quej'?'Un cliente se quejó de su trato':'Un cliente le felicitó');
-    if(v.k==='quej'){e.st.quej++;meta.rep=clamp(meta.rep-0.2,0,5);addTicket('rrpp','Queja por el trato de '+e.name,0,2,false);toast('Un cliente se queja de cómo le ha hablado '+e.name,'bad');sBad();}
-    else{e.st.fel++;e.moral=clamp(e.moral+5,0,100);meta.rep=clamp(meta.rep+0.1,0,5);toast('Un cliente felicita a '+e.name+' por su trato','good');}
+    if(v.k==='quej'){e.st.quej++;repAdd(-0.2,'Quejas por el trato de un empleado');addTicket('rrpp','Queja por el trato de '+e.name,0,2,false);toast('Un cliente se queja de cómo le ha hablado '+e.name,'bad');sBad();}
+    else{e.st.fel++;e.moral=clamp(e.moral+5,0,100);repAdd(+0.1,'Felicitaciones a un empleado');toast('Un cliente felicita a '+e.name+' por su trato','good');}
     dirty=true;
   });
   run.tasks.slice().forEach(t=>{
@@ -4608,7 +4634,7 @@ function doLeave(o,eid){
     run.chat={face:e.face,text:e.name+': «Ve tranquilo/a, que ya cobro yo.»',angry:false,until:run.t+3.6};
   }else if(c){
     const r=reactLeave(c,o);run.away.mult=r.mult;
-    if(r.rep)meta.rep=clamp(meta.rep+r.rep,0,5);
+    if(r.rep)repAdd(+r.rep,'Reacción al salir de caja');
     run.chat={face:c.face,text:r.say,angry:r.rep<0,until:run.t+4};
     if(r.gone){c.items.forEach(ret);regVisit(c,false);run.queue.shift();frontChanged();run.angry++;toast('Se ha ido ofendido. Normal.','bad');}
   }
@@ -5345,7 +5371,7 @@ function applyMG(t,sc,early,e,x){
   }else if(kind==='rot'){
     const mv=moveStock(t.pid,Math.round(8*sc)),p=CAT.find(y=>y.id===t.pid)||CAT[0],L=[];
     const merma=lose(t.pid,x.merma);if(merma)L.push(merma+' a merma');
-    if(+x.badLeft>0&&Math.random()<0.5){addTicket('rrpp','Ha encontrado '+p.n+' caducado en la estantería',0,2,false);meta.rep=clamp(meta.rep-0.15,0,5);L.push('se ha quedado algo caducado a la vista');}
+    if(+x.badLeft>0&&Math.random()<0.5){addTicket('rrpp','Ha encontrado '+p.n+' caducado en la estantería',0,2,false);repAdd(-0.15,'Caducado a la vista');L.push('se ha quedado algo caducado a la vista');}
     if(+x.priceErr){addTicket('back','Le cobraron '+p.n+' a otro precio que el de la etiqueta',Math.max(50,Math.round(p.p*0.3)),1,false);L.push('etiqueta equivocada');}
     if(+x.rotErr)L.push('lo nuevo quedó delante');
     msg=(mv?'Lineal repuesto: +'+mv+' uds en estantería':'Lineal revisado, pero en el almacén no quedaba más')+(L.length?' · '+L.join(' · '):'')+'.';
@@ -5355,10 +5381,10 @@ function applyMG(t,sc,early,e,x){
     let cap=Math.min(24,6*Math.round(+x.placed||0)),tot=0;
     toArr(x.ids).forEach(id=>{if(cap>0){const mv=moveStock(id,Math.min(6,cap));cap-=mv;tot+=mv;}});
     Object.keys(meta.back).forEach(id=>{if(cap>0){const mv=moveStock(id,cap);cap-=mv;tot+=mv;}});
-    if(+x.falsas)meta.rep=clamp(meta.rep-0.05*x.falsas,0,5);
+    if(+x.falsas)repAdd(-0.05*x.falsas,'Reclamaste al proveedor sin motivo');
     const L=[];if(+x.abono)L.push('abono del proveedor +'+fmt(+x.abono));if(+x.lost)L.push('firmaste sin apuntar faltas o roturas −'+fmt(+x.lost));if(+x.spoiled)L.push(x.spoiled+' sin cadena de frío');if(+x.falsas)L.push('reclamaste cosas que estaban bien');
     msg='Camión descargado'+(tot?': +'+tot+' uds a estantería':'')+(L.length?' · '+L.join(' · '):'')+'.';
-    if(sc<0.6)meta.rep=clamp(meta.rep-0.1,0,5);
+    if(sc<0.6)repAdd(-0.1,'Minijuego de Almacén mal hecho');
   }else if(kind==='cv'){
     const c=x.cand;
     if(+x.integ)meta.money-=INTEG;
@@ -5368,27 +5394,27 @@ function applyMG(t,sc,early,e,x){
     msg=applyFeud(x,good);
   }else if(kind==='cash'){
     const d=Math.round(+x.diff||0),said=Math.round(+x.said||0);
-    if(said===d){if(d<0){meta.money+=-d;msg='Arqueo: faltaban '+fmt(-d)+'. Encontrado el ticket mal cobrado y recuperado.';}else msg=d?'Arqueo: sobraban '+fmt(d)+'. Apuntado como sobrante.':'Arqueo: la caja cuadra al céntimo.';meta.rep=clamp(meta.rep+0.03,0,5);}
+    if(said===d){if(d<0){meta.money+=-d;msg='Arqueo: faltaban '+fmt(-d)+'. Encontrado el ticket mal cobrado y recuperado.';}else msg=d?'Arqueo: sobraban '+fmt(d)+'. Apuntado como sobrante.':'Arqueo: la caja cuadra al céntimo.';repAdd(+0.03,'Arqueo bien hecho');}
     else{msg='Arqueo mal hecho: '+(d?'el descuadre de '+fmt(Math.abs(d))+' se queda sin explicar.':'la caja cuadraba y has dado una falsa alarma.');
       /* Faltaba dinero y no se encontró: el jefe decide si investigar (escena de Backoffice). */
       if(d<0&&!e)setTimeout(()=>arqScene({v:-d,n:t.n,already:true}),900);}
   }else if(kind==='spill2'){
     const L=[];
-    if(early&&Math.random()<0.4){addTicket('back','Un cliente se resbaló en el pasillo '+t.n+' (no había cartel)',ri(1000,3000),3,false);meta.rep=clamp(meta.rep-0.3,0,5);L.push('sin cartel, alguien se ha resbalado');good=false;}
+    if(early&&Math.random()<0.4){addTicket('back','Un cliente se resbaló en el pasillo '+t.n+' (no había cartel)',ri(1000,3000),3,false);repAdd(-0.3,'Caída por fregar sin cartel');L.push('sin cartel, alguien se ha resbalado');good=false;}
     if(+x.wetLeft&&Math.random()<0.3){addTicket('back','Un cliente se resbaló en el pasillo '+t.n+' (suelo mojado sin cartel)',ri(800,2000),2,false);L.push('quitaste el cartel con el suelo mojado');good=false;}
     if(+x.cut){if(e)e.moral=clamp(e.moral-6,0,100);L.push('corte con los cristales');}
     if(t.cord&&cordFall(t,1))L.push('con el pasillo acordonado tanto rato, alguien se ha colado y resbalado');
     if(+x.notOut&&Math.random()<0.4){addTicket('alm','Un cliente ha cogido un '+((CAT.find(y=>y.id===+x.pid)||{}).n||'producto')+' roto',0,1,false);L.push('el producto roto seguía en la estantería');}
     else if(!+x.notOut)lose(+x.pid,1);
-    if(good)meta.rep=clamp(meta.rep+0.05,0,5);
+    if(good)repAdd(+0.05,'Avisos bien hechos');
     msg='Pasillo '+t.n+(good?' limpio y seco':' recogido a medias')+(L.length?' · '+L.join(' · '):'')+'.';
   }else
   if(kind==='shelf'){const mv=moveStock(t.pid,Math.round(8*sc));msg=mv?'Lineal repuesto: +'+mv+' uds en estantería.':'Has colocado lo que había, pero en el almacén no quedaba más.';}
   else if(kind==='mop'){
-    if(early&&Math.random()<0.4){addTicket('back','Un cliente se resbaló en el pasillo '+t.n+' (no había cartel)',ri(1000,3000),3,false);meta.rep=clamp(meta.rep-0.3,0,5);msg='Sin cartel, alguien se ha resbalado mientras fregabas. Reclamación en camino.';good=false;}
-    else{meta.rep=clamp(meta.rep+0.05,0,5);msg='Pasillo '+t.n+' limpio y seco.';}
+    if(early&&Math.random()<0.4){addTicket('back','Un cliente se resbaló en el pasillo '+t.n+' (no había cartel)',ri(1000,3000),3,false);repAdd(-0.3,'Caída por fregar sin cartel');msg='Sin cartel, alguien se ha resbalado mientras fregabas. Reclamación en camino.';good=false;}
+    else{repAdd(+0.05,'Avisos bien hechos');msg='Pasillo '+t.n+' limpio y seco.';}
   }else if(kind==='ask'){
-    meta.rep=clamp(meta.rep+(sc>=1?0.1:sc>=0.5?0:-0.15),0,5);
+    repAdd(+(sc>=1?0.1:sc>=0.5?0:-0.15),'Minijuegos (según lo bien que salieron)');
     msg=sc>=1?'«¡Muchas gracias!» Cliente feliz.':sc>=0.5?'Al final lo encontró. A la segunda.':'Se ha ido sin encontrarlo.';
   }else if(kind==='tk'){
     const tk=run.tickets.find(x=>x.id===t.tkid),d=t.dept;
@@ -5399,28 +5425,28 @@ function applyMG(t,sc,early,e,x){
       if(d==='rrpp'&&x.anger!=null||d==='rrpp'&&x.mis!=null&&x.cost!=null){
         const cost=Math.max(0,Math.round(+x.cost||0)),an=+x.anger||0;meta.money-=cost;
         if(+x.mis)msg=+x.misOk?'Bien visto: no era de RR.PP. y la has devuelto.':'La has devuelto, pero era de RR.PP.: el cliente se calienta más.';
-        else if(good){meta.rep=clamp(meta.rep+0.1,0,5);msg='Respuesta publicada y cliente calmado'+(cost?' (vale de '+fmt(cost)+')':'')+'.';}
-        else{meta.rep=clamp(meta.rep-(an>=60?0.5:0.25),0,5);msg=(an>=60?'🔥 La respuesta se ha hecho viral, y no para bien':'La respuesta no ha convencido')+(cost?' (y encima, vale de '+fmt(cost)+')':'')+'.';}
+        else if(good){repAdd(+0.1,'Respuesta en redes');msg='Respuesta publicada y cliente calmado'+(cost?' (vale de '+fmt(cost)+')':'')+'.';}
+        else{repAdd(-(an>=60?0.5:0.25),'Respuesta en redes');msg=(an>=60?'🔥 La respuesta se ha hecho viral, y no para bien':'La respuesta no ha convencido')+(cost?' (y encima, vale de '+fmt(cost)+')':'')+'.';}
         if(e){good?e.st.ok++:e.st.fail++;}
       }
       else if(d==='back'&&x.paid!=null){
         const paid=Math.max(0,Math.round(+x.paid||0)),need=Math.max(0,Math.round(+x.need||0));meta.money-=paid;
-        if(good){meta.rep=clamp(meta.rep+0.1,0,5);if(e)e.st.ok++;}else{meta.rep=clamp(meta.rep-0.3,0,5);if(e)e.st.fail++;}
+        if(good){repAdd(+0.1,'Reclamaciones resueltas por ti');if(e)e.st.ok++;}else{repAdd(-0.3,'Reclamaciones resueltas por ti');if(e)e.st.fail++;}
         if(+x.mis)msg=+x.misOk?'Bien visto: no era de Backoffice y la has devuelto.':'La has devuelto, pero sí era de Backoffice. El cliente se va sin su dinero.';
         else if(paid<need){msg='Le has devuelto '+fmt(paid)+' y le tocaban '+fmt(need)+'. Se va quejándose.';if(paid===0&&need>0)addTicket('rrpp','Le negaron un reembolso que le tocaba',0,2,false);}
         else if(paid>need)msg='Le has devuelto '+fmt(paid)+' y eran '+fmt(need)+': '+fmt(paid-need)+' regalados.';
         else msg=need?'Reembolso exacto de '+fmt(need)+(+x.wrongMethod?', aunque no por donde pagó':'')+'.':'Bien: el cliente se equivocaba y no había nada que devolver.';
       }
-      else if(good){const cost=tk.mis?0:d==='back'?tk.refund:d==='rrpp'?500:0;meta.money-=cost;meta.rep=clamp(meta.rep+0.1,0,5);if(e)e.st.ok++;
+      else if(good){const cost=tk.mis?0:d==='back'?tk.refund:d==='rrpp'?500:0;meta.money-=cost;repAdd(+0.1,'Reclamaciones resueltas por ti');if(e)e.st.ok++;
         msg=tk.mis?'Bien visto: no era de su departamento y la ha devuelto.':'Reclamación resuelta'+(cost?' ('+fmt(cost)+')':'')+'.';}
-      else{const cost=d==='back'&&!tk.mis?tk.refund*2:0;meta.money-=cost;meta.rep=clamp(meta.rep-(d==='rrpp'?0.5:0.3),0,5);if(e)e.st.fail++;msg='La reclamación ha salido mal'+(cost?': −'+fmt(cost):'')+'.';}
+      else{const cost=d==='back'&&!tk.mis?tk.refund*2:0;meta.money-=cost;repAdd(-(d==='rrpp'?0.5:0.3),'Reclamaciones resueltas por ti');if(e)e.st.fail++;msg='La reclamación ha salido mal'+(cost?': −'+fmt(cost):'')+'.';}
       LV[good?'ok':'fail']++;LV.cost+=m0-meta.money;
     }
   }else{
     let cap=Math.round(20*sc),tot=0;
     Object.keys(meta.back).forEach(id=>{if(cap>0){const mv=moveStock(id,cap);cap-=mv;tot+=mv;}});
     msg='Camión descargado: '+Math.round(sc*100)+'% bien colocado'+(tot?', +'+tot+' uds a estantería.':'.');
-    if(sc<0.6)meta.rep=clamp(meta.rep-0.1,0,5);
+    if(sc<0.6)repAdd(-0.1,'Minijuego de Almacén mal hecho');
   }
   return {msg,good};
 }
@@ -5563,9 +5589,9 @@ const indProc=e=>Math.round(e.wage*20*e.days/365),indImp=e=>Math.round(e.wage*33
    grave 30.050,62–60.101,21 €; muy grave 60.101,22–601.012,10 € (caso real en Coslada: 60.102 € por venta reiterada).
    La primera, grave en su grado mínimo (30.050,62 €); la segunda, grave reincidente (30.051–60.101 €); desde la tercera, muy grave en su mínimo (60.101,22 €). */
 function minorSale(who){
-  meta.rep=clamp(meta.rep-0.3,0,5);
+  repAdd(-0.3,'Alcohol vendido a un menor');
   if(Math.random()<0.12){const n=meta.minorFine=(meta.minorFine||0)+1,f=n>=3?6010122:n===2?ri(30051,60101)*100:3005062;
-    run.fines+=f;meta.money-=f;meta.rep=clamp(meta.rep-1,0,5);meta.minorAt={d:meta.day,f,m:meta.money+f,n};
+    run.fines+=f;meta.money-=f;repAdd(-1,'Multa por alcohol a un menor');meta.minorAt={d:meta.day,f,m:meta.money+f,n};
     if(canInsp()&&inspScene(n,f,who))return '';
     return '🚔 Inspección: '+who+' alcohol a un menor. Multa '+(n>=3?'muy grave':'grave')+' de '+fmt(f)+(n>1?' (reincidencia)':'')+'.';}
   return '⚠️ '+who.replace(/^h/,'H')+' alcohol a un menor. Nadie lo ha denunciado… esta vez (multa grave: desde 30.050 €, Ley 5/2002 de Madrid).';
@@ -5588,7 +5614,7 @@ function fireCore(e,r){
   if(just&&!e.warn&&['abs','late','caught','quej','robo'].includes(r))L.push('Sin amonestación previa por escrito.');
   const risk=r==='trial'||r==='none'?0:just?(e.warn>0?0:0.15):0.7;
   if(Math.random()<risk){
-    extra=Math.max(0,indImp(e)-ind)+ri(600,1500)*100;cost+=extra;meta.rep=clamp(meta.rep-0.3,0,5);
+    extra=Math.max(0,indImp(e)-ind)+ri(600,1500)*100;cost+=extra;repAdd(-0.3,'Despido denunciado y perdido');
     L.push(just?'⚖️ Te denuncia: nunca le diste un toque antes de despedirle. El juez lo declara improcedente: −'+fmt(extra)+' y −0,3 de reputación.'
       :'⚖️ Te denuncia: el motivo no se sostiene con lo que hay registrado. Despido improcedente: −'+fmt(extra)+' y −0,3 de reputación.');
   }else if(!just&&r!=='none')L.push('😅 El motivo no se sostenía, pero no te ha denunciado. Esta vez.');
@@ -5705,8 +5731,8 @@ function idDecision(sell){
     else sOk();
   }else{
     it.denied=true;ret(it);
-    if(c.minor){meta.rep=clamp(meta.rep+0.1,0,5);toast('Bien visto. Era menor.','good');sOk();}
-    else{meta.rep=clamp(meta.rep-0.4,0,5);c.p=Math.max(0,c.p-c.max*0.3);run.errors++;c.err++;toast('Era mayor de edad. Cliente molesto.','bad');sBad();}
+    if(c.minor){repAdd(+0.1,'Negaste alcohol a un menor');toast('Bien visto. Era menor.','good');sOk();}
+    else{repAdd(-0.4,'Negaste alcohol a un adulto');c.p=Math.max(0,c.p-c.max*0.3);run.errors++;c.err++;toast('Era mayor de edad. Cliente molesto.','bad');sBad();}
   }
   renderAll();checkRep();
 }
@@ -5757,7 +5783,7 @@ function finish(c,noTip){
   /* IVA de cada producto según su tipo legal (la bolsa, 21 %). */
   run.ivaR=(run.ivaR||0)+c.items.filter(i=>i.scanned).reduce((a,i)=>{const v=(CAT.find(x=>x.id===i.pid)||{}).iva||10;return a+i.p*v/(100+v);},0)+(c.bag?BAG*21/121:0);
   if(c.bag!==c.wantsBag){
-    c.err++;run.errors++;meta.rep=clamp(meta.rep-0.3,0,5);
+    c.err++;run.errors++;repAdd(-0.3,'Errores de cobro y bolsa');
     toast(c.bag?'No pidió bolsa y se la cobraste':'Pidió bolsa y no se la diste','bad');sBad();
   }
   const frac=c.p/c.max,P=PERS[c.pk]||{},rm=c.reg&&meta.regs[c.reg];
@@ -5765,11 +5791,11 @@ function finish(c,noTip){
     const cbB=comboBonus(c);
     let tip=Math.round(frac*250*(meta.up.coffee?1.5:1)*(P.tip!=null?P.tip:1)*(rm&&rm.good>=3?1.3:1)*(1+cbB)/5)*5;
     if(tip>0){run.tips+=tip;toast('Propina para el bote del personal: '+fmt(tip)+(cbB?' · racha +'+Math.round(cbB*100)+'%':''),'good');}
-    if(frac>0.5)meta.rep=clamp(meta.rep+0.08,0,5);
+    if(frac>0.5)repAdd(+0.08,'Clientes contentos');
   }
   if(P.influ){
-    if(c.err===0){meta.rep=clamp(meta.rep+0.3,0,5);toast('Te ha sacado en su directo. +reputación 📈','good');}
-    else{meta.rep=clamp(meta.rep-0.5,0,5);toast('Tu error ya circula por las redes 📉','bad');}
+    if(c.err===0){repAdd(+0.3,'Influencer contento');toast('Te ha sacado en su directo. +reputación 📈','good');}
+    else{repAdd(-0.5,'Influencer que vio un error');toast('Tu error ya circula por las redes 📉','bad');}
   }
   if(Math.random()<0.5)addReview(c.err>1?2:c.err?3:frac>0.5?5:4,c.face);
   regVisit(c,c.err===0&&frac>0.3);
@@ -6634,7 +6660,7 @@ function deskRepo(pid){
   run.tasks.push({id:++uid,k:'repo',ic:'📦',roles:['alm','atc'],dur:10,pen:0.1,pid,n,lang:null,s:TSHORT.repo.replace('%p%',p.n).replace('%n%',n),txt:'Orden de Dirección: reponer «'+p.n+'» en el pasillo '+n+'.',dl:run.t+TLIFE,who:null,until:0,span:1,match:true});
   toast('📦 Aviso creado: reponer '+p.n+'. Asígnalo arriba.','good');renderAll();
 }
-function answerReview(id){const r=run&&run.reviews&&run.reviews.find(x=>x.id===id);if(!r||r.ans)return;r.ans=1;meta.rep=clamp(meta.rep+0.04,0,5);sOk();toast('Reseña respondida con mucho tacto.','good');renderAll();}
+function answerReview(id){const r=run&&run.reviews&&run.reviews.find(x=>x.id===id);if(!r||r.ans)return;r.ans=1;repAdd(+0.04,'Respondiste una reseña');sOk();toast('Reseña respondida con mucho tacto.','good');renderAll();}
 
 /* ---------- tutoriales: «Cómo se trabaja» por puesto y bienvenida la primera vez ----------
    GUIDE[k] = {t: título, steps: [[icono, texto]]}. Claves: puestos de empleado real (atc, alm, back, rrpp, rrhh)
