@@ -133,7 +133,9 @@ button:focus-visible{outline:3px solid var(--tag);outline-offset:2px}
 #toast{position:fixed;left:0;top:0;width:0;height:0;display:flex;gap:8px;align-items:stretch;overflow:hidden;pointer-events:none;z-index:30}
 #toast:empty{display:none}
 #toast .tst{flex:0 1 auto;min-width:0;max-width:100%;display:flex;align-items:center;gap:8px;background:#fff8ef;color:#3a1012;border-left:6px solid #ffb400;border-radius:9px;padding:2px 12px;font:600 16px/1.2 var(--display);pointer-events:auto;cursor:pointer;animation:tstIn .2s ease-out;transition:opacity .25s}
-#toast .tst>span{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+/* Los avisos largos no se cortan: crecen hacia abajo desde el carril (hasta 4 líneas) y se cierran al tocarlos. */
+#toast:not(.fl){overflow:visible;align-items:flex-start}#toast:not(.fl) .tst{min-height:100%;box-shadow:0 6px 14px rgba(0,0,0,.25)}
+#toast .tst>span{display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
 #toast .tst.good{border-left-color:#1f9a55}#toast .tst.bad{border-left-color:#d62f3a;background:#fff0f0}
 #toast .tst.out{opacity:0}
 #toast .tst .tn{flex:none;padding:0 7px;border-radius:9px;background:#3a1012;color:#fff;font-size:.8em}
@@ -1495,7 +1497,7 @@ body{font-size:var(--fs-s)}
 .dchart .dt{font-size:12px}
 .tab i{font-size:var(--fs-xs);line-height:18px}
 @media (max-width:640px){
-  .tab span{font-size:var(--fs-xs);letter-spacing:-.5px}
+  .tab span{font-size:var(--fs-xs);letter-spacing:-.5px;white-space:normal;text-overflow:clip;hyphens:manual;line-height:1.05}
   .tab{padding-left:0;padding-right:0;border-left-width:2px;border-right-width:2px}
   .tab.help{flex:0 0 34px}
   .scr-body .sum span.sm,.scr-body .sum b.sm,.scr-body .up .t,.kpi>small,.balk small{font-size:var(--fs-xs)}
@@ -1531,6 +1533,7 @@ body{font-size:var(--fs-s)}
 .h3sub{font-size:var(--fs-s)}.h3sub b{font-family:var(--pix);font-weight:700}
 .h3sub .h3dn,.h3why li.h3dn b{color:var(--danger)}.h3sub .h3up,.h3why li.h3up b{color:var(--gain)}
 .h3why{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.h3ev{font-size:var(--fs-s);line-height:1.35;margin-top:6px;padding:6px 8px;border-left:3px solid var(--warn,#f2b705);background:#fff8e1;border-radius:6px;overflow-wrap:anywhere}
 .h3why li{display:grid;grid-template-columns:26px minmax(0,1fr) auto;align-items:center;gap:8px;font-size:var(--fs-s);line-height:1.3;padding:5px 0;border-bottom:1px dashed #eadede}
 .h3why li:last-child{border-bottom:0}
 .h3why li i{font-style:normal;font-size:var(--fs-l);text-align:center}
@@ -1750,7 +1753,7 @@ const ROLES={
  alm:{n:'Almacén',s:'Almacén',max:4,duties:['Colocar la mercancía que llega','Descargar camiones','Reponer lineales vacíos','Limpiar derrames y roturas','Reclamaciones por producto agotado']},
  back:{n:'Backoffice',s:'Backoffice',max:4,duties:['Reembolsos y cobros mal hechos','2 reclamaciones de dinero por turno (3 si es rápido)']},
  rrpp:{n:'Relaciones Públicas',s:'RR.PP.',max:4,duties:['Quejas por trato y amenazas en redes','Ayudar a clientes perdidos en sala']},
- rrhh:{n:'Recursos Humanos',s:'RR.HH.',max:2,duties:['Tramitar las solicitudes de empleo','Contratos y periodos de prueba','Cuidar el ánimo de la plantilla (+2 al día)']}
+ rrhh:{n:'Recursos Humanos',s:'RR.HH.',max:2,duties:['Tramitar las solicitudes de empleo','Contratos y periodos de prueba','Cuidar el ánimo de la plantilla (+2 por turno)']}
 };
 const wpick=a=>{let r=Math.random()*a.reduce((t,x)=>t+x.w,0);for(const x of a){r-=x.w;if(r<=0)return x;}return a[0];};
 const LANG={es:'español',en:'inglés',fr:'francés',de:'alemán',it:'italiano',pt:'portugués',ar:'árabe',ro:'rumano',uk:'ucraniano',zh:'chino',wo:'wolof',tl:'tagalo'};
@@ -1772,8 +1775,8 @@ const NATS=[
 ];
 /* Carácter: se ve en la ficha a partir de su primer turno. */
 const TRAITS={
- bromista:{n:'Bromista',ic:'😂',d:'Anima al resto de la plantilla (+ánimo a quien trabaje ese día).'},
- quejica:{n:'Quejica',ic:'😩',d:'Contagia el mal rollo (−ánimo a quien trabaje ese día) y pide aumentos más a menudo.'},
+ bromista:{n:'Bromista',ic:'😂',d:'Anima al resto de la plantilla (+ánimo a quien trabaje ese turno).'},
+ quejica:{n:'Quejica',ic:'😩',d:'Contagia el mal rollo (−ánimo a quien trabaje ese turno) y pide aumentos más a menudo.'},
  currante:{n:'Currante',ic:'💪',d:'Más actitud. No se escaquea.'},
  chismoso:{n:'Cotilla',ic:'👂',d:'En las reuniones te cuenta cosas de los demás. Casi siempre ciertas.'},
  timido:{n:'Timidez',ic:'🙈',d:'Puntualísimo, pero le cuesta tratar con clientes.'},
@@ -2231,7 +2234,7 @@ function weekGoals(){
   const w=meta.week;if(!w)return [];
   const S=wSec(w),live=run&&!run.over&&!run.remote&&S.k==='serve'?run.served||0:0,m=meta.money+(w.div||0);
   const p=S.k==='hire'?(meta.emp.some(e=>e.id>w.eid)?1:0):(w.p||0)+live;
-  return [['💰 Bote ≥ '+fmt(w.gm).replace(',00',''),m>=w.gm,fmt(m).replace(',00','')],['⭐ Reputación ≥ '+w.gr.toFixed(1).replace('.',','),meta.rep>=w.gr,'★ '+meta.rep.toFixed(1)],
+  return [['💰 Bote ≥ '+fmt(w.gm).replace(',00',''),m>=w.gm,fmt(m).replace(',00','')],['⭐ Reputación ≥ '+w.gr.toFixed(1).replace('.',','),meta.rep>=w.gr,'★ '+repT(meta.rep)],
     [S.t+' <small>(premio mayor)</small>',p>=S.n,Math.min(p,S.n)+'/'+S.n]];
 }
 const weekLeft=()=>meta.week?Math.max(0,meta.week.d0+6-meta.day):0;
@@ -2648,7 +2651,7 @@ function cajaScenes(){
 function cardScene(c){
   const cash=msg=>{if(front()!==c||c.phase!=='pay')return;c.cardNo=0;run.card=false;c.pay='cash';c.given=cashGiven(totalOf(c));noteFor(c);if(msg)toast(msg,'bad');renderAll();};
   if(!scene({k:'tarj:'+c.id,who:c.face,sprite:c.id,head:'💳 DATÁFONO · CAJA '+(run.remote?run.till:3),name:c.lab?esc(c.lab.replace(/<[^>]+>/g,'')):'',tag:'Rechazada',prio:2,txt:'Ups, no pasa… 😬',
-    body:`<div class="tpv"><span>DENEGADA</span><b>${fmt(totalOf(c))}</b></div>`,time:8,def:'cash',
+    body:`<div class="tpv"><span>DENEGADA</span><b>${fmt(totalOf(c))}</b></div><div class="scn-hint">💶 Paga en efectivo y le das el cambio. 🔁 Otra vez: pasa 1 de cada 3; si no, pierde un 10 % de paciencia.</div>`,time:8,def:'cash',
     choices:[{t:'💶 En efectivo',k:'cash',cls:'go',key:'E',stamp:'EFECTIVO',sc:'ok',fx:'💶'},{t:'🔁 Probar otra vez',k:'retry',key:'R'}],
     alive:()=>front()===c&&c.phase==='pay'&&c.cardNo,
     onPick:k=>{
@@ -2879,12 +2882,12 @@ function viralScene(r){
     startMG({id:'d'+tk.id,k:'tk',ic:'📨',dept:'rrpp',mis:false,refund:0,txt:r.t,sev:3,s:'Reseña viral',tkid:tk.id,n:0,pid:0,desk:1});};
   const e0=rrFree(),mt={t:'🤐 No contestar',k:'mute',cls:'no',key:'N',stamp:'SIN RESPUESTA',sc:'bad'};
   /* Sin nadie de RR.PP. libre, «contestar» abre el minijuego: la primera (Intro) es no contestar. */
-  const ch=e0?[{t:'📱 Responder ya',k:'ans',cls:'go',key:'R',stamp:'RESPONDIDO',sc:'ok',fx:'💬'},{t:'✍️ Lo contesto yo',k:'me',key:'Y'},mt]
+  const ch=e0?[{t:'📱 Que conteste RR.PP.',k:'ans',cls:'go',key:'R',stamp:'RESPONDIDO',sc:'ok',fx:'💬'},{t:'✍️ Lo contesto yo',k:'me',key:'Y'},mt]
     :[mt,{t:'📱 Lo contesto yo',k:'me',cls:'go',key:'R'}];
   scene({k:'viral:'+r.id,who:r.f||'😡',head:'📱 VITCHGRAM · SE ESTÁ HACIENDO VIRAL',name:esc(h),tag:'⭐ 1/5',prio:1,time:12,def:'auto',
     txt:'«'+esc(r.t)+'»',
     body:`<div class="scn-post"><span class="av" style="background:hsl(${hue} 60% 55%)">${esc(h.slice(1,2).toUpperCase())}</span><div><b>${esc(h)}</b> <small>· ahora</small> <span class="stars">★<i>★★★★</i></span>
-      <div class="sp-act"><span>❤️ <b class="scn-likes">${l0}</b></span><span>🔁 <b class="scn-rt">${Math.round(l0/3)}</b></span><span class="hot">🔥 VIRAL</span></div></div></div>`,
+      <div class="sp-act"><span>❤️ <b class="scn-likes">${l0}</b></span><span>🔁 <b class="scn-rt">${Math.round(l0/3)}</b></span><span class="hot">🔥 VIRAL</span></div></div></div><div class="scn-hint">Bien contestada: +0,05 ★. Mal contestada: −0,15 ★. Sin contestar: −0,2 ★ a los 15 s.</div>`,
     choices:ch,
     tick:()=>{const a=document.querySelector('#scene .scn-likes'),b=document.querySelector('#scene .scn-rt'),n=likes();if(a)a.textContent=kfmt(n);if(b)b.textContent=kfmt(n/3);},
     onPick:k=>{if(!run||run.over)return;const e=rrFree();
@@ -2896,7 +2899,7 @@ function pressScene(){
   const body=tv?`<div class="scn-tv"><span class="rec">🔴 EN DIRECTO</span><b>VITCHMARKET, EL SÚPER DEL BARRIO</b><small>📺 Telebarrio · Informativo de las 21:00</small></div>`
     :`<div class="scn-post scn-live"><span class="av" style="background:#e5383b">🤳</span><div><b>${esc(h)}</b> <small>· ${ri(40,180)} mil seguidores</small><div class="sp-act"><span class="hot">🔴 LIVE</span><span>👀 ${ri(800,4000)}</span></div></div></div>`;
   scene({k:'press:'+meta.day,who:tv?'🎤':'🤳',head:tv?'🎤 PRENSA · TELEBARRIO':'📸 VITCHGRAM · COLABORACIÓN',name:tv?'Periodista de Telebarrio':esc(h),tag:tv?'📺 Tele':'📱 Influencer',prio:1,time:15,def:'no',
-    txt:tv?'¿Nos dejas grabar una entrevista para el informativo?':'¡Holi! ¿Hacemos un vídeo de tu súper? 💅',body,
+    txt:tv?'¿Nos dejas grabar una entrevista para el informativo?':'¡Holi! ¿Hacemos un vídeo de tu súper? 💅',body:body+`<div class="scn-hint">${tv?'🎤':'🎥'} Gratis: lo hace alguien de RR.PP. (o tú, y tu cola espera); si sale bien, +0,15 ★; si sale mal, −0,1 ★. 📸 Pagada: ${fmt(cost)}, +0,1 ★ seguro y el turno que viene, un 15 % más de clientes.</div>`,
     choices:[{t:tv?'🎤 Sí, entrevista':'🎥 Sí, que grabe',k:'int',cls:'go',key:'S',stamp:'¡ACCIÓN!',sc:'ok',fx:'🎬'},
       {t:'📸 Colaboración pagada · '+fmt(cost),k:'paid',key:'P',stamp:'PATROCINADO',sc:'ok',fx:'💸'},
       {t:'🚫 No, gracias',k:'no',cls:'no',key:'N'}],
@@ -2983,7 +2986,7 @@ function quitScene(e){
   const R=run;
   bScene({k:'dimite:'+e.id,who:e.face,sprite:'s'+e.id,role:e.role,head:'🗂️ RR.HH. · DESPACHO',tag:'📝 Dimisión',name:empTag(e),prio:4,...serio(),def:'bye',
     txt:pick(['Me voy, jefe. No puedo más.','Lo dejo. Aquí no hay quien trabaje.','Me ha salido otra cosa. Me piro.']),
-    body:`<div class="sdoc"><h6><span>📝 Carta de dimisión</span><span>Ánimo ${mood(e)}</span></h6><dl><dt>Puesto</dt><dd>${ROLES[e.role].n} · ${e.days} turnos</dd><dt>Cobra</dt><dd class="pix">${monthTxt(e.wage)}</dd><dt>Con +5%</dt><dd class="pix">${monthTxt(Math.round(e.wage*1.05))}</dd></dl></div>`,
+    body:`<div class="sdoc"><h6><span>📝 Carta de dimisión</span><span>Ánimo ${mood(e)}</span></h6><dl><dt>Puesto</dt><dd>${ROLES[e.role].n} · ${e.days} turnos</dd><dt>Cobra</dt><dd class="pix">${monthTxt(e.wage)}</dd><dt>Con +5%</dt><dd class="pix">${monthTxt(Math.round(e.wage*1.05))}</dd></dl></div><div class="scn-hint">💶 Con +5 % puede quedarse, pero no es seguro: con el ánimo así, a veces se va igual. 👋 Suerte: se va hoy y su puesto queda libre.</div>`,
     choices:[{t:'💶 +5% y te quedas',k:'raise',cls:'go',key:'Q'},{t:'👋 Suerte',k:'bye',cls:'no',key:'S',stamp:'BAJA',sc:'bad'}],
     alive:()=>run===R&&!R.over&&meta.emp.includes(e),
     onPick:k=>{if(run!==R||!meta.emp.includes(e))return;
@@ -2997,7 +3000,7 @@ function lateScene(e){
   const R=run;
   return scene({k:'tarde:'+e.id,who:e.face,sprite:'s'+e.id,role:e.role,head:'⏰ FICHAJE · ENTRADA DE PERSONAL',tag:'Llega tarde',name:empTag(e),prio:1,time:9,def:'ok',
     txt:pick(['Perdón, el bus…','Ay, jefe, el metro…','No sonó el despertador, lo juro.','Había un atasco tremendo…']),
-    body:`<div class="sdoc fich"><h6><span>🕘 Tarjeta de fichaje</span><span>${ROLES[e.role].n}</span></h6><dl><dt>Entrada</dt><dd>09:00</dd><dt>Fichado</dt><dd style="color:#d62f3a">${clockOf(run.t,run.dur)}</dd><dt>Toques</dt><dd>${e.warn||0}</dd></dl></div>`,
+    body:`<div class="sdoc fich"><h6><span>🕘 Tarjeta de fichaje</span><span>${ROLES[e.role].n}</span></h6><dl><dt>Entrada</dt><dd>09:00</dd><dt>Fichado</dt><dd style="color:#d62f3a">${clockOf(run.t,run.dur)}</dd><dt>Toques</dt><dd>${e.warn||0}</dd></dl></div><div class="scn-hint">👍 Tranquilo: +3 de ánimo. ⚠️ Toque: −8 de ánimo y queda como amonestación por escrito (sirve para despedir con motivo).</div>`,
     choices:[{t:'👍 Tranquilo',k:'ok',cls:'go',key:'T',stamp:'VALE',sc:'ok',fx:'💛'},{t:'⚠️ Toque',k:'warn',cls:'no',key:'W',stamp:'TOQUE',sc:'bad'}],
     alive:()=>run===R&&!R.over&&meta.emp.includes(e),
     onPick:k=>{if(!meta.emp.includes(e))return;
@@ -3038,7 +3041,7 @@ function raiseScene(){
   const e=pick(ws.flatMap(x=>x.pers==='quejica'||x.moral<45?[x,x,x]:[x])),R=run,nw=Math.round(e.wage*1.05);e.askD=meta.day;
   scene({k:'aum:'+e.id,who:e.face,sprite:'s'+e.id,role:e.role,head:'☕ SALA DE DESCANSO',tag:'💶 Quiere más',name:empTag(e),prio:1,time:14,def:'later',
     txt:pick(['Jefe, ¿un minuto? Lo mío… un 5% más.','Con lo que curro, me merezco un 5%, ¿no?','La luz ha subido. Mi sueldo no.']),
-    body:`<div class="sdoc"><h6><span>💶 Nómina</span><span>${mood(e)} · ${e.days} turnos</span></h6><dl><dt>Ahora</dt><dd class="pix">${monthTxt(e.wage)}</dd><dt>Pide</dt><dd class="pix">${monthTxt(nw)}</dd><dt>Valoración</dt><dd>${verdict(e)}</dd></dl></div>`,
+    body:`<div class="sdoc"><h6><span>💶 Nómina</span><span>${mood(e)} · ${e.days} turnos</span></h6><dl><dt>Ahora</dt><dd class="pix">${monthTxt(e.wage)}</dd><dt>Pide</dt><dd class="pix">${monthTxt(nw)}</dd><dt>Valoración</dt><dd>${verdict(e)}</dd></dl></div><div class="scn-hint">💶 Sí: +20 de ánimo. ✋ No: −12 de ánimo${e.pers==='quejica'?' (−20, que es quejica)':''}. 📅 En la reunión: −3 de ánimo y lo habláis allí.</div>`,
     choices:[{t:'💶 Vale, +5%',k:'yes',cls:'go',key:'S',stamp:'+5%',sc:'ok',fx:'💶'},{t:'✋ Ahora no',k:'no',cls:'no',key:'N'},{t:'📅 En la reunión',k:'later',key:'R'}],
     alive:()=>run===R&&!R.over&&meta.emp.includes(e),
     onPick:k=>{if(!meta.emp.includes(e))return;
@@ -3155,7 +3158,7 @@ function dayTalk(){
   const R=run,crew=()=>meta.emp.filter(e=>working(e));
   scene({k:'charla:'+meta.day,who:'👑',head:'📣 CHARLA ANTES DE ABRIR',tag:best?'🎉 Récord':'📉 Mal día',name:'Tú, ante el equipo',prio:2,time:14,def:'nada',
     txt:best?'Ayer, récord de ventas en caja. El equipo te mira.':'Ayer perdimos dinero. El equipo te mira.',
-    body:`<div class="sdoc"><h6><span>${best?'🏆 Ventas en caja':'📉 Resultado del día'}</span><span>Turno ${h.d}</span></h6><div class="sbig ${best?'pos':'neg'}">${fmt(best?h.s:h.n)}</div></div>`,
+    body:`<div class="sdoc"><h6><span>${best?'🏆 Ventas en caja':'📉 Resultado del turno'}</span><span>Turno ${h.d}</span></h6><div class="sbig ${best?'pos':'neg'}">${fmt(best?h.s:h.n)}</div></div>`,
     choices:[{t:best?'🎉 Felicitar al equipo':'💪 Ánimo, equipo',k:'fel',cls:'go',key:'F',stamp:best?'¡BRAVO!':'¡VAMOS!',sc:'ok',fx:best?'🎉':'💪'},{t:'📢 Bronca general',k:'bronca',cls:'no',key:'B',stamp:'¡ESPABILAD!',sc:'bad'},{t:'🤐 Nada',k:'nada',key:'N'}],
     alive:()=>run===R&&!R.over,
     onPick:k=>{if(k==='nada'||run!==R)return;const fel=k==='fel';
@@ -3391,7 +3394,7 @@ function backScenes(){
   const can=L<2000000,okPat=meta.rep>=3,i=credI();
   backScene({k:'bank:'+meta.day+':'+lv,look:'bank',head:'🏦 BANCO CUADRADO · OF. 0042',tag:lv?'⚠️ Más del 50 %':'Póliza',who:'👔',name:'Don Arturo, el director',prio:2,
     txt:lv?'Ya llevas más de la mitad de la póliza. A −'+fmt(L)+' cerramos el grifo.':'Has tirado de la póliza. Ahora pagas intereses por lo que debas.',
-    body:scnDoc([['Límite',fmt(L)],['Dispuesto','−'+fmt(debt),'neg'],['Libre',fmt(Math.max(0,L-debt))],['Intereses ('+String(+(i*100).toFixed(1)).replace('.',',')+' % anual)','−'+fmt(Math.round(debt*i/365))+'/día','neg']])
+    body:scnDoc([['Límite',fmt(L)],['Dispuesto','−'+fmt(debt),'neg'],['Libre',fmt(Math.max(0,L-debt))],['Intereses ('+String(+(i*100).toFixed(1)).replace('.',',')+' % anual)','−'+fmt(Math.round(debt*i/365))+'/turno','neg']])
       +`<div class="balbar on"><i style="width:${Math.min(100,Math.round(debt/L*100))}%"></i></div>`
       +(can?`<div class="scn-hint">${okPat?'📈 Ampliar a 20.000 €: comisión de apertura 100 € (0,5 %) y el interés sube al 9,5 %.':'📈 Con esta reputación (menos de 3 ★) no te la amplían.'}</div>`:''),
     def:'ok',
@@ -3879,8 +3882,8 @@ function almLiveScenes(){
 function cadScene(p){
   const n=Math.min(meta.stock[p.id]||0,ri(2,4)),a=aisleOf(p.id),dis=Math.round(p.p*0.7/5)*5;
   almScene({k:'cad:'+p.id,look:'label',who:p.e,head:'🏷️ LINEAL · PASILLO '+a,name:esc(p.n),tag:'⚠️ Caduca hoy',prio:0,time:10,def:'deja',rdef:'donar',
-    txt:'Hay '+n+(n===1?' unidad que caduca':' unidades que caducan')+' hoy. ¿Qué hacemos? La Ley 1/2025 contra el desperdicio pone donar antes que tirar (a una tienda pequeña como esta no la obliga, pero el barrio lo agradece).',
-    body:`<div class="cadt"><span class="cadt-d">CAD ${dShort(today0)}</span><span class="cadt-o">${fmt(p.p)}</span><b>${fmt(dis)}</b><span class="cadt-x">−30%</span></div>`,
+    txt:'Hay '+n+(n===1?' unidad que caduca':' unidades que caducan')+' hoy. ¿Qué hacemos? La Ley 1/2025 pide donar antes que tirar (a una tienda tan pequeña no la obliga, pero el barrio lo agradece).',
+    body:`<div class="cadt"><span class="cadt-d">CAD ${dShort(today0)}</span><span class="cadt-o">${fmt(p.p)}</span><b>${fmt(dis)}</b><span class="cadt-x">−30%</span></div><div class="scn-hint">🗑️ Merma: se tiran. 🏷️ Rebaja: se venden al 70 % (a veces queda cutre: −0,05 ★). 🤝 Donar: 0 € y +0,05 ★. 🙈 Dejarlo: la mitad de las veces lo pilla un cliente (−0,15 ★ y queja).</div>`,
     choices:[{t:'🗑️ Retirar a merma',k:'merma',cls:'go',key:'M',stamp:'MERMA',sc:'ok'},{t:'🏷️ Rebajar 30%',k:'rebaja',key:'B',stamp:'−30%',sc:'ok',fx:'🏷️'},{t:'🤝 Donar al banco de alimentos',k:'donar',key:'A',stamp:'DONADO',sc:'ok',fx:'🤝'},{t:'🙈 Dejarlo',k:'deja',cls:'no',key:'D',stamp:'¿Y SI…?',sc:'bad'}],
     onPick:k=>{
       if(!run||run.over)return;
@@ -3900,7 +3903,7 @@ function rotScene(p){
   const mk=(dl,ex)=>almTask('spill','💥',8,'Palé roto de '+p.n+' · pasillo '+a,'Se ha caído un palé de «'+p.n+'» en el pasillo '+a+': cristales y suelo resbaladizo.',Object.assign({n:a,pid:p.id,roles:['alm','atc'],dl:run.t+dl},ex));
   almScene({k:'rot:'+p.id,look:'pa',who:'💥',head:'MEGAFONÍA',name:'¡Palé al suelo en el pasillo '+a+'!',tag:'Transpaleta',prio:2,time:9,def:'cord',rdef:'clean',
     txt:'«Personal de Almacén al pasillo '+a+', por favor.»',
-    body:`<div class="crash">${p.e}${p.e}💥${p.e}🫧🫧</div><div class="scn-hint">Unas ${n} uds de ${esc(p.n)} por el suelo. Resbala.</div>`,
+    body:`<div class="crash">${p.e}${p.e}💥${p.e}🫧🫧</div><div class="scn-hint">Unas ${n} uds de ${esc(p.n)} por el suelo. Resbala.<br>🧹 <b>Limpiar ya</b>: se salva un 30 % y va alguien de Almacén o Caja (deja lo que hace). 🚧 <b>Acordonar</b>: se pierde todo y queda el aviso de limpiar; 1 de cada 5 veces alguien se cuela y se cae (reclamación y −0,2 ★).</div>`,
     choices:[{t:'🧹 Limpiar ya',k:'clean',cls:'go',key:'L',stamp:'¡A FREGAR!',sc:'ok',fx:'🫧'},{t:'🚧 Acordonar y seguir',k:'cord',key:'C',stamp:'ACORDONADO',sc:'bad'}],
     onPick:k=>{
       if(!run||run.over)return;
@@ -4111,7 +4114,7 @@ function balHtml(){
   const b=balData(),m=v=>(v<0?'−':'')+fmt(Math.abs(v)),pc=Math.min(100,Math.round(b.debt/credLim()*100));
   return `<div class="bal"><div class="balk"><span><small>💰 Bote</small><b>${fmt(b.cash)}</b></span><span class="${b.debt?'neg':''}"><small>🏦 Deuda</small><b>${b.debt?'−':''}${fmt(b.debt)}</b></span><span class="${b.pat<0?'neg':'pos'}"><small>📒 Patrimonio</small><b>${m(b.pat)}</b></span></div>
     <div class="balbar ${b.debt?'on':''}" title="Póliza usada"><i style="width:${pc}%"></i></div>
-    <div class="sum"><span>Existencias a coste</span><b>${fmt(b.stk)}</b>${b.cred?`<span>IVA a favor</span><b>${fmt(b.cred)}</b>`:''}<span>Póliza libre</span><b>${fmt(b.free)}</b>${b.int?`<span>Intereses/día</span><b class="neg">−${fmt(b.int)}</b>`:''}<span>Capital inicial</span><b>${fmt(CAP0)}</b><span>Resultado acumulado</span><b class="${b.res<0?'neg':'pos'}">${b.res<0?'−':'+'}${fmt(Math.abs(b.res))}</b></div>
+    <div class="sum"><span>Existencias a coste</span><b>${fmt(b.stk)}</b>${b.cred?`<span>IVA a favor</span><b>${fmt(b.cred)}</b>`:''}<span>Póliza libre</span><b>${fmt(b.free)}</b>${b.int?`<span>Intereses por turno</span><b class="neg">−${fmt(b.int)}</b>`:''}<span>Capital inicial</span><b>${fmt(CAP0)}</b><span>Resultado acumulado</span><b class="${b.res<0?'neg':'pos'}">${b.res<0?'−':'+'}${fmt(Math.abs(b.res))}</b></div>
     <div class="supd">Patrimonio = bote + existencias + IVA a favor − póliza (${fmt(credLim())} máx.).</div>
     <div class="pocket"><span>👑 Tu bolsillo <small>(no es de la tienda)</small></span><b>${fmt(bossOf().cash)}</b></div></div>`;
 }
@@ -4223,7 +4226,7 @@ function deptHtml(D){
   if(!D)return '<div class="supd">Sin datos de este turno.</div>';
   return '<div class="dgrid">'+DEPS.map(([k,ic,n])=>{const o=D[k];if(!o)return '';const g=GRADE(o.s);
     return `<div class="dcard ${g[2]}"><div class="dch"><b>${ic} ${n}</b><span class="dpp" title="Trabajaron / plantilla">👥 ${o.w}/${o.n}</span><span class="grade" title="Nota">${g[1]} ${g[0]}</span></div>
-      <div class="sum">${o.kv.map(x=>`<span>${x[0]}</span><b class="${x[2]?'neg':''}">${x[1]}</b>`).join('')}<span>Coste del día</span><b>${o.cost?'−'+fmt(o.cost):'0'}</b></div>
+      <div class="sum">${o.kv.map(x=>`<span>${x[0]}</span><b class="${x[2]?'neg':''}">${x[1]}</b>`).join('')}<span>Coste del turno</span><b>${o.cost?'−'+fmt(o.cost):'0'}</b></div>
       <div class="dhint ${/^Bien/.test(o.h)?'ok':''}">${o.h}</div></div>`;}).join('')+'</div>';
 }
 /* ---------- el jefe, socio único de la SL ----------
@@ -4295,16 +4298,27 @@ function heroTip(e){
     :`<button class="btn" data-act="stab" data-s="shop" data-k="tips">🧭 Ver los consejos ▸</button>`;
   return {ic:x.ic,t:x.t,d:x.d,hot:x.h,btn};
 }
+/* Lo gordo que solo salió como aviso durante el turno (bajas, multas, hurtos, billetes y cupones): una línea en el cierre. */
+function heroEv(){
+  if(!run)return '';const L=[],h=run.hx;
+  (meta.bajas||[]).filter(b=>b.d===meta.day).forEach(b=>L.push('🚪 '+esc(b.n)+' se ha ido ('+esc(b.why)+')'));
+  if(run.insp)L.push('🛡️ Multa de inspección: −'+fmt(run.insp));
+  if(run.consumo)L.push('📨 Sanción de Consumo: −'+fmt(run.consumo));
+  if(run.fakes)L.push('💶 Billetes falsos cobrados: −'+fmt(run.fakes));
+  if(run.cupL)L.push('🎟️ Cupones malos aplicados: −'+fmt(run.cupL));
+  if(h&&h.lost>h.rec)L.push('🕵️ Hurtos: '+(h.lost-h.rec)+' uds');
+  return L.length?`<div class="h3ev"><b>📌 Hoy también:</b> ${L.join(' · ')}</div>`:'';
+}
 function heroHtml(e){
   const f=e.fin||{},n=f.net||0,dv=(f.cash||0)-(f.div||0),W=heroWhy(f),T=heroTip(e);
   const cls=n>0?'win':n<0?'loss':'even',arr=n>0?'▲':n<0?'▼':'■';
   return `<div class="hero3 ${cls}">${starsHtml()}
     <section class="h3q h3res"><div class="h3l"><small>1 · ¿Gané o perdí?</small><button class="h3more" data-act="stab" data-s="shop" data-k="kpi">📊 Ver detalle ▸</button></div>
       <div class="h3big"><span class="h3ic" aria-hidden="true">${arr}</span><b>${n?sgnP(n):fmt(0)}</b><em>${n>0?'Ganaste':n<0?'Perdiste':'Ni ganas ni pierdes'}</em></div>
-      <div class="h3sub">💰 Bote <b>${fmt(meta.money)}</b> <span class="${dv<0?'h3dn':'h3up'}">(${dv<0?'▼':'▲'} ${sgnP(dv)} hoy)</span> · ⭐ ${repT(meta.rep)}</div></section>
+      <div class="h3sub">💰 Bote <b>${fmt(meta.money)}</b> <span class="${dv<0?'h3dn':'h3up'}">(${dv<0?'▼':'▲'} ${sgnP(dv)} hoy)</span> · ★ ${repT(meta.rep)}</div></section>
     <section class="h3q"><div class="h3l"><small>2 · ¿Por qué?</small></div>
-      <ul class="h3why">${W.length?W.map(x=>`<li class="${x.v<0?'h3dn':'h3up'}"><i aria-hidden="true">${x.ic}</i><span>${x.t}</span><b>${x.v<0?'▼':'▲'} ${sgnP(x.v)}</b></li>`).join(''):'<li><span>Hoy no se ha movido nada.</span></li>'}</ul></section>
-    <section class="h3q h3tip ${T.hot?'hot':''}"><div class="h3l"><small>3 · ¿Qué cambio mañana?</small></div>
+      <ul class="h3why">${W.length?W.map(x=>`<li class="${x.v<0?'h3dn':'h3up'}"><i aria-hidden="true">${x.ic}</i><span>${x.t}</span><b>${x.v<0?'▼':'▲'} ${sgnP(x.v)}</b></li>`).join(''):'<li><span>Hoy no se ha movido nada.</span></li>'}</ul>${heroEv()}</section>
+    <section class="h3q h3tip ${T.hot?'hot':''}"><div class="h3l"><small>3 · ¿Qué cambio el próximo turno?</small></div>
       <div class="h3adv"><b>${T.ic} ${T.t}</b><span>${T.d}</span></div>${T.btn}</section>
   </div>`;
 }
@@ -4366,11 +4380,11 @@ function showStart(confirmWipe){
   const cont=hasSave||meta.day>1;
   if(scrTab.start==='rank'&&!online())scrTab.start='how';
   const k=scrTab.start,X={ach:()=>achHead()+achGrid(),car:carHtml,aj:ajHtml}[k];
-  const HOW=['🛒 Toca cada producto de la cinta para escanearlo. Los de código dañado piden varios toques.','🪪 Productos <b>18+</b>: mira la fecha de nacimiento del DNI y decide si vendes.','🛍️ Si el cliente pide bolsa, añádela. Si no la pide, no la cobres.','💶 Con tarjeta, cobra. En efectivo, da el cambio exacto con billetes y monedas.','📨 <b>Reclamaciones</b>: las dudas, tú. Dinero, a Backoffice. Trato y redes, a RR.PP. Agotados, a Almacén.','📦 Lo que vendes sale de la estantería: pide a los distribuidores y ten gente en Almacén. Empiezas con 30.000 € y una póliza de crédito de 15.000 €: si la agotas, concurso de acreedores.','⭐ La paciencia se agota. Con la reputación a cero, cierras la tienda.','🔓 Empiezas solo en caja: Almacén se abre en el turno 3, Backoffice y RR.PP. en el 5, RR.HH. y Dirección en el 7. Cada semana, objetivos 🎯 con premio.'].map(x=>'<li>'+x+'</li>');
+  const HOW=['🐶 Te acabas de quedar con <b>VitchMarket</b>, un súper de barrio en Madrid. La tienda es tuya… y como no llega para otro cajero, también cobras tú en la <b>Caja 3</b>.','🛒 <b>Escanea</b> tocando cada producto de la cinta (raya roja = código dañado: 3 toques). 🛍️ <b>Bolsa</b>, solo si la pide.','🪪 <b>Alcohol (18+)</b>: mira la fecha de nacimiento del DNI. Vender a un menor: −0,3 de reputación y, si te pillan, multa desde <b>30.050,62 €</b>.','💶 <b>Tarjeta</b>: cobrar y listo. <b>Efectivo</b>: el cambio exacto con billetes y monedas. De más, lo pierde la tienda.','📨 <b>Reclamaciones</b>: las dudas, tú. Dinero, a Backoffice. Trato y redes, a RR.PP. Agotados, a Almacén.','🏢 Desde el turno 1 mandas en todo: Almacén, Backoffice, RR.PP., RR.HH. y Dirección. Pide mercancía, contrata y vigila la 👥 Plantilla.','⭐ La <b>reputación</b> (de ★ 0 a ★ 5) trae clientes: cada enfadado o error la baja. <b>A ★ 0, cierras.</b>','💰 Empiezas con un bote de <b>30.000 €</b> y una póliza de 15.000 €. Sueldos, alquiler e impuestos se pagan cada turno. <b>Si agotas la póliza, concurso de acreedores: fin.</b>','🏆 Cada turno, hasta 3 estrellas; cada semana, objetivos 🎯 con premio. ⚙️ <b>Ajustes</b>: ritmo relajado, texto grande y colores para daltónicos.','🔓 Más adelante llegan ladrones (turno 3), billetes falsos (4), cupones (6) e inspecciones (10). No hay final: aguanta todos los turnos que puedas.'].map(x=>'<li>'+x+'</li>');
   const P=k==='rank'||X?{html:'',nav:''}:paged(HOW,innerHeight<700&&innerWidth<900?3:innerHeight<860&&innerWidth<900?5:7);
   const body=X?X():k==='rank'?'<div id="rank"></div>':`${offline?'<div class="rerr">📴 Sin conexión: juegas en solitario.</div>':''}
     <div class="hero" id="herobox"><span class="htag">🛒 Tu súper, tu historia</span></div>
-    <p class="lead">Eres la cajera o el cajero de VitchMarket y, entre turnos, quien manda. Cobra rápido y sin fallos.</p>
+    <p class="lead">Un turno es un día, de 9:00 a 21:00, en unos 100 segundos. Cobra rápido, sin fallos, y que no se hunda el negocio.</p>
     <ul class="howto">${P.html}</ul>
     ${online()?nameField('Tu nombre en el ranking (no pongas datos personales)'):''}`;
   const foot=!cont?'<button class="btn go big" data-act="start">Abrir caja</button>'
@@ -4547,7 +4561,7 @@ function dailyExit(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.18-104';
+const APPV='2026.11.18-105';
 /* Compara versiones por números («-9» < «-11»), no como texto. */
 const verCmp=(a,b)=>{const x=String(a).split(/[.-]/).map(Number),y=String(b).split(/[.-]/).map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
 try{const vt=document.createElement('div');vt.id='vtag';vt.textContent='v'+APPV;document.body.appendChild(vt);}catch(e){}
@@ -5276,7 +5290,7 @@ function deptReport(){
   meta.emp.filter(e=>e.real).forEach(e=>{const s=e.st;you[e.real]=[['Tus avisos',s.tasks+' bien · '+s.tfail+' mal'],['Tus reclamaciones',s.ok+' bien · '+s.fail+' mal']];});
   return {day:meta.day,you,low,
     atc:[['Clientes atendidos',run.served],['Se fueron enfadados',run.angry],['Errores en caja',run.errors],['Avisos de la tienda',run.tdone+' ✓ · '+run.tlost+' ✗']],
-    back:[['Ventas del día',fmt(run.sales)],['Propinas',fmt(run.tips)],['Multas y pérdidas en caja',fmt(run.fines)],['Nómina del personal',fmt(lastEnd.payroll)],['Reclamaciones de dinero',tk(r.back)],['Bote',fmt(meta.money)]],
+    back:[['Ventas del turno',fmt(run.sales)],['Propinas',fmt(run.tips)],['Multas y pérdidas en caja',fmt(run.fines)],['Nómina del personal',fmt(lastEnd.payroll)],['Reclamaciones de dinero',tk(r.back)],['Bote',fmt(meta.money)]],
     rrpp:[['Reputación','★ '+repT(meta.rep)],['Clientes que se fueron enfadados',run.angry],['Reclamaciones por trato o redes',tk(r.rrpp)]],
     alm:[['Productos agotados',out],['Mercancía esperando en el almacén',pend+' uds'],['Pedidos en camino',meta.orders.length],['Reclamaciones por agotado',tk(r.alm)]],
     rrhh:[['Plantilla',meta.emp.length+' personas'],['Nómina del turno',fmt(lastEnd.payroll)],['Solicitudes pendientes',appsList().length]]};
@@ -5560,7 +5574,7 @@ function spawnTask(){
   const t={id:++uid,k:T.k,ic:T.ic,roles:T.roles,dur:T.dur,pen:T.pen,pid:p.id,n,lang:lg?lg[0]:null,
     s:TSHORT[T.k].replace('%p%',p.n).replace('%n%',n).replace('%l%',lg?lg[1]:''),
     txt:T.t.replace('%p%',p.n).replace('%n%',n).replace('%l%',lg?lg[1]+' (habla '+LANG[lg[0]]+')':''),dl:run.t+TLIFE,who:null,until:0,span:1,match:true};
-  if(T.k==='cv'){t.cand=makeCand();if(!hasRR){t.pen=0;t.dl=run.t+45;t.txt+=' Nadie de RR.HH. en tienda: «Voy yo» para entrevistarle.';}}
+  if(T.k==='cv'){t.cand=makeCand();if(!hasRR){t.pen=0;t.dl=run.t+45;t.txt+=' Sin RR.HH. en tienda: «Voy yo».';}}
   if(T.k==='feud'){t.fd=fd;t.s='Bronca: '+fd.a.name+' y '+fd.b.name;t.txt=fd.a.name+' y '+fd.b.name+' están discutiendo en el almacén.';}
   run.tasks.push(t);
   toast(t.ic+' '+t.txt);beep(660,.12,'triangle',.05);
@@ -6897,7 +6911,7 @@ function showMeeting(){
   });
   const reqs=meet.reqs.map((r,i)=>{
     const a=empById(r.a),b=r.b&&empById(r.b);if(!a||(r.k==='feud'&&!b))return '';
-    const txt=r.k==='raise'?`${a.face} <b>${a.name}</b> pide 3 € más al día. ${a.days>=3?'«Llevo '+a.days+' turnos dejándome la piel.»':'«Con lo que curro, me lo merezco.»'}`
+    const txt=r.k==='raise'?`${a.face} <b>${a.name}</b> pide un 5 % más (${monthTxt(Math.round(a.wage*1.05))}). ${a.days>=3?'«Llevo '+a.days+' turnos dejándome la piel.»':'«Con lo que curro, me lo merezco.»'}`
       :r.k==='off'?`${a.face} <b>${a.name}</b> pide librar el turno ${meta.day+1}. «Es la comunión de mi sobrino.»`
       :r.k==='extra'?`${a.face} <b>${a.name}</b> se ofrece a echar horas extra el próximo turno por 10 €.`
       :`${a.face} <b>${a.name}</b> y ${b.face} <b>${b.name}</b> no se hablan. Cada uno dice que el otro no da palo al agua.`;
@@ -6910,7 +6924,7 @@ function showMeeting(){
     const qa=c.qa.map(x=>`<div class="qa">${x.q}<i>«${x.a}»</i></div>`).join('');
     const btn=(c.hired?'':c.integ?`<div class="qa">🧪 Integridad: <b>${c.integ}</b> (aprox.)</div>`:`<button class="btn" data-act="integc" data-c="${i}" ${meta.money<INTEG?'disabled':''}>🧪 Test de integridad · ${fmt(INTEG)}</button>`)+(c.hired?'<div class="supd">Fichado. Empieza el próximo turno, en periodo de prueba.</div>'
       :`<button class="btn go" data-act="hirec" data-c="${i}" ${full||meta.money<HIRE?'disabled':''}>${full?'Puesto completo':'Contratar · '+fmt(HIRE)}</button>`);
-    return `<div class="emp">${c.ref?'<div class="qa">🤝 '+c.ref+'</div>':''}<div class="eh"><span class="ef">${c.face}</span><div class="t"><b>${c.name}</b>${flag(c)} ${(NATS[c.nat]||NATS[0]).c} · para ${ROLES[c.role].n} · habla ${c.langs.map(l=>LANG[l]).join(', ')} ·${c.exp?c.exp+(c.exp===1?' año':' años')+' de experiencia':'sin experiencia'} · pide ${fmt(c.wage)}/día</div></div>${qa}${btn}</div>`;
+    return `<div class="emp">${c.ref?'<div class="qa">🤝 '+c.ref+'</div>':''}<div class="eh"><span class="ef">${c.face}</span><div class="t"><b>${c.name}</b>${flag(c)} ${(NATS[c.nat]||NATS[0]).c} · para ${ROLES[c.role].n} · habla ${c.langs.map(l=>LANG[l]).join(', ')} ·${c.exp?c.exp+(c.exp===1?' año':' años')+' de experiencia':'sin experiencia'} · pide ${monthTxt(c.wage)}</div></div>${qa}${btn}</div>`;
   });
   const duties=Object.keys(ROLES).map(k=>`<div class="up"><div class="t"><b>${ROLES[k].n} · ${staffOf(k).length}/${ROLES[k].max}</b>${ROLES[k].duties.join(' · ')}</div></div>`).join('');
   const ap=isHost()?appsList().length:0,c=cols();
@@ -7085,7 +7099,7 @@ function renderHud(){
   {const gb=$('#hGoalB'),T=run&&!run.remote&&!isMember()?turnGoals():null;if(gb){gb.hidden=!T;if(T)$('#hGoal').textContent=(run.stars!=null?run.stars:T.filter(g=>g[1]>=1).length)+'/3';}}
   {const rs=$('#hRush'),dw=$('#hDow');if(rs&&dw){if(run&&run.remote){const st=room.state||{};dw.textContent=DOW[dowOf(st.day)].slice(0,3);$('#hDowB').textContent=DOW[dowOf(st.day)];rs.hidden=!((st.t||0)<(st.dur||100)&&rushRaw(9+12*Math.min(1,(st.t||0)/(st.dur||100)))>=1.5);}
     else{dw.textContent=DOW[dowOf(meta.day)].slice(0,3)+(dowF(meta.day)>1?' 🔥':'');$('#hDowB').textContent=DOW[dowOf(meta.day)]+(dowF(meta.day)>1?' 🔥 +15 %':dowF(meta.day)<1?' · −10 %':'');rs.hidden=!rushOn();}}}
-  if(run&&run.remote){const st=room.state||{};$('#hTill').textContent=run.till;$('#hDay').textContent=st.day||1;$('#hMoney').textContent=fmt(st.money||0);$('#hMoney').parentNode.classList.toggle('neg',(st.money||0)<0);$('#hRep').textContent='★ '+(+st.rep||0).toFixed(1);
+  if(run&&run.remote){const st=room.state||{};$('#hTill').textContent=run.till;$('#hDay').textContent=st.day||1;$('#hMoney').textContent=fmt(st.money||0);$('#hMoney').parentNode.classList.toggle('neg',(st.money||0)<0);$('#hRep').textContent='★ '+repT(+st.rep||0);
     $('#hTk').textContent=st.dep&&st.dep.tk?Object.values(st.dep.tk).reduce((a,b)=>a+(+b||0),0):0;$('#hOut').textContent=(st.dep&&st.dep.out)||0;const c=clockOf(st.t,st.dur);$('#hClock').textContent=c;$('#hBar').style.width=Math.min(1,(st.t||0)/(st.dur||100))*100+'%';return;}
   $('#hTill').textContent='3';
   $('#hDay').textContent=meta.day;
@@ -7522,7 +7536,7 @@ function staffInfo(){
   const rows=E.map(e=>`<dt>${e.real?`${e.face} ${esc(e.name)} 🎮`:`<button class="btn mini talkb" data-act="talk" data-e="${e.id}" title="Su ficha y hablar con ${esc(e.name)}">${e.face} ${esc(e.name)} 🗣️</button>`}${e.trial>0?' 🧪':''}</dt><dd>${ROLES[e.role].s} · ${staffState(e)}</dd>`).join('');
   const B=(meta.bajas||[]).slice(0,5).map(b=>`<dt>${b.f} ${esc(b.n)} · T${b.d}</dt><dd>${esc(b.why)}</dd>`).join('');
   scene({k:'plant:'+Date.now(),over:true,head:'👥 PLANTILLA · TURNO '+meta.day,tag:E.filter(onFloor).length+' en tienda / '+E.length,who:'👑',name:'Tu equipo',prio:1,time:40,def:'ok',
-    txt:'Toca a alguien para ver su vida y hablar con él o ella. '+Object.keys(ROLES).map(k=>ROLES[k].s+' '+(cnt[k]||0)).join(' · ')+'. Nómina: '+fmt(E.reduce((s,e)=>s+empCost(e.wage),0))+'/día con Seguridad Social.',
+    txt:'Toca a alguien para ver su vida y hablar con él o ella. '+Object.keys(ROLES).map(k=>ROLES[k].s+' '+(cnt[k]||0)).join(' · ')+'. Nómina: '+fmt(E.reduce((s,e)=>s+empCost(e.wage),0))+' por turno con Seguridad Social.',
     body:`<div class="sdoc"><h6><span>Quién hay</span><span>${E.length}</span></h6><dl>${rows||'<dt>Nadie</dt><dd>Tú contra el mundo</dd>'}</dl></div>`
       +(B?`<div class="sdoc"><h6><span>🚪 Últimas bajas</span><span>${(meta.bajas||[]).length}</span></h6><dl>${B}</dl></div>`:''),
     choices:[{t:'🗂️ Ir a RR.HH.',k:'rrhh',cls:'go',key:'R'},{t:'👍 Vale',k:'ok',key:'V'}],
@@ -7809,7 +7823,7 @@ const tabBadge=k=>{
 function renderTabs(){
   const el=$('#tabs');if(!el)return;
   if(isMember()){el.innerHTML='';return;}
-  el.innerHTML=TABS.map(([k,ic,n])=>{if(!unl(k))return `<button class="tab lock" disabled title="${n}: se abre en el turno ${unlDay(k)}" aria-label="${n}, bloqueado hasta el turno ${unlDay(k)}">🔒<span>${n}</span><i>T${unlDay(k)}</i></button>`;const b=tabBadge(k);return `<button class="tab ${tab===k?'on':''}" data-act="tab" data-k="${k}" title="${n}">${ic}<span>${n}</span>${b?`<i>${b}</i>`:''}</button>`;}).join('')+'<button class="tab help" data-act="guide" title="Cómo se trabaja en esta pestaña" aria-label="Cómo se trabaja">📘</button>';
+  el.innerHTML=TABS.map(([k,ic,n])=>{if(!unl(k))return `<button class="tab lock" disabled title="${n}: se abre en el turno ${unlDay(k)}" aria-label="${n}, bloqueado hasta el turno ${unlDay(k)}">🔒<span>${n}</span><i>T${unlDay(k)}</i></button>`;const b=tabBadge(k);return `<button class="tab ${tab===k?'on':''}" data-act="tab" data-k="${k}" title="${n}">${ic}<span>${n.replace('Backoffice','Back\u00ADoffice')}</span>${b?`<i>${b}</i>`:''}</button>`;}).join('')+'<button class="tab help" data-act="guide" title="Cómo se trabaja en esta pestaña" aria-label="Cómo se trabaja">📘</button>';
 }
 function setTab(k){
   if(!TABS.some(x=>x[0]===k)||!unl(k))return;
@@ -7862,7 +7876,7 @@ function backHtml(){
   const nom=meta.emp.reduce((t,e)=>t+empCost(e.wage),0),r=run||{};
   return `<div class="dgrid"><div class="dpanel"><h2>💼 Backoffice</h2>${staffBlock('back')}
     <div class="zone-title">CUENTAS ${run&&!run.over?'DEL TURNO':'DEL ÚLTIMO TURNO'}</div>
-    <div class="sum"><span>Bote</span><b>${fmt(meta.money)}</b><span>Ventas</span><b>${fmt(r.sales||0)}</b><span>Otras cajas</span><b>${fmt(r.offS||0)}</b><span>Multas y pérdidas en caja</span><b>${r.fines?'−':''}${fmt(r.fines||0)}</b><span>Nómina por día (con Seg. Social)</span><b>−${fmt(nom)}</b><span>Alquiler, luz y demás por día</span><b>−${fmt(FIXED_D)}</b><span>Concurso de acreedores si el bote baja de</span><b>−${fmt(credLim())}</b></div></div>
+    <div class="sum"><span>Bote</span><b>${fmt(meta.money)}</b><span>Ventas</span><b>${fmt(r.sales||0)}</b><span>Otras cajas</span><b>${fmt(r.offS||0)}</b><span>Multas y pérdidas en caja</span><b>${r.fines?'−':''}${fmt(r.fines||0)}</b><span>Nómina por turno (con Seguridad Social)</span><b>−${fmt(nom)}</b><span>Alquiler, luz y demás por turno</span><b>−${fmt(FIXED_D)}</b><span>Concurso de acreedores si el bote baja de</span><b>−${fmt(credLim())}</b></div></div>
     <div class="dpanel"><div class="zone-title">BANDEJA · RECLAMACIONES DE DINERO</div>${tkList('back')}<div class="supd">Las que nadie resuelva se reparten al cerrar entre el personal de Backoffice.</div></div></div>`;
 }
 function rrppHtml(){
@@ -7976,7 +7990,7 @@ const GUIDE={
  atc:{t:'🧾 Caja',steps:[
   ['🎯','<b>Tu misión:</b> cobrar rápido y sin fallos a los clientes que te manda la tienda a tu caja.'],
   ['🛒','Toca cada producto de la cinta para pasarlo por el escáner. Los de <b>código dañado</b> (borde rojo) piden 3 toques.'],
-  ['🪪','Si lleva <b>alcohol (18+)</b>, mira la fecha de nacimiento del DNI. Vender a un menor resta reputación y, si hay inspección, multa grave desde 3.001 € (hasta 60.000 € si reincides).'],
+  ['🪪','Si lleva <b>alcohol (18+)</b>, mira la fecha de nacimiento del DNI. Si no tiene 18 años, «Negar». Vender a un menor resta 0,3 de reputación y, si hay inspección o denuncia, la multa empieza en <b>30.050,62 €</b> (Ley 5/2002 de Madrid): eso cierra la tienda.'],
   ['⌨️','Con teclado va más rápido: <b>Espacio</b> escanea, <b>B</b> bolsa, <b>Intro</b> cobra o da el cambio, <b>S</b>/<b>N</b> en el DNI, <b>⌫</b> quita la última moneda.'],
   ['🛍️','<b>Bolsa:</b> si la pide, añádela. Si no la pide, ni se te ocurra cobrarla.'],
   ['💶','<b>Tarjeta:</b> cobra y espera. <b>Efectivo:</b> pon en la bandeja el cambio exacto y dale a «Dar cambio». De más, lo pierde la tienda; de menos, no te lo aceptan.'],
@@ -8010,11 +8024,19 @@ const GUIDE={
   ['🧑‍💼','<b>Entrevista:</b> lee el currículum (los 📎 delatan los puntos flojos de verdad), elige 3 preguntas y marca con 🚩 lo que no cuadre: mienten 1 de cada 4 veces. Luego contrata (con sueldo) o no.'],
   ['🥊','<b>Bronca entre compañeros:</b> escucha a los dos y mira sus fichas. La razón la suele tener quien mejor trabaja; si están parecidos, media. Si te equivocas, el agraviado se hunde.'],
   ['📝','En tu departamento salen también las <b>solicitudes de empleo</b> de personas reales: «Contratar» o «No».'],
-  ['😊','El día que trabajas, toda la plantilla está un poco más contenta.'],
+  ['😊','El turno que trabajas, toda la plantilla está un poco más contenta (+2 de ánimo).'],
   ['📢','<b>Vacantes:</b> en el tablón de vacantes publicas cuántas plazas buscas de cada puesto. Solo vienen candidatos (y en la portada sale «SE BUSCA») donde hay vacante; contratar la cierra.']]},
  j_caja:{t:'🧾 Caja · jefe',steps:[
-  ['🎯','Aquí cobras tú en la <b>Caja 3</b>. Si cambias de pestaña, un cajero de la casa se pone en tu caja y tú diriges.'],
-  ['🛒','Toca cada producto para escanearlo, revisa el DNI del alcohol, la bolsa, y cobra con tarjeta o con el cambio exacto.'],
+  ['🐶','«¡Buenas! Soy <b>Vitchi</b>, la mascota de la casa. Te cuento el panorama: VitchMarket es tuyo, de la tienda al último yogur. Y como la cosa no da para otro cajero, hoy cobras tú en la <b>Caja 3</b>. Venga, que abrimos.»'],
+  ['🛒','<b>Escanear:</b> toca cada producto de la cinta (o <b>Espacio</b>). Si tiene raya roja, el código está dañado: 3 toques.'],
+  ['🛍️','<b>Bolsa:</b> solo si la pide (lo dice en su bocadillo). Cobrarla sin pedirla, o no darla, es un error: −0,3 de reputación.'],
+  ['🪪','<b>DNI:</b> el alcohol (18+) pide DNI. Mira la fecha de nacimiento: con menos de 18, «Negar». Vender a un menor resta 0,3 de reputación y, si hay inspección o denuncia, la multa empieza en <b>30.050,62 €</b> (Ley 5/2002 de Madrid).'],
+  ['💶','<b>Cobrar:</b> con tarjeta, «Cobrar». En efectivo, pon en la bandeja el cambio exacto y «Dar cambio». De más, lo pierde la tienda; de menos, no te lo aceptan.'],
+  ['⭐','<b>Reputación</b> (★ 0 a ★ 5): con buena fama viene mucha más gente. Un cliente que se cansa de esperar se va enfadado y la baja. <b>A ★ 0, cierras.</b>'],
+  ['💰','<b>Bote:</b> el dinero de la empresa. Empiezas con 30.000 €; cada turno pagas sueldos, alquiler e impuestos. Si pasas de −15.000 € (la póliza del banco), concurso de acreedores y se acabó.'],
+  ['🏢','<b>Mandas en todo desde el turno 1:</b> en las pestañas de arriba tienes Almacén, Backoffice, RR.PP., RR.HH. y Dirección. Si te vas de la Caja, te cubre un cajero de la casa. En <b>👥 Plantilla</b> (arriba) ves quién está, dónde y cuánto cuesta.'],
+  ['🏆','Arriba, <b>🏆 Turno</b>: tres objetivos que dan estrellas al cerrar. <b>🎯 Semana</b>: objetivos de 7 turnos con premio. Tócalos para ver qué falta.'],
+  ['⚙️','<b>⚙️ Ajustes</b> (arriba): ritmo relajado, texto grande, colores para daltónicos y menos movimiento. El turno se para mientras los miras.'],
   ['⌨️','En el ordenador, con teclado: <b>Espacio</b> escanea, <b>B</b> bolsa, <b>Intro</b> cobra o da el cambio, <b>S</b>/<b>N</b> en el DNI, <b>⌫</b> quita la última moneda y <b>1–5</b> deriva una reclamación.'],
   ['🔔','A la derecha (en el móvil, en la 🔔) salen los <b>avisos</b>: asigna a alguien de ese departamento (nadie hace trabajo de otro), mándale con «📢 Mandar a…» aunque esté ocupado, ve tú con «Voy yo» o usa <b>⚡ Asignar todo</b>.'],
   ['🧾','Si hay cajeros reales, abren la <b>Caja 1 y la Caja 2</b> y la tienda les reparte la cola.']]},
@@ -8036,7 +8058,7 @@ const GUIDE={
  j_dir:{t:'👑 Dirección',steps:[
   ['📊','El <b>resumen</b> de la tienda y una tarjeta por departamento: toca una para ir.'],
   ['📹','Las <b>cámaras</b>: toca una para ampliarla y a una persona para ver qué hace (o si se escaquea).'],
-  ['⭐','Las <b>mejoras</b> de la tienda: escáner, ventilador y termo de café.']]}
+  ['⭐','Las <b>mejoras</b> de la tienda: escáner láser (180 €), climatización en cajas (900 €), cafetera (120 €) y arco antirrobo (1.200 €).']]}
 };
 let guide=null;
 const guideSeen=k=>{try{return localStorage.getItem('vitchmarket.guia.'+k)==='1';}catch(e){return true;}};
