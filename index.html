@@ -4363,7 +4363,7 @@ function showShop(noFit){
   else if(k==='dep')body=deptHtml(e.dep);
   else if(k==='you')body=bossHtml();
   else if(k==='tips'){const A=adviceList(e);if(!tipsPer)tipsPer=rowsFit(80,230);const P=paged(A,tipsPer,'<div class="supd">Todo en orden. Sigue así, que no dura.</div>');body=`<div class="advice">${P.html}</div>`;nav=P.nav;}
-  else if(k==='staff'){const P=paged(dep,rowsFit(54,250),'<div class="supd">No tienes a nadie contratado.</div>');body=`<div class="shop">${P.html}</div>`;nav=P.nav;}
+  else if(k==='staff'){const P=paged(dep,rowsFit(54,250),'<div class="supd">No tienes a nadie contratado.</div>');body=`<div class="shop">${P.html}</div>${pg===0?vacQuick()+poolHtml():''}`;nav=P.nav;}
   else if(k==='order'){if(!ordPer)ordPer=Math.max(2,Math.floor((innerHeight-330)/50));body=orderHtml(ordPer);}
   else if(k==='ups')body=`<div class="shop">${upsHtml()}</div>`;
   else if(k==='promo')body=promoHtml();
@@ -4571,7 +4571,7 @@ function dailyExit(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.18-107';
+const APPV='2026.11.18-108';
 /* Compara versiones por números («-9» < «-11»), no como texto. */
 const verCmp=(a,b)=>{const x=String(a).split(/[.-]/).map(Number),y=String(b).split(/[.-]/).map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
 try{const vt=document.createElement('div');vt.id='vtag';vt.textContent='v'+APPV;document.body.appendChild(vt);}catch(e){}
@@ -7897,6 +7897,24 @@ function rrppHtml(){
     <div class="dpanel"><div class="zone-title">RESEÑAS DE HOY</div>${rv.length?'<div class="shop">'+rv.map(r=>`<div class="up"><div class="t"><b>${r.f} ${'★'.repeat(r.st)}${'☆'.repeat(5-r.st)}</b>«${esc(r.t)}»${r.ans?' · ✅ respondida':''}</div>${r.st<=2&&!r.ans&&run&&!run.over?`<button class="btn" data-act="drev" data-id="${r.id}">Responder</button>`:''}</div>`).join('')+'</div>':'<div class="supd">Aún no hay reseñas.</div>'}
     <div class="supd">Responder a una mala reseña suaviza el golpe (+0,04 de reputación).</div></div></div>`;
 }
+/* 🧑‍💼 Bolsa de candidatos: por cada vacante publicada hay 2 candidatos esperando en RR.HH. (máx. 8). Se renuevan solos
+   (los de hace más de 3 turnos se van a otro súper) y se contratan al momento: empiezan el turno siguiente, en prueba. */
+function poolFill(){
+  if(!meta||daily)return [];
+  meta.pool=toArr(meta.pool).filter(c=>c&&ROLES[c.role]&&vacOpen(c.role)>0&&staffOf(c.role).length<ROLES[c.role].max&&meta.day-(c.d||0)<=3);
+  vacRoles().forEach(r=>{let n=meta.pool.filter(c=>c.role===r).length;
+    while(n<2&&meta.pool.length<8){const c=newEmp(r,meta,{},meta.pool.map(x=>x.name));c.wage=Math.round(wageOf(r)*(1+ri(0,4)*0.02));c.exp=ri(0,8);c.prev=pick(PREV);c.d=meta.day;
+      c.qa=['rap','trato','punt','act'].sort(()=>Math.random()-0.5).slice(0,2).map(k=>interview(k,c[k]));meta.pool.push(c);n++;}});
+  return meta.pool;
+}
+/* Vacantes rápidas (para el cierre): ＋/− por puesto, como en RR.HH. */
+function vacQuick(){return '<div class="zone-title">📢 VACANTES</div><div class="vacs">'+Object.keys(ROLES).map(k=>{const v=vacOpen(k),n=staffOf(k).length,mx=ROLES[k].max;return `<div class="vac ${v?'on':''}"><span class="vn"><i>${JOB_IC[k]}</i><b>${ROLES[k].n}</b><small>${n}/${mx}${v?' · se busca '+v:''}</small></span><span><button class="btn" data-act="vac" data-r="${k}" data-d="-1" ${v?'':'disabled'}>−</button> <button class="btn go" data-act="vac" data-r="${k}" data-d="1" ${n+v>=mx?'disabled':''}>＋</button></span></div>`;}).join('')+'</div>';}
+function poolHtml(){
+  const P=poolFill();
+  if(!P.length)return '<div class="zone-title">🧑‍💼 CANDIDATOS DISPONIBLES</div><div class="supd">No hay nadie esperando: publica una vacante (＋ en el puesto que quieras) y aquí te salen candidatos al momento.</div>';
+  return '<div class="zone-title">🧑‍💼 CANDIDATOS DISPONIBLES · CONTRATAS AHORA</div><div class="supd">Empiezan el turno siguiente, en prueba 3 turnos. Contratar cuesta '+fmt(HIRE)+' (anuncio y reconocimiento médico). Ojo: en la entrevista a veces se venden mejor de lo que son.</div><div class="shop">'
+    +P.map((c,i)=>`<div class="up"><div class="t"><b>${c.face} ${esc(c.name)} · ${ROLES[c.role].n}</b>${flag(c)} ${c.exp?c.exp+' años de experiencia':'Sin experiencia'}${c.prev?' · antes: '+esc(c.prev):''} · pide ${monthTxt(c.wage)}${(c.qa||[]).map(q=>`<br><small>«${esc(q.q)}» — <i>${esc(q.a)}</i></small>`).join('')}</div><button class="btn go" data-act="poolhire" data-i="${i}" ${meta.money<HIRE?'disabled':''}>🤝 Contratar</button></div>`).join('')+'</div>';
+}
 function rrhhHtml(){
   let nm=meta.day+1;while(nm%3!==1)nm++;
   const rr=staffOf('rrhh'),realRR=rr.find(e=>e.real&&run&&run.duty&&working(e));
@@ -7905,6 +7923,7 @@ function rrhhHtml(){
     ${isHost()?(appsHtml()||'<div class="zone-title">📝 SOLICITUDES DE EMPLEO</div><div class="supd">No hay solicitudes pendientes.</div>')+(realRR?`<div class="supd">${realRR.name} (RR.HH.) también puede tramitarlas desde su pantalla.</div>`:''):'<div class="supd">En solitario no llegan solicitudes de personas reales: contratas en la reunión de personal.</div>'}
     <div class="zone-title">📢 VACANTES</div><div class="supd">${rr.some(e=>!e.real)&&!realRR?'Tu gente de RR.HH. las publica sola cuando falta personal; tú también puedes.':realRR?realRR.name+' (RR.HH.) también las publica desde su puesto.':'Sin nadie en RR.HH., las publicas tú y entrevistas tú: cuando llega un candidato sale el aviso 🧑‍💼 «Entrevista» y vas con «Voy yo».'} Solo se presentan candidatos a puestos con vacante.</div>
     <div class="vacs">${Object.keys(ROLES).map(k=>{const v=vacOpen(k),n=staffOf(k).length,mx=ROLES[k].max;return `<div class="vac ${v?'on':''}"><span class="vn"><i>${JOB_IC[k]}</i><b>${ROLES[k].n}</b><small>${n}/${mx} en plantilla${v?' · se busca'+(v>1?' ('+v+')':''):''}</small></span><span class="vbtn"><button class="btn mini" data-act="vac" data-r="${k}" data-d="-1" ${v?'':'disabled'}>−</button><b>${v}</b><button class="btn mini go" data-act="vac" data-r="${k}" data-d="1" ${n+v<mx?'':'disabled'}>＋</button></span></div>`;}).join('')}</div>
+    ${poolHtml()}
     <div class="supd">Próxima reunión de personal (valorar, aumentos, contratar y despedir): al cerrar el turno ${meta.day%3===1&&!(run&&!run.over)?meta.day:nm}.</div></div>
     <div class="dpanel"><div class="zone-title">PLANTILLA Y CONTRATOS · ${meta.emp.length} PERSONAS</div><div class="shop">${rows}</div></div>${(meta.bajas||[]).length?`<div class="dpanel"><div class="zone-title">🚪 BAJAS RECIENTES</div>${meta.bajas.slice(0,8).map(b=>`<div class="supd">${b.f} <b>${esc(b.n)}</b> · ${ROLES[b.r]?ROLES[b.r].n:""} · turno ${b.d}: ${esc(b.why)}</div>`).join("")}</div>`:""}</div>`;
 }
@@ -8317,7 +8336,8 @@ function onClick(e){
   else if(a==='rreject')rejectReal(b.dataset.u);
   else if(a==='rtake')roomAct({k:'take',t:+b.dataset.t});
   else if(a==='rtool'){roomAct({k:'take',t:+b.dataset.c});toast('Se lo pides al jefe…');}
-  else if(a==='vac'){const m=setVac(b.dataset.r,+b.dataset.d);toast(m,'good');renderDept(true);saveGame(!(run&&!run.over));}
+  else if(a==='vac'){const m=setVac(b.dataset.r,+b.dataset.d);toast(m+(+b.dataset.d>0&&vacOpen(b.dataset.r)?' Tienes candidatos esperando abajo, en «Candidatos disponibles».':''),'good');renderDept(true);if(scrRender&&$('#overlay').classList.contains('show'))scrRender();saveGame(!(run&&!run.over));}
+  else if(a==='poolhire'){const P=poolFill(),c=P[+b.dataset.i];if(c){const m=hireFromCv(c,c.wage,1);meta.pool=P.filter(x=>x!==c);toast(m,/^Contratad/.test(m)?'good':'bad');if(/^Contratad/.test(m))sOk();renderAll();renderDept(true);if(scrRender&&$('#overlay').classList.contains('show'))scrRender();saveGame(!(run&&!run.over));}}
   else if(a==='wpick'){room.wpick=b.dataset.k||null;room.lastHtml='';renderMember();}
   else if(a==='rhh')roomAct({k:b.dataset.k,u:b.dataset.u});
   else if(a==='rboss')takeOver();
