@@ -1749,7 +1749,7 @@ function unlockScene(u){
 /* ===== Objetivos de la semana (7 turnos, meta.week) =====
    Principales: cerrar la semana con el bote ≥ gm (el de la apertura + 0 / 500 / 1.000 €; los dividendos no cuentan en contra)
    y la reputación ≥ gr (4,0 / 4,2 / 4,4). Secundario que rota (WSEC): premio mayor. Superada = escena con premio a elegir:
-   una mejora gratis, +0,3 de reputación o una ayuda del Ayuntamiento al comercio de proximidad (600 €; 1.000 € con el secundario). */
+   una mejora gratis, +0,2 de reputación o una ayuda del Ayuntamiento al comercio de proximidad (600 €; 1.000 € con el secundario). */
 const WSEC=[{k:'calm',w:1,n:2,t:'😊 Cero enfadados en 2 turnos',v:r=>r.angry?0:1},
  {k:'err',w:1,n:3,t:'🎯 3 turnos sin errores en caja',v:r=>r.errors?0:1},
  {k:'serve',w:1,n:75,t:'🧾 Atiende a 75 clientes en tu caja',v:r=>r.served||0},
@@ -1794,7 +1794,7 @@ const weekCash=w=>w.res&&w.res.sec?100000:60000;
 function weekReward(w,k,silent){
   if(!w.pend)return;w.pend=0;const u=UPS.find(x=>!meta.up[x.k]);
   if(k==='up'&&u){meta.up[u.k]=1;w.got='🎁 '+u.n;}
-  else if(k==='rep'){repAdd(+0.3,'Premio de la semana');w.got='⭐ +0,3 de reputación';}
+  else if(k==='rep'){repAdd(+0.2,'Premio de la semana');w.got='⭐ +0,2 de reputación';}
   else{meta.money+=weekCash(w);w.got='🏛️ Ayuda del Ayuntamiento: '+fmt(weekCash(w));}
   if(!silent){toast('🏆 Premio de la semana '+w.n+': '+w.got,'good');sCoin();saveGame(true);renderHud();rerenderScreen();}
 }
@@ -1810,7 +1810,7 @@ function weekScene(){
     txt:'¡Semana superada! Elige premio, que esto no pasa todos los días.',body:list,
     choices:[{t:'🏛️ Ayuda del Ayuntamiento · '+fmt(weekCash(w)).replace(',00',''),k:'cash',cls:'go',key:'1',stamp:'INGRESADO',sc:'ok',fx:'💶'},
       ...(u?[{t:'🎁 Gratis: '+u.n,k:'up',key:'2',stamp:'INSTALADO',sc:'ok',fx:'🎁'}]:[]),
-      {t:'⭐ +0,3 de reputación',k:'rep',key:'3',stamp:'¡FAMA!',sc:'ok',fx:'⭐'}],
+      {t:'⭐ +0,2 de reputación',k:'rep',key:'3',stamp:'¡FAMA!',sc:'ok',fx:'⭐'}],
     onPick:k=>weekReward(w,k)});
 }
 /* El 🎯 del HUD: los objetivos de la semana en una etiqueta (también en móvil). */
@@ -2554,7 +2554,7 @@ function newCustomer(){
     let b=pickProduct(ITEMS);
     if(day>=2&&Math.random()<0.14){const x=pickProduct(AGE);if(x){b=x;hasAge=true;}}
     if(!b)break;
-    const dmg=Math.random()<0.08+0.03*day;
+    const dmg=Math.random()<Math.min(0.3,0.08+0.02*day);
     meta.stock[b.id]--;
     items.push({id:++uid,pid:b.id,e:b.e,n:b.n,f:b.f||'',p:b.p,age:!!b.age,damaged:dmg,hits:dmg?(meta.up.scanner?2:3):1,done:0,scanned:false,denied:false});
   }
@@ -2563,7 +2563,7 @@ function newCustomer(){
   const age=minor?ri(14,17):ri(18,75);
   const ps=minor?{pk:'normal'}:pickPersona();
   const P=PERS[ps.pk]||PERS.normal;
-  const max=clamp((24+n*3.2-day*1.2)*(P.pat||1)*(ps.memF||1),14,80);
+  const max=clamp((24+n*3.2-day*1.2)*(P.pat||1)*(ps.memF||1),20,80);
   return{id:++cid,face:ps.face||(P.faces?pick(P.faces):pick(FACES)),items,minor,age,birth:birthFor(age),
     wantsBag:Math.random()<(P.bag!=null?P.bag:0.3),bag:false,pay:Math.random()<(P.card!=null?P.card:0.55)?'card':'cash',
     phase:'scan',p:max,max,err:0,given:0,declined:false,talk:rnd(1.5,4),
@@ -2760,7 +2760,7 @@ function leaveAngry(idx){
   run.angry++;
   if(Math.random()<0.7)addReview(1,c.face);
   if(Math.random()<0.35)addTicket('rrpp','Se marchó enfadado de la cola',0,2,false);
-  repAdd(-(idx===0?0.5:0.3),'Clientes que se fueron enfadados (paciencia a cero)');
+  repAdd(-(idx===0?0.3:0.15),'Clientes que se fueron enfadados (paciencia a cero)');
   toast('Un cliente se ha ido harto de esperar','bad');sBad();
   renderAll();checkRep();
 }
@@ -3054,7 +3054,7 @@ function processTickets(){
         r.ok++;r.cost+=cost;repAdd(+0.1,'Reclamaciones bien resueltas por el equipo');e.st.ok++;
       }else{
         const cost=d==='back'?t.refund*2:0;
-        r.fail++;r.cost+=cost;repAdd(-(d==='rrpp'?0.5:0.3),'Reclamaciones mal resueltas por el equipo');e.st.fail++;
+        r.fail++;r.cost+=cost;repAdd(-(d==='rrpp'?0.15:0.1),'Reclamaciones mal resueltas por el equipo');e.st.fail++;
       }
     });
     if(r.late)ws.forEach(e=>{e.moral=clamp(e.moral-4,0,100);});
@@ -3225,10 +3225,10 @@ function adviceList(le){
   /* Requerimientos de la inspección pendientes */
   ((meta.ins||{}).req||[]).forEach(q=>{const c=INSP_C.find(x=>x.k===q.k);hot('📋','Requerimiento de '+INSP_A[q.a].s+': '+q.t,'Vuelven el turno '+q.by+'. '+(c&&c.fx?c.fx:'Arréglalo antes o multa doble.'));});
   /* Contratar */
-  if(r){[['back','Backoffice'],['rrpp','RR.PP.'],['alm','Almacén']].forEach(([k,n])=>{if(r[k].late>0)(room0(k)>0?hot:tip)('➕','Contrata en '+n,r[k].late+(r[k].late===1?' reclamación se quedó':' reclamaciones se quedaron')+' sin atender por falta de gente'+(room0(k)>0?' (quedan '+room0(k)+' plazas).':', pero ya está lleno: mejora a los que hay.'),'hire');});}
-  if(run.angry>=3&&room0('atc')>0)hot('➕','Contrata en Caja',run.angry+' clientes se fueron hartos de esperar. Cada cajero libre baja la impaciencia un 8%.','hire');
+  if(r){[['back','Backoffice'],['rrpp','RR.PP.'],['alm','Almacén']].forEach(([k,n])=>{if(r[k].late>0&&unl('rrhh'))(room0(k)>0?hot:tip)('➕','Contrata en '+n,r[k].late+(r[k].late===1?' reclamación se quedó':' reclamaciones se quedaron')+' sin atender por falta de gente'+(room0(k)>0?' (quedan '+room0(k)+' plazas).':', pero ya está lleno: mejora a los que hay.'),'hire');});}
+  if(run.angry>=3&&room0('atc')>0&&unl('rrhh'))hot('➕','Contrata en Caja',run.angry+' clientes se fueron hartos de esperar. Cada cajero libre baja la impaciencia un 8%.','hire');
   const out=CAT.filter(x=>(meta.stock[x.id]||0)<=0);
-  if(out.length>=4&&cnt('alm')<2&&room0('alm')>0)hot('➕','Contrata en Almacén',out.length+' productos agotados y solo '+cnt('alm')+' en Almacén: no dan abasto.','hire');
+  if(out.length>=4&&cnt('alm')<2&&room0('alm')>0&&unl('rrhh'))hot('➕','Contrata en Almacén',out.length+' productos agotados y solo '+cnt('alm')+' en Almacén: no dan abasto.','hire');
   if(run.tlost>=3)tip('⏱️','Avisos sin atender',run.tlost+' avisos caducaron. Más gente o «⚡ Asignar todo» más a menudo.');
   if(!cnt('rrhh')&&meta.emp.length>=5)tip('🗂️','Contrata a alguien de RR.HH.','Con '+meta.emp.length+' personas, RR.HH. sube el ánimo de todos y te hace las entrevistas.','hire');
   /* Echar o cuidar */
@@ -3500,7 +3500,7 @@ async function fillRanking(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.18-81';
+const APPV='2026.11.18-82';
 /* Compara versiones por números («-9» < «-11»), no como texto. */
 const verCmp=(a,b)=>{const x=String(a).split(/[.-]/).map(Number),y=String(b).split(/[.-]/).map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
 try{const vt=document.createElement('div');vt.id='vtag';vt.textContent='v'+APPV;document.body.appendChild(vt);}catch(e){}
@@ -4416,7 +4416,7 @@ function finishTask(t){
     if(e)logE(e,'Hizo inventario del pasillo '+t.n);
     toast('📋 Inventario del pasillo '+t.n+(ok?': '+ps.length+' productos, '+(out.length?out.length+' agotados ('+out.slice(0,3).map(x=>x.e).join('')+')':'ninguno agotado')+(low.length?', '+low.length+' a punto de acabarse':''):' a medias: '+(e?e.name:'')+' se ha liado contando.'),ok?'good':'bad');
     if(ok)run.ordAt=-99;renderAll();return;}
-  if(!ok){repAdd(-t.pen/2,'Avisos que salieron mal');tStat(t,false,empById(t.who));if(t.chk)albApply(false);
+  if(!ok){repAdd(-t.pen/(t.who==='me'?2:5),'Avisos que salieron mal');tStat(t,false,empById(t.who));if(t.chk)albApply(false);
     if(t.cord)cordFall(t);
     const why=t.lang?'. No se han entendido':(t.match?'':'. No es su puesto');
     toast((t.who==='me'?'Te ha salido regular en el pasillo '+t.n:nm+' lo ha dejado a medias en el pasillo '+t.n)+why,'bad');sBad();renderAll();checkRep();return;}
@@ -4663,7 +4663,7 @@ function coverServe(c,e){
   }
   c.items.forEach(i=>{
     if(i.scanned||i.denied)return;
-    if(i.age&&c.minor&&Math.random()<p){i.denied=true;ret(i);return;}
+    if(i.age&&c.minor&&Math.random()<Math.max(p,0.95)){i.denied=true;ret(i);return;}
     i.scanned=true;
     if(i.age&&c.minor){c.err++;const m=minorSale(e.name+' ha vendido');if(m)toast(m,'bad');}
   });
