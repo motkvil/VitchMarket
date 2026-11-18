@@ -4588,7 +4588,7 @@ function dailyExit(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.18-110';
+const APPV='2026.11.18-111';
 /* Compara versiones por números («-9» < «-11»), no como texto. */
 const verCmp=(a,b)=>{const x=String(a).split(/[.-]/).map(Number),y=String(b).split(/[.-]/).map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
 try{const vt=document.createElement('div');vt.id='vtag';vt.textContent='v'+APPV;document.body.appendChild(vt);}catch(e){}
@@ -6819,7 +6819,8 @@ function empAct(id,k){
   if(k==='praise'){e.moral=clamp(e.moral+12,0,100);msg='👏 Felicitado. Se le nota en la cara.';}
   else if(k==='warn'){
     e.warn++;e.moral=clamp(e.moral-12,0,100);e.focus=3;msg='⚠️ Toque dado (lleva '+e.warn+'). Va a espabilar… o no.';
-    if(!e.real&&e.moral<20&&Math.random()<0.3){meta.emp=meta.emp.filter(x=>x!==e);baja(e,'Se fue tras el toque en la reunión (ánimo muy bajo)',true);meet.gone.push(e.face+' '+e.name+' se lo tomó fatal y se fue dando un portazo.');scrTab.meet='gone';pg=0;sBad();renderHud();showMeeting();return;}
+    if(!e.real&&e.moral<20&&Math.random()<0.3){meta.emp=meta.emp.filter(x=>x!==e);baja(e,'Se fue tras el toque en la reunión (ánimo muy bajo)',true);const vOk=ROLES[e.role]&&staffOf(e.role).length<ROLES[e.role].max;if(vOk&&!vacOpen(e.role))setVac(e.role,1);
+      meet.gone.push(`<b>${e.face} ${esc(e.name)} se lo tomó fatal y se fue dando un portazo.</b><br>Le diste un toque cuando ya tenía el ánimo por los suelos (😡, menos de 20 sobre 100): con el ánimo así, un toque hace que 3 de cada 10 se marchen en el acto.<br><b>Qué pasa ahora:</b> es una baja voluntaria, así que no pagas indemnización y su sueldo deja de contar desde el próximo turno. Te quedas con una persona menos en ${ROLES[e.role].n} (${staffOf(e.role).length} en plantilla).${vOk?'<br><b>Ya he publicado la vacante</b> en RR.HH.: en el próximo turno, en 🗂️ RR.HH. («Candidatos disponibles»), tienes gente para cubrirle y la contratas al momento.':''}<br><small>La próxima vez, a quien esté así primero anímale (felicitar o +5 %) y el toque después.</small>`);scrTab.meet='gone';pg=0;sBad();renderHud();showMeeting();return;}
   }
   else if(k==='raise'){e.wage=Math.round(e.wage*1.05);e.moral=clamp(e.moral+20,0,100);msg='💶 +5% de sueldo: '+monthTxt(e.wage)+'. Ahora te quiere un poquito más.';}
   else if(k==='fire'){meet.firing=id;showMeeting();return;}
@@ -6926,7 +6927,7 @@ function showMeeting(){
         return `<button class="btn ${k==='none'?'':ok?'':'off'}" data-act="fire" data-e="${e.id}" data-r="${k}">${FIRE[k].t}${ev?` <small>${ok?'✅':'❌'} ${ev}</small>`:''}</button>`;}).join('')}
       <button class="btn" data-act="firex">Mejor no le despido</button></div>`:`<div class="row ea">
       <button class="btn" data-act="emp" data-e="${e.id}" data-k="praise">👏 Felicitar</button>
-      <button class="btn" data-act="emp" data-e="${e.id}" data-k="warn">⚠️ Toque</button>
+      <button class="btn${!e.real&&e.moral<20?' no':''}" data-act="emp" data-e="${e.id}" data-k="warn" title="${!e.real&&e.moral<20?'Tiene el ánimo por los suelos: con un toque, 3 de cada 10 se van en el acto.':'Amonestación por escrito: −12 de ánimo, se pone las pilas 3 turnos.'}">⚠️ Toque${!e.real&&e.moral<20?' (riesgo: se puede ir)':''}</button>
       <button class="btn" data-act="emp" data-e="${e.id}" data-k="raise">💶 +5%</button>
       <button class="btn no" data-act="emp" data-e="${e.id}" data-k="fire">Despedir</button></div>`;
     return `<div class="emp ${meet.firing===e.id&&!a?'firing':''}"><div class="eh"><span class="ef">${e.face}</span><div class="t"><b>${e.name}</b>${tag}</div><span class="mood" title="Ánimo">${mood(e)}</span></div>
