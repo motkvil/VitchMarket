@@ -2,7 +2,7 @@
 // Desbloqueo progresivo acortado (RR.HH. y reunión T1, Almacén y Backoffice T2, RR.PP., Dirección e inspector T3) para pasar por las escenas de bienvenida.
 const {JSDOM}=require('jsdom');const fs=require('fs');
 let html=fs.readFileSync('index.html','utf8');
-html=html.replace('dur:100','dur:12').replace('COMPL_P=0.14','COMPL_P=0.2').replace("Math.random()<0.55?'card'","Math.random()<0.05?'card'").replace("get('insp')||''","get('insp')||'1'").replace('next:1.5','next:0.5').replace('nextTask:6','nextTask:1').replace('const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));','const clamp=(v,a,b)=>Math.max(b===5?1:a,Math.min(b,v));').replace('rnd(14,24)*','rnd(2,4)*').replace('Math.max(5.5,9.5-meta.day*0.6)','2').replace("['alm',3,","['alm',2,").replace("['back',5,","['back',2,").replace("['rrpp',5,","['rrpp',3,").replace("['rrhh',7,","['rrhh',1,").replace("['dir',7,","['dir',3,").replace("['insp',10,","['insp',3,").replace('<script src="productos.js"></script>','<script>'+fs.readFileSync('productos.js','utf8')+'</script>');
+html=html.replace('dur:100','dur:12').replace('COMPL_P=0.14','COMPL_P=0.2').replace("Math.random()<0.55?'card'","Math.random()<0.05?'card'").replace("get('insp')||''","get('insp')||'1'").replace('next:1.5','next:0.5').replace('nextTask:6','nextTask:1').replace('const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));','const clamp=(v,a,b)=>Math.max(b===5?1:a,Math.min(b,v));').replace('rnd(14,24)*','rnd(2,4)*').replace('Math.max(5.5,9.5-meta.day*0.6)','2').replace("['alm',3,","['alm',2,").replace("['back',5,","['back',2,").replace("['rrpp',5,","['rrpp',3,").replace("['rrhh',7,","['rrhh',1,").replace("['dir',7,","['dir',3,").replace("['insp',10,","['insp',3,").replace("['ladron',3,","['ladron',1,").replace("['falso',4,","['falso',1,").replace("['cupon',6,","['cupon',2,").replace('<script src="productos.js"></script>','<script>'+fs.readFileSync('productos.js','utf8')+'</script>');
 const errs=[];
 const dom=new JSDOM(html,{runScripts:'dangerously',pretendToBeVisual:true,beforeParse(w){w.addEventListener('error',e=>errs.push(e.message));w.AudioContext=undefined;}});
 const w=dom.window,d=w.document;
@@ -39,6 +39,7 @@ setInterval(()=>{
   const it=d.querySelector('.item');if(it){cl(it);return;}
   const pay=d.querySelector('[data-act=pay]:not([disabled])');if(pay){cl(pay);return;}
   const card=d.querySelector('[data-act=card]');if(card){cl(card);return;}
+  {const bl=d.querySelector('#register [data-act=bill]');if(bl&&Math.random()<.5){stats.bill=(stats.bill||0)+1;cl(bl);return;}}
   const due=d.querySelector('.cashrow.due b');
   if(due){stats.cash++;let c=Math.round(parseFloat(due.textContent.replace(',','.'))*100);
     const tr=d.querySelector('.cashrow.tray b');let cur=Math.round(parseFloat(tr.textContent.replace(',','.'))*100);
