@@ -1640,6 +1640,7 @@ body::before{content:'';position:fixed;top:0;left:0;right:0;height:env(safe-area
 #app{padding-top:env(safe-area-inset-top,0px)!important}
 .card.screen{top:env(safe-area-inset-top,0px)!important}
 #scene.top{top:env(safe-area-inset-top,0px)}
+.h3why li.h3warn{background:#fff1e6;border-radius:8px;padding:6px 8px;border-left:4px solid var(--danger)}.h3why li.h3warn .wt{font-weight:800;white-space:normal;font-family:inherit;color:var(--danger,#b3181b)}
 </style>
 </head>
 <body>
@@ -4166,6 +4167,7 @@ function adviceList(le){
   ((meta.ins||{}).req||[]).forEach(q=>{const c=INSP_C.find(x=>x.k===q.k);hot('📋','Requerimiento de '+INSP_A[q.a].s+': '+q.t,'Vuelven el turno '+q.by+'. '+(c&&c.fx?c.fx:'Arréglalo antes o multa doble.'));});
   /* Contratar */
   if(r){[['back','Backoffice'],['rrpp','RR.PP.'],['alm','Almacén']].forEach(([k,n])=>{if(r[k].late>0&&unl('rrhh'))(room0(k)>0?hot:tip)('➕','Contrata en '+n,r[k].late+(r[k].late===1?' reclamación se quedó':' reclamaciones se quedaron')+' sin atender por falta de gente'+(room0(k)>0?' (quedan '+room0(k)+' plazas).':', pero ya está lleno: mejora a los que hay.'),'hire');});}
+  if(f&&(f.ON||0)<40&&room0('atc')>0)hot('🧾','Contrata cajeros: las Cajas 1 y 2 no abrieron',(f.ON?'Solo despacharon '+f.ON+' clientes':'No despacharon a nadie')+'. Necesitan un cajero libre cada una; el que tienes se pasa el turno cubriendo tu Caja 3 o con avisos. Con 2–3 cajeros más ganarías unos cientos de euros por turno.','hire');
   if(run.angry>=3&&room0('atc')>0&&unl('rrhh'))hot('➕','Contrata en Caja',run.angry+' clientes se fueron hartos de esperar. Cada cajero libre baja la impaciencia un 8%.','hire');
   const out=CAT.filter(x=>(meta.stock[x.id]||0)<=0);
   if(out.length>=4&&cnt('alm')<2&&room0('alm')>0&&unl('rrhh'))hot('➕','Contrata en Almacén',out.length+' productos agotados y solo '+cnt('alm')+' en Almacén: no dan abasto.','hire');
@@ -4287,7 +4289,10 @@ function heroWhy(f){
   if(f.oth<0)add('💸','Reembolsos y compensaciones',f.oth,2);else add('🎁','Abonos y otros ingresos',f.oth||0);
   const C=D.sort((a,b)=>b.w-a.w).slice(0,sales?2:3);
   if(sales){const m=sales-(f.cogs||0)-((f.ivaR||0)-(f.ivaS||0)),big=(f.O||0)>f.S;
-    C.unshift({ic:big?'🛒':'🧾',t:(big?'Las otras cajas vendieron '+fmt(f.O)+(f.S?' y tu caja '+fmt(f.S):''):'Tu caja vendió '+fmt(f.S)+(f.O?' y las otras '+fmt(f.O):''))+' · margen',v:m});}
+    C.unshift({ic:big?'🛒':'🧾',t:(big?'Las Cajas 1 y 2 vendieron '+fmt(f.O)+(f.S?' y tu Caja 3 '+fmt(f.S):''):'Tu Caja 3 vendió '+fmt(f.S)+(f.O?' y las Cajas 1 y 2 '+fmt(f.O):''))+'. Quitando lo que costó la mercancía y el IVA, te quedan',v:m});}
+  /* Si las Cajas 1 y 2 apenas abrieron, es casi siempre LA razón de perder: dilo con todas las letras. */
+  const nC=staffOf('atc').length;
+  if((f.ON||0)<40)C.unshift({ic:'🚫',t:(f.ON?'Las Cajas 1 y 2 casi no abrieron ('+f.ON+' clientes)':'Las Cajas 1 y 2 estuvieron cerradas todo el turno')+': solo abren con un cajero libre y '+(nC?'tienes '+nC+' en Caja, que estuvo cubriendo tu Caja 3 o con avisos':'no tienes ningún cajero')+'. Ahí se despacha a casi toda la clientela (más de 100 clientes por turno).',v:0,warn:1});
   return C;
 }
 function heroTip(e){
@@ -4322,7 +4327,7 @@ function heroHtml(e){
       <div class="h3big"><span class="h3ic" aria-hidden="true">${arr}</span><b>${n?sgnP(n):fmt(0)}</b><em>${n>0?'Ganaste':n<0?'Perdiste':'Ni ganas ni pierdes'}</em></div>
       <div class="h3sub">💰 Bote <b>${fmt(meta.money)}</b> <span class="${dv<0?'h3dn':'h3up'}">(${dv<0?'▼':'▲'} ${sgnP(dv)} hoy)</span> · ★ ${repT(meta.rep)}</div></section>
     <section class="h3q"><div class="h3l"><small>2 · ¿Por qué?</small></div>
-      <ul class="h3why">${W.length?W.map(x=>`<li class="${x.v<0?'h3dn':'h3up'}"><i aria-hidden="true">${x.ic}</i><span>${x.t}</span><b>${x.v<0?'▼':'▲'} ${sgnP(x.v)}</b></li>`).join(''):'<li><span>Hoy no se ha movido nada.</span></li>'}</ul>${heroEv()}</section>
+      <ul class="h3why">${W.length?W.map(x=>x.warn?`<li class="h3dn h3warn"><i aria-hidden="true">${x.ic}</i><span class="wt">${x.t}</span><b>⚠</b></li>`:`<li class="${x.v<0?'h3dn':'h3up'}"><i aria-hidden="true">${x.ic}</i><span>${x.t}</span><b>${x.v<0?'▼':'▲'} ${sgnP(x.v)}</b></li>`).join(''):'<li><span>Hoy no se ha movido nada.</span></li>'}</ul>${heroEv()}</section>
     <section class="h3q h3tip ${T.hot?'hot':''}"><div class="h3l"><small>3 · ¿Qué cambio el próximo turno?</small></div>
       <div class="h3adv"><b>${T.ic} ${T.t}</b><span>${T.d}</span></div>${T.btn}</section>
   </div>`;
@@ -4566,7 +4571,7 @@ function dailyExit(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.18-106';
+const APPV='2026.11.18-107';
 /* Compara versiones por números («-9» < «-11»), no como texto. */
 const verCmp=(a,b)=>{const x=String(a).split(/[.-]/).map(Number),y=String(b).split(/[.-]/).map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
 try{const vt=document.createElement('div');vt.id='vtag';vt.textContent='v'+APPV;document.body.appendChild(vt);}catch(e){}
@@ -8118,7 +8123,8 @@ function rushTick(){
   });
 }
 function offTick(dt){
-  const n=Math.min(Math.max(0,2-Object.keys(run.tills||{}).length),staffOf('atc').filter(e=>!e.real&&isFree(e)&&!run.duty[e.id].slack).length);if(!n)return;
+  const n=Math.min(Math.max(0,2-Object.keys(run.tills||{}).length),staffOf('atc').filter(e=>!e.real&&isFree(e)&&!run.duty[e.id].slack).length);
+  if(!n){run.offShut=(run.offShut||0)+dt;if(run.offShut>(run.dur||100)*0.12&&!run.offWarn&&!(room&&room.sim)&&!run.remote){run.offWarn=1;toast('🚫 Las Cajas 1 y 2 están cerradas: no hay ningún cajero libre. Ahí se despacha a casi toda la clientela. Contrata cajeros en 🗂️ RR.HH. o vuelve tú a la Caja 3 para liberar al tuyo.','bad');}return;}
   const out=CAT.filter(x=>(meta.stock[x.id]||0)<=0).length/CAT.length;
   /* Promos con existencias: +2 % de clientes cada una; la competencia del barrio resta (rivalDrop). */
   const PA=promoOn().filter(p=>PROMO[p.t]&&(meta.stock[p.id]||0)>0);
