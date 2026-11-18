@@ -434,7 +434,8 @@ button:focus-visible{outline:3px solid var(--tag);outline-offset:2px}
 .btn.mini{padding:2px 8px;font-size:11px}
 .camwin{position:fixed;right:8px;bottom:8px;width:min(calc(100vw - 16px),460px);background:#050807;border:2px solid #2b3a33;border-radius:8px;z-index:15;display:none;box-shadow:0 8px 24px rgba(0,0,0,.5);padding:4px}
 .camwin.show{display:block}
-.camhead{display:flex;justify-content:space-between;align-items:center;gap:8px;color:#9fd8b4;font-size:10px;padding:2px 2px 4px}
+.camhead{display:flex;justify-content:space-between;align-items:center;gap:8px;color:#9fd8b4;font-size:12px;padding:2px 2px 4px}
+.camhead span{flex:1}.nmb{opacity:.6}.nmb.on{opacity:1}
 .camcv{display:block;width:100%;border-radius:4px;cursor:pointer;touch-action:manipulation}
 .camslot{background:#050807;border-radius:6px;padding:3px}
 .alerts{display:flex;flex-direction:column;gap:6px}
@@ -1687,7 +1688,7 @@ body::before{content:'';position:fixed;top:0;left:0;right:0;height:env(safe-area
       <div class="sidehead"><b>🔔 AVISOS</b><button class="btn mini go aall" id="aallBtn" data-act="aall" disabled title="Reparte todos los avisos pendientes entre el personal libre">⚡ Asignar todo</button><button class="btn mini sideclose" data-act="side" aria-label="Cerrar avisos">✕</button></div>
       <section class="alerts" id="alerts" aria-live="polite"></section>
       <section class="tasks" id="tasks" aria-label="Avisos en curso y personal"></section>
-      <div id="camwin" class="camwin" aria-label="Cámaras de seguridad"><div class="camhead"><span>📹 Toca una cámara para ampliarla, y a alguien de la plantilla para hablarle</span><button class="btn mini" data-act="cams" aria-label="Cerrar cámaras">✕</button></div><div id="camslot"></div></div>
+      <div id="camwin" class="camwin" aria-label="Cámaras de seguridad"><div class="camhead"><span>📹 Toca una cámara para ampliarla, y a alguien de la plantilla para hablarle</span><button class="btn mini nmb on" data-act="camnm" aria-pressed="true" title="Nombres del personal en las cámaras y en la tienda en directo">🏷️ Nombres</button><button class="btn mini" data-act="cams" aria-label="Cerrar cámaras">✕</button></div><div id="camslot"></div></div>
     </aside>
   </div>
   <button class="alertbtn" id="alertBtn" data-act="side" aria-label="Ver avisos">🔔<b>0</b></button>
@@ -2418,6 +2419,7 @@ function ajHtml(){
     ${row('🌀 Movimiento reducido','Sin animaciones, temblores ni monedas que vuelan.',yn('mov'))}
     ${row('🎨 Paleta para daltónicos','Ganancias en azul y pérdidas en naranja (siguen con ▲ ▼, + y −).',yn('cvd'))}
     ${row('🔠 Texto grande','Un paso más en toda la escala de letra.',yn('big'))}
+    ${row('🏷️ Nombres en cámara','El nombre de cada persona de la plantilla encima de su muñeco, en las cámaras y en la tienda en directo.',`<button class="btn ${camNm?'':'go'}" data-act="camnm" data-v="0" aria-pressed="${!camNm}">No</button><button class="btn ${camNm?'go':''}" data-act="camnm" data-v="1" aria-pressed="${camNm}">Sí</button>`)}
     <div class="supd">El ritmo y «sin prisa» solo valen en solitario: no cambian el reto del día ni la tienda compartida. Lo demás vale en todas partes. Se guardan en este navegador.</div></div>`;
 }
 function ajSet(k,v){
@@ -4586,7 +4588,7 @@ function dailyExit(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.18-109';
+const APPV='2026.11.18-110';
 /* Compara versiones por números («-9» < «-11»), no como texto. */
 const verCmp=(a,b)=>{const x=String(a).split(/[.-]/).map(Number),y=String(b).split(/[.-]/).map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
 try{const vt=document.createElement('div');vt.id='vtag';vt.textContent='v'+APPV;document.body.appendChild(vt);}catch(e){}
@@ -7252,7 +7254,7 @@ function camModel(){
     else if(d.busy){const t=run.tasks.find(y=>y.id===d.task);if(t){w=taskSpot(t);b=t.ic;x='con un aviso: '+t.s;}}
     else if(run.tills&&e.real&&run.tills[e.real]){const tl=run.tills[e.real];w={k:'till',n:tl.n};b='🧾';x='en la Caja '+tl.n+' ('+Object.keys(tl.out).length+' en cola)';}
     else if(d.slack){const p=d.slack.split(' ');b=p[0];x=p.slice(1).join(' ');if(b==='☕')w={k:'brk'};else if(b==='🚬')w={k:'door'};}
-    staff.push({id:e.id,f:e.face,n:e.name,u:e.real||'',r:e.role,w,b,x,sl:d.slack&&!d.busy?1:0});
+    staff.push({id:e.id,f:e.face,n:e.name,u:e.real||'',r:e.role,w,b,x,sl:d.slack&&!d.busy?1:0,bz:d.busy||(run.away&&run.away.cover===e.id)?1:0});
   });
   let me={w:{k:'till'},b:'',x:'en la caja 3'};
   if(run.away){
@@ -7278,10 +7280,10 @@ function camTargets(m){
   if(!m)return T;
   toArr(m.staff).forEach((s,j)=>{
     const p=camPos(s.w||{},j),you=isMember()&&s.u===myUid;
-    T['s'+s.id]={r:s.r,x:p[0],y:p[1],f:s.f,lab:you?'Tú':s.n+(s.u?' 🎮':''),b:s.b||'',hl:you,eid:s.id,u:s.u||'',sl:s.sl?1:0,info:(you?'Tú':s.n)+' · '+(ROLES[s.r]?ROLES[s.r].n:'')+' · '+(s.x||'')};
+    T['s'+s.id]={r:s.r,x:p[0],y:p[1],f:s.f,lab:you?'Tú':s.n+(s.u?' 🎮':''),nt:you?'Tú':String(s.n||'').split(' ')[0],ntu:s.u?1:0,bz:s.bz?1:0,b:s.b||'',hl:you,eid:s.id,u:s.u||'',sl:s.sl?1:0,info:(you?'Tú':s.n)+' · '+(ROLES[s.r]?ROLES[s.r].n:'')+' · '+(s.x||'')};
   });
   const me=m.me||{w:{k:'till'}},p=camPos(me.w||{},0);
-  T.me={x:p[0],y:p[1],f:'🧑‍💼',lab:isMember()?'👑 '+(me.n||'Jefe'):'Tú',b:me.b||'',hl:!isMember(),info:(isMember()?'👑 '+(me.n||'El jefe'):'Tú')+' · '+(me.x||'')};
+  T.me={x:p[0],y:p[1],f:'🧑‍💼',lab:isMember()?'👑 '+(me.n||'Jefe'):'Tú',nt:isMember()?String(me.n||'Jefe').split(' ')[0]:'Tú',boss:1,b:me.b||'',hl:!isMember(),info:(isMember()?'👑 '+(me.n||'El jefe'):'Tú')+' · '+(me.x||'')};
   toArr(m.q).forEach((c,i)=>{T['c'+c.id]={x:i===0?200:200-22*i,y:i===0?196:188,f:c.f,lab:'',b:c.a?'😠':'',hl:false,cust:1,info:i===0?'Cliente en caja':'Cliente en la cola ('+(i+1)+'º)'};});
   return T;
 }
@@ -7312,6 +7314,44 @@ function camStep(m,dt){
     else{s.x+=dx/dd*v;s.y+=dy/dd*v;}
   });
   cam.shop=cam.shop.filter(s=>!s.dead);
+}
+/* ---------- 🏷️ nombres del personal en las vistas en directo (cámaras, tienda en pixel art, isométrica) ----------
+   Se pintan a resolución de pantalla, encima del búfer escalado: una chapa con el nombre de pila (👑 el jefe, 🎮 los
+   jugadores reales) con el color del puesto; 📱 si se escaquea y 🔧 si está con un aviso. Clientes y ladrones, nunca.
+   Si dos chapas se pisan, la de más abajo sube; si aun así no cabe, no se pinta. Se apaga con «🏷️ Nombres». */
+const NM_KEY='vitchmarket.nombres.cam';
+let camNm=true;try{camNm=localStorage.getItem(NM_KEY)!=='0';}catch(e){}
+function toggleNames(v){camNm=v==null?!camNm:!!+v;try{localStorage.setItem(NM_KEY,camNm?'1':'0');}catch(e){}
+  document.querySelectorAll('.nmb').forEach(b=>{b.setAttribute('aria-pressed',camNm);b.classList.toggle('on',camNm);});if(ajw)ajRender();else if(document.querySelector('.ajs'))rerenderScreen();}
+const nmW=new Map();
+function nmMeasure(g,font,t){const k=font+'|'+t;let w=nmW.get(k);if(w==null){g.font=font;w=g.measureText(t).width;if(nmW.size>600)nmW.clear();nmW.set(k,w);}return w;}
+/* chapas de cam.spr: solo plantilla y jefe (los clientes y los compradores de cam.shop, ladrones incluidos, nunca) */
+const nmList=()=>Object.entries(cam.spr).filter(([id,s])=>(id==='me'||id[0]==='s')&&!s.gone&&s.nt).map(([id,s])=>({id,s}));
+/* g: contexto; P(s) → [x,y] encima de la cabeza (px del canvas); fs: letra en px del canvas; short: nombre corto; clip: [x,y,w,h] */
+function nameTags(g,P,fs,short,clip){
+  if(!camNm)return;
+  const L=nmList();if(!L.length)return;
+  const font='800 '+Math.round(fs)+'px Nunito,"Segoe UI",sans-serif',h=Math.round(fs*1.45),pad=Math.round(fs*.45),maxW=fs*(short?4.6:8.5);
+  const T=L.map(({id,s})=>{const p=P(s);let t=s.nt||'';if(short&&t!=='Tú'&&t.length>4)t=t.slice(0,3)+'.';
+    if(s.boss)t='👑 '+t;if(s.ntu)t+=' 🎮';const ic=s.sl?'📱':s.bz?'🔧':'';if(ic)t+=' '+ic;
+    let w=nmMeasure(g,font,t);if(w>maxW){let u=t;while(u.length>2&&nmMeasure(g,font,u+'…')>maxW)u=u.slice(0,-1);t=u+'…';w=nmMeasure(g,font,t);}
+    return {x:p[0],y:p[1],t,w:Math.round(w+pad*2),s,id};}).sort((a,b)=>b.y-a.y);
+  const put=[];
+  T.forEach(o=>{let y=Math.round(o.y-h),x=Math.round(o.x-o.w/2);
+    if(clip)x=Math.max(clip[0]+1,Math.min(clip[0]+clip[2]-o.w-1,x));
+    if(clip&&(o.x<clip[0]||o.x>clip[0]+clip[2]||o.y<clip[1]||o.y>clip[1]+clip[3]+h*2))return;
+    const hit=yy=>put.find(q=>x<q.x+q.w&&x+o.w>q.x&&yy<q.y+q.h+1&&yy+h+1>q.y);
+    let k=0,q;while((q=hit(y))&&k<3){y=q.y-h-1;k++;}
+    if(hit(y))return;if(clip&&(y<clip[1]||y+h>clip[1]+clip[3]))return;
+    put.push({x,y,w:o.w,h,o});});
+  g.save();g.font=font;g.textAlign='center';g.textBaseline='middle';
+  const rr=(x,y,w)=>{g.beginPath();if(g.roundRect)g.roundRect(x,y,w,h,h/2);else g.rect(x,y,w,h);};
+  put.forEach(({x,y,w,o})=>{const s=o.s,bg=s.boss?'#ffd23f':ROLE_PIX[s.r]||'#e5383b';
+    g.fillStyle='rgba(0,0,0,.35)';rr(x,y+Math.max(1,fs/8),w);g.fill();
+    g.fillStyle=bg;rr(x,y,w);g.fill();
+    g.strokeStyle=s.hl?'#ffd23f':'rgba(255,255,255,.95)';g.lineWidth=Math.max(1,fs/9);g.stroke();
+    g.fillStyle=s.boss?'#3a1012':'#fff';g.fillText(o.t,x+w/2,y+h/2+fs*.05);});
+  g.restore();
 }
 function camWorld(c,m,now){
   c.fillStyle='#2c3833';c.fillRect(0,0,262,166);
@@ -7350,7 +7390,6 @@ function camWorld(c,m,now){
     c.font='13px sans-serif';c.fillText(s.f||'🧑',s.x,s.y+bob);
     if(s.sl){const on=Math.floor(now/450)%2;c.fillStyle=on?'rgba(255,210,63,.85)':'rgba(229,56,59,.85)';c.beginPath();c.arc(s.x+9,s.y-10+bob,6,0,7);c.fill();c.font='9px sans-serif';c.fillText(on?(s.b||'📱'):'💤',s.x+9,s.y-10+bob);}
     else if(s.b){c.font='8px sans-serif';c.fillText(s.b,s.x+8,s.y-8+bob);}
-    if(s.lab&&cam.zoom>=0){c.font='bold 5px sans-serif';c.lineWidth=2;c.strokeStyle='#000';c.strokeText(s.lab,s.x,s.y+11);c.fillStyle='#fff';c.fillText(s.lab,s.x,s.y+11);}
   });
 }
 function drawCams(){
@@ -7389,6 +7428,8 @@ function drawCams(){
     c.textAlign='right';c.textBaseline='bottom';c.fillStyle='#d8ffe6';c.fillText(m?'T'+m.d+' '+clockOf(m.t,m.dur):'--:--',gx+gw-7,gy+gh-5);
     if(!m){c.textAlign='center';c.textBaseline='middle';c.fillStyle='rgba(216,255,230,.7)';c.fillText('SIN SEÑAL',gx+gw/2,gy+gh/2);}
     c.restore();
+    /* chapas encima de las rayas de la cámara, para que se lean */
+    if(m)nameTags(c,s=>[ox+(s.x-cx)*sc,oy+(s.y-cy)*sc-(s.sl?17:9)*sc],g?11:12,g&&sc<0.9,[gx+2,gy+2,gw-4,gh-4]);
     c.strokeStyle='#1f2b26';c.lineWidth=2;c.strokeRect(gx+1,gy+1,gw-2,gh-2);
     cam.hits.push({ci,gx,gy,gw,gh,ox,oy,sc,cx,cy});
   });
@@ -7516,8 +7557,8 @@ function drawIso(){
     g.font=`${Math.max(14,Math.round(8*sc))}px sans-serif`;g.fillStyle=blink?'#ffd23f':'#ff4d4f';g.beginPath();g.arc(p[0],p[1],Math.max(11,6*sc),0,7);g.fill();g.fillStyle='#3a1012';g.fillText(t.ic||'❗',p[0],p[1]+1);});
   ppl.forEach(({id,s})=>{const p=S(s.x,s.y,0),top=p[1]-17*sc;iso.hits.push({x:p[0],y:p[1]-8*sc,s});
     if(s.b){g.font=`${Math.max(12,Math.round(6*sc))}px sans-serif`;g.fillStyle='#fff';g.beginPath();g.arc(p[0],top-6,Math.max(9,5*sc),0,7);g.fill();g.fillText(s.b,p[0],top-5);}
-    if(s.lab&&(s.hl||id[0]==='s'||id==='me')&&sc>=2){g.font=`700 ${Math.max(9,Math.round(3.6*sc))}px Nunito,sans-serif`;const tw=g.measureText(s.lab).width+8;g.fillStyle=s.hl||id==='me'?'#ffd23f':'rgba(42,30,72,.8)';g.fillRect(p[0]-tw/2,p[1]+2,tw,13);g.fillStyle=s.hl||id==='me'?'#3a1012':'#fff';g.fillText(s.lab,p[0],p[1]+9);}
   });
+  {const dpr=window.devicePixelRatio||1;nameTags(g,s=>{const p=S(s.x,s.y,0);return [p[0],p[1]-17*sc-(s.b?Math.max(18,10*sc):0)];},Math.max(12*dpr,Math.min(15*dpr,3.8*sc)),false,[0,0,iso.cv.width,iso.cv.height]);}
 }
 /* Debajo de la tienda: reputación, la mascota con lo último que ha pasado y los objetivos del turno. */
 let isoInfoH='';
@@ -7691,6 +7732,8 @@ function pixStore(slot,m,zone,cover){
   const g=cv.getContext('2d'),v=pst.view,S=(x,y)=>[v.ox+(x-v.sx)*v.k,v.oy+(y-v.sy)*v.k];
   const sign=(x,y,t,bg)=>{const p=S(x,y);const fs=Math.max(10,Math.round(4.2*v.k));g.font=`700 ${fs}px Fredoka,sans-serif`;const tw=g.measureText(t).width+10;g.fillStyle=bg;g.fillRect(p[0]-tw/2,p[1]-fs*.7,tw,fs*1.4);g.fillStyle='#fff';g.textAlign='center';g.textBaseline='middle';g.fillText(t,p[0],p[1]);};
   if(!zone){sign(331,20,'ALMACÉN','#f08a24');sign(331,170,'OFICINAS','#7b4bb7');sign(130,190,'CAJAS','#e5383b');}
+  const dpr=window.devicePixelRatio||1;
+  nameTags(g,s=>{const p=S(s.x,s.y+6-16);return [p[0],p[1]-(s.sl?14*v.k:s.b?7*v.k:0)];},Math.max(12*dpr,Math.min(15*dpr,3.8*v.k)),false,[0,0,cv.width,cv.height]);
 }
 function pixStoreClick(ev){
   const cv=ev.currentTarget,r=cv.getBoundingClientRect(),k=cv.width/r.width,v=pst.view;if(!v)return;
@@ -7958,7 +8001,7 @@ function dirHtml(){
       ${card('rrpp','📣','RR.PP.',present('rrpp')+' · '+tabBadge('rrpp')+' pendientes')}
       ${card('rrhh','🗂️','RR.HH.',present('rrhh')+' · '+(isHost()?appsList().length:0)+' solicitudes')}
     </div></div>
-    <div class="dpanel"><div class="zone-title">📹 CÁMARAS · TOCA UNA PARA AMPLIARLA</div><div id="dircams" class="camslot"></div>
+    <div class="dpanel"><div class="zone-title">📹 CÁMARAS · TOCA UNA PARA AMPLIARLA <button class="btn mini nmb${camNm?' on':''}" data-act="camnm" aria-pressed="${camNm}">🏷️ Nombres</button></div><div id="dircams" class="camslot"></div>
     <div class="zone-title">MEJORAS DE LA TIENDA</div><div class="shop">${upsHtml()}</div></div></div>`;
 }
 /* ===== Dirección: cómo va hoy contra ayer a la misma hora =====
@@ -8341,6 +8384,7 @@ function onClick(e){
   else if(a==='undo'){run.tray.pop();sCoin();renderRegister();}
   else if(a==='deliver')deliver();
   else if(a==='cams')toggleCams();
+  else if(a==='camnm')toggleNames(b.dataset.v);
   else if(a==='mute'){muted=!muted;b.textContent=muted?'🔇':'🔊';}
   else if(a==='wipe')showStart(true);
   else if(a==='rename'){if(isMember())room.renaming=true;const w=b.closest('[data-label]');if(w){w.outerHTML=nameInput(w.dataset.label);const i=$('#pname');if(i){i.focus();i.select();}}}
