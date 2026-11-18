@@ -1375,6 +1375,13 @@ body.rem .isostore{display:none!important}
 .scn-badge>span{font-size:30px}.scn-badge b{display:block;font-family:var(--display);color:#4a1414;font-size:15px}.scn-badge small{font-size:12px;color:#7a5a5a}
 @media (prefers-reduced-motion:reduce){.scn-post .hot,.scn-tv .rec{animation:none}}
 #scene.top{z-index:22;top:0}
+#scene.ovmg{z-index:26;top:0}
+.crewb{all:unset;display:block;cursor:pointer;border-radius:4px}.crewb:hover{text-decoration:underline}.crewb:focus-visible{outline:2px solid var(--tag)}
+/* Vidas del personal: ficha (bio), botón para hablar en la 👥 Plantilla */
+.sdoc.bio dd{line-height:1.35}.sdoc.bio dd small{color:var(--mute)}
+.sdoc .talkb{font-size:var(--fs-s);padding:3px 8px;min-height:0}
+.es.bio{font-size:var(--fs-s)}
+.scn .sdoc.bio{max-height:38vh;overflow:auto}
 /* papeles de RR.HH. y Dirección: ficha, acta, carta, oferta */
 .sdoc{background:#fff;border:2px solid #e3cccc;border-radius:8px;padding:6px 10px;font-size:13px;color:#3a2323;box-shadow:0 2px 0 #e3cccc}
 .sdoc h6{margin:0 0 4px;font-family:var(--display);font-size:11px;letter-spacing:1px;color:#c51d22;text-transform:uppercase;display:flex;justify-content:space-between;gap:6px}
@@ -1659,12 +1666,12 @@ body.bigtx{--fs-xs:14px;--fs-s:16px;--fs-m:20px;--fs-l:26px;--fs-xl:34px;--fs-xx
       </main>
       <section class="dept" id="dept" hidden aria-live="polite"></section>
     </div>
-    <section class="isostore" id="isostore" aria-label="La tienda en directo"><div class="ptitle"><span>🏪 Tu tienda en directo</span><small id="isocap">Toca a alguien para ver qué hace</small></div><div id="isoslot"></div><div class="isobottom" id="isobottom"></div></section>
+    <section class="isostore" id="isostore" aria-label="La tienda en directo"><div class="ptitle"><span>🏪 Tu tienda en directo</span><small id="isocap">Toca a alguien de la plantilla para hablarle</small></div><div id="isoslot"></div><div class="isobottom" id="isobottom"></div></section>
     <aside class="sidebar" id="sidebar" aria-label="Avisos, personal y cámaras">
       <div class="sidehead"><b>🔔 AVISOS</b><button class="btn mini go aall" id="aallBtn" data-act="aall" disabled title="Reparte todos los avisos pendientes entre el personal libre">⚡ Asignar todo</button><button class="btn mini sideclose" data-act="side" aria-label="Cerrar avisos">✕</button></div>
       <section class="alerts" id="alerts" aria-live="polite"></section>
       <section class="tasks" id="tasks" aria-label="Avisos en curso y personal"></section>
-      <div id="camwin" class="camwin" aria-label="Cámaras de seguridad"><div class="camhead"><span>📹 Toca una cámara para ampliarla, y a una persona para ver qué hace</span><button class="btn mini" data-act="cams" aria-label="Cerrar cámaras">✕</button></div><div id="camslot"></div></div>
+      <div id="camwin" class="camwin" aria-label="Cámaras de seguridad"><div class="camhead"><span>📹 Toca una cámara para ampliarla, y a alguien de la plantilla para hablarle</span><button class="btn mini" data-act="cams" aria-label="Cerrar cámaras">✕</button></div><div id="camslot"></div></div>
     </aside>
   </div>
   <button class="alertbtn" id="alertBtn" data-act="side" aria-label="Ver avisos">🔔<b>0</b></button>
@@ -1779,6 +1786,336 @@ const TALK={
  servicial:['Si necesitas algo, me dices.','Te echo una mano con eso.'],
  capullo:['Si lo hicierais bien, no tendría que hacerlo yo.','Apartad, que así no se hace.']
 };
+/* Más frases de la plantilla durante el turno (por carácter) y de barrio para cualquiera (TALK_G). */
+const TALK_MAS={
+ bromista:['¿Cómo se llama el primo vegano de Bruce Lee? Brócoli.','Si la cola llega a la puerta, cobramos entrada.','Me he pesado en la báscula de la fruta: 1,99 € el kilo. Barato.','¿Sabéis qué le dijo el yogur a la leche? «Cuajarás».','Hoy vengo motivadísimo: he dormido cuatro horas seguidas.','El de la capucha lleva diez minutos mirando atún. Respeto su proceso.'],
+ quejica:['El aire acondicionado, a 16 grados. Y luego me dicen que exagero.','A mí siempre me tocan los palés que pesan.','Me duele la espalda de mirar la cola.','¿Otra vez el camión? Si vino ayer.','Ni un café a gusto me puedo tomar.'],
+ currante:['Ya he repuesto el pasillo 4. Y el 5, que me aburría.','¿Quién ha dejado las cajas en medio? Ya las quito yo.','Si queréis, os cubro el descanso.','Hoy batimos récord de lineales, ya veréis.'],
+ chismoso:['¿Habéis visto que el del almacén viene con colonia nueva? Ahí hay algo.','La de la pescadería de enfrente se ha separado. Me lo ha dicho una clienta.','No es por nada, pero alguien se ha comido las galletas de la sala de descanso.','Dicen que el jefe va a contratar. Dicen.'],
+ timido:['(susurra) …buenos días.','Eh… ¿esto va aquí? Vale. Perdón.','…ya lo hago yo.'],
+ lider:['Tú, al pasillo 2. Tú, conmigo al muelle. ¡Vamos!','Si esto sale bien hoy, mañana invito a churros.','Un equipo que repone unido, jamás será vencido.'],
+ pasota:['Ya, ya. Ahora voy.','Si se cae el palé, pues se cae.','Yo vengo a lo mío: entrar, fichar, salir.','Relax, que esto no es la NASA.'],
+ servicial:['¿Necesitas que te traiga algo del almacén?','Le he dejado la silla a la señora mayor de la cola.','Ya he limpiado lo del pasillo 7, tranquilos.'],
+ capullo:['Yo aquí soy el único que sabe dónde está el cúter.','Si me pagaran por cada error vuestro, ya me habría jubilado.','Lo hago yo, que si no, lo hacéis mal.','¿Eso es reponer? Mi abuela repone más rápido.']
+};
+Object.keys(TALK_MAS).forEach(k=>{TALK[k]=(TALK[k]||[]).concat(TALK_MAS[k]);});
+const TALK_G=['Qué calor hace en el muelle. Esto es Sevilla en agosto.','La línea 1 del Metro otra vez parada. He venido andando desde Sol.','¿Alguien ha visto el Atleti ayer? Yo sufro mucho, mucho.','El del Madrid de la caja 2 lleva toda la mañana dando la tabarra con la Champions.','Mi suegra viene a comer el domingo. Necesito horas extra para el vino.','La vecina del quinto ha preguntado si vendemos «aguacates de los buenos». Todos son buenos, señora.','Me ha hecho un bizum mi primo con el concepto «por existir».','Hoy hay más gente que en el Rastro un domingo.','Huele a pan recién hecho. Concentrarse aquí es imposible.','Una señora me ha pedido «el champú de la tele». No me ha dicho de qué tele.'];
+/* Reacciones de la plantilla a lo que pasa en la tienda: quip(k) las pone en cola y salen en el chat cuando está libre. */
+const QUIP={
+ punta:['Ya viene la marabunta. Agarraos.','Hora punta: hora de rezar.','Que alguien abra otra caja o me meto en el congelador.','Mirad la cola: parece la del Prado el día que es gratis.'],
+ ladron:['¡Lo sabía! Gafas de sol en un súper no engañan a nadie.','Otro que se cree que la mochila no se ve. Se ve, cariño.','Ni en las pelis roban tan mal.','Ese ya no vuelve. Por lo menos, por aquí.'],
+ insp:['Inspección. Todo el mundo a parecer muy ocupado.','Ese señor de la carpeta me mira raro.','¿Quién ha dejado la fregona delante del extintor? ¡Quitadla ya!'],
+ falso:['¡Un billete falso! Si parecía del Monopoly.','Ese billete tenía menos holograma que mi abono transporte.'],
+ enfado:['Otro que se va echando humo. Y eso que hay aire acondicionado.','Se ha ido sin la compra… y sin despedirse.','Yo también me habría ido, eh. Pero a mí me pagan.'],
+ rival:['¿Un súper nuevo al lado? Nosotros tenemos a Vitchi y ellos no.','Que abran lo que quieran: la vecina del quinto viene aquí a cotillear.']
+};
+function quip(k){if(!run||run.over||run.remote||!QUIP[k])return;(run.qq=run.qq||[]).push({k,t:run.t});}
+function quipTick(){
+  const Q=run.qq;if(!Q||!Q.length||(run.chat&&run.t<run.chat.until))return;
+  const q=Q.shift();run.qq=Q.filter(x=>run.t-x.t<12);if(run.t-q.t>12)return;
+  const ws=meta.emp.filter(e=>inStore(e)&&!e.real);if(!ws.length)return;
+  const e=pick(ws),N=NATS[e.nat]||NATS[0];
+  run.chat={face:e.face,text:e.name+' '+N.f+': «'+pick(QUIP[q.k])+'»',angry:false,until:run.t+4};renderChat();
+}
+
+/* ===== Vidas del personal (NPC): biografía, círculo y aspiración con su arco =====
+   e.bio = {age, from, live, yrs, past:[2], wish, circ:[{k,n,a?}], asp, s (paso del arco), f:{}, next (turno del próximo momento), done, bar}.
+   Los jugadores reales no tienen bio. Se crea en newEmp (con el día de esa partida) y se migra en ensureMeta. */
+const FEM_F=['👩','👩‍🦰','👱‍♀️','👵','👩‍🦳','🧕','👩‍🦱','👩🏿','👩🏽'];
+const isFem=e=>FEM_F.includes(e&&e.face);
+/* «camarer{o|a}» → camarero / camarera según la persona. */
+const gx=(s,f)=>String(s).replace(/\{([^|}]*)\|([^}]*)\}/g,(m,a,b)=>f?b:a);
+const BARRIOS=['Vallecas','Carabanchel','Usera','Lavapiés','Tetuán','Moratalaz','Villaverde','Aluche','San Blas','Hortaleza','Ciudad Lineal','Arganzuela','Chamberí','Getafe','Alcorcón','Leganés','Fuenlabrada','Móstoles','Pan Bendito','Malasaña','Prosperidad','Puente de Vallecas','Orcasitas','Embajadores'];
+const ORIG={'España':['Madrid de toda la vida','Albacete','Jaén','Badajoz','Vigo','Cuenca','Murcia','Zamora','Cádiz','Lugo','Talavera','Guadalajara','Linares'],
+ 'Colombia':['Medellín','Cali','Barranquilla','Bogotá','Pereira'],'Venezuela':['Caracas','Maracaibo','Barquisimeto','Valencia (la de allí)'],'Argentina':['Rosario','Buenos Aires','Córdoba','Mendoza'],
+ 'Marruecos':['Tánger','Casablanca','Nador','Tetuán (el de allí)','Fez'],'Rumanía':['Bucarest','Brașov','Iași','Constanța'],'Ucrania':['Kiev','Járkov','Odesa','Leópolis'],'China':['Qingtian','Wenzhou','Shanghái','Cantón'],
+ 'Senegal':['Dakar','Thiès','Saint-Louis','Ziguinchor'],'Italia':['Nápoles','Bolonia','Bari','Palermo'],'Perú':['Lima','Arequipa','Trujillo','Cusco'],'Brasil':['São Paulo','Salvador de Bahía','Belo Horizonte','Recife'],'Filipinas':['Manila','Cebú','Dávao']};
+const PAST=['Fue camarer{o|a} tres veranos en un chiringuito de Benidorm.','Repartió para una app en bici (y le robaron dos bicis).','Trabajó en una frutería de Usera: sabe si un melón está bueno solo con mirarlo.','Fue teleoperador{|a} de una compañía de luz: «le llamo para mejorar su tarifa».','Montó muebles en un Ikea. Le sobraban tornillos siempre.','Cuidó a una señora mayor en Chamberí que le enseñó a jugar al mus.','Estuvo de reponedor{|a} en otro súper. Dice que este es mejor. (Lo dice delante de ti.)','Fue monitor{|a} de campamento cinco veranos.','Vendió seguros puerta a puerta. Vendió uno. A su tía.','Hizo un FP de Administración y lo terminó con matrícula.','Dejó Derecho en segundo. «No era lo mío. Lo mío era dormir.»','Estuvo en un almacén de paquetería en Getafe, de noche.','Fue azafat{o|a} de congresos en IFEMA.','Repartió folletos en Sol disfrazad{o|a} de muñeco gigante.','Fue dependient{e|a} en una tienda de ropa de la Gran Vía.','Hizo kebabs en Lavapiés. Todavía sueña con la salsa de yogur.','Trabajó de socorrista en una piscina municipal. Rescató a un flotador.','Estuvo en la obra con su tío. Aprendió a decir «eso está a nivel» sin mirar.','Fue conductor{|a} de autoescuela dos meses. Se jubiló de los nervios.','Daba clases particulares de inglés a niños que no querían clases.'];
+const PAST_X=['En su país era profesor{|a} de Matemáticas. Aquí corrige el cambio mentalmente más rápido que la caja.','En su país estudió Turismo. Aquí guía a los turistas perdidos sin cobrar comisión.','En su país tenía una tienda de ropa con su madre.'];
+const PAST_T={bromista:'En el instituto era el payaso de la clase. Lo sigue siendo, pero cobra.',quejica:'Dejó su último trabajo porque «la silla era incómoda». La silla era nueva.',currante:'Desde los 18 ha tenido siempre dos trabajos a la vez.',chismoso:'Sabe la vida de todo su portal. Y la del portal de enfrente.',timido:'En su último trabajo tardaron tres meses en saber cómo se llamaba.',lider:'Fue delegad{o|a} de clase seis años seguidos. Sin oposición.',pasota:'Se tomó un año sabático. Luego otro. Luego vino aquí.',servicial:'Le hace la compra a la vecina del quinto desde hace años. Gratis.',capullo:'Fue «emplead{o|a} del mes» en su último trabajo. Te lo recordará.'};
+const ANEC=['Una vez le tocaron 50 € en un rasca y se los gastó en rascas.','Salió de figurante en una serie. Dice que se le ve una oreja.','Le echaron de un trabajo por comerse el roscón de Reyes de la jefa.','Su primer día en Madrid se perdió en el Metro y acabó en Arganda.','Ganó un concurso de croquetas en las fiestas de su barrio.','Tiene un récord personal: 14 cafés en un turno.','Hizo el Camino de Santiago en chanclas. Bueno, hasta Sarria.','Se tatuó el nombre de su perro. Ahora tiene un gato.','Fue a un concurso de la tele y cayó en la primera pregunta.','Dice que le dio la mano a un futbolista del Madrid en el aeropuerto. Nadie le cree.','Una vez se quedó encerrad{o|a} 40 minutos en una cámara frigorífica.','Vendió su moto para pagarse un máster que no terminó.','Cantó en un karaoke de Lavapiés y le pidieron otra. Sin ironía.','Su abuela le enseñó a regatear en el Rastro. Regatea hasta en el súper.','Se presentó dos veces a un concurso de talentos. Las dos con la misma canción.','Le picó una medusa en Torremolinos y lo cuenta como si fuera una guerra.'];
+const WISH=['Defiende la tortilla con cebolla a muerte.','Es del Atleti y sufre. Mucho. En voz alta.','Es del Rayo y lo lleva con orgullo.','Es del Madrid y te lo recuerda cada lunes.','Quiere ir a Japón algún día. Ya sabe decir «gracias» y «patata».','Colecciona imanes de nevera de sitios en los que no ha estado.','No funciona sin su termo de café de litro.','Se sabe de memoria las ofertas del folleto. Las de la competencia también.','Les tiene pánico a las palomas de la plaza.','Odia el reguetón, pero se sabe todas las letras.','Quiere un perro salchicha. Ya tiene el nombre: Chorizo.','Hace crossfit y te lo va a contar, quieras o no.','Hace pan de masa madre. De momento, la masa madre va ganando.','No se pierde una verbena: San Isidro, la Paloma, San Cayetano.','Juega al pádel los domingos y pierde siempre.','Le pone nombre a las carretillas del almacén.','Ve los realities de la tele en bucle y comenta cada expulsión.','Sueña con un aire acondicionado que funcione en el bus 34.','Guarda las bolsas de plástico dentro de otra bolsa de plástico.','Quiere ver un Clásico en el estadio una vez en la vida.'];
+const WISH_T={bromista:['Quiere hacer un monólogo en un bar de Lavapiés.'],quejica:['Lleva un año diciendo que se va a apuntar al gimnasio.'],currante:['Su sueño es una semana de vacaciones de verdad, sin móvil.'],chismoso:['Su sueño es tener un programa de cotilleo en la radio del barrio.'],timido:['Quiere atreverse a cantar en un karaoke. Algún día.'],lider:['Organiza la porra del Mundial de toda la tienda. Y la gana.'],pasota:['Su plan de futuro es «ya se verá».'],servicial:['Quiere hacer voluntariado en el banco de alimentos.'],capullo:['Quiere que alguien, algún día, le dé la razón en público.']};
+const CNAME=['Ana','Sergio','Laura','David','Cristina','Álex','Paula','Iván','Sara','Miguel','Noelia','Raúl','Bea','Hugo','Carmen','Jorge','Elena','Adri','Nacho','Irene'];
+const KIDS_M=['Leo','Hugo','Mateo','Thiago','Izan','Enzo','Gael','Bruno','Marco'],KIDS_F=['Martina','Lucía','Sofía','Daniela','Valeria','Alba','Noa','Vera','Carla'];
+const PETS=['Toby','Luna','Coco','Lola','Rocky','Kira','Michi','Thor','Canela','Pancho','Chispa','Bimba'];
+const MOMS={'España':['Mari Carmen','Encarni','Rosa','Fina','Conchi','Maribel','Amparo','Pepi'],'Colombia':['Gloria','Luz Marina','Esperanza'],'Venezuela':['Yolanda','Carmen Elena','Mireya'],'Argentina':['Graciela','Susana','Mirta'],
+ 'Marruecos':['Fátima','Khadija','Aicha'],'Rumanía':['Elena','Maria','Doina'],'Ucrania':['Olena','Halyna','Natalia'],'China':['Li Na','Xiu Ying','Mei Lan'],'Senegal':['Aminata','Fatou','Mariama'],
+ 'Italia':['Giuseppina','Rosa','Antonella'],'Perú':['Rosa','Nelly','Gladys'],'Brasil':['Maria José','Sônia','Lúcia'],'Filipinas':['Marites','Rosario','Lorna']};
+const CIRC={pareja:['💑','pareja'],hijo:['👦','hijo'],hija:['👧','hija'],madre:['👩‍👦','su madre'],compi:['🛋️','compi de piso'],perro:['🐶','perro'],gata:['🐱','gata'],abuela:['👵','su abuela'],sobri:['🧒','sobrino'],sobra:['🧒','sobrina']};
+const CIRC_L={
+ pareja:['%n% dice que huelo a pescadería. Le digo que es perfume de lonja.','Este finde, %n% y yo vamos a IKEA. Si sobrevivimos, boda.','%n% me ha hecho un táper de lentejas. Otra vez. Le quiero igual.','%n% y yo hemos visto tres series a la vez. Ya no sé quién mató a quién.'],
+ hijo:['%n% (%a% años) quiere ser youtuber y bombero. A la vez.','%n% ha dicho en el cole que trabajo «en un súper famoso». Ya soy alguien.','Anoche %n% no durmió. Ni yo. Hoy funciono con café y fe.'],
+ hija:['%n% (%a% años) quiere ser astronauta. O cajera, «para tocar el dinero».','%n% me ha hecho un dibujo de la tienda. Tú sales con corona.','%n% ya me gana al parchís. Me gana a todo, la verdad.'],
+ madre:['Mi madre, %n%, me ha llamado tres veces. Para preguntarme si he comido.','%n%, mi madre, dice que aquí la fruta está cara. Lo dice de todas las tiendas.','Mi madre quiere conocerte. Cuidado: viene con croquetas y preguntas.'],
+ compi:['Mi compi de piso, %n%, se ha comido mi yogur. Tenía mi nombre escrito.','%n% puso reguetón a las 3 de la mañana. Le he dejado una nota muy educada. Muy.'],
+ perro:['%n% se ha comido otra zapatilla. La izquierda. Siempre la izquierda.','Si me ves con pelos es por %n%. Suelta más que una alfombra.'],
+ gata:['%n% me tira las cosas de la mesa mirándome a los ojos. En casa manda ella.','%n% duerme veinte horas al día. Mi ídola.'],
+ abuela:['Mi abuela %n% dice que esto antes era un ultramarinos y fiaban.','La abuela %n% ha aprendido a mandar audios. De siete minutos.'],
+ sobri:['Mi sobrino %n% (%a%) me pide que le traiga Kinder «del trabajo». Como si fuera gratis.'],
+ sobra:['Mi sobrina %n% (%a%) dice que de mayor quiere trabajar aquí «para escanear cosas». Pobre.']};
+/* Aspiraciones: ok = si encaja con su edad/origen; w = peso según el carácter; how = qué cuenta cuando le preguntas. */
+const ASP={
+ opos:{ic:'📚',n:'Aprobar las oposiciones de auxiliar administrativo',ok:(e,B)=>B.age<52,w:e=>1+(['currante','timido'].includes(e.pers)?1.5:0),how:['Anoche me estudié el tema 14. Hoy no sé ni cómo me llamo.','Llevo el temario en el móvil. Si me ves mirándolo, es estudio, ¿eh?']},
+ bar:{ic:'🍻',n:'Abrir su propio bar',ok:(e,B)=>B.age>=25,w:e=>1+(e.pers==='bromista'?1.5:e.pers==='capullo'?1:0),how:['Cuando abra mi bar, las bravas llevarán alioli y salsa. Las dos. Sin debate.','He visto otro local en %live%. Con persiana y todo.']},
+ influ:{ic:'📱',n:'Triunfar en redes sociales',ok:(e,B)=>B.age<36,w:e=>1+(e.pers==='bromista'?1.5:e.pers==='chismoso'?1:0),how:['Ayer subí un vídeo ordenando latas. 300 me gusta. El algoritmo me quiere.','Mi público pide más contenido de congelados. Raro, pero es lo que hay.']},
+ madre:{ic:'💸',n:'Mandar dinero a su madre',ok:(e,B,es)=>!es&&B.age<56,w:()=>3,how:['Le he mandado un bizum a mi madre. Me ha contestado con catorce corazones.','Mi madre, en %from%, dice que aquí hace frío. Que venga en agosto.']},
+ boda:{ic:'💍',n:'Ahorrar para su boda',ok:(e,B)=>B.age>=23&&B.age<50,w:()=>1,how:['La boda va bien. La lista de invitados, fatal.','¿Sabes lo que cuesta un DJ? Más que yo en un mes.']},
+ enfer:{ic:'🩺',n:'Estudiar Enfermería',ok:(e,B)=>B.age<40,w:e=>1+(e.pers==='servicial'?2:0),how:['Hoy me sé los huesos de la mano. Pregúntame. No, mejor no.','Entre las clases y esto, duermo cinco horas. Las de Enfermería somos de otra pasta.']},
+ carnet:{ic:'🚗',n:'Sacarse el carnet de conducir',ok:(e,B)=>B.age<32,w:e=>1+(e.pers==='pasota'?1:0),how:['La autoescuela me ha puesto más clases. Por mi bien. Y por su bolsillo.','Aparco mejor el carro de la compra que el coche.']},
+ piso:{ic:'🏠',n:'Independizarse',ok:(e,B)=>B.age<36,w:()=>1,how:['He visto un piso en %live%: 750 € y la ducha está en la cocina.','Mi casero dice que es «un barrio con mucho potencial». Potencial para subirme el alquiler.']},
+ jefe:{ic:'⭐',n:'Llegar a encargad{o|a}',ok:()=>true,w:e=>1+(e.pers==='lider'?2.5:['currante','capullo'].includes(e.pers)?1.5:0),how:['Algún día seré encargad{o|a}. Ya practico mirando mal a la gente.','Me he leído un libro de liderazgo. El capítulo uno.']},
+ musica:{ic:'🎸',n:'Triunfar con su grupo de rumba-trap',ok:(e,B)=>B.age<45,w:e=>0.7+(['bromista','pasota'].includes(e.pers)?1:0),how:['Estamos componiendo una rumba sobre la cola de la Caja 3. Va a ser un temazo.','El bajista nos ha dejado. Por una bajista. Mejor música.']}
+};
+function mkBio(e,day){
+  const N=NATS[e.nat]||NATS[0],es=N.c==='España',f=isFem(e);
+  const age=['👵','👴','👨‍🦲'].includes(e.face)?ri(50,64):e.face==='👩‍🦳'?ri(42,60):ri(19,46);
+  const B={age,from:pick(ORIG[N.c]||ORIG['España']),live:pick(BARRIOS),yrs:es?0:ri(2,15),circ:[],f:{},s:0,next:(day||1)+ri(1,3)};
+  B.past=[gx(!es&&Math.random()<0.4?pick(PAST_X):pick(PAST),f),gx(Math.random()<0.45&&PAST_T[e.pers]?PAST_T[e.pers]:pick(ANEC),f)];
+  B.wish=gx(Math.random()<0.35&&WISH_T[e.pers]?pick(WISH_T[e.pers]):pick(WISH),f);
+  const nm=()=>pick(CNAME.filter(x=>x!==e.name)),add=(k,n,a)=>B.circ.push(a!=null?{k,n,a}:{k,n}),mom=()=>pick(MOMS[N.c]||MOMS['España']);
+  if(age>=22&&Math.random()<0.5)add('pareja',nm());
+  if(age>=26&&Math.random()<0.4){const n=Math.random()<0.6?1:2,a0=Math.max(1,age-42),a1=Math.max(a0,Math.min(40,age-21));for(let i=0;i<n;i++){const h=Math.random()<0.5;add(h?'hijo':'hija',pick(h?KIDS_M:KIDS_F),ri(a0,a1));}}
+  if(age<58&&Math.random()<0.6)add('madre',mom());
+  if(age<36&&!B.circ.some(c=>c.k==='pareja')&&Math.random()<0.5)add('compi',nm());
+  if(Math.random()<0.45)add(Math.random()<0.6?'perro':'gata',pick(PETS));
+  if(age<30&&Math.random()<0.3)add('abuela',mom());
+  if(B.circ.length<2){if(Math.random()<0.5)add('perro',pick(PETS));else{const h=Math.random()<0.5;add(h?'sobri':'sobra',pick(h?KIDS_M:KIDS_F),ri(3,12));}}
+  B.circ=B.circ.slice(0,4);
+  const av=Object.keys(ASP).filter(k=>ASP[k].ok(e,B,es));
+  B.asp=wpick(av.map(k=>({k,w:ASP[k].w(e)}))).k;
+  if(B.asp==='boda'&&!B.circ.some(c=>c.k==='pareja'))B.circ.unshift({k:'pareja',n:nm()});
+  B.bar=pick(['Bar '+e.name,'La Taberna de '+e.name,'Casa '+e.name,'El Rincón de '+e.name]);
+  return B;
+}
+const bioC=(B,k)=>toArr(B.circ).find(c=>c.k===k);
+const bioFill=(s,e)=>{const B=e.bio,p=bioC(B,'pareja');return gx(String(s).replace(/%live%/g,B.live).replace(/%from%/g,B.from).replace(/%p%/g,p?p.n:'mi pareja').replace(/%bar%/g,B.bar||'mi bar'),isFem(e));};
+const circTxt=c=>{const C=CIRC[c.k]||['🙂',c.k];return C[0]+' '+esc(c.n)+' <small>('+C[1]+(c.a?', '+c.a+(c.a===1?' año':' años'):'')+')</small>';};
+function bioHtml(e,mini){
+  const B=e.bio;if(!B)return '';const A=ASP[B.asp]||{},f=isFem(e),N=NATS[e.nat]||NATS[0];
+  const from=B.from===B.live||B.from==='Madrid de toda la vida'?'De '+esc(B.live)+' de toda la vida':'De '+esc(B.from)+(B.yrs?' (en Madrid desde hace '+B.yrs+' años)':'')+' · vive en '+esc(B.live);
+  if(mini)return `<div class="es bio">📖 ${B.age} años · ${from} · Sueña con: <b>${A.ic||''} ${esc(gx(A.n||'',f))}</b>${B.done?' ✔️':''} · Su gente: ${toArr(B.circ).map(c=>(CIRC[c.k]||['🙂'])[0]+' '+esc(c.n)).join(', ')}</div>`;
+  return `<div class="sdoc bio"><h6><span>📖 Su vida</span><span>${B.age} años · ${N.f}</span></h6><dl>
+    <dt>De dónde</dt><dd>${from}</dd><dt>Antes</dt><dd>${toArr(B.past).map(esc).join(' ')}</dd>
+    <dt>Sueña con</dt><dd>${A.ic||''} ${esc(gx(A.n||'',f))}${B.done?' <small>(capítulo cerrado)</small>':''}</dd><dt>Manía</dt><dd>${esc(B.wish)}</dd>
+    <dt>Su gente</dt><dd>${toArr(B.circ).map(circTxt).join(' · ')||'—'}</dd>
+    ${e.log&&e.log.length?`<dt>Diario</dt><dd>${toArr(e.log).slice(-3).map(esc).join(' · ')}</dd>`:''}</dl></div>`;
+}
+/* ¿Qué tal? Algo de su gente, de su sueño o su manía. */
+function howLine(e){
+  const B=e.bio,o=[];
+  toArr(B.circ).forEach(c=>{(CIRC_L[c.k]||[]).forEach(l=>o.push(l.replace(/%n%/g,c.n).replace(/%a%/g,c.a||'')));});
+  if(!B.done)(ASP[B.asp]||{how:[]}).how.forEach(l=>o.push(l));
+  return bioFill(pick(o.length?o:['Bien, jefe. Aquí, sobreviviendo.']),e);
+}
+const mor=(e,n)=>{e.moral=clamp(e.moral+n,0,100);};
+/* Se va por su sueño (baja voluntaria, sin indemnización): RR.HH. abre la vacante. */
+function leaveGood(e,why,party){
+  const live=run&&!run.over;
+  if(live)dropEmp(e,why);else{meta.emp=meta.emp.filter(x=>x!==e);baja(e,why,true);}
+  if(ROLES[e.role]){meta.vac=meta.vac||{};meta.vac[e.role]=Math.min(ROLES[e.role].max,(meta.vac[e.role]||0)+1);}
+  meta.emp.forEach(o=>{if(!live||working(o))mor(o,party?3:1);});
+  if(party)meta.money-=3000;
+  toast('👋 '+e.face+' '+e.name+' se despide de la plantilla. RR.HH. abre una vacante de '+(ROLES[e.role]?ROLES[e.role].n:'')+'.');
+}
+const extraC=e=>Math.round(empCost(e.wage)*0.3);
+/* Arcos: cada paso devuelve {txt, hint, ch:[[k,texto,cls]], def, go(k) → {log, to, gap, done, toast, bad}}. */
+const libStep=(txt,yes)=>(e,B)=>({txt,hint:'📅 Sí: libra el turno '+(meta.day+1)+' (ese día tienes una persona menos) y +10 de ánimo. ✋ No: viene a trabajar y −12 de ánimo; lo suyo le saldrá peor.',
+  ch:[['si','📅 '+yes,'go'],['no','✋ No puedo, te necesito','no']],def:'no',
+  go:k=>{if(k==='si'){e.off=meta.day+1;B.f.lib=1;mor(e,10);return {log:'Le diste libre el turno '+(meta.day+1)+' para lo suyo'};}B.f.lib=0;mor(e,-12);return {log:'Le negaste el día libre que pidió',bad:1};}});
+const extraStep=txt=>(e,B)=>({txt,hint:'⏱️ Sí: pagas hoy '+fmt(extraC(e))+' de horas extra (con su Seguridad Social), +10 de ánimo y rinde más un par de turnos. ✋ No: −6 de ánimo.',
+  ch:[['si','⏱️ Sí, horas extra','go'],['no','✋ Hoy no hay presupuesto','no']],def:'no',
+  go:k=>{if(k==='si'){meta.money-=extraC(e);mor(e,10);e.focus=Math.max(e.focus||0,2);return {log:'Le diste horas extra ('+fmt(extraC(e))+')'};}mor(e,-6);return {log:'Le dijiste que no había horas extra'};}});
+const ARCS={
+ opos:[
+  (e,B)=>({txt:'Jefe, me he apuntado a las oposiciones de auxiliar administrativo de la Comunidad. Estudio por las noches y con el temario en el bus.',
+    hint:'💪 +5 de ánimo. 🙄 −3 de ánimo, pero se aplica más en el trabajo (+actitud).',ch:[['si','💪 ¡A por ellas!','go'],['meh','🙄 Mientras no se note en el curro','']],def:'si',
+    go:k=>{if(k==='si'){mor(e,5);return {log:'Te contó que oposita; le animaste'};}mor(e,-3);e.act=clamp(e.act+0.03,0.05,0.98);return {log:'Te contó que oposita; no te hizo gracia'};}}),
+  libStep('El examen es justo el turno que viene. ¿Me lo das libre? Llevo meses con esto.','Sí, libra y aprueba'),
+  (e,B)=>{const ok=B.f.pass=Math.random()<0.3+(B.f.lib?0.3:0)+e.act*0.2;B.f.tries=(B.f.tries||0)+1;
+    return ok?{txt:'¡JEFE! ¡HE APROBADO! Bueno, he aprobado el examen. La plaza depende de la nota final…',hint:'🎉 +15 de ánimo. Si saca plaza, se irá más adelante (baja voluntaria).',ch:[['ok','🎉 ¡Enhorabuena!','go']],def:'ok',go:()=>{mor(e,15);return {log:'¡Aprobó el examen de las oposiciones!'};}}
+     :{txt:'He suspendido. Me ha faltado medio punto. Medio. Punto.'+(B.f.lib===0?' Si hubiera podido descansar…':''),hint:'🤗 +6 de ánimo y lo intentará otra vez más adelante. 💼 −4 de ánimo, deja las oposiciones y se centra aquí (+actitud).',
+      ch:[['ani','🤗 El año que viene, seguro','go'],['cur','💼 Pues a currar, que aquí tienes trabajo','']],def:'ani',
+      go:k=>{if(k==='ani'&&B.f.tries<2){mor(e,6);return {log:'Suspendió las oposiciones; lo volverá a intentar',to:1,gap:ri(4,6)};}if(k==='ani'){mor(e,6);return {log:'Suspendió otra vez las oposiciones y lo deja estar',done:1};}mor(e,-4);e.act=clamp(e.act+0.05,0.05,0.98);return {log:'Dejó las oposiciones para centrarse en la tienda',done:1};}};},
+  (e,B)=>({txt:'Me han dado plaza. Empiezo en la Comunidad en dos semanas, así que hoy es mi último turno. Gracias por todo, de verdad.',
+    hint:'Se va en buenos términos (baja voluntaria, sin indemnización) y RR.HH. abre la vacante. 🎂 30 € de tarta: +3 de ánimo a quien trabaja hoy. 🤝 +1.',ch:[['tarta','🎂 Despedida con tarta · 30 €','go'],['bye','🤝 Suerte, te lo has ganado','']],def:'bye',
+    go:k=>{logE(e,'Sacó plaza en las oposiciones');leaveGood(e,'Sacó plaza en las oposiciones (baja voluntaria, en buenos términos)',k==='tarta');return {done:1};}})
+ ],
+ boda:[
+  (e,B)=>({txt:'¡Jefe! %p% y yo nos casamos en primavera. Estoy ahorrando hasta los céntimos del café.',hint:'👏 +5 de ánimo. 🎁 Sale 50 € del bote y +12 de ánimo: no se le olvidará.',
+    ch:[['enh','👏 ¡Enhorabuena!','go'],['reg','🎁 Un detalle de la empresa · 50 €','']],def:'enh',
+    go:k=>{if(k==='reg'){meta.money-=5000;mor(e,12);return {log:'Le regalaste 50 € para la boda'};}mor(e,5);return {log:'Te contó que se casa'};}}),
+  extraStep('Oye, ¿hay horas extra? Entre el banquete y el DJ, la boda me sale por un riñón.'),
+  (e,B)=>({txt:'¡Que me caso el turno que viene! ¿Me lo das libre? Es que, si no, %p% me mata.',hint:'💒 Sí: libra el turno '+(meta.day+1)+' y vuelve feliz (+15 de ánimo). ✋ No: viene a trabajar el día de su boda: −25 de ánimo (y puede acabar dimitiendo).',
+    ch:[['si','💒 ¡Claro! ¡Vivan los novios!','go'],['no','✋ Imposible, te necesito','no']],def:'si',
+    go:k=>{if(k==='si'){e.off=meta.day+1;mor(e,15);return {log:'Libró el día de su boda'};}B.f.no=1;mor(e,-25);return {log:'No le dejaste librar el día de su boda',bad:1};}}),
+  (e,B)=>B.f.no?{txt:'Me casé por la tarde, después de cerrar. Con el uniforme en el coche.',hint:'🙏 +4 de ánimo. No arregla lo de la boda, pero ayuda.',ch:[['ok','🙏 Lo siento, de verdad','go']],def:'ok',go:()=>{mor(e,4);return {log:'Se casó después del turno',done:1};}}
+    :{txt:'Ya estamos casados. %p% te manda un trozo de tarta. Lloré con el discurso de mi tía.',hint:'🍰 +6 de ánimo.',ch:[['ok','🍰 ¡Que sea para bien!','go']],def:'ok',go:()=>{mor(e,6);return {log:'Volvió de su boda contentísim{o|a}'.replace(/\{o\|a\}/,isFem(e)?'a':'o'),done:1};}}
+ ],
+ bar:[
+  (e,B)=>({txt:'Algún día abro un bar en %live%. Bravas de verdad, no de esas con kétchup.',hint:'🍻 +5 de ánimo. 😂 +2 (se ríe), pero va en serio.',ch:[['si','🍻 Iré el primero','go'],['ja','😂 Tú lo que quieres es no madrugar','']],def:'si',
+    go:k=>{mor(e,k==='si'?5:2);return {log:'Te contó que sueña con abrir un bar'};}}),
+  (e,B)=>({txt:'He visto un local en traspaso: 18.000 €. Si me subes el sueldo, me quedo y lo dejo estar. Si no… me lo pienso.',
+    hint:'💶 Cobra +8 % ('+monthTxt(Math.round(e.wage*1.08))+'), +15 de ánimo y se olvida del bar. 🍻 +10 de ánimo y en unos turnos se irá a abrirlo (baja voluntaria). 🤔 −4 de ánimo y lo volverá a pedir.',
+    ch:[['sub','💶 +8 % y te quedas','go'],['va','🍻 Ve a por ello, te apoyo',''],['lue','🤔 Ya lo hablaremos','']],def:'lue',
+    go:k=>{if(k==='sub'){e.wage=Math.round(e.wage*1.08);mor(e,15);return {log:'Le subiste el sueldo un 8 % y se olvidó del bar',done:1};}
+      if(k==='va'){B.f.go=1;mor(e,10);return {log:'Le animaste a abrir su bar'};}
+      B.f.n=(B.f.n||0)+1;mor(e,-4);if(B.f.n>=2){B.f.go=1;return {log:'Se cansó de esperar: abrirá su bar igualmente'};}return {log:'Le diste largas con lo del bar',to:1,gap:ri(3,4)};}}),
+  (e,B)=>({txt:'Hoy es mi último turno: el viernes inauguro «'+(B.bar||'mi bar')+'» en %live%. Estáis todos invitados. La primera caña, a mi cuenta.',
+    hint:'Se va en buenos términos (baja voluntaria) y RR.HH. abre la vacante. 🎉 +3 de ánimo a la plantilla y habla bien de la tienda en su bar (+0,05 de reputación). 🤝 +1 de ánimo.',
+    ch:[['ir','🎉 ¡Allí estaremos!','go'],['bye','🤝 Suerte con el bar','']],def:'bye',
+    go:k=>{logE(e,'Se fue a abrir «'+(B.bar||'su bar')+'»');if(k==='ir')repAdd(+0.05,'Un antiguo empleado os recomienda en su bar');leaveGood(e,'Se fue a abrir su bar, «'+(B.bar||'')+'» (baja voluntaria, en buenos términos)',k==='ir');if(k==='ir')meta.money+=3000;return {done:1};}})
+ ],
+ influ:[
+  (e,B)=>({txt:'Tengo 3.200 seguidores en VitchGram. ¿Puedo grabar un «un día en mi súper»? Sin clientes, prometido.',hint:'📸 +6 de ánimo, y el vídeo puede salir bien… o mal. 🚫 −6 de ánimo.',
+    ch:[['si','📸 Graba, pero sin clientes','go'],['no','🚫 Aquí no se graba','no']],def:'no',go:k=>{if(k==='si'){B.f.rec=1;mor(e,6);return {log:'Le dejaste grabar un vídeo en la tienda'};}mor(e,-6);return {log:'No le dejaste grabar en la tienda'};}}),
+  (e,B)=>{if(!B.f.rec)return {txt:'Grabé igual en el descanso. Solo salgo yo y una lata de atún. 200 visitas.',hint:'😂 +3 de ánimo. ⚠️ Cuenta como un toque (amonestación por escrito) y −8 de ánimo.',
+      ch:[['ja','😂 Mientras sea en el descanso','go'],['toq','⚠️ Te dije que no','no']],def:'ja',go:k=>{if(k==='toq'){e.warn=(e.warn||0)+1;mor(e,-8);return {log:'Toque por grabar en la tienda sin permiso'};}mor(e,3);return {log:'Grabó en el descanso y te hizo gracia'};}};
+    if(Math.random()<0.55+e.trato*0.35)return {txt:'¡Jefe! Mi vídeo «cosas que solo pasan en un súper de barrio» va por 40.000 visitas. La gente pregunta dónde está la tienda.',hint:'🔥 +0,08 de reputación por el vídeo y +8 de ánimo.',
+      ch:[['ok','🔥 ¡Eres un crack!','go']],def:'ok',go:()=>{repAdd(+0.08,'Un vídeo de la plantilla en redes');mor(e,8);return {log:'Su vídeo de la tienda se hizo viral (para bien)'};}};
+    return {txt:'Ups. En el vídeo se ve el almacén hecho un desastre y alguien lo ha compartido con «así guardan la comida».',hint:'🗑️ Lo borra ya: −4 de ánimo y se acaba ahí. 🤷 Dejarlo: −0,1 de reputación.',
+      ch:[['bor','🗑️ Bórralo ya','go'],['deja','🤷 Déjalo, ya se olvidará','no']],def:'bor',go:k=>{if(k==='bor'){mor(e,-4);return {log:'Borró un vídeo que dejaba mal al almacén'};}repAdd(-0.1,'Un vídeo de la plantilla en redes');return {log:'Su vídeo dejó mal a la tienda',bad:1};}};},
+  (e,B)=>({txt:'Una marca de patatas fritas me ha escrito. ¡Me pagan en patatas! Pero no dejo esto, ¿eh? Esto es mi contenido.',hint:'🥔 +5 de ánimo.',ch:[['ok','🥔 Mientras no las vendas en caja','go']],def:'ok',go:()=>{mor(e,5);return {log:'Le salió su primera colaboración (en patatas)',done:1};}})
+ ],
+ madre:[
+  (e,B)=>({txt:'Le he mandado dinero a mi madre a %from% para una nevera nueva. Me ha mandado una foto con la nevera. Llorando. Ella, no la nevera.',hint:'🥲 +4 de ánimo.',ch:[['ok','🥲 Qué bonito','go']],def:'ok',go:()=>{mor(e,4);return {log:'Le contó que ayuda a su madre en '+B.from};}}),
+  (e,B)=>({txt:'Jefe… a mi madre la han ingresado. ¿Me podrías adelantar 200 € de la nómina? Te los devuelvo, de verdad.',hint:'💶 Salen 200 € del bote ahora; te los devuelve en unos turnos. +15 de ánimo. ✋ −10 de ánimo.',
+    ch:[['si','💶 Sí, adelanto de 200 €','go'],['no','✋ No hacemos adelantos','no']],def:'no',go:k=>{if(k==='si'){meta.money-=20000;B.f.adv=1;mor(e,15);return {log:'Le adelantaste 200 € para su madre'};}mor(e,-10);return {log:'Le negaste un adelanto para su madre',bad:1};}}),
+  (e,B)=>B.f.adv?{txt:'Mi madre ya está en casa, dando guerra. Aquí tienes tus 200 €. No sabes lo que te lo agradezco.',hint:'🤗 Vuelven 200 € al bote. +6 de ánimo.',ch:[['ok','🤗 Me alegro muchísimo','go']],def:'ok',go:()=>{meta.money+=20000;mor(e,6);return {log:'Devolvió el adelanto; su madre está bien',done:1};}}
+    :{txt:'Mi madre ya está mejor. Le pedí el dinero a un primo… a un interés que ni el banco.',hint:'🙏 +2 de ánimo.',ch:[['ok','🙏 Me alegro de que esté bien','go']],def:'ok',go:()=>{mor(e,2);return {log:'Su madre se recuperó',done:1};}}
+ ],
+ enfer:[
+  (e,B)=>({txt:'Me he matriculado en Enfermería, por las tardes. Algún día te pongo yo las vacunas.',hint:'💉 +5 de ánimo. 🙄 −2 de ánimo.',ch:[['si','💉 ¡Qué bien!','go'],['meh','🙄 ¿Y vas a poder con todo?','']],def:'si',
+    go:k=>{mor(e,k==='si'?5:-2);return {log:'Empezó Enfermería por las tardes'};}}),
+  libStep('Tengo prácticas en el 12 de Octubre el turno que viene. ¿Me lo das libre?','Sí, ve a tus prácticas'),
+  (e,B)=>({txt:B.f.lib?'¡Un 9 en Farmacología! Ya sé qué no se mezcla con el vino. Tú también deberías saberlo.':'Un 5,1 en Farmacología. Aprobado por los pelos y sin dormir.',hint:B.f.lib?'🎓 +8 de ánimo.':'🎓 +3 de ánimo.',
+    ch:[['ok','🎓 ¡Así se hace!','go']],def:'ok',go:()=>{mor(e,B.f.lib?8:3);return {log:'Aprobó Farmacología'};}}),
+  (e,B)=>Math.random()<0.5?{txt:'Me ha salido un contrato en un hospital. Hoy es mi último turno. Si algún día te desmayas en la caja, ya sabes a quién llamar.',
+      hint:'Se va en buenos términos (baja voluntaria) y RR.HH. abre la vacante. 🎂 30 € de tarta: +3 de ánimo a quien trabaja hoy. 🤝 +1.',ch:[['tarta','🎂 Despedida con tarta · 30 €','go'],['bye','🤝 ¡Suerte, enfermer{o|a}!'.replace(/\{o\|a\}/,isFem(e)?'a':'o'),'']],def:'bye',
+      go:k=>{leaveGood(e,'Se fue a trabajar a un hospital (baja voluntaria, en buenos términos)',k==='tarta');return {done:1};}}
+    :{txt:'Me ha salido un contrato en un hospital… para dentro de un año. Así que me tienes aquí un tiempo más.',hint:'😄 +5 de ánimo.',ch:[['ok','😄 Pues aquí te queremos','go']],def:'ok',go:()=>{mor(e,5);return {log:'Se queda un año más antes del hospital',done:1};}}
+ ],
+ carnet:[
+  (e,B)=>({txt:'Me estoy sacando el carnet de conducir. Es mi tercer intento. El examinador ya me saluda por mi nombre.',hint:'🚗 +5 de ánimo y va con más confianza al examen. 😂 +1 (se ríe), pero va con menos confianza.',
+    ch:[['si','🚗 ¡A la tercera va la vencida!','go'],['ja','😂 ¿La tercera?','']],def:'si',go:k=>{B.f.c=k==='si'?1:0;mor(e,k==='si'?5:1);return {log:'Te contó que se saca el carnet'};}}),
+  (e,B)=>{const ok=Math.random()<0.45+0.25*(B.f.c||0)+0.1*(B.f.t||0);B.f.t=(B.f.t||0)+1;
+    return ok?{txt:'¡APROBADO! ¡Ya puedo ir a IKEA sin depender de nadie!',hint:'🥳 +12 de ánimo.',ch:[['ok','🥳 ¡Por fin!','go']],def:'ok',go:()=>{mor(e,12);return {log:'¡Aprobó el carnet de conducir!',done:1};}}
+      :{txt:'He suspendido en la rotonda de Atocha. Nadie aprueba en la rotonda de Atocha.',hint:'🤗 +3 de ánimo; lo volverá a intentar.',ch:[['ok','🤗 La próxima, seguro','go']],def:'ok',go:()=>{mor(e,3);return B.f.t>=3?{log:'Suspendió el carnet otra vez y se compra un patinete',done:1}:{log:'Suspendió el práctico del carnet',to:1,gap:ri(3,5)};}};}
+ ],
+ piso:[
+  (e,B)=>({txt:(bioC(B,'compi')?'Vivo con '+bioC(B,'compi').n+', mi compi de piso, ':'Vivo con mi madre, ')+'y quiero independizarme. Pero en %live% piden 900 € por 30 m² y un balcón de adorno.',hint:'🏠 +3 de ánimo.',
+    ch:[['ok','🏠 Ánimo, ya saldrá algo','go']],def:'ok',go:()=>{mor(e,3);return {log:'Te contó que busca piso'};}}),
+  extraStep('¿Me puedes dar horas extra? Para la fianza me piden dos meses y uno de agencia. Uno de agencia, jefe.'),
+  (e,B)=>({txt:'¡He firmado el alquiler! Un interior en '+pick(BARRIOS)+'. Sin ventana, pero con vecinos que cantan.',hint:'🎉 +10 de ánimo.',ch:[['ok','🎉 ¡A estrenar!','go']],def:'ok',go:()=>{mor(e,10);return {log:'Se independizó por fin',done:1};}})
+ ],
+ jefe:[
+  (e,B)=>({txt:gx('Jefe, algún día quiero ser encargad{o|a}. Déjame demostrártelo.',isFem(e)),hint:'📋 +5 de ánimo y se esfuerza más un par de turnos. ✋ −3 de ánimo.',
+    ch:[['si','📋 Demuéstramelo','go'],['no','✋ Primero lo básico','']],def:'si',go:k=>{if(k==='si'){mor(e,5);e.focus=Math.max(e.focus||0,2);return {log:'Quiere ser encargad'+(isFem(e)?'a':'o')+'; le diste una oportunidad'};}mor(e,-3);return {log:'Quiere ser encargad'+(isFem(e)?'a':'o')+'; le frenaste'};}}),
+  (e,B)=>({txt:gx('Llevo turnos dándolo todo. ¿Me nombras encargad{o|a} de '+ROLES[e.role].n+'? Con un poco más de sueldo, claro.',isFem(e)),
+    hint:'⭐ Ascenso: +10 % de sueldo ('+monthTxt(Math.round(e.wage*1.1))+'), +20 de ánimo y rinde más (+actitud). ✋ −12 de ánimo; si le dices que no dos veces, se buscará otra cosa.',
+    ch:[['asc','⭐ Ascenso · +10 %','go'],['no','✋ Todavía no','no']],def:'no',
+    go:k=>{if(k==='asc'){e.wage=Math.round(e.wage*1.1);e.act=clamp(e.act+0.1,0.05,0.98);mor(e,20);B.f.asc=1;return {log:'Le ascendiste a encargad'+(isFem(e)?'a':'o')+' (+10 %)'};}
+      B.f.no=(B.f.no||0)+1;mor(e,-12);return B.f.no>=2?{log:'Le negaste el ascenso por segunda vez'}:{log:'Le negaste el ascenso',to:1,gap:ri(4,5)};}}),
+  (e,B)=>B.f.asc?{txt:gx('Primer turno de encargad{o|a}. He hecho un cuadrante con colores. Nadie lo ha mirado. Lo voy a plastificar.',isFem(e)),hint:'😎 +4 de ánimo.',ch:[['ok','😎 Precioso cuadrante','go']],def:'ok',go:()=>{mor(e,4);return {log:'Estrena cargo de encargad'+(isFem(e)?'a':'o'),done:1};}}
+    :{txt:gx('Me han ofrecido ser encargad{o|a} en un súper de Usera. Me voy, jefe. Sin rencor.',isFem(e)),hint:'Se va (baja voluntaria) y RR.HH. abre la vacante. 🤝 +1 de ánimo a quien trabaja.',
+      ch:[['bye','🤝 Suerte, te lo has ganado','go']],def:'bye',go:()=>{leaveGood(e,'Se fue a ser encargad'+(isFem(e)?'a':'o')+' a otro súper (no le ascendiste)',false);return {done:1};}}
+ ],
+ musica:[
+  (e,B)=>({txt:'Tengo un grupo de rumba-trap: «Los del Pasillo 4». Tocamos el viernes en una sala de Malasaña.',hint:'🎸 +6 de ánimo. 😂 +1.',ch:[['ir','🎸 ¡Allí estaré!','go'],['ja','😂 ¿Rumba-trap?','']],def:'ir',
+    go:k=>{mor(e,k==='ir'?6:1);return {log:'Te invitó a ver a su grupo'};}}),
+  (e,B)=>({txt:'¿Nos dejas grabar el videoclip en el almacén, después de cerrar? Prometo recoger.',hint:'🎬 +10 de ánimo; si queda bien, +0,05 de reputación (o una caja de huevos rota, −15 €). 🚫 −6 de ánimo.',
+    ch:[['si','🎬 Venga, pero recoged','go'],['no','🚫 Ni de broma','no']],def:'no',
+    go:k=>{if(k!=='si'){mor(e,-6);return {log:'No le dejaste grabar el videoclip'};}mor(e,10);if(Math.random()<0.6){repAdd(+0.05,'Un videoclip grabado en la tienda');return {log:'Grabaron el videoclip en el almacén. Ha quedado chulo',toast:'🎬 El videoclip de «Los del Pasillo 4» sale con el logo de la tienda.'};}
+      meta.money-=1500;return {log:'Grabaron el videoclip y rompieron una caja de huevos',toast:'🥚 Videoclip grabado. Una caja de huevos, no tanto: −15 €.',bad:1};}}),
+  (e,B)=>({txt:'¡Nos han cogido para las fiestas de San Isidro! En la pradera, a las cinco de la tarde, con un calor de muerte.',hint:'🎉 +8 de ánimo.',ch:[['ok','🎉 ¡Qué cracks!','go']],def:'ok',go:()=>{mor(e,8);return {log:'Su grupo tocará en San Isidro',done:1};}})
+ ]
+};
+/* Un momento de su historia: como mucho uno por turno (run.arcAt), solo si llevas tú la tienda y la persona está en tienda y libre. */
+/* Pruebas: ?vida=1 adelanta el momento del turno (y no espera a nadie); ?vida=slack hace que la plantilla se escaquee mucho. */
+const VIDA_T=(()=>{try{return new URLSearchParams(location.search).get('vida')||'';}catch(e){return '';}})();
+function arcBeat(){
+  run.arcDone=1;
+  if(!bossScn()||run.closing)return false;
+  const c=meta.emp.filter(e=>!e.real&&e.bio&&!e.bio.done&&ARCS[e.bio.asp]&&(VIDA_T==='1'||((e.bio.next||0)<=meta.day&&e.days>=1))&&isFree(e));
+  if(!c.length)return false;
+  const e=c.sort((a,b)=>(a.bio.next||0)-(b.bio.next||0))[0],B=e.bio,step=ARCS[B.asp][B.s];
+  if(!step){B.done=1;return false;}
+  B.f=B.f||{};const o=step(e,B),A=ASP[B.asp],s0=B.s,R=run;
+  B.next=meta.day+1;
+  return scene({k:'arc:'+e.id+':'+B.s,look:'label',head:'📖 LA VIDA DE '+e.name.toUpperCase(),tag:A.ic+' '+esc(gx(A.n,isFem(e))),who:e.face,sprite:'s'+e.id,role:e.role,
+    name:empTag(e)+' · '+ROLES[e.role].s+' · '+B.age+' años',prio:0,pz:!room,def:o.def,
+    txt:'«'+esc(bioFill(o.txt,e))+'»',body:'<div class="scn-hint">'+esc(bioFill(o.hint,e))+'</div>',
+    choices:o.ch.map(([k,t,cls],i)=>({t:esc(bioFill(t,e)),k,cls:cls||'',key:String(i+1)})),
+    alive:()=>meta.emp.includes(e)&&B.s===s0,
+    onPick:k=>{if(!meta.emp.includes(e)||B.s!==s0)return;
+      let r={};try{r=o.go(k)||{};}catch(x){console.warn('arc',x);}
+      if(r.log&&meta.emp.includes(e))logE(e,gx(r.log,isFem(e)));
+      if(r.done)B.done=1;else B.s=r.to!=null?r.to:B.s+1;
+      if(!B.done&&!ARCS[B.asp][B.s])B.done=1;
+      B.next=meta.day+(r.gap||ri(2,3));
+      if(r.toast)toast(r.toast,r.bad?'bad':'good');
+      if(run===R)try{renderAll();}catch(x){}}});
+}
+/* ===== Hablar con alguien de la plantilla (👥, Supervisar, cámaras y tienda en directo) ===== */
+const EXCUSE={
+ bromista:['¡Estaba haciendo un vídeo de formación, jefe! Formación… emocional.','Buscaba el pasillo 10. Ah, que solo hay nueve.','Estaba probando si el móvil funciona. Funciona.'],
+ quejica:['Cinco minutos de descanso y ya me cae la bronca. Típico.','Es que nadie me dice lo que tengo que hacer. Y cuando me lo dicen, tampoco.'],
+ currante:['Uf, perdona, es la primera vez en mi vida. Ya voy, ya voy.','Era mi madre. Ya está. ¿Qué hago?'],
+ chismoso:['Estaba investigando a la competencia. ¿Sabes que el de enfrente ha subido el aceite?','Me estaban contando una cosa del almacén… luego te cuento. Bueno, voy.'],
+ timido:['…perdón. Ya voy. …perdón otra vez.','Perdón, perdón… (se pone roj{o|a} como un tomate) …ya voy.'],
+ lider:['Estaba organizando el grupo de WhatsApp del turno. Es gestión, jefe.','Planificaba la estrategia de reposición. Ya, ya la aplico.'],
+ pasota:['Tranqui, jefe, que el lineal no se va a ir a ningún sitio.','Vale, vale. Pero sin gritar, que es lunes. O lo parece.'],
+ servicial:['Ay, perdona, me ha llamado mi madre. Ya estoy, ¿qué necesitas?','Le estaba enseñando a una señora a usar el bizum. Ya voy.'],
+ capullo:['Mientras yo descanso, aquí rinden menos. Piénsalo.','¿Y los demás qué? ¿Solo me ves a mí?']
+};
+const OFFEND=['¿Perdona? Llevo todo el turno sin parar.','¿Que levante el qué? Si estaba con las manos ocupadas.','Vale. Apuntado. Muy apuntado.','Encima que estaba currando… Qué injusticia.'];
+const canTalk=()=>!!(run&&!run.remote&&!quiet&&!isMember()&&!(room&&room.sim));
+const talkTask=e=>run&&!run.over&&!run.closing&&isFree(e)?run.tasks.filter(t=>!t.who&&t.k!=='tk'&&t.roles.includes(e.role)&&tVis(t)).sort((a,b)=>a.dl-b.dl)[0]:null;
+function talkScene(e){
+  if(!e||e.real||!canTalk())return;
+  if(!e.bio)e.bio=mkBio(e,meta.day);
+  if(sceneCur&&/^(plant|talk|resp):/.test(sceneCur.k))sceneClose();
+  const live=run&&!run.over,here=live&&onFloor(e),d=here&&run.duty[e.id],cov=here&&run.away&&run.away.cover===e.id,t=here&&!cov?talkTask(e):null;
+  const sup=!!(mg&&mg.kind==='sup');
+  if(d)d.seen=1;
+  const ch=here?[{t:'💬 ¿Qué tal estás?',k:'how',cls:'go',key:'1'},{t:'👏 Buen trabajo',k:'good',key:'2'},{t:'📢 ¡Levanta el culo y ponte a currar!',k:'push',cls:'no',key:'3'}]
+    .concat(t?[{t:'🔧 Mándale a: '+t.ic+' '+esc(t.s.length>34?t.s.slice(0,32)+'…':t.s),k:'send',key:'4'}]:[]).concat([{t:'👋 Nada, sigue',k:'bye',key:'5'}])
+    :[{t:'👋 Cerrar',k:'bye',cls:'go',key:'1'}];
+  const hint=here?(cov?'Está cubriéndote la caja.':d&&d.slack?'👀 Le has pillado: '+esc(d.slack)+'.':d&&d.busy?'Está con un aviso.':'')+
+    '<br>💬 <b>¿Qué tal?</b> +3 de ánimo (una vez por turno)<br>👏 <b>Buen trabajo</b>: +6 si se lo ha ganado; si no, no cuela<br>📢 <b>¡Levanta el culo!</b> Si se escaquea, vuelve al tajo (−6); si estaba currando, se ofende (−12) y se corre la voz'+(t?'<br>🔧 <b>Mándale</b> al aviso más urgente de su departamento':''):'Ahora no está en la tienda: solo puedes ver su ficha.';
+  scene({k:'talk:'+e.id+':'+Date.now(),over:true,mgok:sup,pz:!room&&here,head:'🗣️ '+(here?'HABLAR CON ':'FICHA DE ')+e.name.toUpperCase(),tag:ROLES[e.role].s+' · '+mood(e),
+    who:e.face,sprite:'s'+e.id,role:e.role,name:empTag(e)+' · '+esc(ROLES[e.role].n),prio:2,def:'bye',
+    txt:'<b>Ahora:</b> '+(live?staffState(e):'fuera de turno'),body:bioHtml(e)+'<div class="scn-hint">'+hint+'</div>',choices:ch,
+    onPick:k=>talkDo(e,k)});
+}
+/* Lo que contesta, en una tarjeta corta que se lee bien (8 s) y en el chat de la caja. */
+function talkResp(e,line,fx,good){
+  if(run&&!run.over)run.chat={face:e.face,text:e.name+': «'+line+'»',angry:!good,until:run.t+5};try{renderChat();}catch(x){}
+  scene({k:'resp:'+e.id+':'+Date.now(),over:true,mgok:!!(mg&&mg.kind==='sup'),look:'label',head:'🗣️ '+e.name.toUpperCase(),tag:mood(e),who:e.face,sprite:'s'+e.id,role:e.role,name:empTag(e),prio:2,time:10,def:'ok',
+    txt:'«'+esc(line)+'»',body:fx?'<div class="scn-hint">'+fx+'</div>':'',choices:[{t:good?'😄 Sigue así':'👍 Vale',k:'ok',cls:'go',key:'1'}]});
+}
+function talkDo(e,k){
+  if(k==='bye'||!run||run.over||!meta.emp.includes(e)||!onFloor(e))return;
+  const d=run.duty[e.id],T=run.talk||(run.talk={}),me=T[e.id]||(T[e.id]={}),sup=mg&&mg.kind==='sup';
+  const done=s=>{if(sup){mg.acted[e.id]=s;renderSup();}renderAll();};
+  if(k==='how'){
+    if(me.how){talkResp(e,'Igual que hace un rato, jefe. ¿Estás bien tú?','Ya le has preguntado hoy: sin efecto.',true);return;}
+    me.how=1;mor(e,3);logE(e,'Charlasteis un rato');sOk();talkResp(e,howLine(e),'+3 de ánimo '+mood(e),true);done('💬 Habéis charlado.');return;}
+  if(k==='good'){
+    if(me.good){talkResp(e,'Que sí, que ya me lo has dicho. Me lo voy a tatuar.','Ya le has felicitado hoy: sin efecto.',true);return;}
+    me.good=1;const s=e.st,ok=!d.slack&&(d.busy||s.tasks+s.ok+s.fel+s.cv>s.tfail+s.fail+s.caught);
+    if(ok){mor(e,6);logE(e,'Le dijiste que estaba haciendo un buen trabajo');sOk();talkResp(e,pick(['¡Gracias, jefe! Eso no me lo dice ni mi madre.','Ay, que me lo creo, ¿eh?','Pues aún no has visto nada.','¿Eso es una subida de sueldo? ¿No? Bueno, me vale igual.']),'+6 de ánimo '+mood(e),true);done('👏 Le has felicitado.');}
+    else{if(d.slack)e.focus=0;talkResp(e,d.slack?'¿Buen trabajo? Pero si llevo diez minutos con el móvil… Bueno, gracias.':'¿Buen trabajo? ¿Yo? Si hoy no he hecho gran cosa…','No cuela: hoy no ha hecho méritos. Sin efecto'+(d.slack?' (y se queda tan pancho).':'.'),false);done('👏 No ha colado.');}
+    return;}
+  if(k==='push'){
+    if(d.slack){const w=d.slack;d.slack=null;d.slackT=0;e.st.caught++;mor(e,-6);e.focus=Math.max(e.focus||0,1);logE(e,'Le pillaste escaqueándose ('+w.replace(/^\S+\s/,'')+')');sOk();
+      talkResp(e,gx(pick(EXCUSE[e.pers]||EXCUSE.pasota),isFem(e)),'Pillado: vuelve al tajo. −6 de ánimo '+mood(e)+'. Queda en su ficha.',false);done('📢 Pillado. Vuelve al tajo.');}
+    else{mor(e,-12);logE(e,'Le echaste la bronca sin motivo');sBad();let rum='';
+      if(Math.random()<0.4){meta.emp.forEach(o=>{if(o!==e&&inStore(o))mor(o,-2);});rum=' Se ha corrido la voz: −2 de ánimo al resto.';}
+      talkResp(e,pick(OFFEND),'Estaba trabajando: se ofende. −12 de ánimo '+mood(e)+'.'+rum,false);done('😠 «¡Pero si estaba trabajando!»');}
+    return;}
+  if(k==='send'){const t=talkTask(e);if(!t){toast('Ya no hay ningún aviso para '+e.name+'.');return;}assignTask(t.id,String(e.id));logE(e,'Le mandaste a: '+t.s);toast(e.face+' '+e.name+' va: '+t.ic+' '+t.s,'good');done('🔧 Le has mandado a un aviso.');}
+}
 /* ===== Economía de una pyme real (España, 2026) =====
    Sueldos: SMI 2026 (RD 126/2026) = 1.221 €/mes × 14 pagas = 17.094 €/año; los convenios de comercio de alimentación
    ponen Caja y Almacén en el SMI o poco más, y a administración algo por encima. Un turno = un día natural (salario anual / 365).
@@ -1819,7 +2156,8 @@ function newEmp(role,m,opt,taken){
   if(pers==='currante')e.act=lim(e.act+0.15);
   if(pers==='pasota')e.act=lim(e.act-0.15);
   if(pers==='timido'){e.trato=lim(e.trato-0.15);e.punt=lim(e.punt+0.15);}
-  return Object.assign(e,opt||{});
+  Object.assign(e,opt||{});if(!e.real&&!e.bio)e.bio=mkBio(e,m.day);
+  return e;
 }
 /* La plantilla inicial es gente con oficio: rasgos visibles comprimidos a ~0,4–0,85 (ni desastres ni estrellas), para que la partida
    no dependa de que te toque un cajero lentísimo. Los que contratas después vienen con el abanico entero (0,15–0,95). */
@@ -2139,8 +2477,8 @@ let sceneCur=null,sceneTok=0;const sceneQ=[],sceneLast={};
 const sceneKind=k=>String(k).split(':')[0];
 const sceneOk=(k,gap)=>!(sceneLast[sceneKind(k)]&&performance.now()/1000-sceneLast[sceneKind(k)]<gap);
 /* over:true = puede salir encima de #overlay (la pantalla del empleado real es un overlay); #mg y la guía la siguen parando. */
-const sceneBlocked=s=>[s&&s.over?'':'#overlay','#mg','#guide'].some(id=>{const x=id&&$(id);return x&&x.classList.contains('show');});
-const scenePaused=()=>!!(sceneCur&&sceneCur.pause&&(!room||room.host)&&!sceneBlocked(sceneCur));
+const sceneBlocked=s=>[s&&s.over?'':'#overlay',s&&s.mgok?'':'#mg','#guide'].some(id=>{const x=id&&$(id);return x&&x.classList.contains('show');});
+const scenePaused=()=>!!(sceneCur&&(sceneCur.pause||sceneCur.pz)&&(!room||room.host)&&!sceneBlocked(sceneCur));
 /* ---------- director de ritmo: presupuesto de tensión de las escenas (todo lo ajustable, en PACE) ----------
    core = flujo de caja que no puede esperar (DNI, reclamación, tarjeta) y continuaciones (carta, nota): siempre pasan.
    ser = serias (y cualquiera con pause). El resto, menores. Tiempos en segundos de juego (run.t); los de serias, ×run.dur/100.
@@ -2201,10 +2539,10 @@ function scene(o){
   scenePump();return true;
 }
 function scenePump(){
-  const el=$('#scene');if(sceneCur||!sceneQ.length||sceneBlocked({over:1})||(el&&(el.classList.contains('hold')||el.classList.contains('out'))))return;
+  const el=$('#scene');if(sceneCur||!sceneQ.length||(sceneBlocked({over:1})&&!sceneQ.some(x=>x.mgok))||(el&&(el.classList.contains('hold')||el.classList.contains('out'))))return;
   sceneQ.sort((a,b)=>(b.prio||0)-(a.prio||0));
   const bl=sceneBlocked();let s;
-  for(;;){const i=sceneQ.findIndex(x=>(!bl||x.over)&&paceGate(x)==='ok');if(i<0)return;s=sceneQ.splice(i,1)[0];if(!(s.alive&&!s.alive()))break;}
+  for(;;){const i=sceneQ.findIndex(x=>(!bl||!sceneBlocked(x))&&paceGate(x)==='ok');if(i<0)return;s=sceneQ.splice(i,1)[0];if(!(s.alive&&!s.alive()))break;}
   sceneShow(s);
 }
 function sceneShow(s){
@@ -2220,7 +2558,7 @@ function sceneShow(s){
     <div class="scn-main">${s.name?`<b class="scn-name">${s.name}</b>`:''}<div class="scn-say">${s.txt||''}</div>${s.body||''}</div></div>
     <div class="scn-ch">${ch}</div>${s.time?'<div class="scn-bar"><i></i></div>':''}</div></div>`;
   if(spr)try{const cv=el.querySelector('.scn-who canvas'),g=cv.getContext('2d');g.imageSmoothingEnabled=false;pPerson(g,9,16,{ch:s.role==='alm'?PWORK:pChar(s.sprite),dir:'d',s:1,staff:!!s.role,role:s.role});}catch(e){}
-  el.classList.remove('out','hold');el.classList.toggle('top',!!s.over);el.classList.toggle('free',!s.pause&&!s.over);el.classList.add('show');
+  el.classList.remove('out','hold');el.classList.toggle('top',!!s.over);el.classList.toggle('ovmg',!!s.mgok);el.classList.toggle('free',!s.pause&&!s.over&&!s.pz);el.classList.add('show');
 }
 function sceneClose(){
   const el=$('#scene'),s=sceneCur;sceneCur=null;if(s&&run&&run.pace&&s.paced&&paceCls(s)==='ser')run.pace.lastSer=run.t;if(!el)return;
@@ -2358,7 +2696,7 @@ function billScene(c){
     onPick:k=>{if(!run||front()!==c||c.note!==n||n.d!=null)return;
       if(k!=='no')n.d='ok';
       else if(n.fake){c.note={v:n.v,fake:false,f:[],tell:'',d:'ok',swap:1};run.fakeOut=(run.fakeOut||0)+1;sOk();
-        toast('🕵️ ¡Era falso! Buen ojo. Te da otro billete.','good');run.chat={face:c.face,text:'«Uy… pues me lo dieron en el cambio de otro sitio.»',angry:false,until:run.t+3};renderChat();}
+        toast('🕵️ ¡Era falso! Buen ojo. Te da otro billete.','good');quip('falso');run.chat={face:c.face,text:'«Uy… pues me lo dieron en el cambio de otro sitio.»',angry:false,until:run.t+3};renderChat();}
       else{n.d='ok';n.bad=1;c.p=Math.max(1,c.p-c.max*0.15);repAdd(-0.1,'Billete bueno rechazado');sBad();
         toast('El billete era bueno. Te lo da igual, de mala gana.','bad');run.chat={face:c.face,text:'«¿Me estás llamando falsificador?»',angry:true,until:run.t+3};renderChat();}
       renderRegister();}});
@@ -2469,7 +2807,7 @@ function sospScene(th,e){
     body:`<ul class="sobs">${obs.map(o=>`<li>${o}</li>`).join('')}</ul><div class="scn-hint">👮 Seguridad: ${fmt(THF.seg)} el servicio. ✋ Si le paras tú y es inocente, −reputación.</div>`,
     choices:[{t:'👮 Avisar a seguridad · '+fmt(THF.seg),k:'seg',cls:'go',key:'S',stamp:'AVISADO',sc:'ok'},{t:'✋ Pararle yo',k:'yo',key:'P'},{t:'🙈 Dejarlo',k:'no',cls:'no',key:'D'}],
     alive:()=>run&&!run.over&&(th.ph==='look'||th.ph==='out'),
-    onPick:k=>{if(!run||run.over||(th.ph!=='look'&&th.ph!=='out'))return;
+    onPick:k=>{if(!run||run.over||(th.ph!=='look'&&th.ph!=='out'))return;const st0=run.hx.stop;setTimeout(()=>{if(run&&run.hx&&run.hx.stop>st0)quip('ladron');},0);
       if(k==='seg'){meta.money-=THF.seg;run.hx.seg+=THF.seg;
         if(th.inno){th.ph='done';th.t1=run.t;toast('👮 El vigilante le mira la bolsa con educación: nada. '+fmt(THF.seg)+' del servicio.');}
         else if(th.ph==='look'||Math.random()<0.9){const g=th.got;thRecover(th);th.t1=run.t;run.hx.stop++;sOk();toast(g?'👮 Pillado en la puerta con '+g+' × '+th.nm+'. Vuelve a la estantería.':'👮 Al ver al vigilante, deja la mochila y se va sin nada.','good');}
@@ -2772,6 +3110,7 @@ function rivalPlan(){
   meta.rivAt=meta.day+ri(18,26);const R=run;rrLater(run.dur*rnd(0.1,0.3),()=>{if(run===R&&!R.over)rivalStart();});
 }
 function rivalStart(){
+  quip('rival');
   const last=meta.riv&&meta.riv.n,P=pick(RIVALS.filter(x=>x.n!==last)),r=meta.riv={n:P.n,ic:P.ic,drop:P.drop,d0:meta.day,len:RIV_LEN,resp:null},pc=Math.round(P.drop*100),R=run;
   bScene({dep:'dir',k:'riv:'+meta.day,look:'letter',head:'📰 EL BARRIO HOY',tag:'🏪 Competencia',who:'📰',name:'Abre un '+P.n+' '+P.d,prio:3,...serio(),def:'nada',
     txt:'Abre un <b>'+P.ic+' '+P.n+'</b> '+P.d+': '+P.x+'. Parte de tus clientes se irá a probar.',
@@ -2931,7 +3270,7 @@ function inspPlan(){
 }
 function inspVisit(){
   const I=meta.ins,a=run.inspA||'cons',A=INSP_A[a],R=run,C=k=>INSP_C.find(c=>c.k===k);
-  I.next=meta.day+ri(4,6);I.n=(I.n||0)+1;
+  I.next=meta.day+ri(4,6);I.n=(I.n||0)+1;quip('insp');
   const due=I.req.filter(r=>r.a===a&&meta.day>=r.by);
   const late=[],fixed=[];due.forEach(r=>{const c=C(r.k),d=c&&c.bad(r);(d?late:fixed).push({r,c,d:d||r.t});});
   const F=INSP_C.filter(c=>c.a===a&&!I.req.some(r=>r.k===c.k)).map(c=>({c,d:c.bad(null)})).filter(x=>x.d);
@@ -3134,14 +3473,35 @@ const TOUR=[
 ];
 /* Habituales: vuelven, tienen sus frases y se acuerdan de cómo les fue la última vez (meta.regs). */
 const REGS=[
- {k:'encarna',name:'Doña Encarna',face:'👵',p:'abuela',say:['¡Mi cajera favorita! O cajero, que sin gafas no veo.','Mi nieto ya está en la universidad, ¿sabes?']},
- {k:'manolo',name:'Manolo, el del bar',face:'👨‍🦲',p:'majo',say:['Lo de siempre, que esta noche hay fútbol.','Pásate un día por el bar, que invito yo.']},
- {k:'ahmed',name:'Ahmed, el del kebab',face:'🧔',p:'majo',say:['¡Hola, amigo! ¿Qué tal la familia?','Hoy cierro tarde, vengo a por pan.']},
- {k:'puri',name:'Doña Puri, la cotilla',face:'👵',p:'borde',say:['¿Has visto a la del quinto? Qué escándalo.','Esto antes estaba más limpio.']},
- {k:'wang',name:'Señor Wang',face:'👴',p:'prisas',say:['Rápido, por favor, que tengo la tienda sola.','Buenos días. Lo mismo que ayer.']},
- {k:'yoli',name:'La Yoli',face:'👩‍🦰',p:'majo',say:['¡Qué pasa! ¿Me cuentas el chisme de hoy?','Vengo de la pelu, ¿a que estoy guapa?']},
- {k:'ernesto',name:'Don Ernesto',face:'👴',p:'despistado',say:['Che, ¿dónde dejé los anteojos?','Mi señora me mandó a por leche… o era pan.']}
+ {k:'encarna',name:'Doña Encarna',face:'👵',p:'abuela',say:['¡Mi cajera favorita! O cajero, que sin gafas no veo.','Mi nieto ya está en la universidad, ¿sabes?'],arc:['Mi nieto Álvaro se presenta a la Selectividad. Le he puesto una vela a San Judas Tadeo.','¡Álvaro ha sacado un 12,8! Medicina en la Complutense. ¡Médico en la familia!','Álvaro ya está en Medicina. Viene a comer los domingos y se me duerme en el sofá.','Álvaro tiene novia. Una chica de Getafe, muy apañada. Estudia Farmacia. Ya tengo médico y botica.']},
+ {k:'manolo',name:'Manolo, el del bar',face:'👨‍🦲',p:'majo',say:['Lo de siempre, que esta noche hay fútbol.','Pásate un día por el bar, que invito yo.'],arc:['El bar va regular. La cafetera nueva hace un ruido que parece un avión.','He puesto gambas al ajillo de tapa. Me las quitan de las manos.','¡Salgo en una guía de bares de toda la vida! Vente, que te invito a una caña.','Me jubilo dentro de un año. Le dejo el bar a mi sobrino. Que Dios reparta suerte.']},
+ {k:'ahmed',name:'Ahmed, el del kebab',face:'🧔',p:'majo',say:['¡Hola, amigo! ¿Qué tal la familia?','Hoy cierro tarde, vengo a por pan.'],arc:['He puesto un kebab nuevo: con las patatas dentro. Revolución.','¡Mi hija ha empezado Ingeniería! Más lista que yo, mucho más.','Este mes cierro por vacaciones. Me voy a ver a mi madre a Tánger.','¡Ya he vuelto! Te he traído dátiles. Para ti, no para la tienda, ¿eh?']},
+ {k:'puri',name:'Doña Puri, la cotilla',face:'👵',p:'borde',say:['¿Has visto a la del quinto? Qué escándalo.','Esto antes estaba más limpio.'],arc:['Que lo sepas: la del quinto se ha comprado un perro. En un piso de cuarenta metros.','La del quinto y el del tercero… no te digo más. No te digo más.','He montado un grupo de WhatsApp del portal. Somos catorce. Hay drama.','Me han echado del grupo de WhatsApp del portal. Por cotilla. ¡A mí!']},
+ {k:'wang',name:'Señor Wang',face:'👴',p:'prisas',say:['Rápido, por favor, que tengo la tienda sola.','Buenos días. Lo mismo que ayer.'],arc:['He abierto otra tienda en Usera. Ahora tengo dos tiendas y ningún día libre.','Mi hijo dice que use TikTok para la tienda. Yo no entiendo nada.','¡Mi tienda sale en TikTok! Ahora viene gente joven a comprar pilas.']},
+ {k:'yoli',name:'La Yoli',face:'👩‍🦰',p:'majo',say:['¡Qué pasa! ¿Me cuentas el chisme de hoy?','Vengo de la pelu, ¿a que estoy guapa?'],arc:['Me he apuntado a zumba. Bueno, he ido una vez.','¡Me he echado novio! Lo conocí en la cola de una tienda de ropa.','Lo he dejado con el novio. Muy pesado con el pádel.','Ahora salgo con uno que hace pan de masa madre. Ya te contaré.']},
+ {k:'ernesto',name:'Don Ernesto',face:'👴',p:'despistado',say:['Che, ¿dónde dejé los anteojos?','Mi señora me mandó a por leche… o era pan.'],arc:['Mi señora me ha hecho una lista. La he perdido. Improviso.','Mi nieta me ha enseñado a hacer videollamadas. Ahora llamo sin querer a todo el mundo.','Cumplimos cincuenta años de casados. Ella dice que es un milagro. Yo también.']}
 ];
+/* Más gracia en la cola: frases de barrio para cualquiera, más frases por personaje y comentarios de precios reales (PRICE, %n% producto, %p% precio). */
+SAY.frontOk.push('Qué calor, por Dios. Y eso que es noviembre.','¿Has visto el Metro? La línea 1, otra vez parada.','¿Ganó ayer el Atleti? No me lo digas, que lo tengo grabado.','Viene mi suegra a comer. Necesito vino. Mucho vino.','¿Te hago un bizum? Ah, que no se puede. Vale, vale.','La vecina del quinto dice que aquí se liga. Yo no lo veo.','¿Esto es lo de marca o lo blanco? Que no se note en la cena.');
+SAY.queueOk.push('Si llego a saber esta cola, me traigo el bocadillo.','Esta cola va más lenta que la M-30 un viernes.','¿Alguien me guarda el sitio? Voy a por pan.','Aquí me hago amigo de toda la cola, por lo menos.','He visto pasar tres estaciones del año en esta cola.');
+SAY.queueAngry.push('¿Esto es una caja o un museo?','Tengo el pollo descongelándose en la bolsa.');
+const PMAS={abuela:{front:['¿Me lo pones en dos bolsas? Que la escalera de casa es muy mala.','Mi nieto me ha puesto el bizum en el móvil. No sé dónde está.','Antes aquí había una mercería. Qué pena.'],queue:['En la cola del médico se espera menos.']},
+ prisas:{front:['Tengo el coche en doble fila. Y el corazón en un puño.','¿Cobras con contactless? ¿Y con la mirada?'],queue:['He salido «un segundo» del trabajo hace veinte minutos.']},
+ borde:{front:['¿Y la sonrisa? ¿Se paga aparte?','A ver si espabilamos, que hoy es para hoy.'],queue:['En el súper de enfrente esto no pasa. Bueno, sí pasa.']},
+ majo:{front:['¡Qué bonita la tienda hoy! ¿Habéis cambiado algo? Ah, no, que me he puesto gafas.','Esto para el bote, que os lo merecéis.'],queue:['¿Quiere pasar usted, que lleva menos? Ah, que lleva más. Vale.']},
+ influencer:{front:['Este súper es súper auténtico, chicos. Súper.','Link en la bio para… bueno, para nada, es un súper.'],queue:['Hoy, contenido de cola. Muy de barrio, muy real.']},
+ colon:{front:['Uy, perdón, no había visto a nadie. A nadie de los ocho.'],queue:['Es que mi tiempo vale mucho, ¿sabes?']},
+ despistado:{front:['¿Esto es el súper? Vale, sí, sí, el súper.','Venía por una cosa y llevo veinte. Me pasa siempre.'],queue:['¿Y esta cola a dónde va? Ah, a pagar. Vale.']}};
+Object.keys(PMAS).forEach(k=>['front','queue'].forEach(f=>{if(PERS[k]&&PMAS[k][f])PERS[k][f]=(PERS[k][f]||[]).concat(PMAS[k][f]);}));
+const PRICE={_:['¿%p% «%n%»? Esto antes valía la mitad.','«%n%» a %p%… Me voy a hacer vegano de lo que esté en oferta.','Madre mía, %p% por «%n%». Lo pago con tarjeta y con lágrimas.','%p% «%n%». Bueno, más barato que el bar de abajo.'],
+ abuela:['¿%p% «%n%»? En mis tiempos, con eso comía una semana.','«%n%» a %p%… ¡Si mi Paco levantara la cabeza!','%p%… En pesetas eso es… no, no quiero saberlo.'],
+ prisas:['%p%, lo que sea, pero ya.'],borde:['¿%p% por «%n%»? Esto es un atraco a mano armada.','%p%. Ni en el aeropuerto, oye.'],
+ majo:['«%n%» a %p%. Bueno, lo bueno se paga, ¿verdad?'],diva:['¿%p% «%n%»? Cariño, por ese precio me lo traes a casa y me lo cocinas.'],
+ despistado:['¿Esto costaba %p%? Juraría que era otra cosa… Da igual.'],influencer:['Chicos, «%n%» a %p%. Comentad si os parece caro. Yo lo pago igual.']};
+function priceLine(c){
+  const it=pick(c.items.filter(i=>!i.denied));if(!it)return null;
+  return pick(PRICE[c.pk]||PRICE._).replace('%n%',it.n).replace('%p%',fmt(it.p));
+}
 function pickPersona(){
   const busy=new Set(run?run.queue.map(q=>q.reg).filter(Boolean):[]);
   const regs=REGS.filter(r=>!busy.has(r.k));
@@ -3210,7 +3570,9 @@ function say(c,idx){
   if(c.complaint&&idx===0)pool=['Quiero hablar con el encargado.','Esto no se puede quedar así.','Tengo todo el día, ¿eh?'];
   else if(c.tour)pool=idx===0?c.tour.front:c.tour.queue;
   else if(idx===0&&f>=0.3&&c.mem&&!c.memSaid){c.memSaid=1;pool=[c.mem];}
+  else if(idx===0&&f>=0.3&&R&&R.arc&&!c.arcSaid){c.arcSaid=1;const v=(meta.regs[c.reg]||{}).visits||0;pool=[R.arc[Math.min(R.arc.length-1,Math.floor(v/2))]];}
   else if(idx===0&&f>=0.3&&R)pool=R.say;
+  else if(idx===0&&f>=0.3&&!c.prSaid&&c.items.length&&Math.random()<0.3){c.prSaid=1;const l=priceLine(c);pool=l?[l]:SAY.frontOk;}
   else if(idx===0)pool=f<0.3?(P.angry||SAY.frontAngry):(P.front||(f>0.7?SAY.frontGood.concat(SAY.frontOk):SAY.frontOk));
   else pool=f<0.4?(P.angry||SAY.queueAngry):(P.queue||SAY.queueOk);
   run.chat={face:c.face,text:(R?R.name.split(',')[0]+': ':'')+pick(pool),angry:f<0.3,until:run.t+3.6};
@@ -3250,6 +3612,7 @@ function startDay(){
   if(promoOn().some(p=>{const y=CAT.find(z=>z.id===p.id);return y&&PROMO[p.t]&&promoMg(y,p.t)<0;}))meta.ins.loss=meta.day;
   try{rivalPlan();}catch(e){console.warn('rival',e);}
   if(meta.day>=2&&Math.random()<0.3)run.pressAt=run.dur*rnd(0.2,0.65);
+  run.arcAt=run.dur*(VIDA_T==='1'?0.06:rnd(0.15,0.55));
   inspPlan();thiefPlan();
   run.buy=meta.buyNext||0;meta.buyNext=0;run.m0=meta.money+run.buy;run.mo=meta.money;run.curve=[];
   meta.liveT=0;saveGame(false);
@@ -3283,7 +3646,7 @@ function leaveAngry(idx){
   if(Math.random()<0.7)addReview(1,c.face);
   if(Math.random()<0.35)addTicket('rrpp','Se marchó enfadado de la cola',0,2,false);
   repAdd(-(idx===0?0.3:0.15),'Clientes que se fueron enfadados (paciencia a cero)');
-  toast('Un cliente se ha ido harto de esperar','bad');sBad();
+  toast('Un cliente se ha ido harto de esperar','bad');sBad();if(Math.random()<0.4)quip('enfado');
   renderAll();checkRep();
 }
 /* Copia de meta al empezar el turno (solo en solitario) para «Repetir el turno» al perder. */
@@ -3348,6 +3711,8 @@ function ensureMeta(){
     if(!e.langs)e.langs=NATS[e.nat].l.slice();
     if(!e.pers&&!e.real)e.pers=pick(Object.keys(TRAITS));
     if(e.hon==null)e.hon=e.real?1:Math.round(rnd(0.15,0.95)*100)/100;
+    if(!e.real&&!e.bio)e.bio=mkBio(e,meta.day);
+    if(e.bio){e.bio.circ=toArr(e.bio.circ);e.bio.past=toArr(e.bio.past);e.bio.f=e.bio.f||{};}
   });
   meta.regs=meta.regs||{};
   meta.runId=meta.runId||Math.random().toString(36).slice(2,10)+Date.now().toString(36);
@@ -4162,7 +4527,7 @@ function dailyExit(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.18-97';
+const APPV='2026.11.18-98';
 /* Compara versiones por números («-9» < «-11»), no como texto. */
 const verCmp=(a,b)=>{const x=String(a).split(/[.-]/).map(Number),y=String(b).split(/[.-]/).map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
 try{const vt=document.createElement('div');vt.id='vtag';vt.textContent='v'+APPV;document.body.appendChild(vt);}catch(e){}
@@ -5113,8 +5478,8 @@ function tickStaff(dt){
   /* Escaqueos: quien está libre a veces se pone a otra cosa. Menos si tiene actitud o le has visto pasar. */
   meta.emp.forEach(e=>{
     const d=run.duty[e.id];if(!d||!inStore(e)||d.busy||e.real)return;
-    if(d.slack){d.slackT=(d.slackT||0)+dt;if(Math.random()<dt*0.06)d.slack=null;}
-    else if(Math.random()<dt*0.012*(1.3-e.act)*(e.moral<40?1.6:1)*(d.seen?0.5:1))d.slack=pick(SLACK);
+    if(d.slack){d.slackT=(d.slackT||0)+dt;if(Math.random()<dt*0.06*(VIDA_T==="slack"?0.1:1))d.slack=null;}
+    else if(Math.random()<dt*0.012*(1.3-e.act)*(e.moral<40?1.6:1)*(d.seen?0.5:1)*(VIDA_T==='slack'?25:1))d.slack=pick(SLACK);
   });
   /* Cada uno hace su trabajo sin que se lo manden: quien está libre (y no escaqueándose) coge solo
      los avisos de su departamento a los 3 s de salir (antes el jefe puede elegir a quién mandar). */
@@ -5148,10 +5513,12 @@ function tickStaff(dt){
     const ws=meta.emp.filter(e=>inStore(e)&&!e.real);
     if(ws.length&&!(run.chat&&run.t<run.chat.until)){
       const e=pick(ws),N=NATS[e.nat]||NATS[0];
-      const line=Math.random()<0.35?pick(N.tic):pick(TALK[e.pers]||['…']);
+      const r=Math.random(),line=r<0.25?pick(N.tic):r<0.45?pick(TALK_G):pick(TALK[e.pers]||['…']);
       run.chat={face:e.face,text:e.name+' '+N.f+': «'+line+'»',angry:false,until:run.t+3.6};renderChat();
     }
   }
+  quipTick();
+  if(!run.arcDone&&run.arcAt&&run.t>=run.arcAt)arcBeat();
   let dirty=false;
   meta.emp.forEach(e=>{const d=run.duty[e.id];if(d&&d.st==='late'&&!d.ann&&run.t>=d.at){d.ann=1;dirty=true;if(!lateScene(e))toast(e.face+' '+e.name+' llega tarde. «Perdón, el bus…»','bad');}});
   /* Escenas raras de Dirección y RR.HH.: un aumento que te piden y la oferta de un comercial. */
@@ -5220,7 +5587,7 @@ function renderTasks(){
     const e=t.who==='me'?null:empById(t.who);
     return `<div class="task"><div>${t.ic} ${t.s}</div><div class="tb"><i data-tid="${t.id}"></i></div><div class="supd">${e?e.face+' '+e.name+(e.real?' 🎮':'')+' está en ello…':'Vas tú. La caja está cerrada.'}</div></div>`;
   }).join('');
-  const crew=meta.emp.map(e=>`<div>${e.face} ${e.real?'🎮':flag(e)} ${e.name} · ${ROLES[e.role].s} · ${staffState(e)}</div>`).join('');
+  const crew=meta.emp.map(e=>{const t=`${e.face} ${e.real?'🎮':flag(e)} ${e.name} · ${ROLES[e.role].s} · ${staffState(e)}`;return e.real||!canTalk()?`<div>${t}</div>`:`<button class="crewb" data-act="talk" data-e="${e.id}" title="Hablar con ${esc(e.name)}">${t}</button>`;}).join('');
   el.innerHTML=`<div class="zone-title">AVISOS EN CURSO</div>${tk||'<div class="supd">Nadie está con ningún aviso.</div>'}
     <div class="zone-title">PERSONAL EN TIENDA</div><div class="crew">${crew||'Nadie. Tú contra el mundo.'}</div>`;
   updateTaskBars();
@@ -6133,7 +6500,7 @@ function renderSup(){
       else if(d.busy){const t=run.tasks.find(x=>x.id===d.task);s='🏃 Con un aviso'+(t?' en el pasillo '+t.n:'');}
       else if(d.slack){s=d.slack;sl=true;}else s='✅ '+DOING[r];
       const can=d&&working(e)&&run.t>=d.at&&!mg.acted[e.id]&&!(run.away&&run.away.cover===e.id);
-      const btn=can?`<button class="btn" data-act="supact" data-e="${e.id}" data-k="cheer">👍 Ánimo</button><button class="btn ${sl?'no':''}" data-act="supact" data-e="${e.id}" data-k="push">📢 ¡Espabila!</button>`
+      const btn=can?`${e.real?'':`<button class="btn" data-act="talk" data-e="${e.id}">🗣️ Hablar</button>`}<button class="btn" data-act="supact" data-e="${e.id}" data-k="cheer">👍 Ánimo</button><button class="btn ${sl?'no':''}" data-act="supact" data-e="${e.id}" data-k="push">📢 ¡Espabila!</button>`
         :(mg.acted[e.id]?`<span class="supd">${mg.acted[e.id]}</span>`:'');
       return `<div class="up"><div class="t"><b>${e.face} ${flag(e)} ${e.name}</b>${s}</div>${btn}</div>`;
     }).join('');
@@ -6335,7 +6702,7 @@ function showMeeting(){
     return `<div class="emp ${meet.firing===e.id&&!a?'firing':''}"><div class="eh"><span class="ef">${e.face}</span><div class="t"><b>${e.name}</b>${tag}</div><span class="mood" title="Ánimo">${mood(e)}</span></div>
       <div class="duty"><b>Su trabajo:</b> ${ROLES[e.role].duties.join(' · ')}.</div>
       <ul class="did">${didList(e)}</ul>
-      ${e.log&&e.log.length?'<div class="es">📒 Lo último: '+e.log.slice(-3).join(' · ')+'</div>':''}
+      ${e.log&&e.log.length?'<div class="es">📒 Lo último: '+e.log.slice(-3).join(' · ')+'</div>':''}${e.bio?bioHtml(e,1):''}
       <div class="es">${e.real?'🎮 <b>Persona real.</b> Su carácter lo conoces tú mejor que nadie':e.days>=1&&TRAITS[e.pers]?TRAITS[e.pers].ic+' <b>'+TRAITS[e.pers].n+'</b>: '+TRAITS[e.pers].d:'❔ Carácter: aún no le conoces.'} · Habla ${e.langs.map(l=>LANG[l]).join(', ')}.</div>
       <div class="ev">${s.shifts?verdict(e,e.mine)+' · 🔁 ¿Lucharías por retenerle? <b>'+keeper(e,e.mine)+'</b>':'Sin datos todavía'}</div>${btns}</div>`;
   });
@@ -6657,7 +7024,7 @@ function camModel(){
     else if(d.busy){const t=run.tasks.find(y=>y.id===d.task);if(t){w=taskSpot(t);b=t.ic;x='con un aviso: '+t.s;}}
     else if(run.tills&&e.real&&run.tills[e.real]){const tl=run.tills[e.real];w={k:'till',n:tl.n};b='🧾';x='en la Caja '+tl.n+' ('+Object.keys(tl.out).length+' en cola)';}
     else if(d.slack){const p=d.slack.split(' ');b=p[0];x=p.slice(1).join(' ');if(b==='☕')w={k:'brk'};else if(b==='🚬')w={k:'door'};}
-    staff.push({id:e.id,f:e.face,n:e.name,u:e.real||'',r:e.role,w,b,x});
+    staff.push({id:e.id,f:e.face,n:e.name,u:e.real||'',r:e.role,w,b,x,sl:d.slack&&!d.busy?1:0});
   });
   let me={w:{k:'till'},b:'',x:'en la caja 3'};
   if(run.away){
@@ -6683,7 +7050,7 @@ function camTargets(m){
   if(!m)return T;
   toArr(m.staff).forEach((s,j)=>{
     const p=camPos(s.w||{},j),you=isMember()&&s.u===myUid;
-    T['s'+s.id]={r:s.r,x:p[0],y:p[1],f:s.f,lab:you?'Tú':s.n+(s.u?' 🎮':''),b:s.b||'',hl:you,info:(you?'Tú':s.n)+' · '+(ROLES[s.r]?ROLES[s.r].n:'')+' · '+(s.x||'')};
+    T['s'+s.id]={r:s.r,x:p[0],y:p[1],f:s.f,lab:you?'Tú':s.n+(s.u?' 🎮':''),b:s.b||'',hl:you,eid:s.id,u:s.u||'',sl:s.sl?1:0,info:(you?'Tú':s.n)+' · '+(ROLES[s.r]?ROLES[s.r].n:'')+' · '+(s.x||'')};
   });
   const me=m.me||{w:{k:'till'}},p=camPos(me.w||{},0);
   T.me={x:p[0],y:p[1],f:'🧑‍💼',lab:isMember()?'👑 '+(me.n||'Jefe'):'Tú',b:me.b||'',hl:!isMember(),info:(isMember()?'👑 '+(me.n||'El jefe'):'Tú')+' · '+(me.x||'')};
@@ -6753,7 +7120,8 @@ function camWorld(c,m,now){
     const bob=s.mv?Math.sin(now/90+s.x)*1.2:0;
     if(s.hl){c.strokeStyle='#ffd23f';c.lineWidth=1.5;c.beginPath();c.arc(s.x,s.y+bob,8,0,7);c.stroke();}
     c.font='13px sans-serif';c.fillText(s.f||'🧑',s.x,s.y+bob);
-    if(s.b){c.font='8px sans-serif';c.fillText(s.b,s.x+8,s.y-8+bob);}
+    if(s.sl){const on=Math.floor(now/450)%2;c.fillStyle=on?'rgba(255,210,63,.85)':'rgba(229,56,59,.85)';c.beginPath();c.arc(s.x+9,s.y-10+bob,6,0,7);c.fill();c.font='9px sans-serif';c.fillText(on?(s.b||'📱'):'💤',s.x+9,s.y-10+bob);}
+    else if(s.b){c.font='8px sans-serif';c.fillText(s.b,s.x+8,s.y-8+bob);}
     if(s.lab&&cam.zoom>=0){c.font='bold 5px sans-serif';c.lineWidth=2;c.strokeStyle='#000';c.strokeText(s.lab,s.x,s.y+11);c.fillStyle='#fff';c.fillText(s.lab,s.x,s.y+11);}
   });
 }
@@ -6851,6 +7219,7 @@ function isoPerson(c,px,py,id,s,now){
   c.fillRect(px-2,py-13,5,4);
   c.fillStyle=hair;c.fillRect(px-2,py-14,5,2);if((h>>9)%3===0)c.fillRect(px-3,py-13,1,4);
   if(s.boss){c.fillStyle='#ffd23f';c.fillRect(px-2,py-16,5,2);c.fillRect(px-2,py-17,1,1);c.fillRect(px,py-17,1,1);c.fillRect(px+2,py-17,1,1);}
+  if(s.sl){c.fillStyle='#1d1d1f';c.fillRect(px+3,py-11,2,3);c.fillStyle=Math.floor(now/450)%2?'#7fd7ff':'#3a9bd6';c.fillRect(px+3,py-11,2,1);}
   if(s.cart){c.fillStyle='#8fa3b8';c.fillRect(px+4,py-5,6,4);c.fillStyle='#5b6b7d';c.fillRect(px+5,py-1,1,1);c.fillRect(px+9,py-1,1,1);}
 }
 function drawIso(){
@@ -6961,10 +7330,10 @@ const onFloor=e=>{const d=run&&run.duty&&run.duty[e.id];return !!d&&!['gone','ab
 function staffInfo(){
   if(!run||run.remote)return;
   const E=meta.emp,cnt={};E.forEach(e=>{cnt[e.role]=(cnt[e.role]||0)+1;});
-  const rows=E.map(e=>`<dt>${e.face} ${esc(e.name)}${e.real?' 🎮':''}${e.trial>0?' 🧪':''}</dt><dd>${ROLES[e.role].s} · ${staffState(e)}</dd>`).join('');
+  const rows=E.map(e=>`<dt>${e.real?`${e.face} ${esc(e.name)} 🎮`:`<button class="btn mini talkb" data-act="talk" data-e="${e.id}" title="Su ficha y hablar con ${esc(e.name)}">${e.face} ${esc(e.name)} 🗣️</button>`}${e.trial>0?' 🧪':''}</dt><dd>${ROLES[e.role].s} · ${staffState(e)}</dd>`).join('');
   const B=(meta.bajas||[]).slice(0,5).map(b=>`<dt>${b.f} ${esc(b.n)} · T${b.d}</dt><dd>${esc(b.why)}</dd>`).join('');
-  scene({k:'plant:'+Date.now(),over:true,head:'👥 PLANTILLA · TURNO '+meta.day,tag:E.filter(onFloor).length+' en tienda / '+E.length,who:'👑',name:'Tu equipo',prio:1,time:20,def:'ok',
-    txt:Object.keys(ROLES).map(k=>ROLES[k].s+' '+(cnt[k]||0)).join(' · ')+'. Nómina: '+fmt(E.reduce((s,e)=>s+empCost(e.wage),0))+'/día con Seguridad Social.',
+  scene({k:'plant:'+Date.now(),over:true,head:'👥 PLANTILLA · TURNO '+meta.day,tag:E.filter(onFloor).length+' en tienda / '+E.length,who:'👑',name:'Tu equipo',prio:1,time:40,def:'ok',
+    txt:'Toca a alguien para ver su vida y hablar con él o ella. '+Object.keys(ROLES).map(k=>ROLES[k].s+' '+(cnt[k]||0)).join(' · ')+'. Nómina: '+fmt(E.reduce((s,e)=>s+empCost(e.wage),0))+'/día con Seguridad Social.',
     body:`<div class="sdoc"><h6><span>Quién hay</span><span>${E.length}</span></h6><dl>${rows||'<dt>Nadie</dt><dd>Tú contra el mundo</dd>'}</dl></div>`
       +(B?`<div class="sdoc"><h6><span>🚪 Últimas bajas</span><span>${(meta.bajas||[]).length}</span></h6><dl>${B}</dl></div>`:''),
     choices:[{t:'🗂️ Ir a RR.HH.',k:'rrhh',cls:'go',key:'R'},{t:'👍 Vale',k:'ok',key:'V'}],
@@ -7079,7 +7448,11 @@ function pixStore(slot,m,zone,cover){
     pPerson(c,s.x,s.y+6,{ch:staff&&s.r==='alm'?PWORK:pChar(id),dir:s.mv?dir:'d',mv:s.mv,t:now,staff,role:s.r,boss,hl:s.hl});
     if(s.th){const hx=Math.round(s.x),hy=Math.round(s.y+6-15);c.fillStyle='#2b2d42';c.fillRect(hx-5,hy+1,10,3);c.fillRect(hx-5,hy+3,2,5);c.fillRect(hx+3,hy+3,2,5);c.fillStyle='#000';c.fillRect(hx-3,hy+6,6,1);}
     pst.hits.push({x:s.x,y:s.y-2,s});
-    if(s.b){c.font='10px sans-serif';c.textAlign='center';c.textBaseline='bottom';c.fillText(s.b,s.x,s.y-11);}
+    if(s.sl){const hx=Math.round(s.x),hy=Math.round(s.y+6-15),on=Math.floor(now/450)%2;
+      c.fillStyle='#1d1d1f';c.fillRect(hx+3,hy+7,3,5);c.fillStyle=on?'#7fd7ff':'#3a9bd6';c.fillRect(hx+4,hy+8,1,3);
+      c.fillStyle='rgba(255,255,255,.92)';c.fillRect(hx-7,hy-14,14,11);c.fillRect(hx-2,hy-3,3,2);c.strokeStyle=on?'#e5383b':'#ffd23f';c.lineWidth=1;c.strokeRect(hx-7.5,hy-14.5,15,12);
+      c.font='9px sans-serif';c.textAlign='center';c.textBaseline='middle';c.fillStyle='#000';c.fillText(on?(s.b||'📱'):'z',hx,hy-8);}
+    else if(s.b){c.font='10px sans-serif';c.textAlign='center';c.textBaseline='bottom';c.fillText(s.b,s.x,s.y-11);}
   });
   let src=null;
   if(zone){const [x,y,w,d]=zone,pad=24,ar=cv.width/cv.height,BW0=pst.buf.width,BH0=pst.buf.height;const pd=cover?6:pad;let sw=w+pd*2,sh=d+pd*2;if(sw/sh<ar)sw=sh*ar;else sh=sw/ar;sw=Math.min(sw,BW0);sh=Math.min(sh,BH0);src=[clamp(x+w/2-sw/2,0,BW0-sw),clamp(y+d/2-sh/2,0,BH0-sh),sw,sh];}
@@ -7093,7 +7466,7 @@ function pixStore(slot,m,zone,cover){
 function pixStoreClick(ev){
   const cv=ev.currentTarget,r=cv.getBoundingClientRect(),k=cv.width/r.width,v=pst.view;if(!v)return;
   const wx=((ev.clientX-r.left)*k-v.ox)/v.k+v.sx,wy=((ev.clientY-r.top)*k-v.oy)/v.k+v.sy;
-  let best=null,bd=14;pst.hits.forEach(h=>{const d=Math.hypot(h.x-wx,h.y-wy);if(d<bd&&h.s.info){bd=d;best=h.s;}});if(best&&best.th)thiefClick(best.th);else if(best)toast(best.info);
+  let best=null,bd=14;pst.hits.forEach(h=>{const d=Math.hypot(h.x-wx,h.y-wy);if(d<bd&&h.s.info){bd=d;best=h.s;}});staffClick(best);
 }
 
 /* fondo de la caja: neveras, congelador, fruta, pan, latas y bebidas, variado */
@@ -7211,7 +7584,13 @@ function till3d(){
 function isoClick(ev){
   const r=iso.cv.getBoundingClientRect(),k=iso.cv.width/r.width,x=(ev.clientX-r.left)*k,y=(ev.clientY-r.top)*k;
   let best=null,bd=18*k;iso.hits.forEach(h=>{const d=Math.hypot(h.x-x,h.y-y);if(d<bd&&h.s.info){bd=d;best=h.s;}});
-  if(best&&best.th)thiefClick(best.th);else if(best)toast(best.info);
+  staffClick(best);
+}
+/* Tocar a alguien en la tienda en directo o en las cámaras: ladrón → sospechoso; alguien de la plantilla (NPC) → hablar con él; el resto, qué hace. */
+function staffClick(s){
+  if(!s)return;if(s.th){thiefClick(s.th);return;}
+  const e=s.eid&&!s.u&&canTalk()&&empById(s.eid);
+  if(e&&!e.real)talkScene(e);else toast(s.info);
 }
 function camClick(ev){
   const r=cam.cv.getBoundingClientRect(),x=ev.clientX-r.left,y=ev.clientY-r.top;
@@ -7220,7 +7599,7 @@ function camClick(ev){
   const wx=(x-h.ox)/h.sc+h.cx,wy=(y-h.oy)/h.sc+h.cy;
   let best=null,bd=12;
   Object.values(cam.spr).concat(cam.shop.filter(s=>s.th)).forEach(s=>{const d=Math.hypot(s.x-wx,s.y-wy);if(d<bd&&s.info){bd=d;best=s;}});
-  if(best&&best.th)thiefClick(best.th);else if(best)toast(best.info);else cam.zoom=-1;
+  if(best)staffClick(best);else cam.zoom=-1;
 }
 
 /* ---------- departamentos: una pestaña con la gestión de cada uno ----------
@@ -7308,7 +7687,7 @@ function rrppHtml(){
 function rrhhHtml(){
   let nm=meta.day+1;while(nm%3!==1)nm++;
   const rr=staffOf('rrhh'),realRR=rr.find(e=>e.real&&run&&run.duty&&working(e));
-  const rows=meta.emp.map(e=>`<div class="up"><div class="t"><b>${e.face} ${e.real?'🎮':flag(e)} ${e.name} · ${ROLES[e.role].n}</b>${e.days} ${e.days===1?'turno':'turnos'} · ${monthTxt(e.wage)}${e.trial?' · en prueba ('+e.trial+')':''}${e.warn?' · ⚠️×'+e.warn:''}</div><span class="mood">${mood(e)}</span></div>`).join('')||'<div class="supd">Plantilla vacía.</div>';
+  const rows=meta.emp.map(e=>`<div class="up"><div class="t"><b>${e.face} ${e.real?'🎮':flag(e)} ${e.name} · ${ROLES[e.role].n}</b>${e.days} ${e.days===1?'turno':'turnos'} · ${monthTxt(e.wage)}${e.trial?' · en prueba ('+e.trial+')':''}${e.warn?' · ⚠️×'+e.warn:''}</div><span class="mood">${mood(e)}</span>${e.real?'':`<button class="btn mini" data-act="talk" data-e="${e.id}">📖 Ficha</button>`}</div>`).join('')||'<div class="supd">Plantilla vacía.</div>';
   return `<div class="dgrid"><div class="dpanel"><h2>🗂️ Recursos Humanos</h2>${staffBlock('rrhh')}
     ${isHost()?(appsHtml()||'<div class="zone-title">📝 SOLICITUDES DE EMPLEO</div><div class="supd">No hay solicitudes pendientes.</div>')+(realRR?`<div class="supd">${realRR.name} (RR.HH.) también puede tramitarlas desde su pantalla.</div>`:''):'<div class="supd">En solitario no llegan solicitudes de personas reales: contratas en la reunión de personal.</div>'}
     <div class="zone-title">📢 VACANTES</div><div class="supd">${rr.some(e=>!e.real)&&!realRR?'Tu gente de RR.HH. las publica sola cuando falta personal; tú también puedes.':realRR?realRR.name+' (RR.HH.) también las publica desde su puesto.':'Sin nadie en RR.HH., las publicas tú y entrevistas tú: cuando llega un candidato sale el aviso 🧑‍💼 «Entrevista» y vas con «Voy yo».'} Solo se presentan candidatos a puestos con vacante.</div>
@@ -7512,6 +7891,7 @@ function rushTick(){
   if(!run||run.over||run.remote||run.closing)return;const h=hourOf();
   RUSH_P.forEach((P,i)=>{const k='rp'+i;if(h<P.a||h>=P.h||(run.rushA||{})[k])return;(run.rushA=run.rushA||{})[k]=1;
     if(!bossScn()){return;}
+    quip('punta');
     const e=freeTill();
     scene({k:'punta:'+i,look:'pa',head:'MEGAFONÍA',tag:'🔥 Hora punta',who:'🔔',name:'Megafonía',time:9,def:'no',prio:0,
       txt:`Ding-dong: se acerca la hora punta ${P.n} (${String(P.h).replace('.5',':30')}${String(P.h).includes('.5')?'':':00'}). ¿Abrimos otra caja?`,
@@ -7676,6 +8056,7 @@ function onClick(e){
   else if(a==='week')weekInfo();
   else if(a==='goals')goalsInfo();
   else if(a==='staffinfo')staffInfo();
+  else if(a==='talk')talkScene(empById(+b.dataset.e));
   else if(a==='emp')empAct(+b.dataset.e,b.dataset.k);
   else if(a==='fire')fireEmp(+b.dataset.e,b.dataset.r);
   else if(a==='integc'){const c=meet&&meet.cands[+b.dataset.c];if(c&&!c.integ&&meta.money>=INTEG){meta.money-=INTEG;c.integ=integBand(c.hon);sCoin();renderHud();showMeeting();}}
