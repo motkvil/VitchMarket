@@ -1279,7 +1279,7 @@ body.rem .isostore{display:none!important}
    + .scn-row (.scn-who persona, .scn-main: .scn-name, .scn-say bocadillo, body) + .scn-ch (botones etiqueta) + .scn-bar (tiempo);
    .scn-stamp.ok|.bad (sello), .scn-fx (emojis que saltan); cuerpos: .dnic (DNI), .tpv (datáfono), .scn-hint (pista). */
 #scene{position:fixed;left:0;right:0;bottom:0;top:var(--scnT,0px);display:none;align-items:center;justify-content:center;padding:12px;z-index:19;background:rgba(42,30,72,.32)}
-#scene.show{display:flex}#scene.out,#scene.hold{pointer-events:none}
+#scene.show{display:flex}#scene.free{background:none;pointer-events:none}#scene.free .scn-wrap{pointer-events:auto}#scene.out,#scene.hold{pointer-events:none}
 .scn-wrap{position:relative;width:min(540px,100%);max-height:100%;display:flex;filter:drop-shadow(0 6px 0 rgba(122,20,24,.45)) drop-shadow(0 14px 18px rgba(0,0,0,.25));animation:scnIn .22s cubic-bezier(.2,1.4,.5,1)}
 #scene.out .scn-wrap{animation:scnOut .16s ease-in forwards}
 .scn{flex:1;min-width:0;overflow:auto;display:flex;flex-direction:column;gap:9px;padding:0 14px 20px;background:#fffdfa;border-radius:6px 6px 0 0;
@@ -1953,7 +1953,7 @@ function sceneShow(s){
     <div class="scn-main">${s.name?`<b class="scn-name">${s.name}</b>`:''}<div class="scn-say">${s.txt||''}</div>${s.body||''}</div></div>
     <div class="scn-ch">${ch}</div>${s.time?'<div class="scn-bar"><i></i></div>':''}</div></div>`;
   if(spr)try{const cv=el.querySelector('.scn-who canvas'),g=cv.getContext('2d');g.imageSmoothingEnabled=false;pPerson(g,9,16,{ch:s.role==='alm'?PWORK:pChar(s.sprite),dir:'d',s:1,staff:!!s.role,role:s.role});}catch(e){}
-  el.classList.remove('out','hold');el.classList.toggle('top',!!s.over);el.classList.add('show');
+  el.classList.remove('out','hold');el.classList.toggle('top',!!s.over);el.classList.toggle('free',!s.pause&&!s.over);el.classList.add('show');
 }
 function sceneClose(){
   const el=$('#scene'),s=sceneCur;sceneCur=null;if(s&&run&&run.pace&&s.paced&&paceCls(s)==='ser')run.pace.lastSer=run.t;if(!el)return;
@@ -3474,7 +3474,7 @@ async function fillRanking(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.17-79';
+const APPV='2026.11.18-80';
 /* Compara versiones por números («-9» < «-11»), no como texto. */
 const verCmp=(a,b)=>{const x=String(a).split(/[.-]/).map(Number),y=String(b).split(/[.-]/).map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
 try{const vt=document.createElement('div');vt.id='vtag';vt.textContent='v'+APPV;document.body.appendChild(vt);}catch(e){}
