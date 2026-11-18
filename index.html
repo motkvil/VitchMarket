@@ -2108,7 +2108,7 @@ function toastPump(){
     const q=toastQ.shift(),el=document.createElement('div'),tx=document.createElement('span');
     el.className='tst '+q.k;el._m=q.m;el._n=q.n;tx.textContent=q.m;el.title=q.m;el.appendChild(tx);
     if(q.n>1){const n=document.createElement('b');n.className='tn';n.textContent='×'+q.n;el.appendChild(n);}
-    el._ms=clamp(3500+60*q.m.length,4000,9000)*(q.k==='bad'?1.25:1);el._t0=Date.now();
+    el._ms=clamp(4000+75*q.m.length,5000,13000)*(q.k==='bad'?1.25:1);el._t0=Date.now();
     const hold=()=>{el._hold=1;clearTimeout(el._t);},go=()=>{el._hold=0;el._t0=Date.now();toastArm(el);};
     el.addEventListener('mouseenter',hold);el.addEventListener('mouseleave',go);
     el.addEventListener('touchstart',hold,{passive:true});el.addEventListener('touchend',go,{passive:true});el.addEventListener('touchcancel',go,{passive:true});
@@ -2117,7 +2117,7 @@ function toastPump(){
   }
   if(!toastRaf)toastFollow();
 }
-function toastArm(el){clearTimeout(el._t);if(el._hold||el._out)return;const ms=toastQ.length?Math.max(2500,el._ms*.55):el._ms;el._t=setTimeout(()=>toastOut(el),Math.max(300,ms-(Date.now()-el._t0)));}
+function toastArm(el){clearTimeout(el._t);if(el._hold||el._out)return;const ms=toastQ.length?Math.max(4000,el._ms*.7):el._ms;el._t=setTimeout(()=>toastOut(el),Math.max(300,ms-(Date.now()-el._t0)));}
 function toastOut(el){if(el._out)return;el._out=1;clearTimeout(el._t);el.classList.add('out');setTimeout(()=>{el.remove();toastPump();},260);}
 
 /* ---------- escenas: situaciones puntuales en una tarjeta centrada (#scene), sin mover el panel fijo ----------
@@ -2194,6 +2194,8 @@ function scene(o){
   if(quiet){if(o.def!=null&&o.onPick)try{o.onPick(o.def);}catch(e){console.warn('scene',e);}return false;}
   if((sceneCur&&sceneCur.k===o.k)||sceneQ.some(x=>x.k===o.k))return false;
   if(run&&!run.over){o.qrun=run;o.q0=run.t;}
+  /* Tiempo mínimo de lectura: ~3 palabras por segundo + 4 s para decidir (como mucho 45 s). */
+  if(o.time){const w=String((o.txt||'')+' '+(o.body||'')+' '+(o.choices||[]).map(c=>c.t).join(' ')).replace(/<[^>]*>/g,' ').split(/\s+/).filter(Boolean).length;o.time=Math.max(o.time,Math.min(45,Math.round(w/3+4)));}
   const g=paceGate(o);if(g.startsWith('drop')){paceDrop(o,g);return true;}
   if(sceneCur&&g==='ok'&&(o.prio||0)>(sceneCur.prio||0)){sceneQ.unshift(sceneCur);sceneCur=null;}
   sceneQ.push(o);
@@ -2220,6 +2222,8 @@ function sceneShow(s){
     <div class="scn-main">${s.name?`<b class="scn-name">${s.name}</b>`:''}<div class="scn-say">${s.txt||''}</div>${s.body||''}</div></div>
     <div class="scn-ch">${ch}</div>${s.time?'<div class="scn-bar"><i></i></div>':''}</div></div>`;
   if(spr)try{const cv=el.querySelector('.scn-who canvas'),g=cv.getContext('2d');g.imageSmoothingEnabled=false;pPerson(g,9,16,{ch:s.role==='alm'?PWORK:pChar(s.sprite),dir:'d',s:1,staff:!!s.role,role:s.role});}catch(e){}
+  {const w=el.querySelector('.scn-wrap');if(w){const on=()=>{if(sceneCur===s)s.hov=1;},off=()=>{s.hov=0;};
+    w.addEventListener('pointerenter',on);w.addEventListener('pointerdown',on);w.addEventListener('pointerleave',off);w.addEventListener('pointercancel',off);}}
   el.classList.remove('out','hold');el.classList.toggle('top',!!s.over);el.classList.toggle('free',!s.pause&&!s.over);el.classList.add('show');
 }
 function sceneClose(){
@@ -2243,7 +2247,10 @@ function sceneSync(){
   try{backScenes();}catch(e){console.warn('backScenes',e);}
   pacePrune();scenePump();
   if(sceneCur&&sceneCur.tick)try{sceneCur.tick();}catch(e){}
-  if(sceneCur&&sceneCur.time){const f=1-(performance.now()-sceneCur.t0)/1000/sceneCur.time,b=document.querySelector('#scene .scn-bar i');
+  if(sceneCur&&sceneCur.time){const now=performance.now();
+    /* Con el ratón o el dedo encima de la tarjeta, el tiempo se para: nadie decide sin poder leer. */
+    if(sceneCur.hov&&sceneCur.lastT)sceneCur.t0+=now-sceneCur.lastT;sceneCur.lastT=now;
+    const f=1-(now-sceneCur.t0)/1000/sceneCur.time,b=document.querySelector('#scene .scn-bar i');
     if(f<=0)scenePick(sceneCur.def);else if(b)b.style.width=(f*100).toFixed(1)+'%';}
 }
 /* La primera vez que sale un +18 en la cinta: aviso serio de la multa de Madrid (una vez por partida, meta.ageWarn). */
@@ -4162,7 +4169,7 @@ function dailyExit(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.18-97';
+const APPV='2026.11.18-101';
 /* Compara versiones por números («-9» < «-11»), no como texto. */
 const verCmp=(a,b)=>{const x=String(a).split(/[.-]/).map(Number),y=String(b).split(/[.-]/).map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
 try{const vt=document.createElement('div');vt.id='vtag';vt.textContent='v'+APPV;document.body.appendChild(vt);}catch(e){}
