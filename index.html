@@ -2133,16 +2133,29 @@ function talkDo(e,k){
   if(k==='send'){const t=talkTask(e);if(!t){toast('Ya no hay ningún aviso para '+e.name+'.');return;}assignTask(t.id,String(e.id));logE(e,'Le mandaste a: '+t.s);toast(e.face+' '+e.name+' va: '+t.ic+' '+t.s,'good');done('🔧 Le has mandado a un aviso.');}
 }
 /* ===== Economía de una pyme real (España, 2026) =====
-   Sueldos: SMI 2026 (RD 126/2026, BOE 19-02-2026) = 1.221 €/mes × 14 pagas = 17.094 €/año. Convenio de Comercio de Alimentación
-   de la Comunidad de Madrid (BOCM 24-02-2024, tablas 2025, prorrogadas mientras se negocia el nuevo; 15 pagas): grupo I 16.196,55 €,
-   II 17.019,30 €, III 17.523,00 €, IV 19.598,85 €/año. Los grupos I y II quedan por debajo del SMI 2026, así que Caja cobra el SMI;
-   Almacén = grupo III; Backoffice = grupo IV; RR.PP. y RR.HH. algo más (grupo sin comprobar). Un turno = un día natural (salario anual / 365).
+   Sueldos (repaso del 18-11-2026): SMI 2026 (RD 126/2026, BOE 19-02-2026) = 1.221 €/mes × 14 pagas = 17.094 €/año; si una tabla
+   del convenio queda por debajo, se cobra el SMI (compensación y absorción, ET art. 27). Convenio Colectivo del Comercio de Alimentación
+   de la Comunidad de Madrid (código 28000715011982; revisión salarial 2023-2025, BOCM 24-02-2024; venció el 31-12-2025 y se negocia otro,
+   así que siguen las tablas 2025): 12 pagas + 3 extras (beneficios, verano y Navidad) = 15 pagas. Grupo I 16.196,55 · II 17.019,30 ·
+   III 17.523,00 · IV 19.598,85 · V 23.057,40 €/año (1.537,16 × 15; el BOCM imprime 23.057,04). Grupos de la comisión paritaria de 2001:
+   I = mozo/a, envasador/a-reponedor/a, auxiliar de caja y administrativo; II = cajero/a, dependiente/a, oficial administrativo/a;
+   III = jefe/a de sección; V = jefe/a de personal y de administración. Antigüedad: suprimida en 1998 (solo queda «ad personam»), así que no se simula.
+   Caja (cajero/a-reponedor/a, II) y Almacén (mozo/a, I) cobran el SMI. Backoffice (oficial administrativo/a, II) cobra 20.000 € de mejora
+   voluntaria (ofertas de administrativo/a contable en Madrid, 20.000–27.000 €). RR.PP. (atención al cliente y redes, sin categoría propia)
+   20.350 € (community manager junior en España: Payscale 20.347 € de media, Jooble 19.704 €). RR.HH. (en una micropyme hace de jefe/a de
+   personal, V) 24.000 € (técnico/a de RR.HH. en Madrid: Indeed 24.141 €, ofertas de InfoJobs 22.000–28.000 €). Un turno = un día natural (salario anual / 365).
    Seguridad Social a cargo de la empresa (Orden PJC/297/2026): contingencias comunes 23,60 % + desempleo 5,50 % + FOGASA 0,20 %
    + formación profesional 0,60 % + MEI 0,75 % + accidentes de trabajo (comercio al por menor de alimentación) 1,50 % = 32,15 %. */
-const SMI_Y=1709400,SS_EMP=0.3215,WAGE_Y={atc:1709400,alm:1752300,back:1959885,rrpp:1980000,rrhh:2100000};
+const SMI_Y=1709400,SS_EMP=0.3215,WAGE_Y={atc:1709400,alm:1709400,back:2000000,rrpp:2035000,rrhh:2400000};
+/* convenio de cada puesto: grupo, categoría, tabla anual (céntimos) y por qué cobra lo que cobra */
+const CONV={atc:{g:'II',c:'cajero/a-reponedor/a',y:1701930},alm:{g:'I',c:'mozo/a de almacén',y:1619655},back:{g:'II',c:'oficial administrativo/a',y:1701930},rrpp:{g:null,c:'atención al cliente y redes',y:0},rrhh:{g:'V',c:'jefe/a de personal',y:2305740}};
 const dayW=y=>Math.round(y/365),SMI_D=dayW(SMI_Y),wageOf=r=>dayW(WAGE_Y[r]||SMI_Y),WAGE=SMI_D;
+const PAGAS=15; /* el convenio paga 15 pagas: el sueldo mensual que se enseña es el anual / 15 */
+const convTxt=r=>{const c=CONV[r],y=WAGE_Y[r]||SMI_Y,m=v=>fmt(Math.round(v/PAGAS))+'/mes';if(!c)return '';
+  return c.g?'Convenio de Comercio de Alimentación de Madrid: grupo '+c.g+' ('+c.c+'), '+m(c.y)+(c.y<SMI_Y?' → por debajo del SMI, cobra el SMI: '+m(y):y>c.y?' + mejora voluntaria: '+m(y):'')+' en 15 pagas.'
+    :'Sin categoría propia en el convenio ('+c.c+'): sueldo de mercado en Madrid, '+m(y)+' en 15 pagas.';};
 const HIRE=10000; /* contratar: anuncio en un portal de empleo y reconocimiento médico (≈100 €) */
-const monthTxt=w=>fmt(Math.round(w*365/14))+'/mes';
+const monthTxt=w=>fmt(Math.round(w*365/PAGAS))+'/mes';
 const empCost=w=>Math.round(w*(1+SS_EMP));
 /* Gastos fijos de un súper de barrio de ~250 m² por día (alquiler ~3.000 €/mes, unos 12 €/m² en un barrio de Madrid; luz con neveras ~1.500 €/mes…).
    Antes era un local de 400 m² (4.800 €/mes de alquiler), demasiado grande para 4–6 personas y 3 cajas. [nombre, €/día en céntimos, IVA soportado %] */
@@ -2180,7 +2193,7 @@ function newEmp(role,m,opt,taken){
 }
 /* La plantilla inicial es gente con oficio: rasgos visibles comprimidos a ~0,4–0,85 (ni desastres ni estrellas), para que la partida
    no dependa de que te toque un cajero lentísimo. Los que contratas después vienen con el abanico entero (0,15–0,95). */
-const defMeta=best=>{const m={day:1,money:3000000,eco2:1,rep:5,up:{scanner:0,fan:0,coffee:0},emp:[],eid:0,stock:{},back:{},orders:[],vac:{atc:1,alm:1},best:best||1};CAT.forEach(x=>{m.stock[x.id]=4;});['atc','back','rrpp','alm'].forEach(r=>{const e=newEmp(r,m);['rap','trato','punt','act'].forEach(k=>{e[k]=Math.round((0.35+0.5*e[k])*100)/100;});m.emp.push(e);});return m;};
+const defMeta=best=>{const m={day:1,money:3000000,eco2:1,eco3:1,rep:5,up:{scanner:0,fan:0,coffee:0},emp:[],eid:0,stock:{},back:{},orders:[],vac:{atc:1,alm:1},best:best||1};CAT.forEach(x=>{m.stock[x.id]=4;});['atc','back','rrpp','alm'].forEach(r=>{const e=newEmp(r,m);['rap','trato','punt','act'].forEach(k=>{e[k]=Math.round((0.35+0.5*e[k])*100)/100;});m.emp.push(e);});return m;};
 let meta=defMeta();
 let run=null,last=0,muted=false,uid=0,cid=Date.now()%1e9,toastQ=[];
 /* ===== Desbloqueo progresivo (el jefe y la partida en solitario; las pantallas de los empleados reales no) =====
@@ -3246,7 +3259,7 @@ function arqScene(o){
    ?insp=1 (o trab/san/cons/prl) fuerza una visita en cada turno (pruebas). */
 const INSP_Q=(()=>{try{return new URLSearchParams(location.search).get('insp')||'';}catch(e){return '';}})();
 const INSP_A={
-  trab:{s:'Trabajo',h:'👷 INSPECCIÓN DE TRABAJO Y SS',who:'🧑‍💼',n:'Inspector Galindo',seal:'ITSS',ok:['Sueldos ≥ SMI 2026 (1.221 €/mes)','Periodos de prueba por escrito']},
+  trab:{s:'Trabajo',h:'👷 INSPECCIÓN DE TRABAJO Y SS',who:'🧑‍💼',n:'Inspector Galindo',seal:'ITSS',ok:['Sueldos ≥ SMI 2026 (1.221 €/mes en 14 pagas)','Periodos de prueba por escrito']},
   san:{s:'Salud Pública',h:'🧪 SALUD PÚBLICA · C. DE MADRID',who:'🥼',n:'Inspectora Bermejo',seal:'SANIDAD',ok:['Control de plagas al día','Albaranes y lotes archivados']},
   cons:{s:'Consumo',h:'🏛️ CONSUMO · C. DE MADRID',who:'🕵️',n:'Inspector Olmedo',seal:'CONSUMO',ok:['Precio por kg o litro en el lineal','Bolsas cobradas y en el ticket']},
   prl:{s:'PRL',h:'⛑️ PREVENCIÓN DE RIESGOS LABORALES',who:'👷',n:'Técnica Salcedo',seal:'PRL',ok:['Botiquín completo','Chaqueta y guantes para la cámara']}};
@@ -3729,6 +3742,8 @@ function ensureMeta(){
   CAT.forEach(x=>{if(meta.stock[x.id]===undefined)meta.stock[x.id]=4;});
   /* Partidas de antes de la economía real: sueldos al convenio (nunca por debajo del SMI) y ampliación de capital hasta 30.000 €. */
   if(!meta.eco2){meta.eco2=1;(meta.emp||[]).forEach(e=>{e.wage=Math.max(e.wage||0,wageOf(e.role));});if(meta.money<3000000)meta.money=3000000;}
+  /* Sueldos por puesto (repaso del 18-11-2026): quien cobra menos que lo de su puesto sube; a nadie se le baja. */
+  if(!meta.eco3){meta.eco3=1;(meta.emp||[]).forEach(e=>{e.wage=Math.max(e.wage||0,wageOf(e.role));});}
   if(!Array.isArray(meta.emp)){
     meta.emp=[];const s=Object.assign({atc:0,back:1,rrpp:1,alm:1},meta.staff);
     Object.keys(ROLES).forEach(r=>{for(let i=0;i<(s[r]||0);i++)meta.emp.push(newEmp(r,meta));});
@@ -4571,7 +4586,7 @@ function dailyExit(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.18-108';
+const APPV='2026.11.18-109';
 /* Compara versiones por números («-9» < «-11»), no como texto. */
 const verCmp=(a,b)=>{const x=String(a).split(/[.-]/).map(Number),y=String(b).split(/[.-]/).map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
 try{const vt=document.createElement('div');vt.id='vtag';vt.textContent='v'+APPV;document.body.appendChild(vt);}catch(e){}
@@ -7548,6 +7563,7 @@ function staffInfo(){
   scene({k:'plant:'+Date.now(),over:true,head:'👥 PLANTILLA · TURNO '+meta.day,tag:E.filter(onFloor).length+' en tienda / '+E.length,who:'👑',name:'Tu equipo',prio:1,time:40,def:'ok',
     txt:'Toca a alguien para ver su vida y hablar con él o ella. '+Object.keys(ROLES).map(k=>ROLES[k].s+' '+(cnt[k]||0)).join(' · ')+'. Nómina: '+fmt(E.reduce((s,e)=>s+empCost(e.wage),0))+' por turno con Seguridad Social.',
     body:`<div class="sdoc"><h6><span>Quién hay</span><span>${E.length}</span></h6><dl>${rows||'<dt>Nadie</dt><dd>Tú contra el mundo</dd>'}</dl></div>`
+      +`<div class="sdoc"><h6><span>💶 Sueldo según convenio</span><span>15 pagas</span></h6><dl>${Object.keys(ROLES).filter(k=>cnt[k]).map(k=>`<dt>${ROLES[k].s}</dt><dd>${convTxt(k)}</dd>`).join('')}</dl></div>`
       +(B?`<div class="sdoc"><h6><span>🚪 Últimas bajas</span><span>${(meta.bajas||[]).length}</span></h6><dl>${B}</dl></div>`:''),
     choices:[{t:'🗂️ Ir a RR.HH.',k:'rrhh',cls:'go',key:'R'},{t:'👍 Vale',k:'ok',key:'V'}],
     onPick:k=>{if(k==='rrhh')setTab('rrhh');}});
@@ -7925,7 +7941,8 @@ function rrhhHtml(){
     <div class="vacs">${Object.keys(ROLES).map(k=>{const v=vacOpen(k),n=staffOf(k).length,mx=ROLES[k].max;return `<div class="vac ${v?'on':''}"><span class="vn"><i>${JOB_IC[k]}</i><b>${ROLES[k].n}</b><small>${n}/${mx} en plantilla${v?' · se busca'+(v>1?' ('+v+')':''):''}</small></span><span class="vbtn"><button class="btn mini" data-act="vac" data-r="${k}" data-d="-1" ${v?'':'disabled'}>−</button><b>${v}</b><button class="btn mini go" data-act="vac" data-r="${k}" data-d="1" ${n+v<mx?'':'disabled'}>＋</button></span></div>`;}).join('')}</div>
     ${poolHtml()}
     <div class="supd">Próxima reunión de personal (valorar, aumentos, contratar y despedir): al cerrar el turno ${meta.day%3===1&&!(run&&!run.over)?meta.day:nm}.</div></div>
-    <div class="dpanel"><div class="zone-title">PLANTILLA Y CONTRATOS · ${meta.emp.length} PERSONAS</div><div class="shop">${rows}</div></div>${(meta.bajas||[]).length?`<div class="dpanel"><div class="zone-title">🚪 BAJAS RECIENTES</div>${meta.bajas.slice(0,8).map(b=>`<div class="supd">${b.f} <b>${esc(b.n)}</b> · ${ROLES[b.r]?ROLES[b.r].n:""} · turno ${b.d}: ${esc(b.why)}</div>`).join("")}</div>`:""}</div>`;
+    <div class="dpanel"><div class="zone-title">PLANTILLA Y CONTRATOS · ${meta.emp.length} PERSONAS</div><div class="shop">${rows}</div>
+    <div class="zone-title">💶 SUELDO SEGÚN CONVENIO</div>${Object.keys(ROLES).map(k=>`<div class="supd">${JOB_IC[k]} <b>${ROLES[k].n}</b>: ${convTxt(k)}</div>`).join('')}<div class="supd">Sueldos brutos en €/mes con 15 pagas (12 + beneficios, verano y Navidad). La antigüedad no suma: el convenio la suprimió en 1998.</div></div>${(meta.bajas||[]).length?`<div class="dpanel"><div class="zone-title">🚪 BAJAS RECIENTES</div>${meta.bajas.slice(0,8).map(b=>`<div class="supd">${b.f} <b>${esc(b.n)}</b> · ${ROLES[b.r]?ROLES[b.r].n:""} · turno ${b.d}: ${esc(b.why)}</div>`).join("")}</div>`:""}</div>`;
 }
 function dirHtml(){
   const r=run||{},live=run&&!run.over;
