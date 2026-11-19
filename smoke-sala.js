@@ -44,16 +44,16 @@ function notify(p){
     },0);
   });
 }
-let uidN=0;const acts={},tillSum={served:0,sales:0},dead=new Set();
+let uidN=0;const noteLog=[];const acts={},tillSum={served:0,sales:0},dead=new Set();
 function client(){
   const uid='uid'+(++uidN);
   const ref=(db,p)=>({path:p||''});
   return async()=>({db:{},uid,ref,
     get:async r=>snap(r.path),
-    set:async(r,v)=>{if(dead.has(uid))return;setAt(r.path,v);notify(r.path);},
+    set:async(r,v)=>{if(dead.has(uid))return;if(/\/notes\//.test(r.path)&&v&&v.m)noteLog.push((v.k?'['+v.k+'] ':'')+v.m);setAt(r.path,v);notify(r.path);},
     update:async(r,o)=>{if(dead.has(uid))return;Object.keys(o).forEach(k=>setAt(r.path+'/'+k,o[k]));notify(r.path);},
     remove:async r=>{if(dead.has(uid))return;setAt(r.path,null);notify(r.path);},
-    push:async(r,v)=>{if(v&&v.k)acts[v.k]=(acts[v.k]||0)+1;if(v&&v.k==="till"&&v.d){tillSum.served+=(+v.d.served||0);tillSum.sales+=(+v.d.sales||0);}const k='a'+(++pushN);setAt(r.path+'/'+k,v);notify(r.path+'/'+k);return{key:k};},
+    push:async(r,v)=>{if(v&&v.k)acts[v.k]=(acts[v.k]||0)+1;if(v&&v.k==='soc')acts['soc:'+v.a]=(acts['soc:'+v.a]||0)+1;if(v&&v.k==="till"&&v.d){tillSum.served+=(+v.d.served||0);tillSum.sales+=(+v.d.sales||0);}const k='a'+(++pushN);setAt(r.path+'/'+k,v);notify(r.path+'/'+k);return{key:k};},
     onValue(r,cb){if(r.path==='.info/serverTimeOffset'){setTimeout(()=>cb({val:()=>skew}),0);return()=>{};}
       const L={type:'value',path:r.path,cb};listeners.push(L);setTimeout(()=>{if(!L.off)cb(snap(r.path));},0);return()=>{L.off=1;};},
     onChildAdded(r,cb){const L={type:'child',path:r.path,cb,seen:new Set()};listeners.push(L);notify(r.path);return()=>{L.off=1;};},
@@ -139,7 +139,7 @@ function memberBot(d){
 (async()=>{
   try{
     const code='VITCH';
-    const A=browser('jefe','http://localhost/');await sleep(400);
+    const A=browser('jefe','http://localhost/?soc=1');await sleep(400);
     const da=A.document;
     da.querySelector('#pname').value='Jefa Test';
     cl(da.querySelector('[data-act=rreg]'));await sleep(200);
@@ -153,8 +153,27 @@ function memberBot(d){
     st.bossCardDisabled=!!db.querySelector('[data-act=rapply][data-r=jefe][disabled]');
     const hA=setInterval(()=>{try{hostBot(da);}catch(e){errs.push('BOT jefe '+e.message);}},40);
     const hB=setInterval(()=>{try{memberBot(db);}catch(e){errs.push('BOT empleada '+e.message);}},60);
+    /* ☕ Corrillo: la empleada invita a un café, cuenta un rumor, contesta a un NPC y escribe en el chat (que ve la jefa). */
+    const soc={cafe:0,rum:0,reply:0,chat:0,panel:0};
+    const hS=setInterval(()=>{try{
+      if(db.querySelector('#mg.show'))return;
+      const sc=db.querySelector('#scene.show');
+      if(sc&&/Un compañero/.test(sc.textContent)){const b=sc.querySelector('button[data-act=scene]');if(b){soc.reply++;cl(b);}return;}
+      if(!db.querySelector('.gs-pick .chatlog')){const o=db.querySelector('[data-act=wpick][data-k=soc]');if(o){soc.panel++;cl(o);}return;}
+      if(!soc.chat){const i=db.querySelector('#socmsg');if(i){i.value='¿Alguien baja a por café? Que hoy no hay quien aguante';cl(db.querySelector('[data-act=chats][data-i=socmsg]'));soc.chat=1;return;}}
+      if(!soc.cafe){const b=db.querySelector('[data-act=soca][data-a=cafe]:not([disabled])');if(b){cl(b);soc.cafe=1;return;}}
+      if(!soc.rum){const b=db.querySelector('[data-act=soca][data-a=rum]:not([disabled])'),sl=db.querySelector('#socto');
+        if(b&&sl){const row=b.closest('.pk-row'),bad=[row.dataset.ra,row.dataset.rb],op=[...sl.options].find(o=>!bad.includes(o.value));if(op){sl.value=op.value;cl(b);soc.rum=1;}return;}}
+    }catch(e){errs.push('BOT corrillo '+e.message);}},500);
     await sleep(45000);
-    clearInterval(hA);clearInterval(hB);
+    clearInterval(hA);clearInterval(hB);clearInterval(hS);
+    st.soc=soc;
+    st.socNotes=noteLog.filter(m=>/^\[soc\]|☕ Café|🤫 Se lo cuentas|💬|😂|🙄|Le has|Le dejas|Silencio|te lo cuenta|Te apuntas|Pasas/.test(m)).slice(0,8).map(m=>m.slice(0,90));
+    st.socRumNote=(noteLog.find(m=>/Se lo cuentas|A quién se lo cuentas|Valiente|Espera/.test(m))||'').slice(0,90);
+    st.socView=(()=>{const v=(getAt('rooms/'+code+'/state/soc/u')||{}).uid2;return v?{rl:Object.keys(v.rl||{}).length,rum:Object.keys(v.rum||{}).length}:null;})();
+    st.chatDb=Object.values(getAt('rooms/'+code+'/chat')||{}).map(m=>m.n+': '+m.t);
+    st.bossSeesChat=/hoy no hay quien aguante/.test((da.querySelector('.bchat .chatlog')||{textContent:''}).textContent);
+    st.radioCafe=/máquina de café/.test(JSON.stringify(getAt('rooms/'+code+'/state/soc/radio')||[])+JSON.stringify((getAt('rooms/'+code+'/meta')||{}).radio||[]));
     st.acts=acts;st.tillSum=tillSum;st.actsLeft=Object.keys(getAt('rooms/'+code+'/acts')||{}).length;
     const metaDb=getAt('rooms/'+code+'/meta')||{};
     const realEmp=Object.values(metaDb.emp||{}).find(e=>e&&e.real);
