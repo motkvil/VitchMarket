@@ -45,5 +45,6 @@ function finish(){
   console.log('ERR='+ERR+(over?' FIN: '+over:''));
   console.log(['T','atend','enf','err','ventas','otras','coste','nómina','fijos','recl','multas','otros','imp','NETO','compras','BOTE','rep','plant','agot','muelle','alm','turno'].join('\t'));
   rows.forEach(r=>console.log(r.join('\t')));
+  {const g=w.__g&&w.__g();if(g){console.log('storylets',JSON.stringify(g.meta.storyN||{}),'· hilos abiertos',JSON.stringify(Object.keys(g.meta.sq||{})));console.log('bajas',(g.meta.bajas||[]).length,JSON.stringify((g.meta.bajas||[]).map(b=>'T'+b.d+' '+b.n+': '+b.why)));}}
   console.log('errors',errs.slice(0,5));process.exit(0);}
 setTimeout(finish,+process.env.TMAX||420000);
