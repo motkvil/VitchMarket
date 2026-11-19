@@ -2239,9 +2239,19 @@ const RUM={
  ofertas:{t:A=>A+' está buscando otro curro'},
  sevia:{t:A=>A+' se va a la competencia la semana que viene'},
  fantasma:{t:A=>A+' vio al reponedor fantasma en el almacén'},
- mentira:{neg:1,t:A=>A+' se inventó que estaba malo para no venir'}
+ mentira:{neg:1,t:A=>A+' se inventó que estaba malo para no venir'},
+ amigos:{t:(A,B)=>A+' y '+B+' son uña y carne'},
+ jefeH:{t:A=>'el jefe sale con la de Hacienda (lo jura '+A+')'},
+ taper:{neg:1,t:(A,B)=>A+' se come los tápers de '+B},
+ boda:{t:(A,B)=>A+(B&&B!=='alguien'?' y '+B+' se casan':' se casa')},
+ bebe:{t:A=>A+' va a tener un bebé'},
+ ascenso:{t:A=>'a '+A+' le han hecho encargado y ya se le ha subido'},
+ sindi:{t:A=>A+' ha firmado la hoja del sindicato'},
+ propina:{neg:1,t:(A,B,v)=>A+' se quedaba '+fmt(v||3000)+' del bote de propinas',v:v=>Math.round((v||3000)*rnd(1.5,3)/100)*100},
+ chivato:{neg:1,t:A=>A+' trabajaba para el súper de enfrente'},
+ pales:{neg:1,t:A=>A+' vende palés por la puerta de atrás'}
 };
-const DIST={toque:'despido',flirt:'romance',ofertas:'sevia',escaqueo:'mentira'};
+const DIST={toque:'despido',flirt:'romance',ofertas:'sevia',escaqueo:'mentira',amigos:'flirt',sindi:'despido',ascenso:'aumento'};
 const rumTxt=r=>{const R=RUM[r.k];return R?'dicen que '+R.t(r.an||'alguien',r.bn||'alguien',r.v):'';};
 const capF=s=>s.charAt(0).toUpperCase()+s.slice(1);
 function learn(w,r){
@@ -2290,6 +2300,124 @@ function socSay(e,txt,bad){
   if(!run||run.over||run.remote||(run.chat&&run.t<run.chat.until))return;
   run.chat={face:e.face,text:e.name+' '+flag(e)+': «'+txt+'»',angry:!!bad,until:run.t+3.6};try{renderChat();}catch(x){}
 }
+/* ===== Gramática de frases (Tracery en pequeño) y calendario de Madrid =====
+   gram(regla,ctx): expande «#símbolo#» con ctx (gctx(e,o): a, o, hijo, barrio, from, asp, nd, amigo, enemigo, pareja, real, ev, fem…)
+   o con otra regla de GR; «#x.cap#» pone mayúscula. Una alternativa que pide algo que no hay (p. ej. #hijo# sin hijos) se descarta y
+   se prueba otra. Género del que habla con {o|a} (gx). Memoria de las 40 últimas frases (GRAM_MEM): no repite ninguna y, si puede, tampoco el mismo arranque (22 letras). */
+const GRAM_MEM=[];
+const GR={
+ charla:['#ab# #tema#','#tema#','#tema# #remate#','#ab# #tema# #remate#'],
+ ab:['Oye, #o#,','#o#, escucha:','Mira, #o#,','Pues nada, #o#,','A ver, #o#,','Tú no te lo vas a creer, #o#:','#o#, en confianza:'],
+ remate:['Lo que te diga.','En fin.','Madrid, macho.','Yo ya no sé.','Tú flipa.','Con dos narices.','Y así todo.','Para mear y no echar gota.','Ahí lo dejo.'],
+ tema:['#hijoT#','#hijoT#','#barrioT#','#barrioT#','#aspT#','#aspT#','#ndT#','#ndT#','#evT#','#evT#','#evT#','#amigoT#','#parejaT#','#realT#','#genT#','#genT#','#genT#','#fromT#'],
+ hijoT:['#hijo# ha vuelto a perder el abrigo. Tercero este mes.','#hijo# dice que de mayor quiere ser cajer{o|a} como yo. Le he dicho que estudie.','#hijo# me ha pedido unas zapatillas de 120 €. Le he enseñado mi nómina.',
+  'Anoche #hijo# no durmió y yo tampoco. Si me ves con los ojos cerrados, estoy rezando.','En el cole de #hijo# piden un disfraz de castaña para mañana. ¿De castaña? ¿Y eso cómo se hace?','#hijo# ha sacado un 9 en Mates. No sé de quién lo habrá sacado.',
+  'Me ha llamado la profe de #hijo#. Otra vez. Ha montado un negocio de cromos en el patio.','#hijo# quiere un perro. Le he dicho que ya tenemos: se llama «tu padre».'],
+ barrioT:['En #barrio# han abierto otra tienda de cigarrillos electrónicos. Ya van cuatro en la misma calle.','El autobús de #barrio# hoy venía tan lleno que he viajado en el bolsillo de un señor.',
+  'En #barrio# están de obras otra vez. Llevan levantando la misma acera desde 2019.','Mi casero de #barrio# dice que el piso «tiene encanto». El encanto es la humedad.','En #barrio# han cerrado la mercería de toda la vida. Ahora es una tienda de gofres con forma de cosas.',
+  'Ayer en #barrio# había una cola para un brunch que daba la vuelta a la manzana. Por un huevo.','Los vecinos de #barrio# tenemos un grupo de WhatsApp. Ayer hubo 400 mensajes por una plaza de aparcamiento.'],
+ fromT:['En #from# esto no pasa, te lo digo yo.','Mi madre me llama desde #from# para preguntarme si como bien. Le digo que trabajo en un súper. Se queda tranquila.','Echo de menos #from#. Y la comida de mi madre. Sobre todo la comida.'],
+ aspT:['Lo mío sigue en marcha: #asp#. Va lento, pero va.','Cuando consiga lo de #asp#, os invito a todos. A un café, no os flipéis.','Me han dicho que lo de #asp# es imposible. Por eso lo voy a hacer.','Esta noche, más #asp#. Duermo cuando me muera.'],
+ ndT:['#nd#','#nd# #remate#'],
+ amigoT:['¿Has visto a #amigo#? Hoy va como una moto.','#amigo# me ha guardado un donut. Eso es amistad, lo demás son tonterías.','Si no fuera por #amigo#, yo ya me habría ido a Cuenca a criar cabras.'],
+ parejaT:['#pareja# me ha preparado un táper. Con una nota. Me ha dado vergüenza y todo.','Esta noche ceno con #pareja#. Bueno, ceno lo que sobre del súper.','#pareja# dice que hablo del súper en sueños. Que anoche dije «¿bolsa?».'],
+ realT:['#real# hoy se lo está currando. Respeto.','¿Tú has visto cómo cobra #real#? Parece que lo hace con los ojos cerrados.','A #real# le debo un café. Me cubrió el otro día sin rechistar.'],
+ evT:['#ev#'],
+ genT:['El de la caja 2 dice que la máquina del café habla. Que le ha dicho «hoy no».','Una señora me ha pedido «el yogur de los de antes». Todos son de ahora, señora.','He contado los carros: faltan dos. Alguien se ha llevado dos carros a su casa. ¿Para qué?',
+  'Un señor me ha pagado 47 céntimos en monedas de uno. Una a una. Mirándome a los ojos.','Ayer un niño se comió una uva en la frutería y su madre le dijo «eso lo pagas tú». Tenía tres años.','La vecina del quinto pregunta si el pan de hoy es «de hoy de verdad».',
+  'Me ha tocado la caja que pita sola. Me tiene manía.','En el pasillo 4 hay un cliente leyendo las etiquetas como si fueran el BOE.','Me duelen pies que no sabía que tenía.','Si me vuelven a pedir «la bolsa grande de las buenas» me hago autónomo.',
+  'El de la frutería ha vuelto a hacer una pirámide de naranjas. Es su Sagrada Familia.','Hoy he visto a un señor discutir con el datáfono. Ha ganado el datáfono.','Un cliente me ha dicho que me parezco a su sobrin{o|a}. No sé si es bueno.',
+  'Me he traído lentejas. Si desaparecen, que sepáis que las he contado.','Llevo tres cafés. Veo los sonidos.','Hay una señora que viene solo a saludar al cajero de la 1. Hoy no estaba y se ha ido sin comprar.']
+,
+ radio:['#a# le cuenta a #o# #rtema#.','#a# y #o# #rjunt#.','Se oye a #a# cantar #canc# en el almacén.','#a# jura que #rjura#.','#a# le enseña a #o# fotos de #hijo#. #rreac#','#a# dice que en #barrio# #rbarrio#.',
+  '#a# sigue con lo suyo (#asp#). #rasp#','#a# y #amigo# se reparten un bocadillo de calamares en el muelle.','#a# no le dirige la palabra a #enemigo#. #rtenso#','#real# #rreal#','#evr#','#evr#','#a# y #o# apuestan un café a #rapuesta#.',
+  'En la sala de descanso, #a# #rsala#.','#a# llama a #pareja# desde el muelle. Habla bajito. #rreac#','#a# #rmania#.'],
+ rtema:['que su casero le ha subido el alquiler otra vez','lo del Atleti, con todo detalle y dos lágrimas','que ha soñado con el escáner de la caja','su teoría de por qué los carros siempre tiran a la izquierda','que en su barrio ya hay más perros que niños',
+  'que se va a apuntar al gimnasio (cuarta vez este año)','la última de la vecina del quinto','que el Metro olía a churros y no había churros','cómo se hace la tortilla de verdad (con cebolla, y no se discute)','que quiere irse a vivir a Teruel, que dicen que existe'],
+ rjunt:['comparten auriculares mientras colocan el muelle','se ríen de algo que no quieren contar','se pasan la mañana discutiendo de tortilla con o sin cebolla','se tapan el uno al otro los bostezos','ordenan las latas por colores «para que quede bonito»'],
+ canc:['una de Camela','«Mediterráneo» a pleno pulmón','reguetón de 2005','la sintonía de «Los Serrano»','una copla que nadie más se sabe','el himno del Atleti en bajito'],
+ rjura:['el congelador 3 suspira','ha visto a la gata del muelle con un yogur','la máquina del café le ha devuelto 20 céntimos de más (primera vez en la historia)','el pasillo 7 está más frío de lo normal','el jefe sonríe cuando cree que nadie mira'],
+ rreac:['Nadie sabe qué decir.','Todo el mundo hace «ooooh».','Hay lágrimas en el muelle.','Se le escapa una sonrisa.'],
+ rbarrio:['han abierto un bar donde se paga con abrazos (mentira, se paga con tarjeta)','hay más andamios que vecinos','las palomas ya tienen sindicato','han puesto un semáforo que nunca se pone verde'],
+ rasp:['Va despacio, pero va.','Esta semana ha avanzado algo.','Dice que el año que viene sí.','Nadie se atreve a preguntar cómo va.'],
+ rtenso:['El aire se puede cortar con el cúter.','Se pasan las cajas sin mirarse.','Los demás hacen como que no lo ven.'],
+ rreal:['se ha ganado el respeto del muelle.','va como un tiro hoy.','ha hecho reír a toda la sala de descanso.','sale en todas las conversaciones de hoy (para bien).'],
+ rapuesta:['quién acaba antes el palé','si hoy viene la señora de los céntimos','cuántos clientes piden bolsa','si el jefe aguanta sin café hasta las 12'],
+ rsala:['ha dejado una tarta con un cartel: «Para todos menos para quien se comió mis lentejas»','ronca cinco minutos exactos y vuelve como nuev{o|a}','reparte caramelos de eucalipto','hace un crucigrama a gritos'],
+ rmania:['ha colocado las latas de atún en pirámide otra vez','cuenta las bolsas de la caja como si fueran billetes','no deja que nadie toque «su» cúter','ha puesto un pósit en su taquilla: «Prohibido mirar»'],
+ evr:['#ev#']
+};
+function gramX(s,ctx,dep){
+  return s.replace(/#(\w+)(\.cap)?#/g,(m,k,cap)=>{let v=ctx[k];if(v==null&&GR[k])v=gramPick(GR[k],ctx,dep+1);if(v==null||v==='')throw 0;v=String(v);return cap?capF(v):v;});
+}
+function gramPick(L,ctx,dep){if(dep>6)return null;for(const s of shuffle(L)){try{return gramX(s,ctx,dep);}catch(e){}}return null;}
+function gram(rule,ctx){
+  ctx=ctx||{};let first=null;
+  for(let i=0;i<8;i++){let s=gramPick(GR[rule]||[rule],ctx,0);if(s==null)return null;s=gx(s,ctx.fem);first=first||s;
+    if(!GRAM_MEM.some(x=>x===s||(i<5&&x.slice(0,22)===s.slice(0,22)))){GRAM_MEM.push(s);if(GRAM_MEM.length>40)GRAM_MEM.shift();return s;}}
+  return first;
+}
+const ND_L={energia:['Estoy que me caigo. He dormido menos que un portero de discoteca.','Si me siento, me duermo. Si me duermo, me despiden. Así que de pie.'],
+  social:['Llevo todo el turno sin hablar con nadie. Le he contado mi vida al lector de códigos.','Necesito un café con alguien. Con quien sea. Con el palé, si hace falta.'],
+  dinero:['A final de mes como arroz. Y a principio, también.','He mirado la cuenta del banco y me ha mirado ella a mí. Con pena.'],
+  estima:['Hago de todo y nadie lo ve. Soy el fantasma del súper.','A veces pienso que si me voy, nadie se da cuenta hasta el inventario.'],
+  calma:['Voy de los nervios. Si alguien me pide bolsa grande, lloro.','Necesito respirar. Hondo. Tres veces. En el congelador.']};
+function gctx(e,o){
+  const B=(e&&e.bio)||{},C=sArr(B.circ),k=C.find(x=>x.k==='hijo'||x.k==='hija'),N=e&&!e.real&&e.nd,low=N?ND_K.slice().sort((a,b)=>N[a]-N[b])[0]:null;
+  const fr=e&&!e.real?relTop(e,1,1)[0]:null,en=e&&!e.real?relTop(e,1,-1)[0]:null,P=e?partnerOf(e):null,pm=C.find(x=>x.k==='pareja');
+  const re=meta.emp.filter(x=>x.real&&x!==e&&x!==o&&run&&run.duty&&working(x)),ev=calEv(meta.day),A=B.asp&&ASP[B.asp];
+  return {a:e&&e.name,o:o&&o.name,hijo:k&&k.n,barrio:B.live,from:B.from,asp:A?gx(A.n,isFem(e)).replace(/^./,x=>x.toLowerCase()):null,
+    nd:low&&N[low]<35?pick(ND_L[low]):null,amigo:fr&&fr.o!==o?fr.o.name:null,enemigo:en?en.o.name:null,pareja:P?P.name:pm?pm.n:null,
+    real:re.length?pick(re).name:null,ev:ev&&ev.ch?pick(ev.ch):null,fem:e?isFem(e):false};
+}
+/* Ruido de fondo de 📻 Radio Pasillo: cada ~22–34 % del turno, una línea con nombres, relaciones, vida y lo que pasa hoy en Madrid. */
+function socAmb(){
+  const S=run.soc;if(!S||run.t<(S.amb||0))return;S.amb=run.t+rnd(0.22,0.34)*(run.dur||100);if(run.t<0.1*(run.dur||100))return;
+  const L=meta.emp.filter(x=>!x.real&&inStore(x));if(!L.length)return;const e=pick(L),o=pick(meta.emp.filter(x=>x!==e&&inStore(x)))||null;
+  const s=gram('radio',gctx(e,o));if(s)radio('📻',s);
+}
+/* ---- 📅 Calendario de Madrid: un «año del súper» de CAL_P turnos (el turno 1 es lunes) con fechas fijas.
+   f = demanda del turno (otras cajas y llegada de clientes); nd = necesidades de la plantilla al abrir; ch = frases para la charla y la radio. */
+const CAL_P=63;
+const MAD_CAL={
+ 4:{k:'puente',ic:'🧳',n:'Puente de mayo',f:0.85,nd:{energia:6},t:'Medio Madrid se ha ido a la playa o al pueblo: hoy entra menos gente.',
+  ch:['Media plantilla está en el pueblo y la otra media, de mal humor.','La A-3 está colapsada desde las siete. Yo, aquí, en mi caja. Feliz.','Mi cuñado está en Benidorm mandando fotos de los pies. Bloqueado.']},
+ 10:{k:'isidro',ic:'💃',n:'San Isidro',f:1.08,nd:{social:10},t:'Chulapos, rosquillas listas y tontas y chotis en la pradera.',
+  ch:['Esta tarde a la pradera de San Isidro con la parpusa y el clavel. Sin discusión.','¿Rosquillas listas o tontas? Las dos. Las tontas para mí, que me representan.','Mi abuela baila el chotis en una baldosa. Yo no sé ni en dos.']},
+ 15:{k:'metro',ic:'🚇',n:'Huelga de Metro',f:0.95,nd:{calma:-8},t:'Paros en el Metro: servicios mínimos y andenes a reventar.',
+  ch:['He venido en la línea 6 de pie, de lado y sin respirar. Me merezco un plus.','Servicios mínimos en el Metro. Mínimos de verdad: un tren y una esperanza.']},
+ 20:{k:'orgullo',ic:'🏳️‍🌈',n:'Orgullo (MADO)',f:1.12,nd:{social:12},t:'Fin de semana del Orgullo: Chueca a tope y la gente comprando agua, hielo y bebida.',
+  ch:['Esta noche al pregón del Orgullo. Llevo purpurina hasta en el DNI.','Hoy se vende hielo como si se acabara el mundo.','En Chueca no cabe ni un alfiler. Y aun así cabe todo el mundo.']},
+ 25:{k:'calor',ic:'🥵',n:'Ola de calor',f:1.06,nd:{energia:-15},t:'Aviso naranja por calor: se venden agua, helados y ventiladores de mano.',
+  ch:['Hace tanto calor que el chicle del suelo está otra vez blando.','Me he metido en la cámara frigorífica «a revisar el género». Diez minutos. Revisando mucho.']},
+ 30:{k:'champions',ic:'⚽',n:'Noche de Champions',f:1,t:'Esta noche hay Champions: a partir de las 20:00, las calles se vacían.',
+  ch:['Esta noche Champions. Si pierden, mañana no me habléis.','Me he puesto la camiseta debajo del chaleco. No se lo digas al jefe.']},
+ 35:{k:'derbi',ic:'⚽',n:'Derbi madrileño',f:0.94,nd:{calma:-6},t:'Derbi en el Metropolitano: medio Madrid de rojiblanco, medio de blanco y el súper en medio.',
+  ch:['Hoy hay derbi. En mi casa ya no nos hablamos desde el desayuno.','Como gane el otro equipo, me cojo baja por depresión.']},
+ 38:{k:'gota',ic:'⛈️',n:'Gota fría',f:0.88,nd:{calma:-5},t:'Gota fría: diluvia, la gente se queda en casa y los que vienen entran chorreando.',
+  ch:['Está cayendo la del pulpo. He venido nadando por la M-30.','El paraguas me ha durado de casa al portal. Récord personal.']},
+ 42:{k:'maraton',ic:'🏃',n:'Maratón de Madrid',f:0.95,t:'Maratón de Madrid: calles cortadas y corredores pidiendo agua por la puerta.',
+  ch:['Hoy hay maratón. Yo corro, pero hacia la máquina del café.','Han cortado la Castellana. Ni mi autobús ni mi paciencia han llegado.']},
+ 47:{k:'bfriday',ic:'🛍️',n:'Black Friday',f:1.15,nd:{energia:-8},t:'Black Friday: la gente entra buscando chollos hasta en el papel higiénico.',
+  ch:['Una señora me ha preguntado si el pan tiene descuento de Black Friday. Le he dicho que el pan es negro solo si se quema.','Hoy todo el mundo busca ofertas. Yo busco una silla.']},
+ 51:{k:'loteria',ic:'🎟️',n:'Sorteo de Navidad',f:1.05,nd:{social:8},t:'Sorteo de la Lotería de Navidad: en la tienda solo se oye a los niños de San Ildefonso.',
+  ch:['¡Que me toque, que me toque! Aunque sea la pedrea, que tengo que pagar el dentista.','Llevo un décimo de Doña Manolita. Tres horas de cola. Si no toca, demando.']},
+ 53:{k:'nochebuena',ic:'🎄',n:'Nochebuena',f:1.25,nd:{energia:-10,social:10},t:'Nochebuena: colas de película, gambas por kilos y todo el mundo con prisa.',
+  ch:['Hoy ceno con la familia. Toda. También el tío que habla de política.','Llevamos 40 kilos de gambas vendidos y son las doce.']},
+ 58:{k:'reyes',ic:'👑',n:'Víspera de Reyes',f:1.12,t:'Víspera de Reyes: roscón, cabalgata y compras de última hora.',
+  ch:['Esta tarde a la cabalgata. Mis sobrinos quieren caramelos. Yo, que no me den en un ojo.','Este año me pido una silla ergonómica a los Reyes. O una semana de vacaciones.']},
+ 60:{k:'rebajas',ic:'🏷️',n:'Primer día de rebajas',f:0.95,nd:{dinero:-6},t:'Rebajas de invierno: Preciados y la Gran Vía a reventar; el súper, más tranquilo.',
+  ch:['Hoy salgo y me voy derecha a Preciados. Con casco.','Me compré un abrigo en rebajas que no necesitaba. Pero estaba al 50 %. Ahorro.']}
+};
+const calEv=d=>MAD_CAL[((Math.max(1,d||1)-1)%CAL_P)+1]||null;
+const calF=d=>{if(daily)return 1;const e=calEv(d);return e?e.f:1;};
+/* Al abrir: aviso del día, ánimo/necesidades y una línea de radio (una vez por turno, meta.calD). */
+function calOpen(ev){
+  if(!ev||meta.calD===meta.day)return;meta.calD=meta.day;
+  meta.emp.forEach(e=>{if(e.real||!ev.nd)return;for(const k in ev.nd)ndAdd(e,k,ev.nd[k]);});
+  const p=Math.round((ev.f-1)*100);radio(ev.ic,ev.n+': '+ev.t);
+  if(!quiet)toast('📅 Hoy en Madrid: '+ev.ic+' '+ev.n+'. '+ev.t+(p?' (clientela '+(p>0?'+':'−')+Math.abs(p)+' %)':''),p<0?'':'good');
+}
 /* ---- decisiones durante el turno (utilidad) ---- */
 const SOCS={charla:'💬 de charla con',cotilla:'🤫 cuchicheando con',ayuda:'🤝 echando una mano a',flirt:'😊 tonteando con',discute:'😤 discutiendo con'};
 const ofHome=e=>{const C=sArr(e.bio&&e.bio.circ),p=C.find(c=>['hijo','hija','madre','pareja','abuela'].includes(c.k));return p;};
@@ -2304,7 +2432,7 @@ const SOC_ACT={
    const r=rel(e,o);if(canRom(e,o)&&r.af>30&&!r.par)r.rom=clamp(r.rom+ri(0,3),0,100);
    if(Math.random()<0.25)spread(e,o);
    const h=ofHome(e),L=[h?'¿Sabes lo que me ha dicho '+(h.k==='madre'?'mi madre':h.n)+'? Luego te cuento.':'¿Viste anoche el partido?','¿Tú también tienes la espalda hecha polvo?','Oye, '+o.name+', ¿hoy quién cierra?'].concat(TALK_G.slice(0,4));
-   socSay(e,pick(L));if(Math.random()<0.4)radio('💬',e.name+' y '+o.name+' charlan un rato junto a la máquina de café.');}},
+   socSay(e,gram('charla',gctx(e,o))||pick(L));if(Math.random()<0.4)radio('💬',gram('radio',gctx(e,o))||e.name+' y '+o.name+' charlan un rato junto a la máquina de café.');}},
  cotilla:{sc:(e,d,N)=>{if(e.pers!=='chismoso'||!sArr(e.know).length)return null;const L=freeMate(e);if(!L.length)return null;return {s:1+(100-N.social)/80,o:pick(L)};},
   go:(e,d,o)=>{socPair(e,o,'cotilla','🤫');const r=spread(e,o);ndAdd(e,'social',15);
    socSay(e,r?'¿Te has enterado? '+capF(rumTxt(r))+'.':'Yo no digo nada, pero…');radio('🤫',e.name+' le cuenta algo en voz baja a '+o.name+'.');}},
@@ -2368,6 +2496,7 @@ function socTick(dt){
   }
   if((S.th+=st)>3){S.th=0;meta.emp.forEach(e=>{if(!e.real&&e.nd)ndThink(e);});}
   try{storyTick();}catch(x){console.warn('story',x);}
+  try{socAmb();}catch(x){console.warn('amb',x);}
 }
 /* ---- entre turnos: necesidades de la noche, relaciones del turno y decisiones de vida ---- */
 const LIFE={
@@ -2401,7 +2530,8 @@ function socDay(){
   const ids=new Set(meta.emp.map(e=>String(e.id)));
   if(meta.rel)Object.keys(meta.rel).forEach(k=>{const [a,b]=k.split('-');if(!ids.has(a)||!ids.has(b))delete meta.rel[k];});
   const np=meta.emp.filter(e=>!e.real),avg=np.length?np.reduce((a,e)=>a+e.moral,0)/np.length:60;
-  meta.tension=clamp((meta.tension||20)+8+(avg<45?8:0)+(meta.sind===2?5:0),0,100);
+  meta.tension=clamp((meta.tension||20)+8+(avg<45?8:0)+(meta.sind===2?5:0)+Object.keys(meta.sq||{}).length*2,0,100);
+  try{sqTease();}catch(x){console.warn('sq',x);}
 }
 /* Al abrir: lo que la plantilla decidió anoche (escenas menores «vida:»; el encargado aplica lo de por defecto). */
 function lifeOpen(){
@@ -2434,7 +2564,7 @@ function lifeOpen(){
 function storyCtx(){
   const all=meta.emp.filter(e=>!e.real),ws=all.filter(e=>inStore(e)&&!run.duty[e.id].busy);
   const avg=all.length?all.reduce((a,e)=>a+e.moral,0)/all.length:60;
-  return {day:meta.day,all,ws,avg,T:meta.tension||20,dow:dowOf(meta.day),mon:new Date().getMonth(),
+  return {day:meta.day,all,ws,avg,T:meta.tension||20,dow:dowOf(meta.day),mon:new Date().getMonth(),reals:meta.emp.filter(e=>e.real&&working(e)),ev:(calEv(meta.day)||{}).k||null,F:/^st-/.test(VIDA_T),
     pairs:f=>{const o=[];for(let i=0;i<all.length;i++)for(let j=i+1;j<all.length;j++){const r=rel(all[i],all[j]);if(f(all[i],all[j],r))o.push([all[i],all[j],r]);}return o;}};
 }
 function stScene(id,o){
@@ -2534,7 +2664,7 @@ const STORY=[
    go:k=>{if(k==='bor'){fearful().forEach(o=>ndAdd(o,'calma',8));meta.emp.forEach(o=>{if(o.pers==='chismoso')mor(o,-3);});return 'Grabación borrada. Paco sigue a lo suyo.';}
      if(k==='sub'){if(Math.random()<0.6){repAdd(+0.05,'El vídeo del reponedor fantasma se hace viral');return '«El fantasma del súper» se hace viral. Vienen a ver el pasillo de lácteos.';}repAdd(-0.05,'Clientes con miedo al pasillo de lácteos');return 'Hay clientes que ya no pasan por los lácteos. Ni de día.';}
      meta.emp.forEach(o=>{if(o.pers==='bromista')mor(o,4);});fearful().forEach(o=>ndAdd(o,'calma',15));return 'Al día siguiente la taza estaba vacía. Nadie lo ha confesado.';}})},
- {id:'metro',cat:'madrid',ten:1,cd:9,open:1,when:c=>{const L=c.all.filter(e=>run.duty[e.id]&&run.duty[e.id].st==='ok');return L.length>=2&&Math.random()<0.5?{L:shuffle(L).slice(0,Math.min(3,L.length))}:null;},
+ {id:'metro',cat:'madrid',ten:1,cd:9,open:1,when:c=>{const L=c.all.filter(e=>run.duty[e.id]&&run.duty[e.id].st==='ok');return L.length>=2&&(c.ev==='metro'||Math.random()<0.5)?{L:shuffle(L).slice(0,Math.min(3,L.length))}:null;},
   run:(c,{L})=>{L.forEach(e=>{const d=run.duty[e.id];d.st='late';d.at=rnd(12,28)*(run.dur||100)/100;d.ann=1;});
    return stScene('metro',{who:'🚇',name:'Metro de Madrid',look:'pa',head:'🚇 HUELGA DE METRO',tag:'⏰ Servicios mínimos',def:'esp',txt:'Paros en el Metro: '+L.map(e=>esc(e.name)).join(', ')+' '+(L.length>1?'llegan':'llega')+' tarde. «Estoy en Pacífico, en un andén con trescientas personas».',
     hint:'🚕 Taxis · '+fmt(1500*L.length)+': llegan casi a la hora y +3 de ánimo. 🕐 Que lleguen cuando puedan: llegan tarde (no cuenta como retraso suyo).',
@@ -2547,19 +2677,584 @@ const STORY=[
    ch:[['si','⚽ Sí, salís a las 20:30','go'],['no','✋ Se sale a las 21:00, como siempre','no']],
    go:k=>{if(k==='si'){meta.champ=meta.day;L.forEach(e=>{mor(e,8);memo(e,'⚽','Le dejaste ver el partido',8,2);});return 'Noche de Champions: los futboleros salen a las 20:30 con la bufanda puesta.';}
      L.forEach(e=>{mor(e,-6);memo(e,'📺','Se perdió la primera parte del partido',-6,1);});return 'Champions por la radio del móvil, a escondidas en el almacén.';}})},
- {id:'calor',cat:'madrid',ten:1,cd:7,open:1,when:c=>(c.mon>=5&&c.mon<=8)||Math.random()<0.12?{}:null,
+ {id:'calor',cat:'madrid',ten:1,cd:7,open:1,when:c=>c.ev==='calor'||(c.mon>=5&&c.mon<=8)||Math.random()<0.12?{}:null,
   run:c=>{c.all.forEach(e=>ndAdd(e,'energia',-20));return stScene('calor',{who:'🥵',name:'AEMET · aviso naranja',look:'pa',head:'🌡️ OLA DE CALOR',tag:'🥵 40 °C',def:'agua',txt:'Aviso naranja por calor en Madrid. En el muelle hay 40 grados y la cámara frigorífica tiene cola para «revisar el género».',
    hint:'🍦 Helados para todos · 25 €: +6 de ánimo y +15 de energía. 💧 Agua del grifo y a currar: −3 de ánimo.',ch:[['hel','🍦 Helados para todos · 25 €','go'],['agua','💧 Agua del grifo y a currar']],
    go:k=>{if(k==='hel'){meta.money-=2500;c.all.forEach(e=>{mor(e,6);ndAdd(e,'energia',15);});return 'Helados para la plantilla. El de pistacho, el primero en desaparecer.';}
      c.all.forEach(e=>think(e,'🥵','Hace un calor que no se puede',-3,1,'calor'));return 'Agua del grifo y abanicos de folleto.';}});}}
 ];
-function storyPick(L){
+/* ---- Paquete de contenido: hilos de varias etapas (cualidades estilo QBN) y 44 storylets más ----
+   meta.sq[k] = {s: etapa, d: turno de la última etapa, …ids de los actores y flags}: sqG/sqSet/sqEnd/sqFree; thr(c,k,etapa,turnos,cast)
+   devuelve el hilo si toca esa etapa (con ?vida=st-<id> lo monta al vuelo con cast(c)); sqA(k,q,'a','b') = actores (si falta uno, se cierra).
+   Las etapas siguientes pesan más (w) para que el hilo continúe. SQ_TZ = adelantos para 📻 entre etapas (sqTease, en socDay).
+   Los reales (e.real) salen en rumores, en la radio y en el grafo de relaciones, pero nunca deciden ni se les obliga a nada. */
+const sqG=k=>(meta.sq&&meta.sq[k])||null;
+function sqSet(k,o){meta.sq=meta.sq||{};const q=meta.sq[k]=Object.assign(meta.sq[k]||{},o||{});q.d=meta.day;return q;}
+function sqEnd(k){if(meta.sq)delete meta.sq[k];(meta.sqDone=meta.sqDone||{})[k]=meta.day;}
+const sqFree=(k,gap)=>!sqG(k)&&!(meta.sqDone&&meta.sqDone[k]>meta.day-(gap||20));
+function thr(c,k,s,age,cast){
+  let q=sqG(k);
+  if(c.F&&(!q||q.s!==s)){const x=cast&&cast(c);if(!x)return null;q=sqSet(k,Object.assign(x,{s}));}
+  if(!q||q.s!==s||(!c.F&&meta.day-q.d<age))return null;
+  return q;
+}
+function sqA(k,q,...ks){const r=ks.map(x=>q[x]==null?null:empById(q[x]));if(r.some(x=>!x)){sqEnd(k);return null;}return r;}
+const VIT={who:'🐶',name:'Vitchi · tu mascota'};
+const spk=e=>e&&!e.real&&inStore(e)?sEmp(e):VIT;
+const eN=e=>esc(e.name);
+const mates=(c,...not)=>c.ws.filter(x=>!not.includes(x));
+const lowHon=L=>L.slice().sort((a,b)=>(a.hon==null?0.6:a.hon)-(b.hon==null?0.6:b.hon))[0];
+const tellReals=m=>{meta.emp.forEach(x=>{if(x.real)try{note(x.real,m);}catch(e){}});};
+const SQ_TZ={
+ taper:['En la nevera de la sala hay un cartel nuevo: «SÉ QUIÉN ERES». Las lentejas tiemblan.','#a# ha escrito su nombre en el yogur con rotulador permanente. Por dentro.'],
+ boda:['#a# y #b# miran fincas por el móvil en el descanso. «Esta tiene pavos reales».','La lista de bodas de #a# y #b# incluye una freidora de aire. Y un perro.'],
+ bebe:['#a# ya tiene nombre para el bebé. Lo dice bajito, por si cambia.','En la sala de descanso han aparecido unos patucos en la taquilla de #a#.'],
+ asc:['#a# ya firma «encargad{o|a}» en los pósits.','#b# ha dejado de reírse con los chistes de #a#. Mala señal.'],
+ desc:['La Caja 2 vuelve a dar problemas. En Backoffice ya la llaman «la Bermudas».','Alguien ha puesto un rosario en el cajón de la Caja 2. Por si acaso.'],
+ notas:['#a# abre su taquilla con cuidado, como si fuera a saltarle algo.','Se ha agotado el bloc de pósits amarillos. Nadie sabe quién se lo ha llevado.'],
+ miron:['El señor de la gabardina ha vuelto. Hoy ha comprado un chicle de fresa. Y ha mirado el lineal de aceite diez minutos.','#a# dice que el de la gabardina apunta cosas en una libreta pequeña.'],
+ msgs:['#a# ha cambiado la contraseña del móvil tres veces hoy.','#a# solo habla por notas de voz. «Por si acaso».'],
+ frente:['En el vestuario circula una hoja con firmas. Cuando entras, se esconde.','#a# y #b# llevan días comiendo juntos y callándose cuando pasas.'],
+ prop:['El bote de las propinas pesa menos de lo que suena.','#a# cuenta las monedas del bote con cara de detective.'],
+ infil:['#a# pregunta a qué hora llega el camión. Otra vez.','#a# hace fotos «al lineal, que me gusta cómo queda».'],
+ pales:['El muelle está más vacío de lo que dice el albarán.','Un vecino jura que a las 21:15 sale una furgoneta blanca por detrás.'],
+ fant:['Esta mañana las latas de atún estaban ordenadas por fecha. Perfectas. Nadie lo hizo.','Huele a Ducados en el almacén. Nadie fuma Ducados desde 1998.','En la cámara 4 se ve un carro moverse solo. Despacito. Con respeto.']
+};
+/* Entre turnos: un adelanto de cada hilo abierto (40 %); los que llevan 15 turnos parados se cierran. */
+function sqTease(){
+  const S=meta.sq||{};
+  Object.keys(S).forEach(k=>{const q=S[k];if(meta.day-q.d>15){sqEnd(k);return;}
+    if(!SQ_TZ[k]||Math.random()>=0.4)return;const a=empById(q.a),b=empById(q.b);
+    const t=pick(SQ_TZ[k]).replace(/#a#/g,a?a.name:'Alguien').replace(/#b#/g,b?b.name:'alguien');radio('📻',gx(t,a&&isFem(a)));});
+}
+const STORY2=[
+ /* ===== CHISME ===== */
+ {id:'salen',cat:'chisme',ten:1,cd:6,when:c=>{
+   const p=c.pairs((a,b,r)=>inStore(a)&&inStore(b)&&canRom(a,b)&&r.rom>=25&&!r.par)[0];
+   const t=p&&mates(c,p[0],p[1])[0];if(t)return {t,a:p[0],b:p[1],rom:1};
+   const re=c.reals[0],t2=c.ws[0],o=c.ws[1];return re&&t2&&o?{t:t2,a:o,b:re,rom:0}:null;},
+  run:(c,{t,a,b,rom})=>stScene('salen',{...sEmp(t),head:'👂 MÁQUINA DEL CAFÉ',tag:'🤫 Quién con quién',def:'corta',
+   txt:'«Que yo no digo nada, jefe, pero '+eN(a)+' y '+eN(b)+(rom?' se toman el café siempre a la misma hora. Y se ríen. Mucho. Demasiado.':' son uña y carne. Hasta comparten el táper.')+'»',
+   hint:'👂 «Cuenta, cuenta»: '+eN(t)+' +5 de ánimo y el rumor corre por la tienda. 🤐 «Dejadles en paz»: '+eN(t)+' −3, nadie más se entera. '+(rom?'💘 Ponerles juntos en el inventario: les das un empujoncito (+romance).':'☕ Invitar a los dos a un café: +afinidad.'),
+   ch:[['oir','👂 Cuenta, cuenta','go'],['corta','🤐 Dejadles en paz'],['cup',rom?'💘 Juntos en el inventario':'☕ Café para los dos']],
+   go:k=>{if(k==='oir'){mor(t,5);ndAdd(t,'social',10);fact(rom?'flirt':'amigos',a,b,0,3,rom?1:0);return t.name+' cuenta lo de '+a.name+' y '+b.name+'. En diez minutos lo sabe hasta la gata del muelle.';}
+     if(k==='corta'){mor(t,-3);relAdd(t,a,{conf:-2});return t.name+' se guarda el chisme. Le cuesta.';}
+     if(rom){relAdd(a,b,{rom:15,af:5});return 'Inventario del pasillo 6: '+a.name+' cuenta, '+b.name+' apunta. Se equivocan mucho.';}
+     relAdd(a,b,{af:8,conf:5});meta.money-=300;return a.name+' y '+b.name+' se toman un café a cuenta del jefe. 3 €.';}})},
+ {id:'hacienda',cat:'chisme',ten:1,cd:14,when:c=>c.day>=4&&c.ws.length?{t:c.ws.find(e=>e.pers==='chismoso')||c.ws[0]}:null,
+  run:(c,{t})=>stScene('hacienda',{...sEmp(t),head:'🧾 RADIO PASILLO',tag:'👀 El jefe y la del 303',def:'calla',
+   txt:'«Jefe, por aquí se dice que tú y la de Hacienda… que si tanto modelo 303… que si tanta «revisión de facturas» los jueves… Yo no digo nada.»',
+   hint:'😂 Reírte: +3 de ánimo a la plantilla y el rumor pierde gracia. 🙄 «Es la gestora, viene por las facturas»: se acaba el rumor (−2 a '+eN(t)+'). 🤫 «Sin comentarios»: el rumor corre como la pólvora y los cotillas, felices.',
+   ch:[['rie','😂 Ojalá, así me perdona el IVA','go'],['niega','🙄 Es la gestora y viene por las facturas'],['calla','🤫 Sin comentarios']],
+   go:k=>{if(k==='rie'){meta.emp.forEach(o=>{if(!o.real&&inStore(o))mor(o,3);});return 'El jefe se ríe del rumor de Hacienda. «Ojalá». Carcajada general en el muelle.';}
+     if(k==='niega'){mor(t,-2);meta.emp.forEach(o=>{if(o.know)o.know=sArr(o.know).filter(r=>r.k!=='jefeH');});return 'Desmentido oficial: la de Hacienda es la gestora. Nadie se lo cree del todo.';}
+     fact('jefeH',t,null,0,null,0);meta.emp.forEach(o=>{if(o.pers==='chismoso')mor(o,4);});return '«Sin comentarios», dice el jefe. Eso es un sí, según '+t.name+'.';}})},
+ {id:'movil',cat:'chisme',ten:1,cd:10,when:c=>{const x=pick(c.all.filter(e=>inStore(e)));return x&&c.ws.length?{x}:null;},
+  run:(c,{x})=>{const B=x.bio||{},sec=x.look?'ofertas':B.asp==='boda'?'boda':B.asp==='opos'?'opos':B.asp==='bar'?'bar':'madre';
+   const msg={ofertas:'«RR.HH. Ahorramás: ¿Puedes venir a la entrevista el jueves?»',boda:'«El de la finca dice que el 14 de junio está libre 💍»',opos:'«Academia: simulacro de examen el sábado a las 9»',bar:'«El del local de '+(B.live||'Usera')+': si das la señal antes del viernes, es tuyo»',madre:'«Mamá: ¿has comido? Contesta. Te veo en línea.»'}[sec];
+   return stScene('movil',{...VIT,head:'📱 VESTUARIO',tag:'📳 Un móvil olvidado',def:'dev',
+   txt:'En el banco del vestuario vibra el móvil de '+eN(x)+'. En la pantalla bloqueada se lee: '+esc(msg),
+   hint:'📱 Devolvérselo sin comentar: +4 de ánimo y confía más en ti. 👀 Preguntarle por el mensaje: te lo cuenta, pero si se siente espiad'+(isFem(x)?'a':'o')+', −6. 📢 Preguntar en el grupo de quién es: todo el mundo ve la pantalla; se corre la voz.',
+   ch:[['dev','📱 Devolvérselo sin comentar','go'],['preg','👀 Preguntarle por el mensaje'],['grupo','📢 «¿De quién es este móvil?» en el grupo','no']],
+   go:k=>{if(!meta.emp.includes(x))return;
+     if(k==='dev'){mor(x,4);memo(x,'📱','El jefe le devolvió el móvil sin cotillear',4,2);return x.name+' recupera su móvil. «Gracias, jefe. De verdad».';}
+     if(k==='preg'){if(Math.random()<0.5){mor(x,-6);memo(x,'😠','Se sintió espiad'+(isFem(x)?'a':'o')+' por el jefe',-6,2);return x.name+' contesta seco: «Eso es cosa mía».';}
+       mor(x,2);if(sec==='ofertas')ndAdd(x,'estima',10);return x.name+' te cuenta lo del mensaje. Ahora sabes algo que los demás no.';}
+     const f=sec==='ofertas'?'ofertas':sec==='boda'?'boda':null;if(f)fact(f,x,null,0,3);if(x.pers==='timido')mor(x,-5);
+     return 'El móvil de '+x.name+' pasa de mano en mano. Ahora todo el mundo sabe lo del mensaje.';}});}},
+ {id:'taper1',cat:'chisme',ten:1,cd:8,when:c=>{if(!sqFree('taper',25))return null;const v=c.ws.find(e=>e.pers!=='capullo');if(!v)return null;
+   const L=c.all.filter(e=>e!==v);if(!L.length)return null;const t=L.find(e=>e.pers==='capullo')||L.find(e=>e.pers==='pasota')||lowHon(L);return {v,t};},
+  run:(c,{v,t})=>stScene('taper1',{...sEmp(v),head:'🥡 NEVERA DE LA SALA',tag:'🕵️ El ladrón de tápers',def:'pasa',
+   txt:'«Jefe, alguien se ha comido mis lentejas. Con chorizo. Con MI NOMBRE en la tapa. Esto es la guerra.»',
+   hint:'📝 Cartel en la nevera: se calma la cosa… de momento (sigue el misterio). 📹 Mirar la cámara de la sala: se sabe quién fue ya (y se lían). 🙄 «Son unas lentejas»: −5 a '+eN(v)+' y el ladrón se crece.',
+   ch:[['cart','📝 Cartel en la nevera','go'],['cam','📹 Mirar la cámara de la sala'],['pasa','🙄 Son unas lentejas','no']],
+   go:k=>{if(k==='cam'){relAdd(v,t,{af:-15,riv:10});sqEnd('taper');fact('taper',t,v,0,3);if(t.pers==='bromista'||t.pers==='pasota'){mor(t,-2);return 'La cámara pilla a '+t.name+' con la cuchara en la mano. «Es que olían muy bien».';}mor(t,-6);return 'Pillado: era '+t.name+'. '+v.name+' le retira el saludo.';}
+     sqSet('taper',{s:2,a:v.id,b:t.id});if(k==='pasa'){mor(v,-5);memo(v,'🥡','Le robaron las lentejas y al jefe le dio igual',-5,2);return v.name+' ha llorado un poco por sus lentejas. Por dentro.';}
+     return 'En la nevera, un cartel: «LAS LENTEJAS NO SE TOCAN». Firmado: la dirección.';}})},
+ {id:'taper2',cat:'chisme',ten:2,cd:3,w:3,when:c=>{const q=thr(c,'taper',2,2,c=>{const v=c.ws[0],t=c.all.find(e=>e!==v);return v&&t?{a:v.id,b:t.id}:null;});if(!q)return null;const A=sqA('taper',q,'a','b');return A?{v:A[0],t:A[1]}:null;},
+  run:(c,{v,t})=>stScene('taper2',{...spk(v),head:'🥡 NEVERA DE LA SALA · 2',tag:'🍮 Ahora el flan',def:'reu',
+   txt:'Ha vuelto a pasar: el flan de '+eN(v)+' ha desaparecido. Y la cuchara. Y el pósit que ponía «NI SE TE OCURRA».',
+   hint:'🌶️ Táper trampa con guindilla: se sabe quién es (y se ríe todo el mundo menos él). 🧊 Nevera nueva con candado y nombres · 25 €: +2 de ánimo a todos y se acabó el misterio sin culpables. 📢 «Lo hablamos en la reunión»: nadie confiesa; −2 a todos.',
+   ch:[['tram','🌶️ Táper trampa con guindilla','go'],['nev','🧊 Nevera con candado · 25 €'],['reu','📢 Lo hablamos en la reunión']],
+   go:k=>{sqEnd('taper');
+     if(k==='tram'){relAdd(v,t,{af:-10,riv:8});mor(t,-6);memo(t,'🌶️','Le pillaron con el táper trampa',-6,2);fact('taper',t,v,0,null);meta.emp.forEach(o=>{if(o.pers==='bromista')mor(o,5);});
+       return t.name+' sale de la sala de descanso llorando, rojo como un pimiento y bebiendo leche. Misterio resuelto.';}
+     if(k==='nev'){meta.money-=2500;meta.emp.forEach(o=>{if(!o.real)mor(o,2);});return 'Nevera nueva con candado. Las lentejas, por fin, a salvo.';}
+     meta.emp.forEach(o=>{if(!o.real)mor(o,-2);});fact('taper',pick(c.all),v,0,2,0);return 'En la reunión nadie confiesa. Ya hay tres sospechosos y ninguna prueba.';}})},
+ {id:'sueldos',cat:'chisme',ten:2,cd:10,when:c=>{for(const e of c.ws){const o=meta.emp.find(o=>o!==e&&o.role===e.role&&o.wage>e.wage*1.03);if(o)return {e,o};}return null;},
+  run:(c,{e,o})=>{const dm=Math.round((o.wage-e.wage)*365/PAGAS);return stScene('sueldos',{...sEmp(e),head:'💶 NÓMINAS',tag:'📄 Una nómina filtrada',def:'conf',
+   txt:'«Jefe, me ha llegado que '+eN(o)+' cobra '+fmt(dm)+' más al mes que yo. Por hacer lo mismo. ¿Me lo explicas?»',
+   hint:'💶 Igualarle el sueldo: +'+fmt(dm)+'/mes en bruto y +10 de ánimo. 🗣️ Explicar el porqué: si '+eN(o)+' rinde más, lo entiende (−2); si no, −8 y se siente engañad'+(isFem(e)?'a':'o')+'. 🤫 «Los sueldos son confidenciales»: −6 y empieza a mirar ofertas.',
+   ch:[['igual','💶 Igualarle el sueldo','go','IGUALADO'],['expl','🗣️ Explicarle por qué'],['conf','🤫 Los sueldos son confidenciales','no']],
+   go:k=>{if(!meta.emp.includes(e))return;if(k==='igual'){e.wage=Math.max(e.wage,o.wage);mor(e,10);ndAdd(e,'dinero',10);logE(e,'Le igualaste el sueldo con '+o.name);return e.name+' cobra ya lo mismo que '+o.name+'. Sonrisa de oreja a oreja.';}
+     if(k==='expl'){if(score(o)>score(e)+0.05){mor(e,-2);return e.name+' lo entiende: «Vale, '+o.name+' se lo curra». Más o menos.';}mor(e,-8);think(e,'😤','Cobra menos por lo mismo',-4,3,'sueldo');relAdd(e,o,{riv:12});return e.name+' no se cree la explicación. Ni un poco.';}
+     mor(e,-6);e.look=(e.look||0)+1;fact('aumento',o,null,ri(5,10),2,0);return 'Los sueldos son confidenciales. '+e.name+' abre InfoJobs en el descanso.';}});}},
+ /* ===== DRAMA ===== */
+ {id:'llanto',cat:'drama',ten:2,cd:9,when:c=>{if(!(c.F||rushOn()||run.queue.length>=3))return null;const x=c.all.find(e=>inStore(e)&&e.role==='atc'&&(partnerOf(e)||!singleE(e)));return x?{x,p:partnerOf(x)}:null;},
+  run:(c,{x,p})=>{const fr=relTop(x,1,1)[0];return stScene('llanto',{...sEmp(x),head:'💔 CAJA 2 · HORA PUNTA',tag:'😢 Le han dejado por WhatsApp',def:'sig',
+   txt:eN(x)+' está cobrando con los ojos llenos de lágrimas: '+(p?eN(p)+' acaba de dejarle':'su pareja acaba de dejarle')+' por WhatsApp. Con un audio de 4 minutos. En plena hora punta.',
+   hint:'🧾 Relevarle 10 minutos: se recompone (+calma) pero las Cajas 1 y 2 van más lentas un rato. 🫂 Que '+(fr?eN(fr.o):'un compi')+' le acompañe: más afinidad entre los dos y +6 de ánimo. 💪 «Respira y sigue, que hay cola»: −8 de ánimo y lo recordará.',
+   ch:[['rel','🧾 Relevarle 10 minutos','go'],['abr','🫂 Que le acompañe '+(fr?esc(fr.o.name):'un compi')],['sig','💪 Respira y sigue, que hay cola','no']],
+   go:k=>{if(!meta.emp.includes(x))return;if(p){const r=rel(x,p);if(r){r.par=0;r.rom=clamp(r.rom-40,0,100);}fact('ruptura',x,p);}
+     else{const B=x.bio;if(B)B.circ=sArr(B.circ).filter(q=>q.k!=='pareja');}
+     think(x,'💔','Le han dejado',-8,3,'rupt');
+     if(k==='rel'){const d=run.duty[x.id];if(d)d.slack='😢 Llorando en el almacén';ndAdd(x,'calma',30);memo(x,'🙏','El jefe le dejó desahogarse',6,2);mor(x,6);return 'Diez minutos en el almacén con una caja de pañuelos. '+x.name+' vuelve a la caja con gafas de sol.';}
+     if(k==='abr'&&fr){relAdd(x,fr.o,{af:12,conf:12});mor(x,6);ndAdd(x,'social',20);return fr.o.name+' abraza a '+x.name+' junto a los congelados. Las clientas aplauden.';}
+     if(k==='abr'){mor(x,4);return x.name+' se desahoga con una compi. La cola espera.';}
+     mor(x,-8);memo(x,'😶','Le hicieron seguir cobrando llorando',-8,3);ndAdd(x,'calma',-15);return x.name+' cobra llorando. Una clienta le deja un caramelo.';}});}},
+ {id:'boda1',cat:'drama',ten:1,cd:12,when:c=>{if(!sqFree('boda',30))return null;
+   const p=c.pairs((a,b,r)=>r.par&&r.af>=35&&(inStore(a)||inStore(b)))[0];if(p)return {a:p[0],b:p[1]};
+   const x=c.ws.find(e=>e.bio&&e.bio.asp==='boda'&&!singleE(e));if(x)return {a:x,b:null};return null;},
+  run:(c,{a,b})=>{const pn=b?eN(b):esc((sArr(a.bio&&a.bio.circ).find(q=>q.k==='pareja')||{}).n||'su pareja');
+   return stScene('boda1',{...sEmp(inStore(a)?a:b),head:'💍 ¡SE CASAN!',tag:'💒 Boda a la vista',def:'fel',
+   txt:'«Jefe… '+(b?'nos casamos':'me caso con '+pn)+'. Bueno, en unos días. Queríamos que lo supieras el primero (después de nuestras madres).»',
+   hint:'🎁 Colecta + 50 € de la empresa: +10 de ánimo '+(b?'a los dos':'')+' y +3 a toda la plantilla. 🥂 Felicitar: +6. 📅 «¿Y quién cubre ese día?»: −6 y queda fatal.',
+   ch:[['col','🎁 Colecta + 50 € de la empresa','go','🎁'],['fel','🥂 ¡Enhorabuena!'],['curro','📅 ¿Y quién cubre ese día?','no']],
+   go:k=>{const C=[a,b].filter(Boolean);sqSet('boda',{s:2,a:a.id,b:b?b.id:null,col:k==='col'?1:0});fact('boda',a,b,0,null);
+     if(k==='col'){meta.money-=5000;C.forEach(x=>mor(x,10));meta.emp.forEach(o=>{if(!o.real&&!C.includes(o))mor(o,3);});tellReals('💍 '+a.name+(b?' y '+b.name:'')+' se casan. La plantilla hace una colecta.');return 'Colecta para la boda de '+a.name+(b?' y '+b.name:'')+': el sobre pesa.';}
+     if(k==='fel'){C.forEach(x=>mor(x,6));return a.name+(b?' y '+b.name:'')+' anuncian boda. Aplausos en el muelle.';}
+     C.forEach(x=>{mor(x,-6);memo(x,'😒','Al jefe solo le importó quién cubría',-6,3);});return 'El jefe pregunta quién cubre el día de la boda. Silencio incómodo.';}});}},
+ {id:'boda2',cat:'drama',ten:2,cd:3,w:3,when:c=>{const q=thr(c,'boda',2,4,c=>{const a=c.ws[0];return a?{a:a.id,b:null}:null;});if(!q)return null;const a=empById(q.a);if(!a){sqEnd('boda');return null;}return {a,b:q.b!=null?empById(q.b):null,q};},
+  run:(c,{a,b,q})=>stScene('boda2',{...spk(a),head:'💒 EL DÍA DE LA BODA',tag:'🗓️ Mañana',def:'lib',
+   txt:'«Jefe, mañana es la boda. '+(b?'Los dos':'Yo')+' libramos, ¿verdad? Hay invitación para ti, por cierto. Habrá jamón.»',
+   hint:'💒 Que libren: '+(b?'los dos libran':'libra')+' mañana, +12 de ánimo y +3 al resto. 🕺 Que libren y vas a la boda · 80 € de regalo: lo mismo, +0,03 ★ (las fotos corren por el barrio) y +5 más. ✋ «No puedo dar el día»: −15 y mucho rencor.',
+   ch:[['lib','💒 Que libren','go'],['vas','🕺 Libran y voy a la boda · 80 €'],['no','✋ No puedo dar el día','no']],
+   go:k=>{sqEnd('boda');const C=[a,b].filter(x=>x&&meta.emp.includes(x));
+     if(k==='no'){C.forEach(x=>{mor(x,-15);think(x,'💢','No le dejaron librar el día de su boda',-6,4,'boda');x.look=(x.look||0)+1;});return 'Sin día libre para la boda. '+C.map(x=>x.name).join(' y ')+' no te lo van a perdonar.';}
+     C.forEach(x=>{x.off=meta.day+1;mor(x,k==='vas'?17:12);memo(x,'💒','Se casó y el jefe se portó',8,4);});meta.emp.forEach(o=>{if(!o.real&&!C.includes(o))mor(o,3);});
+     if(k==='vas'){meta.money-=8000;repAdd(+0.03,'Las fotos de la boda de la plantilla corren por el barrio');tellReals('💒 El jefe va a la boda de '+a.name+'. Hay jamón.');return 'El jefe en la boda de '+a.name+(b?' y '+b.name:'')+': baila «Paquito el Chocolatero» y sale en todas las fotos.';}
+     return 'Boda de '+a.name+(b?' y '+b.name:'')+'. Mañana hay '+C.length+' menos en tienda y mucho arroz en el suelo.';}})},
+ {id:'bebe1',cat:'drama',ten:1,cd:14,when:c=>{if(!sqFree('bebe',40))return null;const x=c.ws.find(e=>e.bio&&e.bio.age>=22&&e.bio.age<=42&&(!singleE(e)||partnerOf(e))&&kidsN(e)<3);return x?{x}:null;},
+  run:(c,{x})=>{const F=isFem(x);return stScene('bebe1',{...sEmp(x),head:'🍼 UNA NOTICIA',tag:'👶 '+(F?'Va a ser madre':'Va a ser padre'),def:'ok',
+   txt:'«Jefe, te lo cuento a ti antes que a la plantilla: '+(F?'estoy embarazada':'voy a ser padre')+'. Estoy muert'+(F?'a':'o')+' de miedo y feliz a la vez.»',
+   hint:'🎉 ¡Enhorabuena!: +10 de ánimo y la noticia corre (bien). '+(F?'🦺 Adaptar su puesto: nada de cargas pesadas ni palés (la ley obliga a evaluar el riesgo; de memoria, Ley de Prevención, art. 26); +6 y más calma. ':'🗓️ Hablar ya de su permiso: más calma y +6. ')+'👍 «Gracias por decírmelo»: +2. (Despedir por embarazo es nulo; ni se plantea.)',
+   ch:[['enh','🎉 ¡Enhorabuena!','go','🎉'],['adapt',F?'🦺 Adaptar su puesto':'🗓️ Hablar de su permiso'],['ok','👍 Gracias por decírmelo']],
+   go:k=>{if(!meta.emp.includes(x))return;sqSet('bebe',{s:2,a:x.id});
+     if(k==='enh'){mor(x,10);fact('bebe',x,null,0,null);meta.emp.forEach(o=>{if(!o.real&&o!==x)relAdd(o,x,{af:3});});return x.name+' va a ser '+(F?'madre':'padre')+'. Ya hay porra con el nombre.';}
+     if(k==='adapt'){mor(x,6);ndAdd(x,'calma',25);logE(x,F?'Le adaptaste el puesto por el embarazo':'Hablasteis de su permiso por nacimiento');return F?x.name+' ya no sube palés. Los demás se pelean por hacerlo por ella.':'El permiso de '+x.name+', hablado y apuntado.';}
+     mor(x,2);return x.name+' vuelve a su puesto con una sonrisa tonta.';}});}},
+ {id:'bebe2',cat:'drama',ten:1,cd:3,w:3,when:c=>{const q=thr(c,'bebe',2,6,c=>{const x=c.ws[0];return x?{a:x.id}:null;});if(!q)return null;const A=sqA('bebe',q,'a');return A?{x:A[0]}:null;},
+  run:(c,{x})=>stScene('bebe2',{...spk(x),head:'🍼 ÚLTIMO TURNO ANTES DEL PERMISO',tag:'👶 Permiso por nacimiento',def:'adios',
+   txt:'«Jefe, mañana empiezo el permiso por nacimiento. Os voy a echar de menos. Bueno, al escáner no.»',
+   hint:'Libra los 3 próximos turnos (en la vida real son semanas, pagadas por la Seguridad Social). 🎈 Merienda de despedida · 20 €: +8 a toda la plantilla. 📢 Publicar una vacante para cubrirle: llegan candidatos a RR.HH. 👋 «Vuelve pronto»: +3.',
+   ch:[['fiesta','🎈 Merienda de despedida · 20 €','go'],['vac','📢 Publicar vacante para cubrir'],['adios','👋 Vuelve pronto']],
+   go:k=>{sqEnd('bebe');if(!meta.emp.includes(x))return;x.offTo=meta.day+3;logE(x,'Empezó el permiso por nacimiento');
+     if(k==='fiesta'){meta.money-=2000;meta.emp.forEach(o=>{if(!o.real)mor(o,8);});tellReals('🎈 Merienda de despedida para '+x.name+', que empieza su permiso por nacimiento.');return 'Merienda en la sala: tarta, globos y '+x.name+' llorando de la risa.';}
+     if(k==='vac'){const m=setVac(x.role,1);mor(x,3);return m?m.replace(/^📢 /,''):'Vacante publicada para cubrir el permiso de '+x.name+'.';}
+     mor(x,3);return x.name+' se va de permiso. Le dejan una tarjeta firmada por todos.';}})},
+ {id:'duelo',cat:'drama',ten:2,cd:16,when:c=>{const x=c.ws.find(e=>sArr(e.bio&&e.bio.circ).some(q=>q.k==='abuela'||q.k==='madre'));if(x)return {x,q:sArr(x.bio.circ).find(q=>q.k==='abuela')||null};const y=c.ws[0];return y&&Math.random()<0.4?{x:y,q:null}:null;},
+  run:(c,{x,q})=>{const who=q?(q.k==='abuela'?'su abuela':'su madre'):'su tío del pueblo';
+   return stScene('duelo',{...sEmp(x),ser:1,head:'🕊️ UNA MALA NOTICIA',tag:'🕯️ Duelo',def:'perm',
+   txt:eN(x)+' acaba de recibir una llamada en el descanso: ha fallecido '+who+'. Está blanc'+(isFem(x)?'a':'o')+', con el chaleco aún puesto.',
+   hint:'🕊️ Que se vaya ya y libre mañana: es su derecho (permiso retribuido por fallecimiento de un familiar, Estatuto de los Trabajadores, art. 37.3; de memoria), +8 de ánimo y lo recordará. 💐 Lo mismo y una corona de la plantilla · 30 €: +12 y +2 al resto. ⏳ «Si puedes, acaba el turno»: −12 y la plantilla te mira raro.',
+   ch:[['perm','🕊️ Vete a casa y libra mañana','go'],['flor','💐 Y una corona de la plantilla · 30 €'],['sig','⏳ Si puedes, acaba el turno','no']],
+   go:k=>{if(!meta.emp.includes(x))return;if(q&&x.bio)x.bio.circ=sArr(x.bio.circ).filter(o=>o!==q);
+     think(x,'🕯️','Ha perdido a '+who,-6,3,'duelo');
+     if(k==='sig'){mor(x,-12);memo(x,'😶','Le hicieron acabar el turno el día que perdió a '+who,-12,5);meta.emp.forEach(o=>{if(!o.real&&o!==x&&inStore(o))mor(o,-2);});return x.name+' acaba el turno en silencio.';}
+     const d=run.duty[x.id];if(d){if(d.busy||(run.away&&run.away.cover===x.id))pullOff(x);d.st='off';d.soc=null;d.slack=null;}x.off=meta.day+1;mor(x,k==='flor'?12:8);memo(x,'🙏','El jefe le dejó ir con los suyos',6,4);
+     if(k==='flor'){meta.money-=3000;meta.emp.forEach(o=>{if(!o.real&&o!==x)mor(o,2);});tellReals('🕊️ '+x.name+' ha perdido a '+who+'. La plantilla manda una corona.');return 'La plantilla manda una corona: «Tus compañeros del VitchMarket». '+x.name+' se va a casa.';}
+     return x.name+' se va a casa con los suyos. Mañana tampoco viene.';}});}},
+ {id:'asc1',cat:'drama',ten:2,cd:12,when:c=>{if(!sqFree('asc',30)||c.day<5)return null;const p=c.pairs((a,b,r)=>a.role===b.role&&r.af>=25&&a.days>=3&&b.days>=3&&!a.enc&&!b.enc&&(inStore(a)||inStore(b)))[0];return p?{a:p[0],b:p[1]}:null;},
+  run:(c,{a,b})=>stScene('asc1',{...VIT,head:'⭐ ASCENSO EN '+ROLES[a.role].n.toUpperCase(),tag:'🤝 Dos amigos, un puesto',def:'nadie',
+   txt:'Hace falta alguien que mande en '+esc(ROLES[a.role].n)+'. Los dos candidatos son uña y carne: '+eN(a)+' ('+mood(a)+') y '+eN(b)+' ('+mood(b)+'). Comen juntos desde hace meses.',
+   hint:'⭐ Elegir a uno: +10 % de sueldo y +12 de ánimo para él/ella; el otro pierde ánimo y gana rivalidad (y quizá algo más). 🤷 «De momento, nadie»: −4 a los dos y siguen como estaban.',
+   ch:[['a','⭐ '+esc(a.name),'go','⭐'],['b','⭐ '+esc(b.name),'go','⭐'],['nadie','🤷 De momento, nadie']],
+   go:k=>{if(k==='nadie'){[a,b].forEach(x=>mor(x,-4));sqEnd('asc');return 'El puesto de encargad@ se queda vacío. '+a.name+' y '+b.name+' respiran. O no.';}
+     const W=k==='a'?a:b,L=W===a?b:a;if(!meta.emp.includes(W))return;W.enc=1;W.wage=Math.round(W.wage*1.1);mor(W,12);logE(W,'Ascendid'+(isFem(W)?'a':'o')+' a encargad'+(isFem(W)?'a':'o')+' de '+ROLES[W.role].n);
+     mor(L,L.bio&&L.bio.asp==='jefe'?-14:-8);relAdd(W,L,{riv:25,af:-15});think(L,'😒','Ascendieron a '+W.name+' y no a mí',-5,4,'asc');fact('ascenso',W,null,0,null);
+     sqSet('asc',{s:2,a:W.id,b:L.id});return W.name+' es '+gx('encargad{o|a}',isFem(W))+' de '+ROLES[W.role].n+'. '+L.name+' aplaude con dos dedos.';}})},
+ {id:'asc2',cat:'drama',ten:2,cd:3,w:3,when:c=>{const q=thr(c,'asc',2,3,c=>{const p=c.pairs((a,b)=>a.role===b.role)[0];return p?{a:p[0].id,b:p[1].id}:null;});if(!q)return null;const A=sqA('asc',q,'a','b');return A?{W:A[0],L:A[1],r:rel(A[0],A[1])}:null;},
+  run:(c,{W,L,r})=>{const ok=r.af>=10;return stScene('asc2',{...spk(ok?L:W),head:ok?'🍻 LAS PACES':'⚔️ «TÚ A MÍ NO ME MANDAS»',tag:'⭐ Después del ascenso',def:ok?'nada':'med',
+   txt:ok?'«Jefe, ya se me ha pasado lo del ascenso de '+eN(W)+'. Pero que invite a cañas, que encargad'+(isFem(W)?'a':'o')+' es.»':'«Jefe, '+eN(L)+' no hace ni caso de lo que le digo. Delante de los clientes. "Tú a mí no me mandas", dice.»',
+   hint:ok?'🍻 Cañas a cuenta de la empresa · 20 €: amigos otra vez (+afinidad, −rivalidad, +5 a los dos). 🙂 «Me alegro»: se arregla solo, más despacio.':'🤝 Mediar: 60 % lo arregláis (−rivalidad); si no, sigue la guerra. 👑 Respaldar a '+eN(W)+': '+eN(L)+' −10 y empieza a mirar ofertas. 🔁 Quitar el ascenso: '+eN(W)+' −15, '+eN(L)+' +6.',
+   ch:ok?[['canas','🍻 Cañas a cuenta de la empresa · 20 €','go'],['nada','🙂 Me alegro']]:[['med','🤝 Mediar','go'],['apoya','👑 Respaldar a '+esc(W.name)],['quita','🔁 Quitar el ascenso','no']],
+   go:k=>{sqEnd('asc');
+     if(k==='canas'){meta.money-=2000;relAdd(W,L,{af:20,riv:-20});[W,L].forEach(x=>mor(x,5));return W.name+' y '+L.name+' brindan en el bar de enfrente. Como antes.';}
+     if(k==='nada'){relAdd(W,L,{af:6,riv:-8});return L.name+' y '+W.name+' vuelven a comer juntos. Poco a poco.';}
+     if(k==='med'){const s=Math.random()<0.6;relAdd(W,L,s?{af:12,riv:-15}:{riv:10});return s?'Mediación en el despacho: '+W.name+' y '+L.name+' se dan la mano. Fuerte.':'La mediación acaba con '+L.name+' dando un portazo.';}
+     if(k==='apoya'){mor(L,-10);L.look=(L.look||0)+1;relAdd(W,L,{riv:10});return 'El jefe respalda a '+W.name+'. '+L.name+' obedece. Con cara de vinagre.';}
+     W.enc=0;W.wage=Math.round(W.wage/1.1);mor(W,-15);mor(L,6);think(W,'😞','Le quitaron el ascenso',-6,4,'asc');return W.name+' deja de ser '+gx('encargad{o|a}',isFem(W))+'. En el muelle no se habla de otra cosa.';}});}},
+ {id:'ex',cat:'drama',ten:1,cd:9,when:c=>{const x=c.ws.find(e=>e.role==='atc'&&singleE(e)&&!partnerOf(e));return x?{x}:null;},
+  run:(c,{x})=>stScene('ex',{...sEmp(x),head:'😬 COLA DE LA CAJA 2',tag:'💔 Su ex en la cola',def:'prof',
+   txt:'El ex de '+eN(x)+' acaba de ponerse en su cola. Con su nueva pareja. Y una barra de pan. Y una botella de cava. '+eN(x)+' te mira con ojos de «sácame de aquí».',
+   hint:'🔄 Cambiarle de caja: +4 de ánimo y más calma. 🧾 «Le cobro yo»: +6 y te lo agradece en el alma. 💼 «Profesionalidad»: −6 y nervios… aunque a veces sale con la cabeza alta.',
+   ch:[['cam','🔄 Cambiarle de caja','go'],['yo','🧾 Le cobro yo'],['prof','💼 Profesionalidad, que es un cliente','no']],
+   go:k=>{if(!meta.emp.includes(x))return;if(k==='cam'){mor(x,4);ndAdd(x,'calma',15);return x.name+' se va a reponer yogures justo a tiempo. El ex paga en otra caja.';}
+     if(k==='yo'){mor(x,6);memo(x,'🙏','El jefe le cobró al ex',6,2);return 'El jefe cobra al ex de '+x.name+'. «¿Bolsa?» Con una mirada que congela el cava.';}
+     if(Math.random()<0.35){ndAdd(x,'estima',15);mor(x,3);return x.name+' le cobra al ex con una sonrisa de anuncio. «¿Quiere el ticket? ¿No? Mejor». Leyenda.';}
+     mor(x,-6);ndAdd(x,'calma',-20);return x.name+' cobra al ex temblando. Se le cae el cava. Pasillo 3, derrame.';}})},
+ /* ===== SUSPENSE ===== */
+ {id:'desc1',cat:'suspense',ten:1,cd:10,when:c=>{if(!sqFree('desc',25)||c.day<3)return null;const at=c.all.filter(e=>e.role==='atc');const r=Math.random();
+   const cul=at.length&&r<0.45?wpick(at.map(e=>({e,w:Math.pow(1-(e.hon==null?0.6:e.hon),2)+0.02}))).e:null;return {cul,why:cul?'emp':r<0.75?'cajon':'timo'};},
+  run:(c,{cul,why})=>{const bk=staffOf('back').find(e=>inStore(e)&&!e.real);meta.money-=500;
+   return stScene('desc1',{...(bk?sEmp(bk):VIT),look:'letter',head:'🧮 CAJA 2 · ARQUEO',tag:'❓ Faltan 5 €',def:'nada',
+   txt:'«La Caja 2 descuadra: faltan 5 €. Será un error de cambio. Seguro. Bueno, casi seguro.»',
+   hint:'👁️ Vigilar la Caja 2: si vuelve a pasar, hay más papeletas de saber por qué. 🧮 Arqueo extra cada turno: lo mismo, más despacio. 🤷 «5 €, ni me inmuto»: si es algo, crecerá.',
+   ch:[['vig','👁️ Vigilar la Caja 2','go'],['arq','🧮 Arqueo extra cada turno'],['nada','🤷 5 €, ni me inmuto']],
+   go:k=>{sqSet('desc',{s:2,cul:cul?cul.id:null,why,vig:k==='vig'?1:0,arq:k==='arq'?1:0,v:500});return 'La Caja 2 descuadra 5 €. '+(k==='nada'?'Nadie le da importancia.':'Backoffice toma nota.');}});}},
+ {id:'desc2',cat:'suspense',ten:2,cd:2,w:3,when:c=>{const q=thr(c,'desc',2,2,()=>({cul:null,why:'cajon',v:500}));return q?{q}:null;},
+  run:(c,{q})=>{meta.money-=1500;q.v+=1500;return stScene('desc2',{...VIT,look:'letter',head:'🧮 CAJA 2 · OTRA VEZ',tag:'❓ Faltan 15 €',def:'nada',
+   txt:'La Caja 2 vuelve a descuadrar. Hoy faltan 15 €. Ya van '+fmt(q.v)+'. En Backoffice ya la llaman «el Triángulo de las Bermudas».',
+   hint:'📹 Girar la cámara 4 hacia las cajas: casi seguro que se ve la próxima vez. 🔀 Rotar a los cajeros: si es alguien, se le corta el chollo (o no). 🗣️ Preguntar a los de Caja: −3 de ánimo a todos y quien sea se esconde mejor.',
+   ch:[['cam','📹 Girar la cámara 4 a las cajas','go'],['rot','🔀 Rotar a los cajeros'],['preg','🗣️ Preguntar a los de Caja'],['nada','🤷 Esperar a ver']],
+   go:k=>{sqSet('desc',{s:3,cam:k==='cam'?1:q.cam||0,rot:k==='rot'?1:0});
+     if(k==='preg'){meta.emp.forEach(o=>{if(!o.real&&o.role==='atc')mor(o,-3);});if(q.cul){const x=empById(q.cul);if(x){think(x,'😰','Teme que le pillen',-3,2,'desc');}}return 'Interrogatorio en la sala de descanso. Todos inocentes. Al menos de boquilla.';}
+     return k==='cam'?'La cámara 4 ya no mira a los yogures: mira a la Caja 2.':k==='rot'?'Rotación de cajeros: nadie repite caja dos turnos.':'La Caja 2, a su aire.';}});}},
+ {id:'desc3',cat:'suspense',ten:3,cd:2,w:3,when:c=>{const q=thr(c,'desc',3,2,()=>({cul:null,why:'cajon',v:2000,cam:1}));return q?{q,cul:q.cul!=null?empById(q.cul):null}:null;},
+  run:(c,{q,cul})=>{const why=q.cul!=null&&!cul?'cajon':q.why;const p=0.35+(q.cam?0.4:0)+(q.vig?0.25:0)+(q.arq?0.15:0)-(q.rot&&why==='emp'?0.2:0);
+   const seen=c.F||Math.random()<p;meta.money-=4000;q.v+=4000;
+   if(!seen){sqEnd('desc');fact('hurto',pick(c.all.filter(e=>e.role==='atc'))||pick(c.all),null,q.v,2,0);
+     return stScene('desc3',{...VIT,look:'letter',head:'🧮 CAJA 2 · 40 €',tag:'❓ Sin respuesta',def:'ok',txt:'Hoy faltan 40 € y la cámara no enseña nada claro. En total, '+fmt(q.v)+'. Luego, de repente, deja de pasar. Nunca se supo.',
+      hint:'🤷 Ya no se puede hacer nada: queda un bulo corriendo por la plantilla.',ch:[['ok','🤷 Asumirlo','no','ASUMIDO']],go:()=>'El misterio de la Caja 2 queda sin resolver. Hay quien tiene un nombre en la cabeza.'});}
+   const cajon=why==='cajon',timo=why==='timo';
+   return stScene('desc3',{...(cul&&inStore(cul)?sEmp(cul):VIT),ser:1,look:'letter',head:'📹 CAJA 2 · LA GRABACIÓN',tag:cul?'🕵️ '+esc(cul.name):cajon?'🔧 El cajón':'🎭 Un timador',def:cul?'toq':'ok',
+    txt:cul?'La cámara 4 pilla a '+eN(cul)+' guardándose billetes en el calcetín al cerrar la Caja 2. En total, '+fmt(q.v)+'.':cajon?'La grabación lo aclara: el cajón de la Caja 2 tiene el muelle roto y se come las monedas de 2 €, que caen dentro del mueble. Están todas ahí: '+fmt(q.v)+'.':
+      'La grabación lo aclara: un cliente con gorra hace el timo del cambio (paga con 20, pide cambio, lo lía y se lleva de más). Viene siempre a la misma hora.',
+    hint:cul?'🔥 Despedir por hurto (disciplinario, con el cálculo legal de siempre). ⚠️ Toque por escrito y que lo devuelva: recuperas '+fmt(q.v)+'. 🤝 «Devuélvelo y aquí no ha pasado nada»: recuperas el dinero; +confianza o se crece.':
+      cajon?'🔧 Arreglar el cajón · 40 €: recuperas '+fmt(q.v)+' y la Caja 2 deja de descuadrar. 😂 Contarlo en el grupo: risas y +3 de ánimo a los de Caja (y a los que sospechaban, vergüenza).':'📋 Cartel y formación para los de Caja: +estima y no vuelve a pasar. 👮 Denunciar con la grabación: +0,03 ★ (el barrio lo agradece).',
+    ch:cul?[['fire','🔥 Despedir por hurto','no','DESPIDO'],['toq','⚠️ Toque y que lo devuelva','go'],['perd','🤝 Devuélvelo y aquí no ha pasado nada']]:cajon?[['ok','🔧 Arreglar el cajón · 40 €','go'],['risa','😂 Contarlo en el grupo']]:[['ok','📋 Cartel y formación','go'],['poli','👮 Denunciar con la grabación']],
+    go:k=>{sqEnd('desc');
+      if(cul){if(!meta.emp.includes(cul))return;meta.money+=q.v;cul.st.robo=(cul.st.robo||0)+1;logE(cul,'Pillad'+(isFem(cul)?'a':'o')+' con '+fmt(q.v)+' de la Caja 2');fact('hurto',cul,null,q.v,null);
+        if(k==='fire'){fireNow(cul,'robo');return cul.name+' sale por la puerta con la carta de despido. El calcetín, vacío.';}
+        if(k==='toq'){cul.warn=(cul.warn||0)+1;mor(cul,-10);cul.focus=3;return cul.name+' devuelve '+fmt(q.v)+' y se lleva un toque por escrito.';}
+        if(Math.random()<0.5){cul.hon=clamp((cul.hon==null?0.6:cul.hon)+0.15,0,1);mor(cul,4);return cul.name+' devuelve el dinero llorando: «No volverá a pasar». Parece que va en serio.';}
+        return cul.name+' devuelve el dinero. Y sonríe. Mala señal.';}
+      if(cajon){meta.money+=q.v;if(k==='ok'){meta.money-=4000;return 'Cajón arreglado: aparecen '+fmt(q.v)+' en monedas de 2 € dentro del mueble. Misterio resuelto.';}meta.emp.forEach(o=>{if(!o.real&&o.role==='atc')mor(o,3);});return 'El cajón tragaperras de la Caja 2 se hace famoso en el grupo. Las monedas, recuperadas.';}
+      if(k==='poli'){repAdd(+0.03,'Denunciaste al timador del cambio');return 'Denuncia con la grabación: al de la gorra le esperan en comisaría.';}
+      meta.emp.forEach(o=>{if(!o.real&&o.role==='atc')ndAdd(o,'estima',10);});return 'Cartel en las cajas: «El cambio se cuenta delante del cliente». El timador no vuelve.';}});}},
+ {id:'notas1',cat:'suspense',ten:1,cd:10,when:c=>{if(!sqFree('notas',25))return null;const x=c.ws[0];if(!x)return null;const L=c.all.filter(e=>e!==x);if(!L.length)return null;
+   const adm=L.find(e=>canRom(e,x)&&rel(e,x).rom>=15),riv=L.find(e=>rel(e,x).riv>=30),bro=L.find(e=>e.pers==='bromista');
+   const au=adm||riv||bro||pick(L);return {x,au,ty:au===adm?'adm':au===riv?'riv':'bro'};},
+  run:(c,{x,au,ty})=>{const n1={adm:'«Me gusta cómo colocas los yogures. Con cariño.»',riv:'«Te estoy vigilando.»',bro:'«El pasillo 5 sabe lo que hiciste.»'}[ty];
+   return stScene('notas1',{...sEmp(x),head:'📌 TAQUILLA DE '+esc(x.name).toUpperCase(),tag:'✉️ Nota sin firma',def:'tran',
+   txt:'«Jefe, alguien me ha dejado esto en la taquilla: '+n1+' Sin firma. Con un pósit amarillo.»',
+   hint:'🔍 Investigar la letra: tendrás más pistas en la siguiente. 😌 Tranquilizarle: +15 de calma. 📌 Cartel: «Las taquillas son privadas»: a veces se acaba aquí.',
+   ch:[['inv','🔍 Investigar la letra','go'],['tran','😌 Tranquilizarle'],['cart','📌 Cartel: las taquillas son privadas']],
+   go:k=>{if(k==='tran')ndAdd(x,'calma',15);if(k==='cart'&&Math.random()<0.4){sqEnd('notas');return 'Cartel en el vestuario. Las notas dejan de aparecer.';}
+     sqSet('notas',{s:2,a:x.id,b:au.id,ty,inv:k==='inv'?1:0});ndAdd(x,'calma',ty==='riv'?-15:0);return x.name+' guarda la nota en la cartera. '+(k==='inv'?'El jefe compara letras con las hojas de fichaje.':'');}});}},
+ {id:'notas2',cat:'suspense',ten:2,cd:2,w:3,when:c=>{const q=thr(c,'notas',2,2,c=>{const x=c.ws[0],y=c.all.find(e=>e!==x);return x&&y?{a:x.id,b:y.id,ty:'bro'}:null;});if(!q)return null;const A=sqA('notas',q,'a','b');return A?{x:A[0],q}:null;},
+  run:(c,{x,q})=>{const n2={adm:'«¿Un café después del turno? Si dices que sí, ponte el chaleco al revés.»',riv:'«Sé lo que hiciste con el palé de cerveza.»',bro:'«Las latas de atún hablan. Y hablan de ti.»'}[q.ty];
+   return stScene('notas2',{...spk(x),head:'📌 SEGUNDA NOTA',tag:'✉️ Otra vez',def:'esp',
+   txt:'Otra nota en la taquilla de '+eN(x)+': '+n2+(q.inv?' La letra se parece a la de alguien de la plantilla.':''),
+   hint:'🖊️ Comparar con las hojas de fichaje: se sabe quién es en la próxima'+(q.inv?' (con lo que ya investigaste, seguro)':'')+'. 📹 Poner una cámara en el vestuario: ¡no! grabar en vestuarios está prohibido (Ley de Protección de Datos, art. 89; de memoria); te lo para la gestoría. ⏳ Esperar.',
+   ch:[['letra','🖊️ Comparar con el fichaje','go'],['cam','📹 Cámara en el vestuario','no'],['esp','⏳ Esperar a ver']],
+   go:k=>{if(k==='cam'){meta.money-=6000;mor(x,-3);sqSet('notas',{s:3,inv:q.inv||0});return 'La gestoría frena la cámara del vestuario a tiempo: «¿Estás loco? Eso es ilegal». 60 € de consulta.';}
+     sqSet('notas',{s:3,inv:(q.inv||0)+(k==='letra'?1:0)});return k==='letra'?'El jefe pasa la tarde comparando letras. Tiene una sospecha.':'Las notas siguen. '+x.name+' abre la taquilla con guantes.';}});}},
+ {id:'notas3',cat:'suspense',ten:2,cd:2,w:3,when:c=>{const q=thr(c,'notas',3,1,c=>{const x=c.ws[0],y=c.all.find(e=>e!==x);return x&&y?{a:x.id,b:y.id,ty:'bro'}:null;});if(!q)return null;const A=sqA('notas',q,'a','b');return A?{x:A[0],y:A[1],q}:null;},
+  run:(c,{x,y,q})=>{const t={adm:'Era '+eN(y)+'. Se pone rojo como un tomate cuando le preguntas. «Es que no me atrevía a decírselo a la cara».',riv:'Era '+eN(y)+'. No lo niega: «Que se entere de que hay alguien mirando».',bro:'Era '+eN(y)+', «para animar el ambiente». Tiene otras doce notas preparadas.'}[q.ty];
+   const ch=q.ty==='adm'?[['cafe','☕ Que se tomen ese café','go'],['prof','💼 Aquí, notas de trabajo y punto']]:q.ty==='riv'?[['toq','⚠️ Toque por escrito a '+esc(y.name),'no','TOQUE'],['med','🤝 Mediación entre los dos','go']]:[['risa','😂 Reírse y pedirle que pare','go'],['toq','⚠️ Toque por escrito','no']];
+   return stScene('notas3',{...spk(y),head:'📌 EL AUTOR DE LAS NOTAS',tag:'🖊️ Misterio resuelto',def:ch[0][0],txt:t,
+   hint:q.ty==='adm'?'☕ El café: si '+eN(x)+' quiere, puede salir algo (+romance); si no, quedan como amigos. 💼 Cortarlo: −6 a '+eN(y)+'.':q.ty==='riv'?'⚠️ Toque: cuenta para un despido; '+eN(x)+' se queda más tranquil'+(isFem(x)?'a':'o')+'. 🤝 Mediación: −rivalidad si sale bien (60 %).':'😂 Reírse: +3 a los bromistas; '+(x.pers==='timido'?eN(x)+' no le ve la gracia (−4). ':'')+'⚠️ Toque: −8 a '+eN(y)+'.',
+   ch,go:k=>{sqEnd('notas');if(!meta.emp.includes(x)||!meta.emp.includes(y))return;
+     if(k==='cafe'){const r=relAdd(x,y,{rom:canRom(x,y)?15:0,af:10});if(r.rom>=55&&singleE(x)&&singleE(y)&&!partnerOf(x)&&!partnerOf(y)&&canRom(x,y)){r.par=1;fact('romance',x,y);return 'El café se alarga dos horas. '+x.name+' y '+y.name+' salen juntos. Lo del chaleco al revés queda para la historia.';}return x.name+' y '+y.name+' se toman el café. Amigos. De momento.';}
+     if(k==='prof'){mor(y,-6);relAdd(x,y,{rom:-15});return y.name+' deja de escribir notas. Y de sonreír un rato.';}
+     if(k==='toq'){y.warn=(y.warn||0)+1;mor(y,-8);ndAdd(x,'calma',20);logE(y,'Toque por las notas en la taquilla de '+x.name);return y.name+' se lleva un toque por las notas. Se acabaron los pósits.';}
+     if(k==='med'){const s=Math.random()<0.6;relAdd(x,y,s?{riv:-20,af:10}:{riv:10});return s?'Mediación: '+x.name+' y '+y.name+' firman la paz con un pósit.':'La mediación no funciona. Ahora se miran mal en vez de escribirse.';}
+     meta.emp.forEach(o=>{if(o.pers==='bromista')mor(o,3);});if(x.pers==='timido')mor(x,-4);return 'Las notas eran de '+y.name+'. El muelle se parte de risa. '+x.name+', menos.';}});}},
+ {id:'miron1',cat:'suspense',ten:1,cd:10,when:c=>{if(!sqFree('miron',25))return null;const x=c.ws.find(e=>e.role==='atc')||c.ws[0];if(!x)return null;
+   const pal=sqG('fant');return {x,tr:pal&&Math.random()<0.5?'paco':wpick([{k:'comp',w:meta.riv?3:1},{k:'myst',w:1.5},{k:'paco',w:1},{k:'raro',w:1}]).k};},
+  run:(c,{x,tr})=>stScene('miron1',{...sEmp(x),head:'🧥 EL DE LA GABARDINA',tag:'👀 Un cliente que mira demasiado',def:'nada',
+   txt:'«Jefe, hay un señor con gabardina que lleva tres días viniendo. Compra un chicle y se pasa veinte minutos mirando las estanterías. Apunta cosas en una libreta.»',
+   hint:'🗣️ Hablarle: a veces se descubre ya. 👮 Seguridad · 40 €: le vigilan cuando vuelva (más calma a la plantilla). 🤷 «Es un cliente»: sigue viniendo.',
+   ch:[['hab','🗣️ Hablarle','go'],['seg','👮 Que le vigile seguridad · 40 €'],['nada','🤷 Es un cliente']],
+   go:k=>{if(k==='seg'){meta.money-=4000;meta.emp.forEach(o=>ndAdd(o,'calma',5));}sqSet('miron',{s:2,a:x.id,tr,seg:k==='seg'?1:0,hab:k==='hab'?1:0});
+     return k==='hab'?'El de la gabardina sonríe mucho y dice muy poco. «Solo miro».':k==='seg'?'Seguridad tiene una foto del de la gabardina en el mostrador.':'El de la gabardina se lleva su chicle. Mañana, más.';}})},
+ {id:'miron2',cat:'suspense',ten:2,cd:2,w:3,when:c=>{const q=thr(c,'miron',2,2,c=>{const x=c.ws[0];return x?{a:x.id,tr:'myst'}:null;});if(!q)return null;const A=sqA('miron',q,'a');return A?{x:A[0],q}:null;},
+  run:(c,{x,q})=>{const t={comp:'Hoy ha hecho fotos al lineal de aceite. Y a los precios. Con flash.',myst:'Hoy ha cronometrado cuánto tarda la cola. Y ha preguntado por el baño solo para ver cómo le contestan.',paco:'Hoy ha recolocado tres latas mal puestas sin que nadie se lo pida. Y se ha ido silbando.',raro:'Hoy se ha quedado mirando a '+eN(x)+' un buen rato desde el pasillo 4. Sin comprar nada.'}[q.tr];
+   return stScene('miron2',{...spk(x),head:'🧥 LA GABARDINA, OTRA VEZ',tag:'👀 Tercer día',def:'esp',txt:'El de la gabardina ha vuelto. '+t,
+   hint:'🚪 Hablarle claro: se descubre quién es (y qué quiere). ⏳ Esperar: vuelve otro día. '+(q.tr==='raro'?'🚶 Que nadie cierre sol'+(isFem(x)?'a':'o')+': +calma a '+eN(x)+'.':'📸 Hacerle tú una foto a él: «¿Le gusta que le hagan fotos?».'),
+   ch:[['hab','🚪 Hablarle claro','go'],['esp','⏳ Esperar'],['ext',q.tr==='raro'?'🚶 Que nadie cierre solo':'📸 Hacerle una foto a él']],
+   go:k=>{if(k==='ext'&&q.tr==='raro')ndAdd(x,'calma',20);sqSet('miron',{s:3,hab:k==='hab'?1:q.hab||0});return k==='hab'?'Le paras en la puerta. «Ya hablaremos», dice. Y se va.':'El de la gabardina se va. Volverá.';}});}},
+ {id:'miron3',cat:'suspense',ten:2,cd:2,w:3,when:c=>{const q=thr(c,'miron',3,1,c=>{const x=c.ws[0];return x?{a:x.id,tr:pick(['comp','myst','paco','raro'])}:null;});if(!q)return null;const x=empById(q.a)||c.ws[0];return {x,q};},
+  run:(c,{x,q})=>{const T={
+   comp:['Es un empleado del súper de enfrente tomando precios. Lo confiesa con la libreta en la mano: «Me mandan a mí, yo solo apunto».','🚪 «Aquí se viene a comprar»: se va y no vuelve. ☕ Invitarle a un café y sonsacarle: te cuenta sus ofertas de la semana (+4 de ánimo a la plantilla, que se ríe un buen rato).',[['echa','🚪 Aquí se viene a comprar','no'],['cafe','☕ Café y que cante','go']]],
+   myst:['Es un «cliente misterioso» de una consultora de calidad del barrio. Hoy publica su informe sobre los súper de la zona.','😁 Esperar el informe: si la reputación va bien (★ 4 o más), +0,1 ★; si no, −0,05 ★. 🎁 Regalarle una bolsa de productos: mal: «Eso no se hace» (−0,05 ★).',[['inf','😁 Esperar el informe','go'],['reg','🎁 Regalarle una bolsa','no']]],
+   paco:['Es Paco. Reponedor de este súper de 1979 a 2012. Viene porque echa de menos el olor a cartón. «Lo de las latas mal puestas no lo soporto, chaval».','🎖️ Nombrarle reponedor honorario: +5 de ánimo a la plantilla y café gratis para Paco. ☕ Un café y que cuente batallitas: +3.',[['hon','🎖️ Reponedor honorario','go'],['cafe','☕ Café y batallitas']]],
+   raro:['Es un pesado que está agobiando a '+eN(x)+': le espera fuera, le pregunta a qué hora sale. Ella/él ya no sabe qué hacer.','👮 Prohibirle la entrada y denunciarlo: +30 de calma a '+eN(x)+', +0,02 ★ (el barrio lo agradece). 🗣️ Hablar con él: 50 % se corta; si no, vuelve.',[['seg','👮 Prohibir la entrada y denunciar','go'],['hab','🗣️ Hablar con él']]]}[q.tr];
+   const txt=q.tr==='raro'?T[0].replace('Ella/él',isFem(x)?'Ella':'Él'):T[0];
+   return stScene('miron3',{...(q.tr==='paco'?{who:'👴',name:'Paco · reponedor jubilado'}:{who:'🧥',name:'El de la gabardina'}),ser:q.tr==='raro'?1:0,head:'🧥 QUIÉN ES',tag:'🔍 Se descubre',def:T[2][0][0],txt,hint:T[1],
+    ch:T[2],go:k=>{sqEnd('miron');
+     if(q.tr==='comp'){if(k==='cafe'){meta.emp.forEach(o=>{if(!o.real&&inStore(o))mor(o,4);});return 'El espía del súper de enfrente canta sus ofertas por un café con leche. La plantilla, encantada.';}return 'El de la gabardina era de la competencia. No vuelve.';}
+     if(q.tr==='myst'){if(k==='reg'){repAdd(-0.05,'Intentaste comprar al cliente misterioso');return 'El cliente misterioso rechaza la bolsa y lo pone en el informe.';}if(meta.rep>=4){repAdd(+0.1,'Buen informe del cliente misterioso');return 'Informe del cliente misterioso: VitchMarket, el mejor súper del barrio.';}repAdd(-0.05,'Informe regular del cliente misterioso');return 'Informe del cliente misterioso: «colas largas y caras largas».';}
+     if(q.tr==='paco'){meta.paco=1;const n=k==='hon'?5:3;meta.emp.forEach(o=>{if(!o.real)mor(o,n);});return k==='hon'?'Paco, reponedor honorario del VitchMarket. Tiene su taza en la sala.':'Paco cuenta cómo era el súper en 1985. Sin códigos de barras. «Se cobraba de memoria, chaval».';}
+     if(k==='seg'){if(meta.emp.includes(x))ndAdd(x,'calma',30);repAdd(+0.02,'Protegiste a tu plantilla de un acosador');return 'El pesado tiene prohibida la entrada. '+x.name+' respira.';}
+     if(Math.random()<0.5)return 'El pesado se corta. De momento.';if(meta.emp.includes(x)){ndAdd(x,'calma',-15);mor(x,-4);}return 'El pesado vuelve al día siguiente. '+x.name+' sale por la puerta de atrás.';}});}},
+ {id:'msgs1',cat:'suspense',ten:1,cd:10,when:c=>{if(!sqFree('msgs',25))return null;const x=c.ws[0];if(!x)return null;const y=c.all.find(e=>e!==x&&e.pers==='chismoso'&&inStore(e));return {x,y,why:y&&Math.random()<0.55?'chis':'web'};},
+  run:(c,{x,y,why})=>stScene('msgs1',{...sEmp(x),head:'📱 «ALGUIEN LEE MIS MENSAJES»',tag:'👀 Mensajes',def:'para',
+   txt:'«Jefe, alguien lee mis mensajes. Sabe cosas que solo he hablado por WhatsApp. Lo de mi casero. Lo de '+(sArr(x.bio&&x.bio.circ)[0]?esc(sArr(x.bio.circ)[0].n||'mi familia'):'mi familia')+'. TODO.»',
+   hint:'💻 Revisar el ordenador de Backoffice: si la causa está ahí, se acaba ya. 🕵️ Preguntar quién sabe qué: la próxima vez se sabe. 🙄 «Paranoias»: −6 y más nervios.',
+   ch:[['it','💻 Revisar el ordenador','go'],['dig','🕵️ Preguntar quién sabe qué'],['para','🙄 Paranoias tuyas','no']],
+   go:k=>{if(k==='it'&&why==='web'){sqEnd('msgs');mor(x,3);ndAdd(x,'calma',25);meta.emp.forEach(o=>{if(o.pers==='chismoso')mor(o,-3);});return 'Misterio resuelto: '+x.name+' tenía el WhatsApp Web abierto en el ordenador de Backoffice desde marzo. Lo leía todo el que pasaba.';}
+     if(k==='para'){mor(x,-6);ndAdd(x,'calma',-15);}sqSet('msgs',{s:2,a:x.id,b:y?y.id:null,why,dig:k==='dig'?1:0});return x.name+' cambia la contraseña del móvil. Tres veces.';}})},
+ {id:'msgs2',cat:'suspense',ten:2,cd:2,w:3,when:c=>{const q=thr(c,'msgs',2,2,c=>{const x=c.ws[0],y=c.all.find(e=>e!==x);return x?{a:x.id,b:y?y.id:null,why:y?'chis':'web'}:null;});if(!q)return null;const x=empById(q.a),y=q.b!=null?empById(q.b):null;if(!x){sqEnd('msgs');return null;}return {x,y:q.why==='chis'?y:null,q};},
+  run:(c,{x,y,q})=>stScene('msgs2',{...spk(x),head:'📱 YA SE SABE',tag:'🔍 Mensajes',def:y?'charla':'ok',
+   txt:y?eN(y)+' leía los mensajes de '+eN(x)+' por encima del hombro en el descanso. Y luego lo contaba en el muelle, «adornado».':'Era el WhatsApp Web abierto en el ordenador del almacén. Lo leía cualquiera que fuera a imprimir un albarán.',
+   hint:y?'⚠️ Toque por escrito a '+eN(y)+': −8 y le dura la manía. 🗣️ Sentaros los tres: 60 % se arregla (+afinidad).':'🔐 Cerrar sesión y cambiar contraseñas: +calma a todos. Fin.',
+   ch:y?[['toq','⚠️ Toque por escrito','no','TOQUE'],['charla','🗣️ Sentaros los tres','go']]:[['ok','🔐 Cerrar sesión y cambiar claves','go']],
+   go:k=>{sqEnd('msgs');if(!y){meta.emp.forEach(o=>ndAdd(o,'calma',8));if(meta.emp.includes(x))mor(x,4);return 'Sesiones cerradas en todos los ordenadores. '+x.name+' vuelve a escribir tranquil'+(isFem(x)?'a':'o')+'.';}
+     if(!meta.emp.includes(y))return;if(k==='toq'){y.warn=(y.warn||0)+1;mor(y,-8);relAdd(x,y,{af:-10,riv:10});ndAdd(x,'calma',20);logE(y,'Toque por leer los mensajes de '+x.name);fact('mentira',y,null,0,2);return y.name+' se lleva un toque por fisgón.';}
+     const s=Math.random()<0.6;relAdd(x,y,s?{af:10,conf:5,riv:-5}:{riv:12});return s?y.name+' pide perdón a '+x.name+'. «Es que me aburría».':'La charla acaba mal: '+x.name+' ya no deja el móvil ni para ir al baño.';}})},
+ /* ===== CONSPIRACIÓN ===== */
+ {id:'frente1',cat:'conspira',ten:1,cd:12,when:c=>{if(!sqFree('frente',30)||c.day<6||meta.sind===1)return null;const L=c.all.filter(e=>e.moral<55||(e.nd&&e.nd.dinero<40));if(L.length<2)return null;
+   const p=c.pairs((a,b,r)=>L.includes(a)&&L.includes(b)&&r.af>=10)[0];if(!p)return null;const t=c.ws.find(e=>e!==p[0]&&e!==p[1]&&(e.pers==='servicial'||e.pers==='timido'))||c.ws.find(e=>e!==p[0]&&e!==p[1]);return t?{a:p[0],b:p[1],t}:null;},
+  run:(c,{a,b,t})=>stScene('frente1',{...sEmp(t),head:'✊ EL VESTUARIO',tag:'📝 Una hoja con firmas',def:'deja',
+   txt:'«Jefe, que no te he dicho nada yo, ¿eh? Pero '+eN(a)+' y '+eN(b)+' están pasando una hoja por el vestuario. Para afiliarse a un sindicato. Y que se elija delegado.»',
+   hint:'🤝 Hablar con '+eN(a)+' y '+eN(b)+' ya: te cuentan qué les pasa; +5 a los dos y la cosa se calma. 🤷 Dejarles: es su derecho; la hoja sigue sumando firmas. 👀 Que '+eN(t)+' te cuente quién firma: '+eN(t)+' queda de chivat'+(isFem(t)?'a':'o')+' si se sabe (40 %), y tomar represalias sería ilegal.',
+   ch:[['hab','🤝 Hablar con ellos ya','go'],['deja','🤷 Es su derecho'],['mira','👀 Cuéntame quién firma','no']],
+   go:k=>{if(k==='hab'){[a,b].forEach(x=>mor(x,5));sqEnd('frente');meta.tension=clamp((meta.tension||0)-10,0,100);return a.name+' y '+b.name+' te cuentan lo de los turnos y los domingos. Se quedan más tranquilos.';}
+     if(k==='mira'&&Math.random()<0.4){meta.emp.forEach(o=>{if(!o.real&&o!==t)relAdd(o,t,{af:-10,conf:-8});});think(t,'🐀','Le llaman chivat'+(isFem(t)?'a':'o'),-5,3,'chiv');}
+     sqSet('frente',{s:2,a:a.id,b:b.id,n:2});fact('sindi',a,b,0,null);return 'La hoja de firmas sigue circulando por el vestuario. Ya hay dos nombres.';}})},
+ {id:'frente2',cat:'conspira',ten:2,cd:2,w:3,when:c=>{const q=thr(c,'frente',2,2,c=>{const p=c.all.slice(0,2);return p.length===2?{a:p[0].id,b:p[1].id,n:2}:null;});if(!q)return null;const A=sqA('frente',q,'a','b');if(!A)return null;
+   const n=Math.max(q.n||2,2+c.all.filter(e=>!A.includes(e)&&(e.moral<55||(e.nd&&e.nd.dinero<40))).length);return {a:A[0],b:A[1],n,re:c.reals[0]||meta.emp.find(e=>e.real)};},
+  run:(c,{a,b,n,re})=>{if(re)fact('sindi',re,null,0,2,0);return stScene('frente2',{...spk(a),head:'✊ YA SON '+n,tag:'📝 La hoja crece',def:'ign',
+   txt:'«Jefe, ya somos '+n+' en la hoja. '+(re?'Dicen que hasta '+eN(re)+' se lo está pensando. ':'')+'Queremos hablar de los domingos, de los turnos partidos y del sueldo. Con todos, no uno a uno.»',
+   hint:'💶 Adelantarte: +3 % de sueldo a la plantilla de la casa y fruta en la sala (+6 de ánimo); se acaba la hoja. 🗣️ Asamblea con todos: se elige delegado de personal en la próxima. 🙈 Ignorarlo: +15 de tensión y la cosa se pone fea.',
+   ch:[['mej','💶 +3 % y fruta en la sala','go'],['asm','🗣️ Asamblea con todos'],['ign','🙈 Ignorarlo','no']],
+   go:k=>{if(k==='mej'){meta.emp.forEach(o=>{if(!o.real){o.wage=Math.round(o.wage*1.03);mor(o,6);}});sqEnd('frente');meta.sind=1;return 'El jefe se adelanta: +3 % y un frutero en la sala. La hoja de firmas acaba en la papelera.';}
+     sqSet('frente',{s:3,n,asm:k==='asm'?1:0});if(k==='ign'){meta.tension=clamp((meta.tension||0)+15,0,100);meta.sind=meta.sind||2;[a,b].forEach(x=>mor(x,-4));return 'El jefe ignora la hoja. '+n+' firmas. En el muelle se habla de elecciones.';}
+     return 'Asamblea en la sala de descanso: '+n+' sillas, una cafetera y mucho que decir.';}});}},
+ {id:'frente3',cat:'conspira',ten:3,cd:2,w:3,when:c=>{const q=thr(c,'frente',3,2,c=>{const p=c.all.slice(0,2);return p.length===2?{a:p[0].id,b:p[1].id,n:3}:null;});if(!q)return null;const A=sqA('frente',q,'a','b');return A?{a:A[0],n:q.n||3,q}:null;},
+  run:(c,{a,n,q})=>stScene('frente3',{...spk(a),ser:1,head:'🗳️ ELECCIONES',tag:'✊ Delegad'+(isFem(a)?'a':'o')+' de personal',def:'rec',
+   txt:'Elecciones en la sala de descanso con una caja de zapatos de urna. Sale '+eN(a)+' como delegad'+(isFem(a)?'a':'o')+' de personal'+(meta.emp.length<6?' (con menos de seis en plantilla solo se puede si lo decide la mayoría; de memoria, ET art. 62)':'')+'. Te pide una reunión cada semana.',
+   hint:'🤝 Reconocerl'+(isFem(a)?'a':'o')+' y reunirte cada semana: +5 a todos, −20 de tensión, se acaban los líos sindicales. 📋 Gestoría · 60 €: lo mismo, con papeles en regla (+3 más). 🚫 Poner trabas: es ilegal (vulnera la libertad sindical); 60 % Inspección de Trabajo: multa del juego de 1.500 € y −0,2 ★; −10 a todos.',
+   ch:[['rec','🤝 Reconocerle y reunirnos','go','✊'],['ges','📋 Gestoría · 60 €'],['tra','🚫 Poner trabas','no']],
+   go:k=>{sqEnd('frente');
+     if(k==='tra'){meta.emp.forEach(o=>{if(!o.real)mor(o,-10);});meta.sind=2;meta.tension=clamp((meta.tension||0)+20,0,100);if(Math.random()<0.6){meta.money-=150000;run.fines=(run.fines||0)+150000;repAdd(-0.2,'Pusiste trabas a la elección de delegado de personal');return 'Inspección de Trabajo: 1.500 € de multa por obstaculizar la elección. La plantilla, en pie de guerra.';}return 'El jefe pone trabas. La plantilla recoge firmas para ir a Inspección.';}
+     meta.deleg=a.id;meta.sind=1;meta.tension=clamp((meta.tension||0)-20,0,100);meta.emp.forEach(o=>{if(!o.real)mor(o,k==='ges'?8:5);});if(k==='ges')meta.money-=6000;
+     logE(a,'Elegid'+(isFem(a)?'a':'o')+' delegad'+(isFem(a)?'a':'o')+' de personal');tellReals('🗳️ '+a.name+' es delegad'+(isFem(a)?'a':'o')+' de personal.');return a.name+' es '+gx('delegad{o|a}',isFem(a))+' de personal. Primera reunión: el microondas de la sala.';}})},
+ {id:'prop1',cat:'conspira',ten:1,cd:10,when:c=>{if(!sqFree('prop',25))return null;const at=c.all.filter(e=>e.role==='atc'||e.role==='back');if(at.length<2)return null;
+   const y=lowHon(at),x=c.ws.find(e=>e!==y);return x?{x,y,dis:(y.hon==null?0.6:y.hon)<0.55||c.F}:null;},
+  run:(c,{x,y,dis})=>stScene('prop1',{...sEmp(x),head:'🫙 EL BOTE DE PROPINAS',tag:'🧮 No salen las cuentas',def:'nada',
+   txt:'«Jefe, el bote de propinas sale a 3 € por cabeza. ¡Tres euros! Con lo que dejan las señoras de los céntimos tendría que salir más. Lo reparte '+eN(y)+'. Yo no digo nada.»',
+   hint:'🧮 Que lo cuente Backoffice delante de todos: si hay trampa, sale. 🔄 Que lo reparta cada día uno distinto: se arregla sin buscar culpables. 🙄 «Las propinas son vuestras, apañaos»: si hay trampa, crece y acaba en bronca.',
+   ch:[['cuenta','🧮 Que lo cuente Backoffice','go'],['turno','🔄 Cada día lo reparte uno'],['nada','🙄 Las propinas son vuestras']],
+   go:k=>{if(k==='turno'){sqEnd('prop');if(dis){mor(y,-5);y.hon=clamp((y.hon||0.5)+0.05,0,1);}meta.emp.forEach(o=>{if(!o.real&&o!==y)mor(o,2);});return 'Nuevo sistema: cada día reparte el bote uno distinto. Las propinas engordan misteriosamente.';}
+     if(k==='cuenta'&&!dis){sqEnd('prop');relAdd(x,y,{af:-5});mor(x,-2);return 'Backoffice cuenta el bote delante de todos: cuadra al céntimo. '+x.name+' pide perdón a '+y.name+'. Con la boca pequeña.';}
+     sqSet('prop',{s:2,a:x.id,b:y.id,dis:dis?1:0,v:ri(25,90)*100,cu:k==='cuenta'?1:0});return k==='cuenta'?'Backoffice cuenta el bote: no cuadra. Faltan billetes.':'Las propinas siguen saliendo a 3 €. '+x.name+' empieza a apuntar lo que entra.';}})},
+ {id:'prop2',cat:'conspira',ten:2,cd:2,w:3,when:c=>{const q=thr(c,'prop',2,2,c=>{const L=c.all;return L.length>=2?{a:L[0].id,b:L[1].id,dis:1,v:5000}:null;});if(!q)return null;const A=sqA('prop',q,'a','b');return A?{x:A[0],y:A[1],v:q.v}:null;},
+  run:(c,{x,y,v})=>stScene('prop2',{...spk(x),head:'🫙 LAS PROPINAS',tag:'🕵️ '+esc(y.name),def:'dev',
+   txt:'Las cuentas ya no dejan dudas: '+eN(y)+' se ha quedado unos '+fmt(v)+' del bote de propinas en las últimas semanas. Las propinas son de la plantilla, no de la empresa.',
+   hint:'💶 Que lo devuelva y se acabó: la plantilla +3 y '+eN(y)+' −6. ⚠️ Toque por escrito: cuenta para un despido, −10 y el rumor corre (con razón). 🙈 Taparlo: '+eN(x)+' −8, +10 de tensión y alguien acabará contándolo.',
+   ch:[['dev','💶 Que lo devuelva','go'],['toq','⚠️ Toque por escrito','no','TOQUE'],['tap','🙈 Taparlo']],
+   go:k=>{sqEnd('prop');if(!meta.emp.includes(y))return;
+     if(k==='dev'){mor(y,-6);meta.emp.forEach(o=>{if(!o.real&&o!==y)mor(o,3);});relAdd(x,y,{af:-8});return y.name+' devuelve '+fmt(v)+' al bote. Las propinas de esta semana salen a 9 € por cabeza.';}
+     if(k==='toq'){y.warn=(y.warn||0)+1;y.st.robo=(y.st.robo||0)+1;mor(y,-10);fact('propina',y,null,v,null);logE(y,'Toque: se quedaba dinero del bote de propinas');return y.name+' se lleva un toque por las propinas. Todo el mundo lo sabe.';}
+     mor(x,-8);meta.tension=clamp((meta.tension||0)+10,0,100);fact('propina',y,null,v,2,0);relAdd(x,y,{riv:15});return 'El jefe tapa lo de las propinas. '+x.name+' no lo olvida. Y se lo cuenta a alguien.';}})},
+ {id:'infil1',cat:'conspira',ten:2,cd:12,when:c=>{if(!sqFree('infil',30)||c.day<4)return null;const x=c.all.filter(e=>(e.days||0)<=6&&inStore(e)).sort((a,b)=>(a.days||0)-(b.days||0))[0];if(!x)return null;const t=c.ws.find(e=>e!==x);return t?{x,t,spy:Math.random()<(meta.riv?0.65:0.45)}:null;},
+  run:(c,{x,t,spy})=>stScene('infil1',{...sEmp(t),head:'🕵️ EL NUEVO PREGUNTA MUCHO',tag:'❓ '+esc(x.name),def:'nada',
+   txt:'«Jefe, '+eN(x)+' pregunta mucho. Márgenes, proveedores, a qué hora llega el camión, cuánto cobramos. Y lo apunta todo en el móvil.»',
+   hint:'👀 Vigilarle: en la próxima se sabe. 🗣️ Preguntárselo a la cara: si no es nada, −8 a '+eN(x)+' y '+eN(t)+' queda fatal. 🤷 «Es curioso, nada más»: si fuera de la competencia, se llevaría tus precios.',
+   ch:[['obs','👀 Vigilarle','go'],['pre','🗣️ Preguntárselo a la cara'],['nada','🤷 Es curios'+(isFem(x)?'a':'o')]],
+   go:k=>{if(k==='pre'){if(spy&&Math.random()<0.5){sqEnd('infil');dropEmp(x,'Se fue en cuanto le preguntaron por qué apuntaba tanto (trabajaba para la competencia)');fact('chivato',x,null,0,null);return x.name+' se pone blanco, coge su chaqueta y no vuelve. Trabajaba para el súper de enfrente.';}
+       if(!spy){sqEnd('infil');mor(x,-8);relAdd(x,t,{af:-15});return x.name+' se ofende: «¡Estoy haciendo un máster de distribución!». Y es verdad.';}}
+     if(k==='nada'&&spy)meta.spyTo=meta.day+4;sqSet('infil',{s:2,a:x.id,spy:spy?1:0,obs:k==='obs'?1:0});return k==='obs'?'Alguien no le quita ojo a '+x.name+'.':x.name+' sigue preguntando. Mucho.';}})},
+ {id:'infil2',cat:'conspira',ten:3,cd:2,w:3,when:c=>{const q=thr(c,'infil',2,2,c=>{const x=c.all[0];return x?{a:x.id,spy:1,obs:1}:null;});if(!q)return null;const A=sqA('infil',q,'a');return A?{x:A[0],q}:null;},
+  run:(c,{x,q})=>{if(!q.spy)return stScene('infil2',{...spk(x),head:'📚 EL MISTERIO DEL NUEVO',tag:'🎓 Un máster',def:'ayu',
+     txt:'Resuelto: '+eN(x)+' hace un máster de distribución alimentaria y su trabajo de fin de máster es… VitchMarket. «¿Me dejas usar los datos? Saldrás en los agradecimientos».',
+     hint:'📚 Ayudarle: +10 de ánimo y +estima; quizá se quede muchos años. 🔒 «Los datos son de la empresa»: −4.',ch:[['ayu','📚 Ayudarle con el TFM','go'],['no','🔒 Los datos son de la empresa']],
+     go:k=>{sqEnd('infil');if(!meta.emp.includes(x))return;if(k==='ayu'){mor(x,10);ndAdd(x,'estima',15);logE(x,'Le ayudaste con su trabajo de fin de máster');return x.name+' saca un 9,5 en el TFM. VitchMarket sale en la página 3.';}mor(x,-4);return x.name+' hará el TFM sobre otro súper. Uno con menos secretos.';}});
+   return stScene('infil2',{...VIT,ser:1,head:'🕵️ PILLADO',tag:'📸 Fotos a la hoja de pedidos',def:'hab',
+    txt:(q.obs?'Lo has visto con tus ojos: ':'Al final se descubre: ')+eN(x)+' manda fotos de la hoja de pedidos y de los precios a un contacto que se llama «Jefe Súper Enfrente 😎». Trabaja para la competencia.',
+    hint:'🔥 Despedirle: si está en prueba, sin coste; si no, como «sin motivo» de la lista (improcedente, 33 días por año) y se va. 🕵️ Agente doble: que le pase precios falsos; la competencia se equivoca y tus otras cajas venden un 3 % más 4 turnos (si le pillan a él, 50 %, se va igual). 🗣️ Hablar: confiesa y se va por su pie.',
+    ch:[['fire','🔥 Despedirle','no','DESPIDO'],['doble','🕵️ Agente doble','go'],['hab','🗣️ Hablar con él']],
+    go:k=>{sqEnd('infil');if(!meta.emp.includes(x))return;fact('chivato',x,null,0,null);meta.spyTo=0;
+      if(k==='fire'){fireNow(x,x.trial>0?'trial':'none');return x.name+', el espía del súper de enfrente, despedido. La plantilla no se lo cree.';}
+      if(k==='doble'){meta.spyUp=meta.day+4;if(Math.random()<0.5){dropEmp(x,'Su otro jefe se dio cuenta de los precios falsos y le llamó (era de la competencia)');return 'Operación precios falsos: el súper de enfrente pone el aceite más caro que tú. '+x.name+' desaparece al día siguiente.';}return 'Operación precios falsos: el súper de enfrente sube el aceite por error. '+x.name+' no sabe que lo sabes.';}
+      dropEmp(x,'Confesó que trabajaba para la competencia y se fue por su pie');return x.name+' lo confiesa todo y se va con la cabeza baja. «No era nada personal».';}});}},
+ {id:'pales1',cat:'conspira',ten:2,cd:12,when:c=>{if(!sqFree('pales',30)||c.day<4)return null;const al=c.all.filter(e=>e.role==='alm');if(!al.length)return null;const y=lowHon(al);return {y,thief:(y.hon==null?0.6:y.hon)<0.5||(!c.F&&Math.random()<0.2)};},
+  run:(c,{y,thief})=>{const p=pick(CAT.filter(x=>!x.age&&(meta.back[x.id]||0)+(meta.stock[x.id]||0)>=4))||null;const lost=p?loseUnits(p.id,ri(2,4)):0;
+   return stScene('pales1',{...VIT,head:'🚚 EL MUELLE NO CUADRA',tag:'📦 Faltan cosas',def:'nada',
+   txt:'El muelle no cuadra con los albaranes: '+(p?'faltan '+lost+' uds de «'+esc(p.n)+'» y ':'')+'han desaparecido varios palés de madera vacíos. Nadie sabe nada.',
+   hint:'📋 Inventario sorpresa: más pistas en la próxima. 📹 Cámara al muelle: casi seguro que se ve. 🤷 «Se habrán roto»: si es algo, seguirá pasando.',
+   ch:[['inv','📋 Inventario sorpresa','go'],['cam','📹 Cámara al muelle'],['nada','🤷 Se habrán roto']],
+   go:k=>{sqSet('pales',{s:2,a:y.id,thief:thief?1:0,inv:k==='inv'?1:0,cam:k==='cam'?1:0});return k==='nada'?'El muelle sigue sin cuadrar. Nadie le da importancia.':'Al muelle se le mira con lupa.';}});}},
+ {id:'pales2',cat:'conspira',ten:2,cd:2,w:3,when:c=>{const q=thr(c,'pales',2,2,c=>{const y=c.all.find(e=>e.role==='alm')||c.all[0];return y?{a:y.id,thief:0}:null;});return q&&sqA('pales',q,'a')?{q}:null;},
+  run:(c,{q})=>stScene('pales2',{who:'👵',name:'Doña Encarna · vecina',head:'🚐 LA FURGONETA BLANCA',tag:'🕘 21:15',def:'esp',
+   txt:'«Hijo, yo no me meto en nada. Pero por la puerta de atrás de tu súper sale una furgoneta blanca a las nueve y cuarto, cuando cerráis. Todos los días. Con palés.»',
+   hint:'🔦 Quedarte al cierre a esperar: se sabe quién es seguro. 🔒 Cambiar la cerradura · 80 €: se acaba (sin saber quién era) y queda el rumor. 👮 Denunciar: la policía tarda; 50 % se sabe.',
+   ch:[['esp','🔦 Esperar al cierre','go'],['cer','🔒 Cambiar la cerradura · 80 €'],['pol','👮 Denunciar']],
+   go:k=>{if(k==='cer'){meta.money-=8000;sqEnd('pales');fact('pales',pick(c.all.filter(e=>e.role==='alm'))||pick(c.all),null,0,2,0);return 'Cerradura nueva en el muelle. La furgoneta blanca deja de venir. Ya hay quien tiene un nombre (a saber si el bueno).';}
+     if(k==='pol'&&Math.random()<0.5){sqEnd('pales');return 'La policía toma nota. La furgoneta deja de venir. Nunca se sabe de quién era.';}sqSet('pales',{s:3});return 'Esta noche el jefe cierra la persiana… y se queda dentro, a oscuras, con un termo.';}})},
+ {id:'pales3',cat:'conspira',ten:3,cd:2,w:3,when:c=>{const q=thr(c,'pales',3,1,c=>{const y=c.all.find(e=>e.role==='alm')||c.all[0];return y?{a:y.id,thief:Math.random()<0.5?1:0}:null;});if(!q)return null;const A=sqA('pales',q,'a');return A?{y:A[0],q}:null;},
+  run:(c,{y,q})=>{const th=!!q.thief;return stScene('pales3',{...(inStore(y)?sEmp(y):VIT),ser:1,head:'🔦 21:15 · LA PUERTA DE ATRÁS',tag:'🚐 '+esc(y.name),def:th?'toq':'paga',
+   txt:th?'A las 21:15 aparece la furgoneta y quien carga es '+eN(y)+': latas, agua y dos palés de cerveza. Para el bar de un primo.':'A las 21:15 aparece la furgoneta y quien carga es '+eN(y)+'… pero solo palés de madera vacíos. Se los vende a un chatarrero a 3 € y con eso paga el café de la sala. Lo malo: los palés eran alquilados al proveedor.',
+   hint:th?'🔥 Despedir por hurto (disciplinario). ⚠️ Toque y que pague lo que se llevó (−12 de ánimo). 🤝 «Que no se repita»: se queda en la plantilla; los demás lo ven.':'💸 Pagar los palés al proveedor · 60 € y prohibirlo: −4 a '+eN(y)+'. 😂 «Al menos invitaba al café»: risas, +3 a la plantilla, pero pagas 60 € igual.',
+   ch:th?[['fire','🔥 Despedir por hurto','no','DESPIDO'],['toq','⚠️ Toque y que lo pague','go'],['per','🤝 Que no se repita']]:[['paga','💸 Pagar los palés y prohibirlo','go'],['risa','😂 Al menos invitaba al café']],
+   go:k=>{sqEnd('pales');if(!meta.emp.includes(y))return;
+     if(!th){meta.money-=6000;if(k==='paga'){mor(y,-4);return 'Se acabó el negocio de los palés. El café de la sala vuelve a pagarse a escote.';}meta.emp.forEach(o=>{if(!o.real)mor(o,3);});return y.name+', el mecenas del café. Los palés se pagan; las risas, gratis.';}
+     y.st.robo=(y.st.robo||0)+1;fact('pales',y,null,0,null);logE(y,'Pillad'+(isFem(y)?'a':'o')+' cargando género en una furgoneta al cierre');
+     if(k==='fire'){fireNow(y,'robo');return y.name+', despedid'+(isFem(y)?'a':'o')+'. La furgoneta blanca no vuelve.';}
+     if(k==='toq'){y.warn=(y.warn||0)+1;mor(y,-12);meta.money+=ri(60,150)*100;return y.name+' paga lo que se llevó y se lleva un toque. El primo del bar busca otro proveedor.';}
+     meta.emp.forEach(o=>{if(!o.real&&o!==y&&o.pers==='currante')think(o,'😤','Aquí se roba y no pasa nada',-4,3,'injusto');});return 'El jefe perdona a '+y.name+'. En el muelle no se habla de otra cosa.';}});}},
+ /* ===== PARANORMAL: «El reponedor fantasma» (4 etapas, con explicación… o no) ===== */
+ {id:'fant1',cat:'paranormal',ten:1,cd:10,when:c=>{if(!sqFree('fant',40)||c.day<3)return null;const x=c.ws.find(e=>e.role==='alm')||c.ws[0];return x?{x}:null;},
+  run:(c,{x})=>{const p=pick(CAT.filter(o=>!o.age&&(meta.back[o.id]||0)>0));let mv=0;if(p){mv=Math.min(6,meta.back[p.id]);meta.back[p.id]-=mv;meta.stock[p.id]=(meta.stock[p.id]||0)+mv;}
+   fearful().forEach(o=>{ndAdd(o,'calma',-10);});
+   return stScene('fant1',{...sEmp(x),look:'pa',head:'👻 EL REPONEDOR FANTASMA · I',tag:'🥫 Alguien repone de noche',def:'ign',
+   txt:'«Jefe, esta mañana el lineal de '+(p?'«'+esc(p.n)+'» ':'conservas ')+'estaba repuesto. Perfecto, por fechas, con las etiquetas mirando al frente. Anoche cerré yo. Y no lo hice yo.»',
+   hint:'🔦 Investigar: miras albaranes y llaves (más pistas). 🙄 «Lo haría alguien y no se acuerda»: sigue pasando. 🔮 Médium · 60 €: quien tiene miedo a los fantasmas se queda más tranquilo; la médium vuelve si hace falta.',
+   ch:[['inv','🔦 Investigar','go'],['ign','🙄 Alguien que no se acuerda'],['med','🔮 Llamar a una médium · 60 €']],
+   go:k=>{if(k==='med'){meta.money-=6000;fearful().forEach(o=>ndAdd(o,'calma',20));}sqSet('fant',{s:2,a:x.id,inv:k==='inv'?1:0,med:k==='med'?1:0});fact('fantasma',x,null,0,null);
+     return k==='med'?'La médium recorre el almacén con un péndulo: «Aquí hay alguien que trabajó mucho». Cobra 60 €.':'Alguien repone de noche en el VitchMarket. '+(mv?'Al menos, bien.':'');}});}},
+ {id:'fant2',cat:'paranormal',ten:2,cd:2,w:3,when:c=>{const q=thr(c,'fant',2,2,c=>{const x=c.ws[0];return x?{a:x.id}:null;});if(!q)return null;const x=empById(q.a)||c.ws[0];return x?{x,q}:null;},
+  run:(c,{x,q})=>stScene('fant2',{...spk(x),look:'pa',head:'👻 EL REPONEDOR FANTASMA · II',tag:'📝 Una hoja de pedido a boli',def:'caf',
+   txt:'En el muelle aparece una hoja de pedido escrita a boli, con letra de los ochenta: «FALTA EL PALÉ DE COLA CAO. ROTAD LOS YOGURES. — P.». Nadie escribe a boli desde 2009.',
+   hint:'📼 Revisar la cámara 4: más pistas (y quizá más miedo). ⚡ Electricista · 90 €: revisa el almacén por si hay una explicación técnica. ☕ Dejarle un café a «P.»: +4 a los bromistas, calma a los miedosos.',
+   ch:[['inv','📼 Revisar la cámara 4','go'],['elec','⚡ Electricista · 90 €'],['caf','☕ Dejarle un café a «P.»']],
+   go:k=>{if(k==='elec')meta.money-=9000;if(k==='caf'){meta.emp.forEach(o=>{if(o.pers==='bromista')mor(o,4);});fearful().forEach(o=>ndAdd(o,'calma',10));}
+     sqSet('fant',{s:3,inv:(q.inv||0)+(k==='inv'?1:0),elec:k==='elec'?1:0});return k==='inv'?'La cámara 4 graba una sombra a las 6:02. Con bata gris. Empujando un transpalé.':k==='elec'?'El electricista no encuentra nada raro. «Eso sí, la instalación es del 87, como la de mi abuela».':'Café con leche para «P.» junto a la hoja de pedido. Por la mañana, la taza está fregada.';}})},
+ {id:'fant3',cat:'paranormal',ten:2,cd:2,w:3,when:c=>{const q=thr(c,'fant',3,2,c=>({a:(c.ws[0]||{}).id}));if(!q)return null;const x=empById(q.a)||c.ws[0];return x?{x,q}:null;},
+  run:(c,{x,q})=>{fearful().forEach(o=>{ndAdd(o,'calma',-15);think(o,'👻','El almacén le da miedo',-4,2,'fant');});
+   return stScene('fant3',{...spk(x),look:'pa',head:'👻 EL REPONEDOR FANTASMA · III',tag:'🚬 Huele a Ducados',def:'sal',
+   txt:'Frío en el pasillo de lácteos y olor a Ducados en el almacén. '+eN(x)+' jura que, al ir a por una caja, alguien le dijo desde detrás de los palés: «Rota los yogures, chaval». No había nadie.',
+   hint:'🌙 Quedarte una noche en el almacén: se sabe la verdad (o algo parecido). 🔮 Llamar otra vez a la médium · 60 €: «Quiere acabar algo». 🧂 Sal en la puerta: calma a los miedosos; el misterio sigue a su aire.',
+   ch:[['noche','🌙 Quedarme una noche','go'],['med','🔮 Médium · 60 €'],['sal','🧂 Sal en la puerta']],
+   go:k=>{if(k==='med')meta.money-=6000;if(k==='sal')fearful().forEach(o=>ndAdd(o,'calma',20));sqSet('fant',{s:4,noche:k==='noche'?1:0,med:k==='med'?1:q.med||0});
+     return k==='noche'?'Esta noche el jefe duerme en el almacén, en una silla plegable, con una linterna y un bocadillo.':k==='med'?'La médium, muy seria: «Quiere acabar su último palé».':'Sal gorda en la puerta del almacén. Por si acaso. La gata del muelle la lame.';}});}},
+ {id:'fant4',cat:'paranormal',ten:2,cd:2,w:3,when:c=>{const q=thr(c,'fant',4,1,c=>({a:(c.ws[0]||{}).id,noche:Math.random()<0.5?1:0}));return q?{q}:null;},
+  run:(c,{q})=>{const how=(q.noche||(q.inv||0)>=2||meta.paco)?'paco':q.med?'med':q.elec?'elec':'nada';
+   const T={paco:['👴','Paco · reponedor jubilado','A las 6:02 se abre la puerta del muelle con llave. Es Paco: 71 años, reponedor aquí de 1979 a 2012. Nadie cambió la cerradura. «No duermo, chaval, y esto no se ordena solo». Fuma Ducados en la puerta. Lleva años viniendo.',
+      '🎖️ Reponedor honorario: café gratis, +5 de ánimo a la plantilla y +0,05 ★ (la historia corre por el barrio). 🔑 Cambiar la cerradura · 80 €: calma a los miedosos; Paco se despide con pena. 🤝 Ofrecerle unas horas: «Yo ya cotizo lo mío», pero se emociona (+3).',
+      [['hon','🎖️ Reponedor honorario','go','🎖️'],['cer','🔑 Cambiar la cerradura · 80 €'],['ofr','🤝 Ofrecerle unas horas']]],
+    med:['🔮','La médium','La médium vuelve con velas: «Es Paco. Murió… de aburrimiento, en su casa, jubilado. Solo quiere que alguien acabe su último palé de Cola Cao».',
+      '📦 Acabar el palé entre todos: +8 a la plantilla y paz en el almacén. 🙄 «¿60 € por esto?»: la plantilla se ríe; los miedosos, no.',[['pale','📦 Acabar el palé entre todos','go'],['no','🙄 ¿60 € por esto?']]],
+    elec:['⚡','El electricista','El electricista vuelve: un cable de 1987 enciende la cámara frigorífica y las luces del muelle a las 6:00. Explica las luces y el frío. No explica la hoja escrita a boli. Ni el olor a Ducados.',
+      '🔧 Cambiar el cable · 60 €: se acaban las luces; lo demás, a saber. 🫡 «Gracias, Paco»: dejarlo estar.',[['cab','🔧 Cambiar el cable · 60 €','go'],['ok','🫡 Gracias, Paco']]],
+    nada:['👻','El almacén','Esta mañana el palé de Cola Cao estaba terminado. Nadie lo pidió. Nadie lo colocó. En la hoja de pedido, a boli: «AHORA SÍ. GRACIAS. — P.». Desde entonces, silencio.',
+      '🫡 «Gracias, Paco»: +4 a la plantilla, calma a los miedosos. 😱 Que nadie entre sol@ al almacén: más calma, menos rapidez.',[['ok','🫡 Gracias, Paco','go'],['par','😱 Al almacén, en parejas']]]}[how];
+   return stScene('fant4',{who:T[0],name:T[1],look:'pa',head:'👻 EL REPONEDOR FANTASMA · IV',tag:how==='paco'?'🔦 La verdad':'❓ ¿La verdad?',def:T[3][0][0],txt:T[2],hint:T[3],ch:T[4],
+    go:k=>{sqEnd('fant');const all=meta.emp.filter(o=>!o.real);
+     if(how==='paco'){meta.paco=1;if(k==='hon'){all.forEach(o=>mor(o,5));repAdd(+0.05,'La historia de Paco, el reponedor honorario, corre por el barrio');return 'Paco, reponedor honorario. Tiene taza propia y permiso para ordenar el atún.';}
+       if(k==='cer'){meta.money-=8000;fearful().forEach(o=>ndAdd(o,'calma',30));return 'Cerradura nueva. Paco devuelve la llave vieja con un «cuidadme las latas».';}all.forEach(o=>mor(o,3));return 'Paco no quiere horas: «Yo vengo por gusto». Se queda a tomar el café.';}
+     if(how==='med'){if(k==='pale'){all.forEach(o=>mor(o,8));fearful().forEach(o=>ndAdd(o,'calma',40));return 'Entre todos acaban el palé de Cola Cao. En el almacén, por fin, silencio.';}meta.emp.forEach(o=>{if(o.pers==='bromista')mor(o,3);});return 'La médium se va ofendida. Esa noche, el palé de Cola Cao aparece a medias.';}
+     if(how==='elec'){if(k==='cab'){meta.money-=6000;fearful().forEach(o=>ndAdd(o,'calma',20));return 'Cable nuevo. Ya no se encienden las luces solas. El olor a Ducados… sigue.';}return 'El jefe le da las gracias a Paco. En voz alta. Por si acaso.';}
+     if(k==='ok'){all.forEach(o=>mor(o,4));fearful().forEach(o=>ndAdd(o,'calma',20));return '«Gracias, Paco». El almacén queda en paz. Y bien ordenado.';}fearful().forEach(o=>ndAdd(o,'calma',30));return 'Al almacén se entra en parejas. Se repone más despacio, pero se repone.';}});}},
+ {id:'cajasola',cat:'paranormal',ten:1,cd:12,when:c=>c.day>=2?{x:c.ws.find(e=>e.role==='atc')||c.ws[0]||null}:null,
+  run:(c,{x})=>{const b=c.all.find(e=>e.pers==='bromista'&&inStore(e));return stScene('cajasola',{...(x?sEmp(x):VIT),look:'pa',head:'🪙 LA CAJA 1 SE ABRE SOLA',tag:'🕐 13:13',def:'guar',
+   txt:'A las 13:13, la Caja 1 se ha abierto sola con un «clinc». Dentro, entre las monedas de euro, hay una moneda de 100 pesetas de 1987.',
+   hint:'🔧 Técnico del TPV · 45 €: el cajón tiene un fallo de electroimán; se arregla (y la moneda, a la vitrina). 🪙 Guardar la moneda: +3 a los bromistas, −calma a los miedosos. 🕵️ Preguntar quién tiene pesetas: si es una broma, se sabe.',
+   ch:[['tec','🔧 Técnico del TPV · 45 €','go'],['guar','🪙 Guardar la moneda'],['inv','🕵️ ¿Quién tiene pesetas?']],
+   go:k=>{if(k==='tec'){meta.money-=4500;fearful().forEach(o=>ndAdd(o,'calma',10));return 'Fallo del electroimán del cajón. La moneda de 100 pesetas, en una vitrina junto al reloj de fichar.';}
+     if(k==='inv'&&b){relAdd(b,x||b,{af:3});meta.emp.forEach(o=>{if(o.pers==='bromista')mor(o,3);});return 'Era '+b.name+', con la colección de pesetas de su abuelo. El cajón, eso sí, sí se abre solo.';}
+     meta.emp.forEach(o=>{if(o.pers==='bromista')mor(o,3);});fearful().forEach(o=>ndAdd(o,'calma',-10));fact('fantasma',x||pick(c.all)||meta.emp[0],null,0,2,0);return 'La moneda de 100 pesetas se queda en la Caja 1 como amuleto. La caja sigue abriéndose a las 13:13.';}});}},
+ {id:'frio7',cat:'paranormal',ten:1,cd:12,when:c=>{const x=c.ws[0];return x?{x}:null;},
+  run:(c,{x})=>stScene('frio7',{...sEmp(x),look:'pa',head:'🥶 PASILLO 7',tag:'❄️ Un frío que no es normal',def:'nada',
+   txt:'«Jefe, en el pasillo 7 hace un frío que no es normal. Se me eriza el vello. Los clientes pasan corriendo. Una señora se ha santiguado.»',
+   hint:'❄️ Revisar el mural refrigerado: 70 % es la puerta del congelador mal cerrada (se arregla y +0,02 ★: clientes contentos). 🧥 Chaquetas para la plantilla · 40 €: +4 de ánimo y +energía. 🤷 «Así se conserva todo mejor»: −0,02 ★ (quejas por el frío).',
+   ch:[['frig','❄️ Revisar el mural refrigerado','go'],['chaq','🧥 Chaquetas · 40 €'],['nada','🤷 Así se conserva mejor','no']],
+   go:k=>{if(k==='frig'){if(Math.random()<0.7){repAdd(+0.02,'Arreglaste la puerta del congelador del pasillo 7');return 'La puerta del congelador del pasillo 7 no cerraba. Ahora sí. El fantasma, era el frío.';}fact('fantasma',x,null,0,2,0);return 'El congelador está perfecto. El pasillo 7 sigue helado. Nadie sabe por qué.';}
+     if(k==='chaq'){meta.money-=4000;meta.emp.forEach(o=>{if(!o.real){mor(o,4);ndAdd(o,'energia',10);}});return 'Chaquetas polares con el logo de VitchMarket para todos. Hasta para la gata.';}
+     repAdd(-0.02,'Clientes quejándose del frío del pasillo 7');return 'El pasillo 7 sigue helado. Los clientes compran el yogur corriendo.';}})},
+ {id:'ouija',cat:'paranormal',ten:1,cd:14,when:c=>c.ws.length>=3?{L:c.ws.slice(0,3)}:null,
+  run:(c,{L})=>{const msg=pick(['«S-U-B-E-L-E-S-E-L-S-U-E-L-D-O»','«R-O-T-A-D-L-O-S-Y-O-G-U-R-E-S»','«E-L-A-T-L-E-T-I-G-A-N-A»','«Q-U-I-E-N-S-E-C-O-M-I-O-L-A-S-L-E-N-T-E-J-A-S»','«P-A-C-O»']);
+   return stScene('ouija',{...sEmp(L[0]),look:'pa',head:'🔮 SALA DE DESCANSO',tag:'👻 La ouija',def:'pasa',
+   txt:'En la sala de descanso hay una ouija hecha con un cartón de huevos y un tapón de Mahou. '+L.map(eN).join(', ')+' la usan en el descanso. Te invitan a jugar.',
+   hint:'👻 Unirte: más afinidad entre los tres (+5) y contigo; los miedosos lo pasan mal. 🚫 Prohibirla: −4 a los bromistas. 🙄 Dejarles: es su descanso.',
+   ch:[['jug','👻 Me apunto','go'],['pro','🚫 Aquí no se invoca a nadie','no'],['pasa','🙄 Es vuestro descanso']],
+   go:k=>{if(k==='pro'){meta.emp.forEach(o=>{if(o.pers==='bromista')mor(o,-4);});return 'Ouija requisada. El tapón de Mahou, al contenedor amarillo.';}
+     if(k==='jug'){for(let i=0;i<L.length;i++)for(let j=i+1;j<L.length;j++)relAdd(L[i],L[j],{af:5,conf:3});L.forEach(o=>{mor(o,4);ndAdd(o,'social',15);});fearful().forEach(o=>ndAdd(o,'calma',-15));
+       const re=meta.emp.find(e=>e.real&&working(e));if(re)L.forEach(o=>relAdd(o,re,{af:2}));return 'La ouija responde: '+msg+'. Gritos, risas y una silla por los suelos.';}
+     L.forEach(o=>ndAdd(o,'social',10));return 'La ouija dice '+msg+'. Lo cuentan en el muelle durante una semana.';}});}},
+ /* ===== ACTUALIDAD DE MADRID (calendario: salen al abrir el turno de su fecha, MAD_CAL) ===== */
+ {id:'isidro',cat:'madrid',ten:1,cd:30,open:1,cal:'isidro',when:c=>c.ev==='isidro'&&c.all.length?{x:c.all.find(e=>['bromista','chismoso','lider'].includes(e.pers))||c.all[0]}:null,
+  run:(c,{x})=>stScene('isidro',{...sEmp(x),head:'💃 SAN ISIDRO',tag:'🌼 Chotis y rosquillas',def:'no',
+   txt:'«Jefe, que hoy es San Isidro. ¿Puedo venir de chulap'+(isFem(x)?'a':'o')+' y poner chotis por megafonía? Por el barrio, jefe. Por la tradición.»',
+   hint:'💃 «¡Venga, chotis!»: +5 a toda la plantilla y +0,03 ★. 🍩 Rosquillas listas y tontas en caja · 30 €: +0,05 ★. 🎧 «Hilo musical de siempre»: −3 a '+eN(x)+'.',
+   ch:[['si','💃 ¡Venga, chotis!','go'],['ros','🍩 Rosquillas en caja · 30 €'],['no','🎧 Hilo musical de siempre']],
+   go:k=>{if(k==='si'){meta.emp.forEach(o=>{if(!o.real)mor(o,5);});repAdd(+0.03,'Chotis por megafonía en San Isidro');return x.name+' cobra con parpusa y clavel. Una señora se arranca a bailar en el pasillo 2.';}
+     if(k==='ros'){meta.money-=3000;repAdd(+0.05,'Rosquillas de San Isidro para la clientela');return 'Rosquillas listas y tontas en caja. Las tontas vuelan.';}mor(x,-3);return 'San Isidro con hilo musical. '+x.name+' tararea el chotis bajito.';}})},
+ {id:'orgullo',cat:'madrid',ten:1,cd:30,open:1,cal:'orgullo',when:c=>c.ev==='orgullo'&&c.all.length?{x:pick(c.all)}:null,
+  run:(c,{x})=>stScene('orgullo',{...sEmp(x),head:'🏳️‍🌈 ORGULLO',tag:'🎉 Madrid de fiesta',def:'hie',
+   txt:'«Jefe, es el fin de semana del Orgullo: Chueca a reventar, la gente pidiendo hielo y agua por la puerta. ¿Ponemos la bandera en el escaparate? Aquí cabe todo el mundo.»',
+   hint:'🏳️‍🌈 Bandera y cartel «Aquí cabe todo el mundo»: +0,05 ★ y +4 a la plantilla. 🧊 Hielo y agua a pie de caja: las otras cajas venden +15 % hoy. 🛒 «Un sábado más»: nada.',
+   ch:[['ban','🏳️‍🌈 Bandera en el escaparate','go','🏳️‍🌈'],['hie','🧊 Hielo y agua a pie de caja'],['nada','🛒 Un sábado más']],
+   go:k=>{if(k==='ban'){repAdd(+0.05,'El escaparate del Orgullo gusta en el barrio');meta.emp.forEach(o=>{if(!o.real)mor(o,4);});tellReals('🏳️‍🌈 El escaparate del VitchMarket luce la bandera del Orgullo.');return 'Bandera en el escaparate y el cartel «Aquí cabe todo el mundo». Selfis en la puerta todo el día.';}
+     if(k==='hie'){meta.promo=meta.day;return 'Hielo y agua a pie de caja: se agota todo a media tarde.';}return 'Un sábado más en el VitchMarket. Fuera, la fiesta.';}})},
+ {id:'puente',cat:'madrid',ten:1,cd:30,open:1,cal:'puente',when:c=>c.ev==='puente'&&c.all.length>=2?{L:shuffle(c.all).slice(0,2)}:null,
+  run:(c,{L})=>stScene('puente',{...sEmp(L[0]),head:'🧳 PUENTE DE MAYO',tag:'🏖️ Media plantilla quiere irse',def:'sor',
+   txt:'«Jefe, es puente. '+eN(L[1])+' y yo queremos irnos al pueblo mañana. Hay poca gente, ¿no? Mira la tienda.»',
+   hint:'🗓️ Que libren los dos mañana: +8 a cada uno; mañana hay dos menos. 🎲 Sortearlo: libra uno (+8) y el otro −2. ✋ «En puente se trabaja»: −5 a los dos.',
+   ch:[['dos','🗓️ Que libren los dos','go'],['sor','🎲 Sortearlo'],['no','✋ En puente se trabaja','no']],
+   go:k=>{if(k==='no'){L.forEach(o=>mor(o,-5));return 'En puente se trabaja. El pueblo, para otro año.';}
+     const W=k==='dos'?L:[pick(L)];W.forEach(o=>{o.off=meta.day+1;mor(o,8);});L.filter(o=>!W.includes(o)).forEach(o=>mor(o,-2));return W.map(o=>o.name).join(' y ')+' se va'+(W.length>1?'n':'')+' al pueblo mañana. '+(W.length>1?'Traerán':'Traerá')+' chorizo.';}})},
+ {id:'rebajas',cat:'madrid',ten:1,cd:30,open:1,cal:'rebajas',when:c=>c.ev==='rebajas'&&c.all.length?{x:pick(c.all)}:null,
+  run:(c,{x})=>stScene('rebajas',{...sEmp(x),head:'🏷️ REBAJAS',tag:'🛍️ Preciados',def:'no',
+   txt:'«Jefe, hoy empiezan las rebajas. ¿Me dejas salir una hora antes para ir a Preciados? No soy la única persona que lo pide, que conste.»',
+   hint:'🛍️ Sí: +6 a '+eN(x)+' (sale antes, una persona menos al final). 🏷️ «Mejor hacemos rebajas aquí»: cartel de ofertas · 20 €, +0,03 ★. ✋ No: −4.',
+   ch:[['si','🛍️ Venga, vete','go'],['dto','🏷️ Rebajas aquí · 20 €'],['no','✋ No','no']],
+   go:k=>{if(k==='si'){mor(x,6);const d=run.duty[x.id];if(d&&!d.busy)d.slack='🛍️ Se ha ido de rebajas';return x.name+' sale disparad'+(isFem(x)?'a':'o')+' hacia Preciados.';}
+     if(k==='dto'){meta.money-=2000;repAdd(+0.03,'Cartel de rebajas en el súper');return 'Cartel de rebajas en el VitchMarket. Una señora pregunta si el pan también.';}mor(x,-4);return x.name+' mira las rebajas en el móvil durante el descanso.';}})},
+ {id:'bfriday',cat:'madrid',ten:2,cd:30,open:1,cal:'bfriday',when:c=>c.ev==='bfriday'&&c.all.length?{x:c.all.find(e=>e.pers==='bromista'||e.pers==='lider')||c.all[0]}:null,
+  run:(c,{x})=>stScene('bfriday',{...sEmp(x),head:'🖤 BLACK FRIDAY',tag:'🛒 Locura',def:'ser',
+   txt:'«Jefe, la gente entra preguntando por el Black Friday. Hasta en el papel higiénico. ¿Ponemos carteles de BLACK FRIDAY en todo? Aunque los precios sean los mismos…»',
+   hint:'🖤 Carteles y caja de apoyo: las otras cajas venden +15 % hoy, pero la plantilla acaba reventada (−10 de energía). 🙅 «Aquí los precios son los de siempre»: +0,02 ★ por honestidad. 📢 Megafonía cada 10 minutos: +15 % de ventas y −0,03 ★ (la gente se harta).',
+   ch:[['cart','🖤 Carteles y caja de apoyo','go'],['ser','🙅 Los precios de siempre'],['mega','📢 Megafonía cada 10 min','no']],
+   go:k=>{if(k==='ser'){repAdd(+0.02,'Sin falsas ofertas en Black Friday');return 'Ni un cartel de Black Friday. Una clienta lo agradece: «Por fin un sitio serio».';}
+     meta.promo=meta.day;if(k==='cart'){meta.emp.forEach(o=>ndAdd(o,'energia',-10));return 'Carteles de BLACK FRIDAY hasta en los carros. La plantilla, reventada.';}repAdd(-0.03,'Megafonía de Black Friday cada 10 minutos');return '«¡BLACK FRIDAY EN VITCHMARKET!» cada diez minutos. A media tarde, una clienta desenchufa el altavoz.';}})},
+ {id:'loteria',cat:'madrid',ten:1,cd:30,open:1,cal:'loteria',when:c=>c.ev==='loteria'&&c.all.length?{x:c.all.find(e=>e.pers==='chismoso'||e.pers==='servicial')||c.all[0]}:null,
+  run:(c,{x})=>{const n=meta.emp.filter(o=>!o.real).length;return stScene('loteria',{...sEmp(x),head:'🎟️ LOTERÍA DE NAVIDAD',tag:'🔢 El sorteo',def:'cada',
+   txt:'«Jefe, he comprado décimos en Doña Manolita para la plantilla. Tres horas de cola. ¿Pone la empresa uno? Si toca, que toque a todos.»',
+   hint:'🎟️ Un décimo de la empresa · 20 €: se sortea hoy (reintegro, pedrea… o algo más). 🎄 Un décimo para cada uno · '+fmt(2000*n)+': +8 a todos, aunque no toque nada. 🙅 «Cada uno lo suyo»: −2.',
+   ch:[['emp','🎟️ Un décimo de la empresa · 20 €','go'],['todos','🎄 Uno para cada uno · '+fmt(2000*n)],['cada','🙅 Cada uno lo suyo']],
+   go:k=>{const L=meta.emp.filter(o=>!o.real);if(k==='cada'){L.forEach(o=>mor(o,-2));return 'Cada uno con su décimo. En la sala, la radio con los niños de San Ildefonso.';}
+     meta.money-=k==='todos'?2000*L.length:2000;if(k==='todos')L.forEach(o=>mor(o,8));
+     const r=Math.random();if(r<0.01){meta.money+=600000;L.forEach(o=>mor(o,20));return '¡QUINTO PREMIO! 6.000 € para la empresa. Hay cava en el muelle y alguien llora abrazado a un palé.';}
+     if(r<0.06){meta.money+=10000;return 'Pedrea: 100 €. Se celebra como si fuera el Gordo.';}if(r<0.16){meta.money+=2000;return 'Reintegro. «Al menos no perdemos», dice '+x.name+'.';}
+     return 'Ni reintegro. «Lo importante es la salud», dice todo el mundo a la vez.';}});}},
+ {id:'nochebuena',cat:'madrid',ten:1,cd:30,open:1,cal:'nochebuena',when:c=>c.ev==='nochebuena'&&c.all.length?{x:c.all.find(e=>e.pers==='quejica')||c.all[0]}:null,
+  run:(c,{x})=>{const n=meta.emp.filter(o=>!o.real).length;return stScene('nochebuena',{...sEmp(x),head:'🎄 NOCHEBUENA',tag:'🦐 Colas de película',def:'nada',
+   txt:'«Jefe, hoy es Nochebuena, llevamos 40 kilos de gambas vendidos y son las doce. Una pregunta: ¿hay cesta de Navidad este año? Lo digo por todos.»',
+   hint:'🎁 Cesta para cada uno · '+fmt(3500*n)+': +10 a todos. 🍫 Turrón y cava en la sala · 25 €: +5. 🎄 «Felices fiestas»: −3 (los quejicas, −6).',
+   ch:[['cesta','🎁 Cesta para cada uno · '+fmt(3500*n),'go','🎁'],['tur','🍫 Turrón y cava en la sala · 25 €'],['nada','🎄 Felices fiestas']],
+   go:k=>{const L=meta.emp.filter(o=>!o.real);if(k==='cesta'){meta.money-=3500*L.length;L.forEach(o=>mor(o,10));tellReals('🎁 Este año hay cesta de Navidad para la plantilla.');return 'Cestas de Navidad para toda la plantilla. Con jamoncito. '+x.name+' no tiene de qué quejarse (lo intenta).';}
+     if(k==='tur'){meta.money-=2500;L.forEach(o=>mor(o,5));return 'Turrón y cava en la sala de descanso. Brindis a las 18:00.';}L.forEach(o=>mor(o,o.pers==='quejica'?-6:-3));return '«Felices fiestas», dice el jefe. Y nada más.';}});}},
+ {id:'reyes',cat:'madrid',ten:1,cd:30,open:1,cal:'reyes',when:c=>c.ev==='reyes'&&c.all.length>=2?{a:c.all[0],b:c.all[1],t:c.all.slice().sort((p,q)=>((q.st&&q.st.late)||0)-((p.st&&p.st.late)||0))[0]}:null,
+  run:(c,{a,b,t})=>stScene('reyes',{...sEmp(a),head:'👑 VÍSPERA DE REYES',tag:'🥐 Roscón',def:'sala',
+   txt:'Roscón en la sala de descanso. A '+eN(a)+' le ha tocado el haba (paga el del año que viene) y a '+eN(b)+' la figurita. '+eN(a)+' propone sacar roscón también para los clientes.',
+   hint:'👑 Roscón para clientes en caja · 30 €: +0,04 ★. 🥐 Solo para la plantilla · 15 €: +4 a todos. 🪨 Carbón dulce para '+eN(t)+', que es quien más tarde llega: +4 a los bromistas, −6 a '+eN(t)+'.',
+   ch:[['ros','👑 Roscón para los clientes · 30 €','go'],['sala','🥐 Solo la plantilla · 15 €'],['car','🪨 Carbón para '+esc(t.name)]],
+   go:k=>{if(k==='ros'){meta.money-=3000;repAdd(+0.04,'Roscón de Reyes para la clientela');return 'Roscón en caja para la clientela. Un niño encuentra la figurita y llora de emoción.';}
+     if(k==='sala'){meta.money-=1500;meta.emp.forEach(o=>{if(!o.real)mor(o,4);});return 'Roscón de nata en la sala. '+a.name+' paga el del año que viene. Ya lo sabe.';}
+     meta.emp.forEach(o=>{if(o.pers==='bromista')mor(o,4);});mor(t,-6);return t.name+' recibe carbón dulce. «Por llegar tarde a todo». No le hace gracia.';}})},
+ {id:'gota',cat:'madrid',ten:2,cd:30,open:1,cal:'gota',when:c=>c.ev==='gota'?{x:c.all.find(e=>e.role==='alm')||c.all[0]||null}:null,
+  run:(c,{x})=>stScene('gota',{...(x?sEmp(x):VIT),look:'pa',head:'⛈️ GOTA FRÍA',tag:'💧 Una gotera en el pasillo 3',def:'cub',
+   txt:'Diluvia sobre Madrid y hay una gotera encima del pasillo 3. Los clientes entran chorreando y el suelo de la entrada parece una piscina.',
+   hint:'🪣 Cubos y cartel de suelo mojado: −5 de energía a la plantilla, sin más. 🛠️ Técnico de urgencia · 120 €: arreglado y +0,02 ★. 🤷 «Ya escampará»: 40 % alguien se resbala (−0,1 ★ y la caída queda para la inspección).',
+   ch:[['cub','🪣 Cubos y cartel','go'],['tec','🛠️ Técnico de urgencia · 120 €'],['nada','🤷 Ya escampará','no']],
+   go:k=>{if(k==='cub'){meta.emp.forEach(o=>ndAdd(o,'energia',-5));return 'Cubos en el pasillo 3 y cartel amarillo. Plic, plic, plic, todo el turno.';}
+     if(k==='tec'){meta.money-=12000;repAdd(+0.02,'Arreglaste la gotera en plena gota fría');return 'El técnico sube al tejado bajo la tormenta. Héroe del barrio.';}
+     if(Math.random()<0.4){repAdd(-0.1,'Un cliente se resbaló con la gotera');meta.ins=meta.ins||{};meta.ins.fall=meta.day;return 'Un señor se resbala en la entrada. Se levanta solo, pero lo cuenta en el grupo del barrio.';}return 'Escampa a media tarde. Ha habido suerte.';}})},
+ {id:'derbi',cat:'madrid',ten:1,cd:30,open:1,cal:'derbi',when:c=>{if(c.ev!=='derbi'||!c.all.length)return null;const fan=t=>c.all.filter(e=>new RegExp(t).test(e.bio&&e.bio.wish||''));const at=fan('Atleti'),rm=fan('Madrid');
+   return {A:at[0]||c.all[0],B:rm.find(e=>e!==(at[0]||c.all[0]))||c.all.find(e=>e!==(at[0]||c.all[0]))||null};},
+  run:(c,{A,B})=>{const res=pick(['atleti','madrid','empate']);return stScene('derbi',{...sEmp(A),head:'⚽ DERBI MADRILEÑO',tag:'🔴⚪ Metropolitano',def:'apu',
+   txt:'Derbi en el Metropolitano. '+eN(A)+' (del Atleti)'+(B?' y '+eN(B)+' (del Madrid)':'')+' llevan desde las nueve lanzándose pullas por encima de las cajas.',
+   hint:'📺 Radio del partido en el almacén: +6 a los futboleros… y luego depende del resultado. 🍻 «El que pierda paga las cañas»: más afinidad entre los dos. 🔇 «Aquí no se habla de fútbol»: −4 a los dos.',
+   ch:[['tele','📺 Radio del partido en el almacén','go'],['apu','🍻 El que pierda paga las cañas'],['pro','🔇 Aquí no se habla de fútbol','no']],
+   go:k=>{const L=[A,B].filter(Boolean);if(k==='pro'){L.forEach(o=>mor(o,-4));return 'Prohibido hablar de fútbol. Se comunican por señas.';}
+     const R=res==='empate'?'Empate a uno en el derbi.':res==='atleti'?'Gana el Atleti el derbi.':'Gana el Madrid el derbi.';
+     if(k==='apu'&&B){relAdd(A,B,{af:8,conf:4,riv:-5});return R+(res==='empate'?' Cañas a medias.':' Paga '+(res==='atleti'?B.name:A.name)+'.');}
+     if(k==='tele'){L.forEach(o=>mor(o,6));if(res==='atleti'){mor(A,4);if(B)mor(B,-4);}else if(res==='madrid'){mor(A,-4);if(B)mor(B,4);}}
+     return R+' En el almacén, '+(res==='empate'?'tablas y abrazos.':'uno canta y el otro repone en silencio.');}});}},
+ {id:'maraton',cat:'madrid',ten:1,cd:30,open:1,cal:'maraton',when:c=>c.ev==='maraton'&&c.all.length?{x:c.all.find(e=>e.bio&&e.bio.age<40)||c.all[0]}:null,
+  run:(c,{x})=>stScene('maraton',{...sEmp(x),head:'🏃 MARATÓN DE MADRID',tag:'🚧 Calles cortadas',def:'nada',
+   txt:'Maratón de Madrid: calles cortadas, la plantilla llega andando y por la puerta asoman corredores pidiendo agua. '+eN(x)+' ha corrido los 10 km antes de entrar a trabajar. Y lo cuenta.',
+   hint:'💧 Mesa de agua para los corredores · 30 €: +0,06 ★ (salís en las fotos). 👏 Aplaudir a '+eN(x)+' delante de todos: +8 a '+eN(x)+'. 🤷 Un domingo más.',
+   ch:[['agua','💧 Mesa de agua · 30 €','go'],['apl','👏 Aplaudir a '+esc(x.name)],['nada','🤷 Un domingo más']],
+   go:k=>{if(k==='agua'){meta.money-=3000;repAdd(+0.06,'Mesa de agua para los corredores del maratón');return 'Mesa de agua en la puerta: los corredores gritan «¡VITCHMARKET!» al pasar.';}
+     if(k==='apl'){mor(x,8);ndAdd(x,'estima',15);return 'Aplausos en la sala para '+x.name+', que enseña la medalla a todo el que pasa.';}return 'Domingo de maratón. Medio barrio en chándal.';}})}
+];
+STORY.push(...STORY2);
+function storyPick(L,force){
   const F=/^st-/.test(VIDA_T)?VIDA_T.slice(3):'';
-  const c=STORY.filter(s=>F?s.id===F:L(s)&&!(meta.storyCd&&meta.storyCd[s.id]>meta.day));if(!c.length)return null;const ctx=storyCtx();
+  const c=STORY.filter(s=>F?s.id===F:L(s)&&(force||!(meta.storyCd&&meta.storyCd[s.id]>meta.day)));if(!c.length)return null;const ctx=storyCtx();
+  if(F&&c[0].cal)ctx.ev=c[0].cal;
   const ok=c.map(s=>{let x=null;try{x=s.when(ctx);}catch(e){}return x?{s,x}:null;}).filter(Boolean);if(!ok.length)return null;
-  const T=meta.tension||20,want=T<35?1:T<70?2:3,last=meta.storyLast||'';
+  /* respiro: si ayer hubo un pico (ten 3), hoy toca algo pequeño */
+  const T=meta.tension||20,want=meta.storyHi===meta.day-1?1:T<35?1:T<70?2:3,last=meta.storyLast||'';
   const p=wpick(ok.map(o=>({o,w:(o.s.w||1)*(o.s.cat===last?0.25:1)*(o.s.ten===want?2.2:Math.abs(o.s.ten-want)===1?1:0.4)}))).o;
   meta.storyCd=meta.storyCd||{};meta.storyCd[p.s.id]=meta.day+(p.s.cd||6);meta.storyLast=p.s.cat;meta.tension=clamp(T-p.s.ten*18,0,100);
+  if(p.s.ten>=3)meta.storyHi=meta.day;meta.storyN=meta.storyN||{};meta.storyN[p.s.cat]=(meta.storyN[p.s.cat]||0)+1;
+  try{(window.__story=window.__story||[]).push({d:meta.day,id:p.s.id,cat:p.s.cat,T});}catch(e){}
   try{p.s.run(ctx,p.x);}catch(e){console.warn('story',e);}return p.s.id;
 }
 /* Director: como mucho 2 por turno (22–40 % y 55–78 %); el segundo, solo con tensión alta o a veces. Espera a que no haya escena. */
@@ -2567,7 +3262,7 @@ function storyTick(){
   if(run.closing||!(bossScn()||(room&&room.sim)))return;
   const D=run.story||(run.story={n:0,at:(/^st-/.test(VIDA_T)?[0.08,0.3]:[rnd(0.22,0.4),rnd(0.55,0.78)]).map(x=>x*(run.dur||100))});
   if(D.n>=2||run.t<D.at[D.n]||sceneCur||sceneQ.length)return;
-  if(D.n===1&&(meta.tension||0)<45&&Math.random()<0.5){D.n=2;return;}
+  if(D.n===1&&(meta.storyHi===meta.day-1||((meta.tension||0)<45&&Math.random()<0.5))){D.n=2;return;}
   D.n++;storyPick(s=>!s.open);
 }
 /* Al abrir: un storylet de la ciudad (Metro, Champions, calor) uno de cada cuatro turnos, y lo que decidió la plantilla anoche. */
@@ -2575,7 +3270,9 @@ function storyOpen(){
   if(!run||run.remote||(room&&!isHost())||daily)return;
   meta.emp.forEach(socEnsure);
   try{lifeOpen();}catch(e){console.warn('life',e);}
-  if(meta.day>=2&&Math.random()<0.25)try{storyPick(s=>s.open);}catch(e){console.warn('story',e);}
+  const ev=calEv(meta.day);
+  if(ev){try{calOpen(ev);storyPick(s=>s.cal===ev.k||s.id===ev.k,1);}catch(e){console.warn('cal',e);}}
+  else if(meta.day>=2&&Math.random()<0.25)try{storyPick(s=>s.open&&!s.cal);}catch(e){console.warn('story',e);}
 }
 /* Ficha: necesidades, pensamientos, relaciones y lo que hay que saber (mini = reunión). */
 function socHtml(e,mini){
@@ -5049,7 +5746,7 @@ function dailyExit(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.19-112';
+const APPV='2026.11.19-113';
 /* Compara versiones por números («-9» < «-11»), no como texto. */
 const verCmp=(a,b)=>{const x=String(a).split(/[.-]/).map(Number),y=String(b).split(/[.-]/).map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
 try{const vt=document.createElement('div');vt.id='vtag';vt.textContent='v'+APPV;document.body.appendChild(vt);}catch(e){}
@@ -6017,7 +6714,7 @@ function prepShift(){
     /* Dimisión: si llevas tú la tienda, te lo dice a la cara (escena) y viene a trabajar mientras decides. */
     if(e.moral<15&&Math.random()<0.4){if(!bossScn()){meta.emp=meta.emp.filter(x=>x!==e);baja(e,'Dimitió con el ánimo por los suelos (estaba el encargado)',true);notes.push(e.name+' ha dejado el trabajo');return;}quit.push(e);}
     const d={st:'ok',at:0,busy:0,task:null,slack:null,slackT:0,seen:0};
-    if(e.off===meta.day)d.st='off';
+    if(e.off===meta.day||(e.offTo&&e.offTo>=meta.day))d.st='off';
     else if(Math.random()<(e.moral<30?0.3:0.03)*(1.3-e.punt)){d.st='abs';e.st.abs++;notes.push(e.name+' no viene hoy');logE(e,'Faltó sin avisar');}
     else if(Math.random()<0.4*(1-e.punt)){d.st='late';d.at=rnd(8,30);e.st.late++;logE(e,'Llegó tarde');}
     if(d.st==='ok'||d.st==='late'){
@@ -8679,7 +9376,7 @@ function offTick(dt){
   const out=CAT.filter(x=>(meta.stock[x.id]||0)<=0).length/CAT.length;
   /* Promos con existencias: +2 % de clientes cada una; la competencia del barrio resta (rivalDrop). */
   const PA=promoOn().filter(p=>PROMO[p.t]&&(meta.stock[p.id]||0)>0);
-  const dem=OFF.dem*(0.2+0.16*meta.rep)*(1-0.6*out)*(1+0.03*Math.min(meta.day,10))*(meta.promo===meta.day?1.15:1)*(meta.champ===meta.day?0.96:1)*dowF(meta.day)*(1+0.02*PA.length)*(1-rivalDrop());
+  const dem=OFF.dem*(0.2+0.16*meta.rep)*(1-0.6*out)*(1+0.03*Math.min(meta.day,10))*(meta.promo===meta.day?1.15:1)*(meta.champ===meta.day?0.96:1)*dowF(meta.day)*calF(meta.day)*(meta.spyTo>=meta.day?0.97:1)*(meta.spyUp>=meta.day?1.03:1)*(1+0.02*PA.length)*(1-rivalDrop());
   /* La curva de horas punta reparte el día sin cambiar el total: el tope de las cajas es diario (en la punta van a tope, en el valle se rascan la barriga). */
   const rate=Math.min(dem,n*OFF.cap)*rushF()/(run.dur||100);
   run.offAcc=(run.offAcc||0)+dt*rate;
@@ -8710,7 +9407,7 @@ function step(ts,hid){
             run.queue.splice(1,0,nc);
             cutScene(nc);
           }else run.queue.push(nc);
-          const ia=Math.max(5.5,9.5-meta.day*0.6)/(rushF()*dowF(meta.day));
+          const ia=Math.max(5.5,9.5-meta.day*0.6)/(rushF()*dowF(meta.day)*calF(meta.day));
           run.next=custRng(()=>rnd(ia*0.7,ia*1.3));
           renderAll();
         }else run.next=2;
