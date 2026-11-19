@@ -6096,7 +6096,7 @@ function dailyExit(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.19-120';
+const APPV='2026.11.19-121';
 /* Compara versiones por números («-9» < «-11»), no como texto. */
 const verCmp=(a,b)=>{const x=String(a).split(/[.-]/).map(Number),y=String(b).split(/[.-]/).map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
 try{const vt=document.createElement('div');vt.id='vtag';vt.textContent='v'+APPV;document.body.appendChild(vt);}catch(e){}
@@ -6465,8 +6465,8 @@ function roomChanged(){
 function appsHtml(){
   const ap=appsList();if(!ap.length)return '';
   return '<div class="zone-title">📝 SOLICITUDES DE EMPLEO</div><div class="shop">'+ap.map(([u,m])=>{
-    const r=m.apply,full=staffOf(r).length>=ROLES[r].max;
-    return `<div class="up"><div class="t"><b>${m.on?'🟢':'⚪'} 🎮 ${esc(cleanName(m.name))}</b>Solicita ${JOB_IC[r]} ${ROLES[r].n}${full?' · el puesto está completo: despide a alguien antes':''}</div>
+    const r=m.apply,full=realFull(r),npcFull=!full&&staffOf(r).length>=ROLES[r].max;
+    return `<div class="up"><div class="t"><b>${m.on?'🟢':'⚪'} 🎮 ${esc(cleanName(m.name))}</b>Solicita ${JOB_IC[r]} ${ROLES[r].n}${full?' · ya hay '+ROLES[r].max+' jugadores reales en ese puesto':npcFull?' · está lleno de NPC, pero las personas reales tienen prioridad: entra igual y te sobra un NPC':''}</div>
       <button class="btn go" data-act="rhire" data-u="${esc(u)}" ${full?'disabled':''}>Contratar</button><button class="btn no" data-act="rreject" data-u="${esc(u)}">No</button></div>`;
   }).join('')+'</div>';
 }
@@ -6474,12 +6474,16 @@ function appsAlerts(){
   return appsList().map(([u,m])=>{const r=m.apply,full=staffOf(r).length>=ROLES[r].max;
     return `<div class="alert"><span class="at">📝 ${esc(cleanName(m.name))} solicita ${ROLES[r].n}</span><span class="who"><button class="btn" data-act="rhire" data-u="${esc(u)}" ${full?'disabled title="Puesto completo"':''}>Contratar</button><button class="btn off" data-act="rreject" data-u="${esc(u)}">No</button></span></div>`;}).join('');
 }
+/* Los jugadores reales tienen prioridad: un puesto solo está «completo» para ellos si ya hay tantos reales como plazas.
+   Si está lleno de NPC, el real entra igual y sobra un NPC (despídele cuando quieras desde 🗂️ RR.HH. o el cierre). */
+const realFull=r=>staffOf(r).filter(e=>e.real).length>=ROLES[r].max;
 function hireReal(u){
   const m=room.members[u];if(!isHost()||!m||!ROLES[m.apply])return;
-  if(staffOf(m.apply).length>=ROLES[m.apply].max){toast('Ese puesto está completo.','bad');return;}
+  if(realFull(m.apply)){toast('Ese puesto está completo de jugadores reales.','bad');return;}
+  const over=staffOf(m.apply).length>=ROLES[m.apply].max;
   fb.update(rRef('members/'+u),{role:m.apply,apply:null}).catch(e=>console.warn(e));fillVac(m.apply);if(run&&!run.over)run.hires=(run.hires||0)+1;
   note(u,'¡Contratado/a en '+ROLES[m.apply].n+'! Empiezas ya, en periodo de prueba.',false,'hire');
-  sOk();toast('🎮 '+cleanName(m.name)+' contratado/a en '+ROLES[m.apply].n,'good');
+  sOk();toast('🎮 '+cleanName(m.name)+' contratado/a en '+ROLES[m.apply].n+(over?'. El puesto ya estaba lleno de NPC: te sobra uno, despídelo cuando quieras en 🗂️ RR.HH.':''),'good');
 }
 function rejectReal(u){
   const m=room.members[u];if(!isHost()||!m)return;
@@ -6758,7 +6762,7 @@ function onAct(a){
   if(a.k==='hire'||a.k==='reject'){
     if(e.role!=='rrhh'){note(e.real,'Eso solo lo puede hacer Recursos Humanos.',true);return;}
     const m=room.members[a.u];if(!m||!m.apply)return;
-    if(a.k==='hire'){if(staffOf(m.apply).length>=ROLES[m.apply].max){note(e.real,'Ese puesto está completo.',true);return;}hireReal(a.u);note(e.real,'Has contratado a '+cleanName(m.name)+' en '+ROLES[m.apply].n+'.');}
+    if(a.k==='hire'){if(realFull(m.apply)){note(e.real,'Ese puesto está completo.',true);return;}hireReal(a.u);note(e.real,'Has contratado a '+cleanName(m.name)+' en '+ROLES[m.apply].n+'.');}
     else{rejectReal(a.u);note(e.real,'Has rechazado la solicitud de '+cleanName(m.name)+'.');}
     logE(e,(a.k==='hire'?'Contrató a ':'Rechazó a ')+cleanName(m.name));
     return;
@@ -9544,12 +9548,13 @@ function shopFireHtml(e){
 }
 function shopFireGo(id,r){
   const e=empById(id);if(!e||!FIRE[r]||!canShopFire()||(r==='trial'&&!(e.trial>0)))return;
+  {const d=run&&!run.over&&run.duty&&run.duty[e.id];if(d&&(d.busy||(run.away&&run.away.cover===e.id)))pullOff(e);}
   const role=e.role,o=fireCore(e,r);shopFire=null;if(run&&run.duty)delete run.duty[e.id];
   const vm=setVac(role,1);poolFill();scrTab.shop='staff';pg=0;sBad();renderHud();
   scene({k:'carta:'+id,who:'✉️',head:'✉️ CARTA DE DESPIDO',tag:'🔥 '+FIRE[r].t.replace(/^\S+ /,''),name:empTag(e),prio:5,def:'ok',over:true,
     txt:'Recoge tus cosas. Seguridad te acompaña a la puerta.',body:`<div class="sdoc carta">${o.L.join('<br>')}</div><div class="scn-hint">${/^📢/.test(vm)?vm+' Tienes candidatos en «Candidatos disponibles», debajo de la plantilla.':'Si quieres sustituirle, publica una vacante (＋) en la pestaña Plantilla.'}</div>`,
     choices:[{t:'📁 Archivar',k:'ok',cls:'go',key:'A',stamp:'ARCHIVADO',sc:'ok'}]});
-  if(scrRender)scrRender();saveGame(true);
+  if(scrRender&&$('#overlay').classList.contains('show'))scrRender();else{renderAll();renderDept(true);}saveGame(!(run&&!run.over));
 }
 function poolHtml(){
   const P=poolFill();
@@ -9560,7 +9565,7 @@ function poolHtml(){
 function rrhhHtml(){
   let nm=meta.day+1;while(nm%3!==1)nm++;
   const rr=staffOf('rrhh'),realRR=rr.find(e=>e.real&&run&&run.duty&&working(e));
-  const rows=meta.emp.map(e=>`<div class="up"><div class="t"><b>${e.face} ${e.real?'🎮':flag(e)} ${e.name} · ${ROLES[e.role].n}</b>${e.days} ${e.days===1?'turno':'turnos'} · ${monthTxt(e.wage)}${e.trial?' · en prueba ('+e.trial+')':''}${e.warn?' · ⚠️×'+e.warn:''}${e.enc?' · '+encT(e):''}</div><span class="mood">${mood(e)}</span>${e.real?'':`<button class="btn mini" data-act="talk" data-e="${e.id}">📖 Ficha</button>`}${encBtns(e)}</div>`).join('')||'<div class="supd">Plantilla vacía.</div>';
+  const rows=meta.emp.map(e=>`<div class="up"><div class="t"><b>${e.face} ${e.real?'🎮':flag(e)} ${e.name} · ${ROLES[e.role].n}</b>${e.days} ${e.days===1?'turno':'turnos'} · ${monthTxt(e.wage)}${e.trial?' · en prueba ('+e.trial+')':''}${e.warn?' · ⚠️×'+e.warn:''}${e.enc?' · '+encT(e):''}</div><span class="mood">${mood(e)}</span>${e.real?'':`<button class="btn mini" data-act="talk" data-e="${e.id}">📖 Ficha</button>`}${encBtns(e)}${canShopFire()&&shopFire!==e.id&&!(room&&e.real&&e.real===room.uid)?`<button class="btn mini no" data-act="sfire" data-e="${e.id}">🔥 Despedir</button>`:''}</div>${canShopFire()&&shopFire===e.id?shopFireHtml(e):''}`).join('')||'<div class="supd">Plantilla vacía.</div>';
   return `<div class="dgrid"><div class="dpanel"><h2>🗂️ Recursos Humanos</h2>${staffBlock('rrhh')}
     ${isHost()?(appsHtml()||'<div class="zone-title">📝 SOLICITUDES DE EMPLEO</div><div class="supd">No hay solicitudes pendientes.</div>')+(realRR?`<div class="supd">${realRR.name} (RR.HH.) también puede tramitarlas desde su pantalla.</div>`:''):'<div class="supd">En solitario no llegan solicitudes de personas reales: contratas en la reunión de personal.</div>'}
     <div class="zone-title">📢 VACANTES</div><div class="supd">${rr.some(e=>!e.real)&&!realRR?'Tu gente de RR.HH. las publica sola cuando falta personal; tú también puedes.':realRR?realRR.name+' (RR.HH.) también las publica desde su puesto.':'Sin nadie en RR.HH., las publicas tú y entrevistas tú: cuando llega un candidato sale el aviso 🧑‍💼 «Entrevista» y vas con «Voy yo».'} Solo se presentan candidatos a puestos con vacante.</div>
@@ -9957,8 +9962,8 @@ function onClick(e){
   else if(a==='integc'){const c=meet&&meet.cands[+b.dataset.c];if(c&&!c.integ&&meta.money>=INTEG){meta.money-=INTEG;c.integ=integBand(c.hon);sCoin();renderHud();showMeeting();}}
   else if(a==='explfire'){if(meet&&!meet.expl){meet.expl=1;meta.surv=0;meta.emp.forEach(x=>{x.moral=clamp(x.moral+2,0,100);});toast('📣 Lo has explicado claro. El equipo lo entiende.','good');sOk();showMeeting();}}
   else if(a==='enc')encSet(+b.dataset.e,b.dataset.k);
-  else if(a==='sfire'){shopFire=+b.dataset.e;if(scrRender)scrRender();}
-  else if(a==='sfirex'){shopFire=null;if(scrRender)scrRender();}
+  else if(a==='sfire'){shopFire=+b.dataset.e;if(scrRender&&$('#overlay').classList.contains('show'))scrRender();else renderDept(true);}
+  else if(a==='sfirex'){shopFire=null;if(scrRender&&$('#overlay').classList.contains('show'))scrRender();else renderDept(true);}
   else if(a==='sfirego')shopFireGo(+b.dataset.e,b.dataset.r);
   else if(a==='firex'){if(meet){meet.firing=null;showMeeting();}}
   else if(a==='req')applyReq(+b.dataset.r,+b.dataset.o);
