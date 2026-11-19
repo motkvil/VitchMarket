@@ -1,5 +1,5 @@
 {
- "fuente": "tienda.mercadona.es (mad1) 2026-11-18",
+ "fuente": "tienda.mercadona.es (mad1) 2026-11-19",
  "verificado": true,
  "productos": [
   {
@@ -599,6 +599,357 @@
    "e": "🥦",
    "iva": 4,
    "mid": "61261"
+  },
+  {
+   "id": 67,
+   "n": "Leche desnatada",
+   "f": "Brik 1 l",
+   "p": 81,
+   "e": "🥛",
+   "iva": 4,
+   "mid": "10384"
+  },
+  {
+   "id": 68,
+   "n": "Nata para cocinar",
+   "f": "Brik 50 cl",
+   "p": 155,
+   "e": "🍶",
+   "iva": 10,
+   "mid": "10161"
+  },
+  {
+   "id": 69,
+   "n": "Queso fresco de Burgos",
+   "f": "Pack-4 250 g",
+   "p": 115,
+   "e": "🧀",
+   "iva": 4,
+   "mid": "52408"
+  },
+  {
+   "id": 70,
+   "n": "Natillas de vainilla",
+   "f": "Pack-4 500 g",
+   "p": 105,
+   "e": "🍮",
+   "iva": 10,
+   "mid": "68137"
+  },
+  {
+   "id": 71,
+   "n": "Yogur de fresa",
+   "f": "Pack-4 500 g",
+   "p": 75,
+   "e": "🍓",
+   "iva": 10,
+   "mid": "20040"
+  },
+  {
+   "id": 72,
+   "n": "Magdalenas",
+   "f": "Paquete 550 g",
+   "p": 200,
+   "e": "🧁",
+   "iva": 10,
+   "mid": "60846"
+  },
+  {
+   "id": 73,
+   "n": "Galletas Digestive",
+   "f": "Paquete 800 g",
+   "p": 155,
+   "e": "🍪",
+   "iva": 10,
+   "mid": "14214"
+  },
+  {
+   "id": 74,
+   "n": "Cacao soluble",
+   "f": "Bote 383 g",
+   "p": 500,
+   "e": "🍫",
+   "iva": 10,
+   "mid": "13019"
+  },
+  {
+   "id": 75,
+   "n": "Macarrones",
+   "f": "Paquete 1 kg",
+   "p": 120,
+   "e": "🍝",
+   "iva": 10,
+   "mid": "6250"
+  },
+  {
+   "id": 76,
+   "n": "Fideos",
+   "f": "Paquete 500 g",
+   "p": 85,
+   "e": "🍜",
+   "iva": 10,
+   "mid": "6256"
+  },
+  {
+   "id": 77,
+   "n": "Caldo de pollo",
+   "f": "Brik 1 l",
+   "p": 75,
+   "e": "🍲",
+   "iva": 10,
+   "mid": "7313"
+  },
+  {
+   "id": 78,
+   "n": "Vinagre de vino",
+   "f": "Botella 1 l",
+   "p": 65,
+   "e": "🍶",
+   "iva": 10,
+   "mid": "4940"
+  },
+  {
+   "id": 79,
+   "n": "Mayonesa",
+   "f": "Tarro 50 cl",
+   "p": 120,
+   "e": "🫙",
+   "iva": 10,
+   "mid": "13406"
+  },
+  {
+   "id": 80,
+   "n": "Ketchup",
+   "f": "Bote 600 g",
+   "p": 105,
+   "e": "🍅",
+   "iva": 10,
+   "mid": "23579"
+  },
+  {
+   "id": 81,
+   "n": "Té verde",
+   "f": "Caja 30 g",
+   "p": 75,
+   "e": "🍵",
+   "iva": 10,
+   "mid": "13651"
+  },
+  {
+   "id": 82,
+   "n": "Almendras tostadas",
+   "f": "Paquete 200 g",
+   "p": 240,
+   "e": "🌰",
+   "iva": 10,
+   "mid": "11960"
+  },
+  {
+   "id": 83,
+   "n": "Cacahuetes",
+   "f": "Paquete 250 g",
+   "p": 90,
+   "e": "🥜",
+   "iva": 10,
+   "mid": "34820"
+  },
+  {
+   "id": 84,
+   "n": "Mejillones en escabeche",
+   "f": "Lata 111 g",
+   "p": 180,
+   "e": "🦪",
+   "iva": 10,
+   "mid": "18619"
+  },
+  {
+   "id": 85,
+   "n": "Maíz dulce",
+   "f": "Pack-3 450 g",
+   "p": 155,
+   "e": "🌽",
+   "iva": 10,
+   "mid": "16712"
+  },
+  {
+   "id": 86,
+   "n": "Pimientos del piquillo",
+   "f": "Tarro 340 g",
+   "p": 145,
+   "e": "🫑",
+   "iva": 10,
+   "mid": "16005"
+  },
+  {
+   "id": 87,
+   "n": "Carne picada",
+   "f": "Bandeja 500 g",
+   "p": 410,
+   "e": "🥩",
+   "iva": 10,
+   "mid": "2869"
+  },
+  {
+   "id": 88,
+   "n": "Lomo de cerdo",
+   "f": "Pieza 1,1 kg",
+   "p": 495,
+   "e": "🥩",
+   "iva": 10,
+   "mid": "4590"
+  },
+  {
+   "id": 89,
+   "n": "Jamón serrano",
+   "f": "Paquete 240 g",
+   "p": 395,
+   "e": "🍖",
+   "iva": 10,
+   "mid": "59124"
+  },
+  {
+   "id": 90,
+   "n": "Tortilla de patata",
+   "f": "Bandeja 600 g",
+   "p": 270,
+   "e": "🍳",
+   "iva": 10,
+   "mid": "80771"
+  },
+  {
+   "id": 91,
+   "n": "Queso curado",
+   "f": "Pieza 410 g",
+   "p": 467,
+   "e": "🧀",
+   "iva": 4,
+   "mid": "50965"
+  },
+  {
+   "id": 92,
+   "n": "Pimiento rojo",
+   "f": "Pieza 220 g",
+   "p": 64,
+   "e": "🫑",
+   "iva": 4,
+   "mid": "69310"
+  },
+  {
+   "id": 93,
+   "n": "Pepino",
+   "f": "Pieza 200 g",
+   "p": 37,
+   "e": "🥒",
+   "iva": 4,
+   "mid": "69584"
+  },
+  {
+   "id": 94,
+   "n": "Calabacín",
+   "f": "Pieza 390 g",
+   "p": 74,
+   "e": "🥒",
+   "iva": 4,
+   "mid": "69338"
+  },
+  {
+   "id": 95,
+   "n": "Ajos",
+   "f": "Malla 250 g",
+   "p": 185,
+   "e": "🧄",
+   "iva": 4,
+   "mid": "69297"
+  },
+  {
+   "id": 96,
+   "n": "Pera conferencia",
+   "f": "Pieza 170 g",
+   "p": 43,
+   "e": "🍐",
+   "iva": 4,
+   "mid": "3119"
+  },
+  {
+   "id": 97,
+   "n": "Agua con gas",
+   "f": "Botella 1,5 l",
+   "p": 42,
+   "e": "🫧",
+   "iva": 10,
+   "mid": "28468"
+  },
+  {
+   "id": 98,
+   "n": "Refresco de naranja",
+   "f": "Botella 2 l",
+   "p": 95,
+   "e": "🍊",
+   "iva": 21,
+   "mid": "21729"
+  },
+  {
+   "id": 99,
+   "n": "Bebida de avena",
+   "f": "Brik 1 l",
+   "p": 95,
+   "e": "🌾",
+   "iva": 10,
+   "mid": "23912"
+  },
+  {
+   "id": 100,
+   "n": "Lejía",
+   "f": "Botella 2 l",
+   "p": 80,
+   "e": "🧴",
+   "iva": 21,
+   "mid": "43075"
+  },
+  {
+   "id": 101,
+   "n": "Desodorante",
+   "f": "5 cl",
+   "p": 90,
+   "e": "🧴",
+   "iva": 21,
+   "mid": "60670"
+  },
+  {
+   "id": 102,
+   "n": "Friegasuelos",
+   "f": "Botella 1,5 l",
+   "p": 95,
+   "e": "🪣",
+   "iva": 21,
+   "mid": "43347"
+  },
+  {
+   "id": 103,
+   "n": "Croquetas de jamón",
+   "f": "Paquete 500 g",
+   "p": 140,
+   "e": "🧆",
+   "iva": 10,
+   "mid": "63400"
+  },
+  {
+   "id": 104,
+   "n": "Patatas prefritas congeladas",
+   "f": "Paquete 1 kg",
+   "p": 185,
+   "e": "🍟",
+   "iva": 10,
+   "mid": "61421"
+  },
+  {
+   "id": 105,
+   "n": "Calamar troceado",
+   "f": "Paquete",
+   "p": 570,
+   "e": "🦑",
+   "iva": 10,
+   "mid": "24242"
   }
  ]
 }

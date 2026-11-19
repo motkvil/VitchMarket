@@ -21,7 +21,7 @@ setInterval(()=>{try{
   const ov=d.querySelector('#overlay.show');
   if(ov){
     if(g&&g.lastEnd&&g.lastEnd.fin&&g.run&&g.run.over&&lastDay!==g.meta.day){lastDay=g.meta.day;const f=g.lastEnd.fin,r=g.run;
-      rows.push([g.meta.day,r.served,r.angry,r.errors,fmt(f.S),fmt(f.O||0),fmt(f.cogs),fmt(f.P),fmt(f.FX||0),fmt(f.K),fmt(f.F),fmt(f.oth),fmt(f.iva+f.is),fmt(f.net),fmt(f.B),fmt(g.meta.money),g.meta.rep.toFixed(1),g.meta.emp.length,Object.values(g.meta.stock).filter(v=>v<=0).length,Object.values(g.meta.back).reduce((a,b)=>a+b,0),g.meta.emp.filter(e=>e.role==='alm').map(e=>(r.duty[e.id]||{}).st+':'+Math.round(e.moral)).join(','),g.meta.emp.map(e=>e.role+':'+((r.duty[e.id]||{}).st)).join(' ')]);}
+      rows.push([g.meta.day,r.served,r.angry,r.errors,fmt(f.S),fmt(f.O||0),fmt(f.cogs),fmt(f.P),fmt(f.FX||0),fmt(f.K),fmt(f.F),fmt(f.oth),fmt(f.iva+f.is),fmt(f.net),fmt(f.B),fmt(g.meta.money),g.meta.rep.toFixed(1),g.meta.emp.length,Object.values(g.meta.stock).filter(v=>v<=0).length,Object.values(g.meta.back).reduce((a,b)=>a+b,0),g.meta.emp.filter(e=>e.role==='alm').map(e=>(r.duty[e.id]||{}).st+':'+Math.round(e.moral)).join(','),g.meta.emp.map(e=>e.role+':'+((r.duty[e.id]||{}).st)).join(' '),'ánimo '+g.meta.emp.map(e=>e.role+Math.round(e.moral)+(e.nd?'['+Object.entries(e.nd).filter(([k,v])=>v<30).map(([k,v])=>k+Math.round(v)).join(',')+']':'')+(e.th&&e.th.length?'{'+e.th.map(t=>t.v).join(',')+'}':'')).join(' ')]);}
     const h=ov.querySelector('h2');if(h&&/Quiebra|Concurso|despedido/.test(h.textContent)){over=h.textContent;finish();return;}
     if(rows.length>=DAYS){finish();return;}
     const b=ov.querySelector('[data-act=start],[data-act=next],[data-act=meeting],[data-act=endmeet]');cl(b);return;}
