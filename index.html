@@ -6057,7 +6057,7 @@ function dailyExit(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.19-115';
+const APPV='2026.11.19-116';
 /* Compara versiones por números («-9» < «-11»), no como texto. */
 const verCmp=(a,b)=>{const x=String(a).split(/[.-]/).map(Number),y=String(b).split(/[.-]/).map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
 try{const vt=document.createElement('div');vt.id='vtag';vt.textContent='v'+APPV;document.body.appendChild(vt);}catch(e){}
@@ -8731,7 +8731,7 @@ function toggleCams(){cam.on=!cam.on;const w=$('#camwin');if(w)w.classList.toggl
 const taskSpot=t=>t.k==='truck'?{k:'dock'}:t.k==='order'?{k:'post',r:'alm',i:1}:t.k==='cash'?{k:'post',r:'back',i:1}:t.k==='cv'||t.k==='feud'?{k:'post',r:'rrhh',i:1}:t.k==='tk'?{k:'post',r:t.dept||'back',i:0}:{k:'aisle',n:t.n||1};
 function camModel(){
   if(!run||run.over)return null;
-  const idx={},staff=[];
+  const idx={},staff=[],OT=offTills(),otn={};OT.forEach(o=>otn[o.e.id]=o.n);
   meta.emp.forEach(e=>{
     const i=idx[e.role]=(idx[e.role]||0)+1,d=run.duty&&run.duty[e.id];
     if(!d||d.st==='abs'||d.st==='off'||d.st==='gone'||run.t<d.at)return;
@@ -8740,6 +8740,7 @@ function camModel(){
     else if(d.busy){const t=run.tasks.find(y=>y.id===d.task);if(t){w=taskSpot(t);b=t.ic;x='con un aviso: '+t.s;}}
     else if(run.tills&&e.real&&run.tills[e.real]){const tl=run.tills[e.real];w={k:'till',n:tl.n};b='🧾';x='en la Caja '+tl.n+' ('+Object.keys(tl.out).length+' en cola)';}
     else if(d.slack){const p=d.slack.split(' ');b=p[0];x=p.slice(1).join(' ');if(b==='☕')w={k:'brk'};else if(b==='🚬')w={k:'door'};}
+    else if(otn[e.id]&&!d.soc){const k=otn[e.id];w={k:'till',n:k};b='🧾';x='en la Caja '+k+' ('+((run.oq&&run.oq[k]||[]).length)+' en cola)';}
     else if(d.soc){const o=empById(d.soc.w);b=d.soc.ic;x=(SOCS[d.soc.k]||'de charla con')+' '+(o?o.name:'alguien');
       if(o&&d.soc.lead){const od=run.duty[o.id],t=od&&od.busy&&run.tasks.find(y=>y.id===od.task);let oi=0;for(const z of meta.emp){if(z.role===o.role){if(z===o)break;oi++;}}w=Object.assign({},t?taskSpot(t):{k:'post',r:o.role,i:oi},{dx:10});}}
     staff.push({id:e.id,f:e.face,n:e.name,u:e.real||'',r:e.role,w,b,x,sl:d.slack&&!d.busy?1:0,bz:d.busy||(run.away&&run.away.cover===e.id)?1:0});
@@ -8752,6 +8753,7 @@ function camModel(){
   me.n=isHost()?(playerName()||'Jefe'):'Tú';
   return {d:meta.day,t:Math.round(run.t),dur:run.dur,open:!run.closing,me,staff,
     q:run.queue.map(c=>({id:c.id,f:c.face,a:c.p<c.max*0.3?1:0})),
+    oq:OT.map(o=>({n:o.n,c:((run.oq&&run.oq[o.n])||[]).map(c=>({id:c.id,f:c.f}))})).concat(Object.values(run.tills||{}).map(t=>({n:t.n,c:Object.keys(t.out||{}).map(k=>({id:'r'+k,f:'🧑'}))}))),
     tasks:run.tasks.filter(t=>!t.who).map(t=>({id:t.id,k:t.k,ic:t.ic,n:t.n||0}))};
 }
 function camPos(w,j){const p=camPos0(w,j);return w&&w.dx?[p[0]+w.dx,p[1]]:p;}
@@ -8773,14 +8775,15 @@ function camTargets(m){
   });
   const me=m.me||{w:{k:'till'}},p=camPos(me.w||{},0);
   T.me={x:p[0],y:p[1],f:'🧑‍💼',lab:isMember()?'👑 '+(me.n||'Jefe'):'Tú',nt:isMember()?String(me.n||'Jefe').split(' ')[0]:'Tú',boss:1,b:me.b||'',hl:!isMember(),info:(isMember()?'👑 '+(me.n||'El jefe'):'Tú')+' · '+(me.x||'')};
-  toArr(m.q).forEach((c,i)=>{T['c'+c.id]={x:i===0?200:200-22*i,y:i===0?196:188,f:c.f,lab:'',b:c.a?'😠':'',hl:false,cust:1,info:i===0?'Cliente en caja':'Cliente en la cola ('+(i+1)+'º)'};});
+  toArr(m.oq).forEach(o=>{const x0=o.n===1?60:128;toArr(o.c).forEach((c,i)=>{T['o'+c.id]={x:x0-10*i,y:196-9*i,f:c.f,lab:'',b:'',hl:false,cust:1,info:i===0?'Cliente en la Caja '+o.n:'Cliente en la cola de la Caja '+o.n+' ('+(i+1)+'º)'};});});
+  toArr(m.q).forEach((c,i)=>{T['c'+c.id]={x:200-10*i,y:196-9*i,f:c.f,lab:'',b:c.a?'😠':'',hl:false,cust:1,info:i===0?'Cliente en caja':'Cliente en la cola ('+(i+1)+'º)'};});
   return T;
 }
 function camStep(m,dt){
   const T=camTargets(m),S=cam.spr,sp=70*dt;
   Object.keys(T).forEach(id=>{
     let s=S[id];
-    if(!s){const st=id[0]==='c'?aislePt():SPOT.door;s=S[id]={x:st[0],y:st[1]};}
+    if(!s){const st=id[0]==='c'||id[0]==='o'?aislePt():SPOT.door;s=S[id]={x:st[0],y:st[1]};}
     Object.assign(s,T[id],{tx:T[id].x,ty:T[id].y,x:s.x,y:s.y,gone:0});
   });
   Object.keys(S).forEach(id=>{const s=S[id];if(!T[id]&&!s.gone){s.gone=1;s.tx=SPOT.door[0];s.ty=SPOT.door[1]+12;s.hl=false;}});
@@ -9397,7 +9400,7 @@ function setTab(k){
   openGuide('j_'+k,true);
 }
 /* Un cajero de la casa se pone en la Caja 3 mientras el jefe dirige (primero los de Caja). */
-function pickCashier(){const f=meta.emp.filter(e=>isFree(e)&&!e.real&&!run.duty[e.id].slack);return f.find(x=>x.role==='atc')||f.find(x=>x.pers==='servicial')||f[0]||null;}
+function pickCashier(){const f=meta.emp.filter(e=>isFree(e)&&!e.real&&!run.duty[e.id].slack).sort((a,b)=>perf(b,b.role==='atc')-perf(a,a.role==='atc'));return f.find(x=>x.role==='atc')||f.find(x=>x.pers==='servicial')||f[0]||null;}
 function autoTill(){
   run.away={mult:1.6,cover:null,served:0,auto:1};
   const e=pickCashier();
@@ -9691,9 +9694,15 @@ function rushTick(){
         run.rushHelp={id:f.id,to:run.dur*(P.e-9)/12};f.moral=clamp(f.moral+1,0,100);toast('🧾 '+f.face+' '+f.name+' abre otra caja para la hora punta.','good');}});
   });
 }
+/* Cajas 1 y 2 que llevan los cajeros NPC libres (las que no ocupa un cajero real). */
+function offTills(){if(!run||run.remote)return [];const used=Object.values(run.tills||{}).map(t=>t.n),fr=staffOf('atc').filter(e=>!e.real&&isFree(e)&&!run.duty[e.id].slack),out=[];
+  [1,2].forEach(n=>{if(!used.includes(n)&&fr.length)out.push({n,e:fr.shift()});});return out;}
 function offTick(dt){
-  const n=Math.min(Math.max(0,2-Object.keys(run.tills||{}).length),staffOf('atc').filter(e=>!e.real&&isFree(e)&&!run.duty[e.id].slack).length);
-  if(!n){run.offShut=(run.offShut||0)+dt;if(run.offShut>(run.dur||100)*0.12&&!run.offWarn&&!(room&&room.sim)&&!run.remote){run.offWarn=1;toast('🚫 Las Cajas 1 y 2 están cerradas: no hay ningún cajero libre. Ahí se despacha a casi toda la clientela. Contrata cajeros en 🗂️ RR.HH. o vuelve tú a la Caja 3 para liberar al tuyo.','bad');}return;}
+  /* Quien te cubre la Caja 3 la lleva como una caja más: despacha su parte de la clientela (antes, cubrirte cerraba la Caja 1 o 2). */
+  const OT=offTills(),cv=run.away&&run.away.cover&&empById(run.away.cover)?1:0,n=OT.length+cv;
+  /* Colas visibles de las Cajas 1 y 2 (solo para las cámaras; las ventas se apuntan abajo como siempre). */
+  const oq=run.oq=run.oq||{1:[],2:[]};[1,2].forEach(k=>{if(!OT.some(o=>o.n===k))oq[k]=[];});
+  if(!n){run.offShut=(run.offShut||0)+dt;if(run.offShut>(run.dur||100)*0.12&&!run.offWarn&&!(room&&room.sim)&&!run.remote){run.offWarn=1;toast('🚫 Las Cajas 1 y 2 están cerradas: no hay ningún cajero libre. Ahí se despacha a casi toda la clientela. Contrata cajeros en 🗂️ RR.HH.','bad');}return;}
   const out=CAT.filter(x=>(meta.stock[x.id]||0)<=0).length/CAT.length;
   /* Promos con existencias: +2 % de clientes cada una; la competencia del barrio resta (rivalDrop). */
   const PA=promoOn().filter(p=>PROMO[p.t]&&(meta.stock[p.id]||0)>0);
@@ -9704,6 +9713,7 @@ function offTick(dt){
   while(run.offAcc>=1){run.offAcc--;let v=Math.round(OFF.ticket*custRng(()=>rnd(0.4,1.6),'or'));const c=Math.round(v*(SUPS[0].cf+OFF.merma));
     if(rivalCut())v=Math.round(v*0.98);
     run.offS+=v;run.offC+=c;run.offN++;meta.money+=v-c;
+    {const r=ri(0,n-1);if(r<OT.length){const q=oq[OT[r].n],tg=clamp(Math.round(rushF()*1.6+Math.random()),1,4);q.shift();while(q.length<tg)q.push({id:run.oqId=(run.oqId||0)+1,f:pick(FACES)});}}
     /* Ticket con promo: se lleva la pareja o el trío de la estantería (unidades de verdad; su coste ya se pagó al comprarlas). */
     if(PA.length&&Math.random()<0.04*PA.length){const p=pick(PA),y=CAT.find(z=>z.id===p.id),P=PROMO[p.t],u=Math.min(meta.stock[p.id]||0,p.t==='20'?ri(1,2):P.k);
       if(y&&u>0){meta.stock[p.id]-=u;const d=promoDiscN(p.t,u,y.p),nv=u*y.p-d,pc=u*unitCost(y,'hac');
