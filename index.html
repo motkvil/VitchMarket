@@ -5822,8 +5822,9 @@ function showShop(noFit){
   scrRender=()=>showShop();
   const e=lastEnd,r=e.res;
   const DST={ok:'Trabajó',late:'Llegó tarde',abs:'Faltó sin avisar',off:'Libró',gone:'Desconectado/a'};
+  const cf=canShopFire();if(shopFire!=null&&!meta.emp.some(x=>x.id===shopFire))shopFire=null;
   const dep=meta.emp.map(e=>{const d=run.duty[e.id];
-    return `<div class="up"><div class="t"><b>${e.face} ${e.real?'🎮':flag(e)} ${e.name} · ${ROLES[e.role].n}</b>${d?DST[d.st]||'—':'—'}${e.trial?' · en prueba':''} · ${monthTxt(e.wage)} · ${verdict(e)}</div><span class="mood" title="Ánimo">${mood(e)}</span></div>`;
+    return `<div class="up"><div class="t"><b>${e.face} ${e.real?'🎮':flag(e)} ${e.name} · ${ROLES[e.role].n}</b>${d?DST[d.st]||'—':'—'}${e.trial?' · en prueba':''}${e.warn?' · ⚠️×'+e.warn:''} · ${monthTxt(e.wage)} · ${verdict(e)}</div><span class="mood" title="Ánimo">${mood(e)}</span>${cf&&shopFire!==e.id?`<button class="btn mini no" data-act="sfire" data-e="${e.id}">🔥 Despedir</button>`:''}</div>${cf&&shopFire===e.id?shopFireHtml(e):''}`;
   });
   const meetDay=meta.day%3===1&&unl('rrhh');
   let nm=meta.day+1;while(nm%3!==1||nm<(unl('rrhh')?0:unlDay('rrhh')))nm++;
@@ -6057,7 +6058,7 @@ function dailyExit(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.19-116';
+const APPV='2026.11.19-117';
 /* Compara versiones por números («-9» < «-11»), no como texto. */
 const verCmp=(a,b)=>{const x=String(a).split(/[.-]/).map(Number),y=String(b).split(/[.-]/).map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
 try{const vt=document.createElement('div');vt.id='vtag';vt.textContent='v'+APPV;document.body.appendChild(vt);}catch(e){}
@@ -9461,6 +9462,26 @@ function poolFill(){
 }
 /* Vacantes rápidas (para el cierre): ＋/− por puesto, como en RR.HH. */
 function vacQuick(){return '<div class="zone-title">📢 VACANTES</div><div class="vacs">'+Object.keys(ROLES).map(k=>{const v=vacOpen(k),n=staffOf(k).length,mx=ROLES[k].max;return `<div class="vac ${v?'on':''}"><span class="vn"><i>${JOB_IC[k]}</i><b>${ROLES[k].n}</b><small>${n}/${mx}${v?' · se busca '+v:''}</small></span><span><button class="btn" data-act="vac" data-r="${k}" data-d="-1" ${v?'':'disabled'}>−</button> <button class="btn go" data-act="vac" data-r="${k}" data-d="1" ${n+v>=mx?'disabled':''}>＋</button></span></div>`;}).join('')+'</div>';}
+/* Despedir desde el cierre (pestaña Plantilla), sin esperar a la reunión: mismo cálculo legal (fireCore), la carta en una escena
+   y se publica la vacante de su puesto para que salgan candidatos al momento. Solo quien manda (solitario o jefe; nunca el encargado). */
+let shopFire=null;
+const canShopFire=()=>!!(meta&&!meet&&!daily&&!(room&&room.sim)&&(!room||isHost()));
+function shopFireHtml(e){
+  const h=hist(e),fin=finiquito(e);
+  return `<div class="supd shfire"><b>¿Por qué despides a ${esc(e.name)}?</b> Si el motivo no se demuestra con lo registrado, te puede denunciar. Finiquito: ${fmt(fin)} · indemnización: ${e.trial?'nada si no supera la prueba':fmt(indProc(e))+' si es procedente, '+fmt(indImp(e))+' si es improcedente'}.${e.warn?'':' Ojo: nunca le has dado un toque.'} Al despedir se publica su vacante y te salen candidatos abajo.
+    <div class="opts">${Object.keys(FIRE).filter(k=>k!=='trial'||e.trial>0).map(k=>{const ok=k==='trial'||FIRE[k].ok(e,h),ev=FIRE[k].ev(e,h);
+      return `<button class="btn ${k==='none'?'':ok?'':'off'}" data-act="sfirego" data-e="${e.id}" data-r="${k}">${FIRE[k].t}${ev?` <small>${ok?'✅':'❌'} ${ev}</small>`:''}</button>`;}).join('')}
+    <button class="btn" data-act="sfirex">Mejor no le despido</button></div></div>`;
+}
+function shopFireGo(id,r){
+  const e=empById(id);if(!e||!FIRE[r]||!canShopFire()||(r==='trial'&&!(e.trial>0)))return;
+  const role=e.role,o=fireCore(e,r);shopFire=null;if(run&&run.duty)delete run.duty[e.id];
+  const vm=setVac(role,1);poolFill();scrTab.shop='staff';pg=0;sBad();renderHud();
+  scene({k:'carta:'+id,who:'✉️',head:'✉️ CARTA DE DESPIDO',tag:'🔥 '+FIRE[r].t.replace(/^\S+ /,''),name:empTag(e),prio:5,def:'ok',over:true,
+    txt:'Recoge tus cosas. Seguridad te acompaña a la puerta.',body:`<div class="sdoc carta">${o.L.join('<br>')}</div><div class="scn-hint">${/^📢/.test(vm)?vm+' Tienes candidatos en «Candidatos disponibles», debajo de la plantilla.':'Si quieres sustituirle, publica una vacante (＋) en la pestaña Plantilla.'}</div>`,
+    choices:[{t:'📁 Archivar',k:'ok',cls:'go',key:'A',stamp:'ARCHIVADO',sc:'ok'}]});
+  if(scrRender)scrRender();saveGame(true);
+}
 function poolHtml(){
   const P=poolFill();
   if(!P.length)return '<div class="zone-title">🧑‍💼 CANDIDATOS DISPONIBLES</div><div class="supd">No hay nadie esperando: publica una vacante (＋ en el puesto que quieras) y aquí te salen candidatos al momento.</div>';
@@ -9866,6 +9887,9 @@ function onClick(e){
   else if(a==='fire')fireEmp(+b.dataset.e,b.dataset.r);
   else if(a==='integc'){const c=meet&&meet.cands[+b.dataset.c];if(c&&!c.integ&&meta.money>=INTEG){meta.money-=INTEG;c.integ=integBand(c.hon);sCoin();renderHud();showMeeting();}}
   else if(a==='explfire'){if(meet&&!meet.expl){meet.expl=1;meta.surv=0;meta.emp.forEach(x=>{x.moral=clamp(x.moral+2,0,100);});toast('📣 Lo has explicado claro. El equipo lo entiende.','good');sOk();showMeeting();}}
+  else if(a==='sfire'){shopFire=+b.dataset.e;if(scrRender)scrRender();}
+  else if(a==='sfirex'){shopFire=null;if(scrRender)scrRender();}
+  else if(a==='sfirego')shopFireGo(+b.dataset.e,b.dataset.r);
   else if(a==='firex'){if(meet){meet.firing=null;showMeeting();}}
   else if(a==='req')applyReq(+b.dataset.r,+b.dataset.o);
   else if(a==='hirec')hireCand(+b.dataset.c);
