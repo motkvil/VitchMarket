@@ -1662,6 +1662,9 @@ body::before{content:'';position:fixed;top:0;left:0;right:0;height:env(safe-area
 .ndb{display:flex;align-items:center;gap:3px}.ndb i{font-style:normal}.ndb b{flex:1;height:8px;background:#e9e3d8;border-radius:4px;overflow:hidden;display:block}.ndb u{display:block;height:100%;text-decoration:none}
 .th{display:inline-block;background:#f3efe7;border-radius:10px;padding:1px 7px;margin:2px 2px 0 0;font-size:var(--fs-xs,12px)}.th.neg{background:#fde3e3;color:#8a1c22}.th.pos{background:#e2f5e6;color:#1d6b33}
 .es.soc{line-height:1.6}
+.champ{margin:6px 0 10px;padding:10px 12px;border-radius:12px;background:linear-gradient(180deg,#fff6d1,#ffe48a);border:2px solid #c99a00;color:#4a3300;font-size:var(--fs-s);box-shadow:0 3px 0 #c99a00}
+/* Revisión móvil (19-11-2026): nada por debajo de 12 px en vacantes, botones pequeños, pistas de escena y fichas. */
+@media (max-width:820px){.scn-head,.scn-head span,.dcard span,.mgsteps span,.scn-doc small,.vac small,.vac .vn small,.btn.mini,.scn-hint,#scene .sdoc dt,#scene .sdoc dd,#scene .sdoc span,.sideclose,.shop .up small,.pk-row small{font-size:12px!important}}
 </style>
 </head>
 <body>
@@ -3316,7 +3319,7 @@ function socHtml(e,mini){
    Chat entre reales: /rooms/VITCH/chat (chatSend/chatSubs, 30 mensajes, 140 letras, sin enlaces). Pruebas: ?soc=1 (invitaciones
    al momento y un rumor de partida para cada real). Nada de esto existe en solitario. */
 const SOC_T=(()=>{try{return new URLSearchParams(location.search).get('soc')==='1';}catch(e){return false;}})();
-const SOC_CD={cafe:60,que:20,rum:30,desm:30,def:45,plot:5,queja:120,rep:1},SOC_MAX=30;
+const SOC_CD={cafe:60,que:20,rum:30,desm:30,def:45,plot:5,queja:120,rep:1,ecall:6,egive:2,eani:20},SOC_MAX=30,SOC_ENC={ecall:1,egive:1,eani:1};
 const relLbl=af=>af>=60?['💞','uña y carne']:af>=25?['🤝','buen rollo']:af>-25?['😐','ni fu ni fa']:af>-50?['😒','roces']:['😤','no te traga'];
 function socR(u){run.socR=run.socR||{};return run.socR[u]||(run.socR[u]={cd:{},n:0,inv:null,nInv:0,invT:-99,q:0,plot:null,said:{}});}
 const onBreak=e=>{const d=run&&!run.over&&run.duty&&run.duty[e.id];return !!(d&&d.soc&&d.soc.cafe&&run.t<d.soc.u);};
@@ -3361,6 +3364,9 @@ function socView(){
     u[e.real]={rl,rum:sArr(e.know).slice(-5).reverse().map(r=>[r.id,capF(rumTxt(r)),r.a,r.b==null?-1:r.b]),
       plot:plot?{k:plot.k,t:plot.t,j:S.plot===plot.k?1:S.plot==='no:'+plot.k?-1:0}:null,
       inv:S.inv&&!S.inv.done?S.inv.pub:null,cafe:onBreak(e)?Math.ceil(run.duty[e.id].soc.u-run.t):0};
+    if(e.enc){const C=meta.emp.filter(o=>encScope(e,o)&&onFloor(o)),T=run.tasks.filter(t=>!t.who&&t.k!=='tk'&&tVis(t));
+      u[e.real].enc={t:encT(e),c:C.map(o=>{const d=run.duty[o.id]||{},t=isFree(o)&&!d.slack?T.find(x=>x.roles.includes(o.role)):null;
+        return [o.id,o.face,cleanName(o.name),o.role,staffState(o),d.slack&&!d.busy?1:0,mood(o),t?t.id:0,t?t.ic+' '+t.s:''];})};}
   });
   return {radio:sArr(meta.radio).slice(0,8).map(x=>[x.h||('T'+x.d),x.ic,x.t]),u};
 }
@@ -3463,12 +3469,28 @@ function socAct(e,a){
   if(!room||!run||run.over||!run.duty||!e||!e.real)return;
   const k=typeof a.a==='string'?a.a:'',S=socR(e.real),now=Date.now();if(!SOC_CD[k])return;
   if(!inStore(e)){note(e.real,'Desde casa no se cotillea: tienes que estar en la tienda.',true);return;}
-  if(k!=='rep'){
+  if(SOC_ENC[k]){const w=SOC_CD[k]*1000-(now-(S.cd[k]||0));if(w>0){note(e.real,'Espera '+Math.ceil(w/1000)+' s.',true);return;}}
+  if(k!=='rep'&&!SOC_ENC[k]){
     if(S.n>=SOC_MAX){note(e.real,'Ya has socializado bastante por hoy: a currar, que te ve el jefe.',true);return;}
     const w=SOC_CD[k]*1000-(now-(S.cd[k]||0));if(w>0){note(e.real,'Espera '+Math.ceil(w/1000)+' s antes de volver a hacerlo.',true);return;}
   }
   const N=v=>{const o=empById(+v);return o&&o!==e&&meta.emp.includes(o)?o:null;},knows=id=>sArr(e.know).find(x=>x.id===+id);
   let m=null,bad=false;
+  if(SOC_ENC[k]){
+    /* 🎖️ Órdenes del encargado/a real a la gente a su cargo. */
+    const o=N(a.e);if(!e.enc){note(e.real,'Para mandar tienes que ser encargad'+(isFem(e)?'a':'o')+'.',true);return;}
+    if(!o||o.real||!encScope(e,o)||!onFloor(o)){note(e.real,'Esa persona no está a tu cargo o no está en la tienda.',true);return;}
+    const d=run.duty[o.id];
+    if(k==='ecall'){
+      if(d.slack&&!d.busy){d.slack=null;d.slackT=0;d.soc=null;o.st.caught++;mor(o,-4);o.focus=Math.max(o.focus||0,1);relAdd(o,e,{af:-3});logE(o,e.name+' le pilló escaqueándose');socSay(e,pick(['¡'+o.name+', a currar!','Vamos, '+o.name+', que hay faena.']));radio('🎖️',e.name+' pilla a '+o.name+' escaqueándose.');m='📢 Pillas a '+o.name+' y vuelve a su puesto.';}
+      else{mor(o,-8);relAdd(o,e,{af:-6});think(o,'😤',e.name+' me ha echado la bronca sin motivo',-4,2,'encb:'+e.id);m='😬 '+o.name+' no se escaqueaba. Se ha molestado.';bad=true;}
+    }else if(k==='egive'){
+      const t=run.tasks.find(x=>x.id===+a.r&&!x.who&&x.roles.includes(o.role));
+      if(!t||!isFree(o)||d.slack){note(e.real,'Ese aviso ya lo tiene alguien o '+o.name+' está liad'+(isFem(o)?'a':'o')+'.',true);return;}
+      assignTask(t.id,String(o.id));m='🔧 Mandas a '+o.name+' a: '+t.ic+' '+t.s+'.';
+    }else{mor(o,5);relAdd(o,e,{af:3});think(o,'👍',e.name+' me ha dado ánimos',2,1,'enca:'+e.id);m='👍 Le das ánimos a '+o.name+'. Se le nota.';}
+    S.cd[k]=now;note(e.real,m,bad);return;
+  }
   if(k==='rep'){
     const I=S.inv;if(!I||I.done||I.id!==+a.r)return;const o=empById(I.o),ops=[I.pub.a[0],I.pub.b[0]];if(!ops.includes(a.o))return;
     I.done=1;if(!o||!meta.emp.includes(o))return;try{m=SOC_INV[I.k].go(o,e,a.o,I.x);}catch(x){console.warn('soc',x);}
@@ -3547,6 +3569,7 @@ function socPanel(st,role,can,d){
   const rum=toArr(me&&me.rum),rl=toArr(me&&me.rl),npc=rl.filter(c=>!c[5]),npcIn=npc.filter(c=>c[6]);
   const sel=(id,L)=>`<select class="socsel" id="${id}" aria-label="Elige compañero">${L.map(c=>`<option value="${c[0]}">${c[1]} ${esc(c[2])}</option>`).join('')}</select>`;
   let h=!S?'<div class="gf mute">La tienda está cerrada: aquí no hay nadie con quien cotillear. El chat sí funciona.</div>':'';
+  if(me&&me.enc){const E=me.enc,C=toArr(E.c);h+=`<h5>🎖️ TU EQUIPO <small>(${esc(E.t)})</small></h5>`+(C.length?C.map(([id,f,n,r,stt,sl,md,tid,ts])=>`<div class="pk-row"><span class="pe">${f}</span><div><b>${esc(n)} ${md||''}</b><small>${JOB_IC[r]||''} ${ROLES[r]?ROLES[r].s:''} · ${esc(stt)}</small></div><span class="wbtns">${tid?`<button class="btn mini go" data-act="soca" data-a="egive" data-e="${id}" data-r="${tid}" ${can?'':'disabled'} title="Mandarle a este aviso">🔧 ${esc(ts).slice(0,26)}</button>`:''}<button class="btn mini ${sl?'no':''}" data-act="soca" data-a="ecall" data-e="${id}" ${can?'':'disabled'} title="${sl?'Se está escaqueando: le pillas':'No se escaquea: si le echas la bronca, se molesta'}">📢 ¡A currar!</button><button class="btn mini" data-act="soca" data-a="eani" data-e="${id}" ${can?'':'disabled'}>👍 Ánimo</button></span></div>`).join(''):'<div class="supd">Ahora mismo no tienes a nadie a tu cargo en la tienda.</div>');}
   if(me&&me.cafe>0)h+=`<div class="rok">☕ Estás en el café: ${me.cafe} s. Mientras, no coges avisos${run&&run.remote?' y tu caja espera':''}.</div>`;
   if(S)h+='<h5>📻 RADIO PASILLO</h5><div class="radio">'+(toArr(S.radio).map(x=>`<div class="rp ${myN&&String(x[2]).includes(myN)?'mine':''}"><i>${esc(x[0])}</i> ${esc(x[1])} ${esc(x[2])}</div>`).join('')||'<div class="supd">Silencio en los pasillos. De momento.</div>')+'</div>';
   if(S)h+='<h5>🤫 LO QUE SE CUENTA <small>(verdad o no, a saber)</small></h5>'+(rum.length?(npcIn.length?`<div class="supd">Contárselo a ${sel('socto',npcIn)}</div>`:'')
@@ -5925,6 +5948,22 @@ async function submitScore(final){
       staff:meta.emp.length,score:days*100000+clamp(Math.round(meta.money/100),0,99999),final:!!final,ts:f.serverTimestamp()});
   }catch(e){console.warn('No se pudo subir la puntuación:',e);}
 }
+/* 🏆 Temporadas: el ranking se reinicia cada mes (hora de Madrid) por la fecha de la última subida (ts). Arriba, el campeón
+   del mes pasado con su corona; luego el top 10 del mes y el top 5 de siempre. Con ".indexOn": ["score","ts"] en las reglas. */
+const MESES=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+function seasonB(off){const [y,m]=madDate().split('-').map(Number),d=new Date(Date.UTC(y,m-1+(off||0),1));return {t:Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),1)-2*3600e3,n:MESES[d.getUTCMonth()]+' de '+d.getUTCFullYear()};}
+const rkRow=(r,me)=>`<li class="${me&&r.id===me?'me':''}"><b>${esc(r.name)}</b> · ${r.days} ${r.days===1?'turno':'turnos'} · ${fmt(r.money)}${r.final?' 🪦':''}</li>`;
+async function rankSeasonHtml(f,me){
+  const Q=(...a)=>f.get(f.query(f.ref(f.db,'ranking'),...a)),rowsOf=s=>{const r=[];s.forEach(c=>{r.push(Object.assign({id:c.key},c.val()));});return r;};
+  const cur=seasonB(0),prev=seasonB(-1);
+  const [sm,sp,sa]=await Promise.all([Q(f.orderByChild('ts'),f.startAt(cur.t),f.limitToLast(400)),Q(f.orderByChild('ts'),f.startAt(prev.t),f.endAt(cur.t-1),f.limitToLast(400)),Q(f.orderByChild('score'),f.limitToLast(5))]);
+  const top=a=>a.sort((x,y)=>(y.score||0)-(x.score||0));
+  const M=top(rowsOf(sm)).slice(0,10),P=top(rowsOf(sp))[0],A=rowsOf(sa).reverse();
+  return (P?`<div class="champ">👑 <b>Campeón/a de ${prev.n}</b>: ${esc(P.name)} · ${P.days} ${P.days===1?'turno':'turnos'} · ${fmt(P.money)}</div>`:'')
+    +`<div class="zone-title">🏆 TEMPORADA DE ${cur.n.toUpperCase()}</div>`+(M.length?'<ol class="rank">'+M.map(r=>rkRow(r,me)).join('')+'</ol>':'<div class="supd">Temporada nueva: nadie ha subido nada este mes. Estrénala tú.</div>')
+    +`<div class="supd">Cuenta la partida que hayas jugado este mes. El día 1 empieza otra temporada y el primero se lleva la corona 👑.</div>`
+    +(A.length?'<div class="zone-title">🏛️ DE SIEMPRE</div><ol class="rank">'+A.map(r=>rkRow(r,me)).join('')+'</ol>':'');
+}
 async function fillRanking(){
   if(!$('#rank'))return;
   if(!online()){$('#rank').innerHTML='';return;}
@@ -5932,11 +5971,9 @@ async function fillRanking(){
   const f=await fbInit(),box=()=>$('#rank');
   if(!f){if(box())box().innerHTML='<div class="supd">El ranking no está disponible ahora mismo.</div>';return;}
   try{
-    const s=await f.get(f.query(f.ref(f.db,'ranking'),f.orderByChild('score'),f.limitToLast(10)));
-    const rows=[];s.forEach(c=>{rows.push(Object.assign({id:c.key},c.val()));});rows.reverse();
+    const h=await rankSeasonHtml(f,meta&&meta.runId);
     if(!box())return;
-    box().innerHTML=rows.length?'<ol class="rank">'+rows.map(r=>`<li class="${r.id===meta.runId?'me':''}"><b>${esc(r.name)}</b> · ${r.days} ${r.days===1?'turno':'turnos'} · ${fmt(r.money)}${r.final?' 🪦':''}</li>`).join('')+'</ol>'
-      :'<div class="supd">Aún no hay nadie. Estrénalo tú.</div>';
+    box().innerHTML=h;
   }catch(e){console.warn('No se pudo cargar el ranking:',e);if(box())box().innerHTML='<div class="supd">No se pudo cargar el ranking.</div>';}
 }
 /* ---------- 🗓️ Reto del día (como el diario de Spelunky) ----------
@@ -6059,7 +6096,7 @@ function dailyExit(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.19-119';
+const APPV='2026.11.19-120';
 /* Compara versiones por números («-9» < «-11»), no como texto. */
 const verCmp=(a,b)=>{const x=String(a).split(/[.-]/).map(Number),y=String(b).split(/[.-]/).map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
 try{const vt=document.createElement('div');vt.id='vtag';vt.textContent='v'+APPV;document.body.appendChild(vt);}catch(e){}
@@ -6530,9 +6567,7 @@ function note(u,m,bad,k,x){if(isHost()&&u)fb.set(rRef('notes/'+u),Object.assign(
 async function loadRank(){
   if(Date.now()-rankAt<60000||!fb)return;rankAt=Date.now();
   try{
-    const s=await fb.get(fb.query(fb.ref(fb.db,'ranking'),fb.orderByChild('score'),fb.limitToLast(10)));
-    const rows=[];s.forEach(c=>{rows.push(Object.assign({id:c.key},c.val()));});rows.reverse();
-    rankCache=rows.length?'<ol class="rank">'+rows.map(r=>`<li><b>${esc(r.name)}</b> · ${r.days} ${r.days===1?'turno':'turnos'} · ${fmt(r.money)}${r.final?' 🪦':''}</li>`).join('')+'</ol>':'<div class="supd">Aún no hay nadie. Estrénalo tú.</div>';
+    rankCache=await rankSeasonHtml(fb,null);
   }catch(e){rankCache='<div class="supd">No se pudo cargar el ranking.</div>';}
   if(isMember())renderMember();
 }
@@ -7013,22 +7048,23 @@ const isFree=e=>inStore(e)&&!run.duty[e.id].busy;
    e.enc=2 = encargado/a general (como mucho uno), manda en toda la plantilla NPC. Mientras trabaja y no se escaquea:
    los suyos se escaquean la mitad, cada ~6 s pilla al que lleve >6 s escaqueado y lo devuelve al tajo (−3 de ánimo; −6 si es
    capullo o de trato seco) y, si tiene trato ≥0,5, su gente rinde +0,03. Cuesta +10 % de sueldo (+5 % más el general). */
-const encScope=(b,e)=>b!==e&&!e.real&&!b.real&&(b.enc===2||(b.enc&&b.role===e.role));
+const encScope=(b,e)=>b!==e&&!e.real&&(b.enc===2||(b.enc&&b.role===e.role));
 function encOf(e){if(!run||!run.duty||!meta||e.real)return null;return meta.emp.find(b=>b.enc&&encScope(b,e)&&working(b)&&run.t>=(run.duty[b.id].at||0)&&!run.duty[b.id].slack)||null;}
 const encT=e=>e.enc===2?'⭐ '+gx('encargad{o|a}',isFem(e))+' general':e.enc?'🎖️ '+gx('encargad{o|a}',isFem(e))+' de '+ROLES[e.role].s:'';
 function encBtns(e){
-  if(e.real||!canShopFire())return '';
+  if(!canShopFire()||(e.real&&!room))return '';
   if(e.enc===2)return `<button class="btn mini" data-act="enc" data-e="${e.id}" data-k="down" title="Vuelve a su puesto y a su sueldo de antes; −15 de ánimo">⬇️ Quitar cargo</button>`;
   if(e.enc)return (meta.emp.some(x=>x.enc===2)?'':`<button class="btn mini go" data-act="enc" data-e="${e.id}" data-k="gen" title="Manda en toda la plantilla: +5 % más de sueldo">⭐ General</button>`)+`<button class="btn mini" data-act="enc" data-e="${e.id}" data-k="down" title="Vuelve a su puesto y a su sueldo de antes; −15 de ánimo">⬇️ Quitar</button>`;
   if(e.trial>0||e.days<3||meta.emp.some(x=>x.enc&&x.role===e.role))return '';
   return `<button class="btn mini go" data-act="enc" data-e="${e.id}" data-k="up" title="Manda en ${ROLES[e.role].s}: los suyos se escaquean menos y les pilla si lo hacen. +10 % de sueldo">🎖️ Ascender</button>`;
 }
 function encSet(id,k){
-  const e=empById(id);if(!e||e.real||!canShopFire())return;
+  const e=empById(id);if(!e||!canShopFire()||(e.real&&!room))return;
   if(k==='up'&&!e.enc&&!meta.emp.some(x=>x.enc&&x.role===e.role)){e.enc=1;e.wage=Math.round(e.wage*1.1);mor(e,12);logE(e,'Ascendid'+(isFem(e)?'a':'o')+' a '+encT(e).replace(/^\S+ /,''));memo(e,'🎖️','Le ascendiste',10,4,'enc');fact('ascenso',e,null,10);radio('🎖️',e.name+' es '+encT(e).replace(/^\S+ /,'')+'.');toast('🎖️ '+e.name+' manda ahora en '+ROLES[e.role].s+' (+10 % de sueldo: '+monthTxt(e.wage)+').','good');}
   else if(k==='gen'&&e.enc===1&&!meta.emp.some(x=>x.enc===2)){e.enc=2;e.wage=Math.round(e.wage*1.05);mor(e,8);logE(e,'Ascendid'+(isFem(e)?'a':'o')+' a encargad'+(isFem(e)?'a':'o')+' general');radio('⭐',e.name+' es '+encT(e).replace(/^\S+ /,'')+'. Se acabó el café largo.');toast('⭐ '+e.name+' manda en toda la plantilla ('+monthTxt(e.wage)+').','good');}
   else if(k==='down'&&e.enc){e.wage=Math.round(e.wage/(e.enc===2?1.155:1.1));e.enc=0;mor(e,-15);logE(e,'Le quitaste el cargo de encargad'+(isFem(e)?'a':'o'));think(e,'😞','Le quitaron el cargo',-6,4,'enc');radio('⬇️',e.name+' ya no es '+gx('encargad{o|a}',isFem(e))+'.');toast(e.name+' vuelve a ser uno/a más ('+monthTxt(e.wage)+').','bad');}
   else return;
+  if(e.real&&isHost())note(e.real,e.enc?'🎖️ Ahora eres '+encT(e).replace(/^\S+ /,'')+' ('+monthTxt(e.wage)+'). En ☕ Corrillo tienes «🎖️ Tu equipo»: mandar a cada uno a un aviso, pillar a quien se escaquea y dar ánimos.':'⬇️ Ya no eres '+gx('encargad{o|a}',isFem(e))+'. Vuelves a tu sueldo de antes ('+monthTxt(e.wage)+').',!e.enc,e.enc?'raise':'warn');
   sOk();renderHud();if(scrRender&&$('#overlay').classList.contains('show'))scrRender();else renderDept(true);saveGame(!(run&&!run.over));
 }
 function perf(e,match,lang){
@@ -7215,7 +7251,7 @@ function tickStaff(dt){
   });
   /* 🎖️ El encargado/a hace la ronda: pilla al que lleva rato escaqueado y lo devuelve a su puesto. */
   if(!run.remote&&(run.encT=(run.encT||0)+dt)>6){run.encT=0;
-    meta.emp.forEach(x=>{const d=run.duty[x.id];if(!d||!d.slack||d.busy||(d.slackT||0)<6||x.real)return;const b=encOf(x);if(!b)return;
+    meta.emp.forEach(x=>{const d=run.duty[x.id];if(!d||!d.slack||d.busy||(d.slackT||0)<6||x.real)return;const b=encOf(x);if(!b||b.real)return;
       const hard=b.pers==='capullo'||b.trato<0.4;d.slack=null;d.slackT=0;d.soc=null;x.st.caught++;mor(x,hard?-6:-3);x.focus=Math.max(x.focus||0,1);
       relAdd(x,b,{af:hard?-6:-2});logE(x,b.name+' ('+encT(b).replace(/^\S+ /,'')+') le pilló escaqueándose');
       socSay(b,hard?pick(['¡'+x.name+', a currar o te vas a la calle!','Te pago para trabajar, no para mirar el móvil.','¡Vamos, '+x.name+', que no estamos de vacaciones!']):pick(['Venga, '+x.name+', que hay faena.',x.name+', échame una mano, anda.','Vamos, '+x.name+', que luego descansamos.']),hard);
@@ -7464,7 +7500,7 @@ function sendQueue(e,n,boss){
 /* ---------- minijuegos cuando vas tú ---------- */
 const AISLES=[[1,'Lácteos y huevos',1,8],[2,'Panadería y desayuno',9,13],[3,'Despensa',14,23],[4,'Aperitivos y conservas',24,29],[5,'Carne y pescado',30,37],[6,'Fruta y verdura',38,48],[7,'Bebidas',49,55],[8,'Droguería',56,64],[9,'Congelados',65,66]];
 /* Los productos 67+ (ampliación del catálogo) van por lista: AISLE_X[pasillo] = ids. */
-const AISLE_X={1:[67,68,69,70,71],2:[72,73,74],3:[75,76,77,78,79,80,81],4:[82,83,84,85,86],5:[87,88,89,90,91],6:[92,93,94,95,96],7:[97,98,99],8:[100,101,102],9:[103,104,105]};
+const AISLE_X={1:[67,68,69,70,71,106],2:[72,73,74,107,108,109,110,111,112],3:[75,76,77,78,79,80,81,113,114,115,116],4:[82,83,84,85,86,117,118,119,120,121,122],5:[87,88,89,90,91,123,124,125,126],6:[92,93,94,95,96,127,128,129,130,131],7:[97,98,99,132,133,134,135,136,137],8:[100,101,102,138,139,140,141,142,143,144,145],9:[103,104,105,146,147,148,149,150]};
 const aisleOf=id=>(AISLES.find(a=>(id>=a[2]&&id<=a[3])||(AISLE_X[a[0]]||[]).includes(id))||AISLES[2])[0];
 const ZONES=[['frio','❄️ Cámara de frío'],['fruta','🍎 Fruta y verdura'],['drog','🧴 Droguería'],['seco','📦 Seco y bebidas']];
 const zoneOf=id=>{const a=aisleOf(id);return a===1||a===5||a===9?'frio':a===6?'fruta':a===8?'drog':'seco';};

@@ -59,7 +59,7 @@ function client(){
     onChildAdded(r,cb){const L={type:'child',path:r.path,cb,seen:new Set()};listeners.push(L);notify(r.path);return()=>{L.off=1;};},
     onDisconnect:()=>({set:async()=>{},remove:async()=>{},cancel:async()=>{}}),
     serverTimestamp:()=>({'.sv':'timestamp'}),
-    query:r=>r,orderByChild:()=>0,limitToLast:()=>0});
+    query:r=>r,orderByChild:()=>0,limitToLast:()=>0,startAt:()=>0,endAt:()=>0});
 }
 
 /* ---------- dos navegadores ---------- */

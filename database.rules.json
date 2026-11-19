@@ -5,7 +5,8 @@
     "ranking": {
       ".read": true,
       ".indexOn": [
-        "score"
+        "score",
+        "ts"
       ],
       "$run": {
         ".write": "auth != null && (!data.exists() || data.child('uid').val() === auth.uid)",

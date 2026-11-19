@@ -950,6 +950,415 @@
    "e": "🦑",
    "iva": 10,
    "mid": "24242"
+  },
+  {
+   "id": 106,
+   "n": "Kéfir natural",
+   "f": "Bote 500 g",
+   "p": 110,
+   "e": "🥛",
+   "iva": 10,
+   "mid": "20029"
+  },
+  {
+   "id": 107,
+   "n": "Pan integral",
+   "f": "350 g",
+   "p": 150,
+   "e": "🍞",
+   "iva": 4,
+   "mid": "12049.1"
+  },
+  {
+   "id": 108,
+   "n": "Sobaos",
+   "f": "Paquete 480 g",
+   "p": 200,
+   "e": "🧁",
+   "iva": 10,
+   "mid": "82699"
+  },
+  {
+   "id": 109,
+   "n": "Mermelada de fresa",
+   "f": "Tarro 400 g",
+   "p": 145,
+   "e": "🍓",
+   "iva": 10,
+   "mid": "86755"
+  },
+  {
+   "id": 110,
+   "n": "Miel de flores",
+   "f": "Bote 500 g",
+   "p": 320,
+   "e": "🍯",
+   "iva": 10,
+   "mid": "15430"
+  },
+  {
+   "id": 111,
+   "n": "Café en cápsulas",
+   "f": "Caja 110 g",
+   "p": 380,
+   "e": "☕",
+   "iva": 10,
+   "mid": "52774"
+  },
+  {
+   "id": 112,
+   "n": "Manzanilla",
+   "f": "Caja 27 g",
+   "p": 65,
+   "e": "🌼",
+   "iva": 10,
+   "mid": "11168"
+  },
+  {
+   "id": 113,
+   "n": "Tomate triturado",
+   "f": "Bote 400 g",
+   "p": 55,
+   "e": "🥫",
+   "iva": 10,
+   "mid": "16044"
+  },
+  {
+   "id": 114,
+   "n": "Lentejas pardinas",
+   "f": "Paquete 1 kg",
+   "p": 185,
+   "e": "🫘",
+   "iva": 4,
+   "mid": "5330"
+  },
+  {
+   "id": 115,
+   "n": "Garbanzos secos",
+   "f": "Paquete 1 kg",
+   "p": 215,
+   "e": "🫘",
+   "iva": 4,
+   "mid": "5214"
+  },
+  {
+   "id": 116,
+   "n": "Champiñón laminado",
+   "f": "Pack-3 450 g",
+   "p": 180,
+   "e": "🍄",
+   "iva": 10,
+   "mid": "16616"
+  },
+  {
+   "id": 117,
+   "n": "Aceitunas negras",
+   "f": "Bote 350 g",
+   "p": 105,
+   "e": "🫒",
+   "iva": 10,
+   "mid": "52734"
+  },
+  {
+   "id": 118,
+   "n": "Berberechos",
+   "f": "Lata 111 g",
+   "p": 325,
+   "e": "🐚",
+   "iva": 10,
+   "mid": "18553"
+  },
+  {
+   "id": 119,
+   "n": "Pipas de girasol",
+   "f": "Paquete 200 g",
+   "p": 110,
+   "e": "🌻",
+   "iva": 10,
+   "mid": "34079"
+  },
+  {
+   "id": 120,
+   "n": "Palomitas",
+   "f": "Paquete 270 g",
+   "p": 110,
+   "e": "🍿",
+   "iva": 10,
+   "mid": "34822"
+  },
+  {
+   "id": 121,
+   "n": "Nueces",
+   "f": "Paquete 200 g",
+   "p": 240,
+   "e": "🌰",
+   "iva": 10,
+   "mid": "34024"
+  },
+  {
+   "id": 122,
+   "n": "Sardinas ahumadas",
+   "f": "Bandeja 85 g",
+   "p": 215,
+   "e": "🐟",
+   "iva": 10,
+   "mid": "18436"
+  },
+  {
+   "id": 123,
+   "n": "Pavo en lonchas",
+   "f": "Paquete 225 g",
+   "p": 230,
+   "e": "🦃",
+   "iva": 10,
+   "mid": "17775"
+  },
+  {
+   "id": 124,
+   "n": "Salmón ahumado",
+   "f": "Paquete 100 g",
+   "p": 370,
+   "e": "🐟",
+   "iva": 10,
+   "mid": "53444"
+  },
+  {
+   "id": 125,
+   "n": "Burger de pollo",
+   "f": "Bandeja 540 g",
+   "p": 380,
+   "e": "🍔",
+   "iva": 10,
+   "mid": "2622"
+  },
+  {
+   "id": 126,
+   "n": "Fuet",
+   "f": "Pieza 240 g",
+   "p": 250,
+   "e": "🌭",
+   "iva": 10,
+   "mid": "55108"
+  },
+  {
+   "id": 127,
+   "n": "Mandarinas",
+   "f": "Malla 2 kg",
+   "p": 350,
+   "e": "🍊",
+   "iva": 4,
+   "mid": "5504"
+  },
+  {
+   "id": 128,
+   "n": "Kiwi",
+   "f": "Pieza 110 g",
+   "p": 51,
+   "e": "🥝",
+   "iva": 4,
+   "mid": "3820"
+  },
+  {
+   "id": 129,
+   "n": "Berenjena",
+   "f": "Pieza 400 g",
+   "p": 88,
+   "e": "🍆",
+   "iva": 4,
+   "mid": "69326"
+  },
+  {
+   "id": 130,
+   "n": "Puerros",
+   "f": "450 g",
+   "p": 216,
+   "e": "🥬",
+   "iva": 4,
+   "mid": "68408"
+  },
+  {
+   "id": 131,
+   "n": "Judías verdes",
+   "f": "Paquete 350 g",
+   "p": 200,
+   "e": "🫛",
+   "iva": 4,
+   "mid": "68131"
+  },
+  {
+   "id": 132,
+   "n": "Zumo de melocotón y uva",
+   "f": "Pack-6 1,2 l",
+   "p": 150,
+   "e": "🧃",
+   "iva": 10,
+   "mid": "39216"
+  },
+  {
+   "id": 133,
+   "n": "Bebida energética",
+   "f": "Lata 25 cl",
+   "p": 40,
+   "e": "⚡",
+   "iva": 21,
+   "mid": "21697"
+  },
+  {
+   "id": 134,
+   "n": "Vino blanco",
+   "f": "Brik 1 l",
+   "p": 170,
+   "e": "🥂",
+   "iva": 21,
+   "mid": "66105",
+   "age": true
+  },
+  {
+   "id": 135,
+   "n": "Ginebra",
+   "f": "Botella 1 l",
+   "p": 1095,
+   "e": "🍸",
+   "iva": 21,
+   "mid": "28715",
+   "age": true
+  },
+  {
+   "id": 136,
+   "n": "Ron blanco",
+   "f": "Botella 70 cl",
+   "p": 570,
+   "e": "🥃",
+   "iva": 21,
+   "mid": "35919",
+   "age": true
+  },
+  {
+   "id": 137,
+   "n": "Sidra asturiana",
+   "f": "Botella 75 cl",
+   "p": 170,
+   "e": "🍏",
+   "iva": 21,
+   "mid": "28515",
+   "age": true
+  },
+  {
+   "id": 138,
+   "n": "Papel de aluminio",
+   "f": "Caja 30 m",
+   "p": 225,
+   "e": "🧻",
+   "iva": 21,
+   "mid": "49000"
+  },
+  {
+   "id": 139,
+   "n": "Film transparente",
+   "f": "Caja 80 m",
+   "p": 195,
+   "e": "🎞️",
+   "iva": 21,
+   "mid": "60294"
+  },
+  {
+   "id": 140,
+   "n": "Estropajo",
+   "f": "Paquete 3 ud",
+   "p": 90,
+   "e": "🧽",
+   "iva": 21,
+   "mid": "71342"
+  },
+  {
+   "id": 141,
+   "n": "Toallitas de bebé",
+   "f": "Paquete 80 ud",
+   "p": 100,
+   "e": "👶",
+   "iva": 21,
+   "mid": "79427"
+  },
+  {
+   "id": 142,
+   "n": "Compresas",
+   "f": "Paquete 1 ud",
+   "p": 120,
+   "e": "🌸",
+   "iva": 4,
+   "mid": "47380"
+  },
+  {
+   "id": 143,
+   "n": "Comida para gato",
+   "f": "Bote 400 g",
+   "p": 70,
+   "e": "🐱",
+   "iva": 21,
+   "mid": "52710"
+  },
+  {
+   "id": 144,
+   "n": "Comida para perro",
+   "f": "Bote 1,24 kg",
+   "p": 150,
+   "e": "🐶",
+   "iva": 21,
+   "mid": "17654"
+  },
+  {
+   "id": 145,
+   "n": "Gel-champú de bebé",
+   "f": "Bote 60 cl",
+   "p": 370,
+   "e": "🧴",
+   "iva": 21,
+   "mid": "46978"
+  },
+  {
+   "id": 146,
+   "n": "Pizza 4 quesos",
+   "f": "410 g",
+   "p": 290,
+   "e": "🍕",
+   "iva": 10,
+   "mid": "63580"
+  },
+  {
+   "id": 147,
+   "n": "Lasaña boloñesa",
+   "f": "Caja 600 g",
+   "p": 290,
+   "e": "🥘",
+   "iva": 10,
+   "mid": "86597"
+  },
+  {
+   "id": 148,
+   "n": "Gambas peladas",
+   "f": "Paquete",
+   "p": 490,
+   "e": "🦐",
+   "iva": 10,
+   "mid": "24181"
+  },
+  {
+   "id": 149,
+   "n": "Judía verde congelada",
+   "f": "Paquete 1 kg",
+   "p": 130,
+   "e": "🫛",
+   "iva": 4,
+   "mid": "61282"
+  },
+  {
+   "id": 150,
+   "n": "Pescadilla congelada",
+   "f": "Paquete",
+   "p": 525,
+   "e": "🐟",
+   "iva": 10,
+   "mid": "62176"
   }
  ]
 }
