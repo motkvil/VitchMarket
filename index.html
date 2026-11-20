@@ -6096,7 +6096,7 @@ function dailyExit(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.19-121';
+const APPV='2026.11.20-122';
 /* Compara versiones por números («-9» < «-11»), no como texto. */
 const verCmp=(a,b)=>{const x=String(a).split(/[.-]/).map(Number),y=String(b).split(/[.-]/).map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
 try{const vt=document.createElement('div');vt.id='vtag';vt.textContent='v'+APPV;document.body.appendChild(vt);}catch(e){}
@@ -7181,6 +7181,7 @@ function assignTask(tid,who){
 function pullOff(e){
   const d=run.duty[e.id];if(!d)return;
   if(run.away&&run.away.cover===e.id){run.away.cover=null;run.away.mult=1.6;toast(e.name+' deja la Caja 3 por necesidad del servicio.','bad');}
+  else if(d.task==='xcaja'){const n=run.xt&&run.xt[e.id];if(run.xt)delete run.xt[e.id];toast(e.name+' cierra la Caja '+(n||'')+' por necesidad del servicio.','bad');}
   else{const t2=run.tasks.find(x=>x.id===d.task);if(t2){t2.who=null;t2.real=0;t2.dl=run.t+TLIFE;toast(e.name+' deja «'+t2.s+'» a medias: vuelve a la lista.','bad');}}
   if(e.real)note(e.real,'📢 El jefe te cambia de tarea por necesidad del servicio.');
   d.busy=0;d.task=null;d.slack=null;
@@ -7483,10 +7484,33 @@ function coverServe(c,e){
   finish(c,false);
 }
 function supBtn(){if(!(run&&!run.over&&!run.remote))return '';const e=freeTill();
-  return (e&&run.queue.length>=2?`<button class="btn sup call" data-act="callq">📢 «¡Pasen a la otra caja!» · ${e.face} ${e.name}</button>`:'')+'<button class="btn sup" data-act="supervise">👀 Supervisar la tienda</button>';}
+  const X=xtList(),xb=X.map(x=>`<button class="btn sup" data-act="xtclose" data-e="${x.id}">🔒 Cerrar Caja ${run.xt[x.id]} · ${x.face} ${esc(x.name.split(' ')[0])}</button>`).join('')+(xtRoom()&&xtCands().length?'<button class="btn sup call" data-act="xtopen">🧾 Abrir otra caja · elige quién</button>':'');
+  return xb+(e&&run.queue.length>=2?`<button class="btn sup call" data-act="callq">📢 «¡Pasen a la otra caja!» · ${e.face} ${e.name}</button>`:'')+'<button class="btn sup" data-act="supervise">👀 Supervisar la tienda</button>';}
 /* Repartir la cola: un cajero/a de la casa libre abre otra caja y se lleva a los últimos de tu cola (las reclamaciones se quedan contigo).
    Lo hace solo cada cierto tiempo si ve tu cola larga (según su actitud y su ánimo), o cuando el jefe lo dice. */
-const freeTill=()=>run&&!run.remote&&Object.keys(run.tills||{}).length<2?staffOf('atc').find(e=>!e.real&&isFree(e)&&!run.duty[e.id].slack&&!(run.away&&run.away.cover===e.id)):null;
+const freeTill=()=>{if(!run||run.remote)return null;const x=xtList()[0];if(x)return x;return Object.keys(run.tills||{}).length<2?staffOf('atc').find(e=>!e.real&&isFree(e)&&!run.duty[e.id].slack&&!(run.away&&run.away.cover===e.id))||null:null;};
+/* 🧾 Abrir otra caja a mano: el jefe pone a cualquiera de la plantilla (NPC libre, de Caja o no) en la Caja 1 o 2.
+   run.xt[id] = n; queda ocupado (d.task='xcaja': no coge avisos) hasta que el jefe la cierra, se lo lleva a otra cosa o acaba el turno. */
+const xtOn=e=>{const d=run&&run.duty&&run.duty[e.id];return !!(run&&run.xt&&run.xt[e.id]&&d&&d.task==='xcaja'&&onFloor(e));};
+function xtList(){if(!run||!run.xt)return [];return Object.keys(run.xt).map(id=>empById(+id)).filter(e=>e&&meta.emp.includes(e)&&xtOn(e));}
+const xtCands=()=>meta.emp.filter(e=>!e.real&&onFloor(e)&&isFree(e)&&!run.duty[e.id].slack&&!(run.away&&run.away.cover===e.id)).sort((a,b)=>((b.role==='atc')-(a.role==='atc'))||perf(b,b.role==='atc')-perf(a,a.role==='atc'));
+const xtRoom=()=>Object.keys(run.tills||{}).length+offTills().length<2;
+function xtOpen(){
+  if(!run||run.over||run.remote)return;
+  if(!xtRoom()){toast('Las Cajas 1 y 2 ya están abiertas.','bad');return;}
+  const C=xtCands().slice(0,4);if(!C.length){toast('No hay nadie libre para abrir otra caja: todos están en un aviso, cubriéndote o no han llegado.','bad');return;}
+  scene({k:'xcaja:'+Date.now(),head:'🧾 ABRIR OTRA CAJA',tag:'Caja 1 o 2',who:'🧾',name:'¿Quién se pone?',prio:3,time:20,def:'no',
+    txt:'Elige a quien abre la caja. Se lleva a la gente de tu cola y no coge avisos de su departamento hasta que la cierres.',
+    body:`<div class="scn-hint">${C.map(e=>`${e.face} <b>${esc(e.name)}</b> · ${ROLES[e.role].s}${e.role==='atc'?' (es su puesto)':' (no es su puesto: −2 de ánimo y deja de hacer lo suyo)'}`).join('<br>')}</div>`,
+    choices:C.map((e,i)=>({t:'🧾 '+e.name.split(' ')[0]+' · '+ROLES[e.role].s,k:String(e.id),cls:i?'':'go',key:String(i+1),stamp:'CAJA ABIERTA',sc:'ok'})).concat([{t:'✖ Nada',k:'no',key:'N'}]),
+    onPick:k=>{if(k==='no')return;const e=empById(+k);if(!e||!xtRoom()||!xtCands().includes(e)){toast('Ya no está libre o ya no queda caja.','bad');return;}
+      const used=Object.values(run.tills||{}).map(t=>t.n).concat(Object.values(run.xt||{}),offTills().map(o=>o.n)),n=[1,2].find(x=>!used.includes(x))||2;
+      const d=run.duty[e.id];d.busy=1;d.task='xcaja';d.slack=null;d.soc=null;(run.xt=run.xt||{})[e.id]=n;
+      if(e.role!=='atc')mor(e,-2);logE(e,'Abrió la Caja '+n+' por orden tuya');
+      toast('🧾 '+e.face+' '+e.name+' abre la Caja '+n+'.','good');sendQueue(e,2,false);renderAll();}});
+}
+function xtClose(id){const e=empById(id);if(!run||!run.xt||!run.xt[id])return;const n=run.xt[id];delete run.xt[id];const d=e&&run.duty[e.id];if(d&&d.task==='xcaja'){d.busy=0;d.task=null;}
+  if(e)toast('🔒 '+e.name+' cierra la Caja '+n+' y vuelve a lo suyo.');renderAll();}
 function sendQueue(e,n,boss){
   if(!run||run.remote||!e)return 0;let k=0;
   for(let i=1;i<run.queue.length&&k<n;){const c=run.queue[i];if(c.phase==='complaint'||c.complaint){i++;continue;}
@@ -8811,6 +8835,7 @@ function camModel(){
     if(!d||d.st==='abs'||d.st==='off'||d.st==='gone'||run.t<d.at)return;
     let w={k:'post',r:e.role,i:i-1},b='',x='en su puesto';
     if(run.away&&run.away.cover===e.id){w={k:'till'};b='🧾';x='te está cubriendo la caja';}
+    else if(d.task==='xcaja'&&run.xt&&run.xt[e.id]){w={k:'till',n:run.xt[e.id]};b='🧾';x='en la Caja '+run.xt[e.id]+' ('+((run.oq&&run.oq[run.xt[e.id]])||[]).length+' en cola)';}
     else if(d.busy){const t=run.tasks.find(y=>y.id===d.task);if(t){w=taskSpot(t);b=t.ic;x='con un aviso: '+t.s;}}
     else if(run.tills&&e.real&&run.tills[e.real]){const tl=run.tills[e.real];w={k:'till',n:tl.n};b='🧾';x='en la Caja '+tl.n+' ('+Object.keys(tl.out).length+' en cola)';}
     else if(d.slack){const p=d.slack.split(' ');b=p[0];x=p.slice(1).join(' ');if(b==='☕')w={k:'brk'};else if(b==='🚬')w={k:'door'};}
@@ -9155,6 +9180,7 @@ function staffState(e){
   if(!run||run.over||!d)return 'fuera de turno';
   if(d.st==='gone')return 'desconectado/a';if(d.st==='abs')return '❌ falta hoy';if(d.st==='off')return '🏖️ libra hoy';if(run.t<d.at)return '⏰ aún no ha llegado';
   if(run.away&&run.away.cover===e.id)return '🧾 en tu Caja 3';
+  if(d.task==='xcaja'&&run.xt&&run.xt[e.id])return '🧾 en la Caja '+run.xt[e.id]+' (la abriste tú)';
   if(d.busy){const t=run.tasks.find(x=>x.who===e.id);return '🔧 '+(t?t.s:'en un aviso');}
   if(run.tills&&e.real&&run.tills[e.real])return '🧾 en la Caja '+run.tills[e.real].n;
   if(d.slack)return '😴 se escaquea';
@@ -9783,14 +9809,15 @@ function rushTick(){
     const e=freeTill();
     scene({k:'punta:'+i,look:'pa',head:'MEGAFONÍA',tag:'🔥 Hora punta',who:'🔔',name:'Megafonía',time:9,def:'no',prio:0,
       txt:`Ding-dong: se acerca la hora punta ${P.n} (${String(P.h).replace('.5',':30')}${String(P.h).includes('.5')?'':':00'}). ¿Abrimos otra caja?`,
-      body:`<div class="scn-hint">${e?e.face+' '+esc(e.name)+' está libre en Caja: abriría otra caja y se llevaría a la gente de tu cola hasta que pase la punta.':'Ahora mismo no hay nadie de Caja libre: la cola la aguantas tú.'}${dowF(meta.day)!==1?' Hoy es '+DOW[dowOf(meta.day)].toLowerCase()+'.':''}</div>`,
-      choices:[{t:e?'🧾 Abrir otra caja · '+e.name:'🧾 Abrir otra caja (nadie libre)',k:'go',cls:'go',key:'S',stamp:e?'CAJA ABIERTA':'NADIE LIBRE',sc:e?'ok':'bad'},{t:'🤷 Ya se apañarán',k:'no',key:'N'}],
-      onPick:k=>{if(k!=='go')return;const f=freeTill();if(!f){toast('No hay nadie de Caja libre para abrir otra caja.','bad');return;}
+      body:`<div class="scn-hint">${e?e.face+' '+esc(e.name)+' está libre en Caja: abriría otra caja y se llevaría a la gente de tu cola hasta que pase la punta.':'Ahora mismo no hay nadie de Caja libre: si dices que sí, eliges a alguien de otro departamento.'}${dowF(meta.day)!==1?' Hoy es '+DOW[dowOf(meta.day)].toLowerCase()+'.':''}</div>`,
+      choices:[{t:e?'🧾 Abrir otra caja · '+e.name:'🧾 Abrir otra caja · elige quién',k:'go',cls:'go',key:'S',stamp:'CAJA ABIERTA',sc:'ok'},{t:'🤷 Ya se apañarán',k:'no',key:'N'}],
+      onPick:k=>{if(k!=='go')return;const f=freeTill();if(!f){setTimeout(xtOpen,600);return;}
         run.rushHelp={id:f.id,to:run.dur*(P.e-9)/12};f.moral=clamp(f.moral+1,0,100);toast('🧾 '+f.face+' '+f.name+' abre otra caja para la hora punta.','good');}});
   });
 }
 /* Cajas 1 y 2 que llevan los cajeros NPC libres (las que no ocupa un cajero real). */
 function offTills(){if(!run||run.remote)return [];const used=Object.values(run.tills||{}).map(t=>t.n),fr=staffOf('atc').filter(e=>!e.real&&isFree(e)&&!run.duty[e.id].slack),out=[];
+  xtList().forEach(e=>{const n=run.xt[e.id];if(!used.includes(n)&&out.length<2){out.push({n,e});used.push(n);}});
   [1,2].forEach(n=>{if(!used.includes(n)&&fr.length)out.push({n,e:fr.shift()});});return out;}
 function offTick(dt){
   /* Quien te cubre la Caja 3 la lleva como una caja más: despacha su parte de la clientela (antes, cubrirte cerraba la Caja 1 o 2). */
@@ -9972,6 +9999,8 @@ function onClick(e){
   else if(a==='leave')doLeave(b.dataset.o,b.dataset.e);
   else if(a==='leavecancel'){pendingLeave=null;closeMG();}
   else if(a==='supervise')openSup();
+  else if(a==='xtopen')xtOpen();
+  else if(a==='xtclose')xtClose(+b.dataset.e);
   else if(a==='callq'){const e=freeTill();if(e)sendQueue(e,2,true);else toast('No hay ningún cajero libre ahora mismo.','bad');}
   else if(a==='return')returnTill();
   else if(a==='supact')supAct(+b.dataset.e,b.dataset.k);
