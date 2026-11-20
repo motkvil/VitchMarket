@@ -1665,6 +1665,7 @@ body::before{content:'';position:fixed;top:0;left:0;right:0;height:env(safe-area
 .champ{margin:6px 0 10px;padding:10px 12px;border-radius:12px;background:linear-gradient(180deg,#fff6d1,#ffe48a);border:2px solid #c99a00;color:#4a3300;font-size:var(--fs-s);box-shadow:0 3px 0 #c99a00}
 /* Revisión móvil (19-11-2026): nada por debajo de 12 px en vacantes, botones pequeños, pistas de escena y fichas. */
 @media (max-width:820px){.scn-head,.scn-head span,.dcard span,.mgsteps span,.scn-doc small,.vac small,.vac .vn small,.btn.mini,.scn-hint,#scene .sdoc dt,#scene .sdoc dd,#scene .sdoc span,.sideclose,.shop .up small,.pk-row small{font-size:12px!important}}
+.camtill{color:#ffe08a;font-size:12px;padding:2px 4px 4px;line-height:1.35}.camtill:empty{display:none}#isocap b{color:inherit}
 </style>
 </head>
 <body>
@@ -1706,12 +1707,12 @@ body::before{content:'';position:fixed;top:0;left:0;right:0;height:env(safe-area
       </main>
       <section class="dept" id="dept" hidden aria-live="polite"></section>
     </div>
-    <section class="isostore" id="isostore" aria-label="La tienda en directo"><div class="ptitle"><span>🏪 Tu tienda en directo</span><small id="isocap">Toca a alguien de la plantilla para hablarle</small></div><div id="isoslot"></div><div class="isobottom" id="isobottom"></div></section>
+    <section class="isostore" id="isostore" aria-label="La tienda en directo"><div class="ptitle"><span>🏪 Tu tienda en directo</span><small id="isocap" aria-live="off">Toca a alguien de la plantilla para hablarle</small></div><div id="isoslot"></div><div class="isobottom" id="isobottom"></div></section>
     <aside class="sidebar" id="sidebar" aria-label="Avisos, personal y cámaras">
       <div class="sidehead"><b>🔔 AVISOS</b><button class="btn mini go aall" id="aallBtn" data-act="aall" disabled title="Reparte todos los avisos pendientes entre el personal libre">⚡ Asignar todo</button><button class="btn mini sideclose" data-act="side" aria-label="Cerrar avisos">✕</button></div>
       <section class="alerts" id="alerts" aria-live="polite"></section>
       <section class="tasks" id="tasks" aria-label="Avisos en curso y personal"></section>
-      <div id="camwin" class="camwin" aria-label="Cámaras de seguridad"><div class="camhead"><span>📹 Toca una cámara para ampliarla, y a alguien de la plantilla para hablarle</span><button class="btn mini nmb on" data-act="camnm" aria-pressed="true" title="Nombres del personal en las cámaras y en la tienda en directo">🏷️ Nombres</button><button class="btn mini" data-act="cams" aria-label="Cerrar cámaras">✕</button></div><div id="camslot"></div></div>
+      <div id="camwin" class="camwin" aria-label="Cámaras de seguridad"><div class="camtill" id="camtill"></div><div class="camhead"><span>📹 Toca una cámara para ampliarla, y a alguien de la plantilla para hablarle</span><button class="btn mini nmb on" data-act="camnm" aria-pressed="true" title="Nombres del personal en las cámaras y en la tienda en directo">🏷️ Nombres</button><button class="btn mini" data-act="cams" aria-label="Cerrar cámaras">✕</button></div><div id="camslot"></div></div>
     </aside>
   </div>
   <button class="alertbtn" id="alertBtn" data-act="side" aria-label="Ver avisos">🔔<b>0</b></button>
@@ -5550,7 +5551,7 @@ function endDay(){
   meta.money-=iva+is;
   /* Para la carta trimestral de Hacienda (backScenes): lo declarado y pagado desde la última. */
   {const q=meta.taxQ=meta.taxQ||{r:0,s:0,iva:0,is:0,n:0};q.r+=ivaR;q.s+=ivaS;q.iva+=iva;q.is+=is;q.n++;}
-  const fin={cv:Math.round(run.cvS||0),cvN:run.cvN||0,hx:run.hx&&(run.hx.n||run.hx.seg)?run.hx:null,fk:run.fakes||0,fkN:run.fakeIn||0,fkO:run.fakeOut||0,cupL:run.cupL||0,cupO:run.cupOut||0,S,O,ON:run.offN||0,F,B,P:payroll,PB:payB,FX,INT,K,oth,cogs,iva,ivaR,ivaS,cred:meta.ivaCred||0,bai,is,net:bai-is,cash:delta-iva-is,m0:run.m0,div:DV,pu:run.promoU||0,pv:Math.round(run.promoV||0),pc:Math.round(run.promoC||0)};
+  const fin={SN:run.served||0,cv:Math.round(run.cvS||0),cvN:run.cvN||0,hx:run.hx&&(run.hx.n||run.hx.seg)?run.hx:null,fk:run.fakes||0,fkN:run.fakeIn||0,fkO:run.fakeOut||0,cupL:run.cupL||0,cupO:run.cupOut||0,S,O,ON:run.offN||0,F,B,P:payroll,PB:payB,FX,INT,K,oth,cogs,iva,ivaR,ivaS,cred:meta.ivaCred||0,bai,is,net:bai-is,cash:delta-iva-is,m0:run.m0,div:DV,pu:run.promoU||0,pv:Math.round(run.promoV||0),pc:Math.round(run.promoC||0)};
   /* Reserva legal (art. 274 LSC): el 10% del beneficio va a reserva hasta llegar al 20% del capital; solo cuando ya no hay pérdidas acumuladas. */
   {const rl=meta.resLeg||0;if(fin.net>0&&rl<CAP0*0.2&&balData().res>0){fin.rl=Math.min(Math.round(fin.net*0.1),CAP0*0.2-rl);meta.resLeg=rl+fin.rl;}}
   meta.hist=(meta.hist||[]).concat([{d:meta.day,s:S,n:fin.net}]).slice(-6);
@@ -5798,8 +5799,9 @@ function heroWhy(f){
   if(f.oth<0)add('💸','Reembolsos y compensaciones',f.oth,2);else add('🎁','Abonos y otros ingresos',f.oth||0);
   const C=D.sort((a,b)=>b.w-a.w).slice(0,sales?2:3);
   if(sales){const m=sales-(f.cogs||0)-((f.ivaR||0)-(f.ivaS||0)),big=(f.O||0)>f.S;
-    const cv=Math.min(f.cv||0,f.O||0),o12=(f.O||0)-cv,s3=(f.S||0)+cv,c3=cv?' (de eso, '+fmt(cv)+' lo despachó quien te cubría)':'';
-    C.unshift({ic:big?'🛒':'🧾',t:(big?'Las Cajas 1 y 2 vendieron '+fmt(o12)+(s3?' y tu Caja 3 '+fmt(s3)+c3:''):'Tu Caja 3 vendió '+fmt(s3)+c3+(o12?' y las Cajas 1 y 2 '+fmt(o12):''))+'. Quitando lo que costó la mercancía y el IVA, te quedan',v:m});}
+    const cv=Math.min(f.cv||0,f.O||0),o12=(f.O||0)-cv,s3=(f.S||0)+cv,c3=cv?', de los que '+(f.cvN||0)+' los despachó quien te cubría':'',
+      n12=Math.max(0,(f.ON||0)-(f.cvN||0)),n3=(f.SN||0)+(f.cvN||0),cl=n=>n+(n===1?' cliente':' clientes');
+    C.unshift({ic:big?'🛒':'🧾',t:(big?'Las Cajas 1 y 2 despacharon '+cl(n12)+' ('+fmt(o12)+')'+(s3?' y tu Caja 3, '+cl(n3)+' ('+fmt(s3)+c3+')':''):'Tu Caja 3 despachó '+cl(n3)+' ('+fmt(s3)+c3+')'+(o12?' y las Cajas 1 y 2, '+cl(n12)+' ('+fmt(o12)+')':''))+'. Quitando lo que costó la mercancía y el IVA, te quedan',v:m});}
   /* Si las Cajas 1 y 2 apenas abrieron, es casi siempre LA razón de perder: dilo con todas las letras. */
   const nC=staffOf('atc').length;
   if((f.ON||0)<40)C.unshift({ic:'🚫',t:(f.ON?'Las Cajas 1 y 2 casi no abrieron ('+f.ON+' clientes)':'Las Cajas 1 y 2 estuvieron cerradas todo el turno')+': solo abren con un cajero libre y '+(nC?'tienes '+nC+' en Caja, que estuvo cubriendo tu Caja 3 o con avisos':'no tienes ningún cajero')+'. Ahí se despacha a casi toda la clientela (más de 100 clientes por turno).',v:0,warn:1});
@@ -6096,7 +6098,7 @@ function dailyExit(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.20-122';
+const APPV='2026.11.20-123';
 /* Compara versiones por números («-9» < «-11»), no como texto. */
 const verCmp=(a,b)=>{const x=String(a).split(/[.-]/).map(Number),y=String(b).split(/[.-]/).map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
 try{const vt=document.createElement('div');vt.id='vtag';vt.textContent='v'+APPV;document.body.appendChild(vt);}catch(e){}
@@ -8850,7 +8852,7 @@ function camModel(){
     else me={w:{k:'roam'},b:run.away.auto?'📋':'👀',x:run.away.auto?'dirigiendo la tienda':'supervisando la tienda'};
   }
   me.n=isHost()?(playerName()||'Jefe'):'Tú';
-  return {d:meta.day,t:Math.round(run.t),dur:run.dur,open:!run.closing,me,staff,
+  return {d:meta.day,t:Math.round(run.t),dur:run.dur,open:!run.closing,sw:run.sw||0,me,staff,
     q:run.queue.map(c=>({id:c.id,f:c.face,a:c.p<c.max*0.3?1:0})),
     oq:OT.map(o=>({n:o.n,c:((run.oq&&run.oq[o.n])||[]).map(c=>({id:c.id,f:c.f}))})).concat(Object.values(run.tills||{}).map(t=>({n:t.n,c:Object.keys(t.out||{}).map(k=>({id:'r'+k,f:'🧑'}))}))),
     tasks:run.tasks.filter(t=>!t.who).map(t=>({id:t.id,k:t.k,ic:t.ic,n:t.n||0}))};
@@ -8892,13 +8894,13 @@ function camStep(m,dt){
     if(dd<=sp){s.x=s.tx;s.y=s.ty;if(s.gone)delete S[id];}else{s.x+=dx/dd*sp;s.y+=dy/dd*sp;}
   });
   /* Gente comprando por los pasillos (decorado: más cuanto más avanzan los días). */
-  const want=m&&m.open?clamp(2+(m.d||1),3,8):0;
-  while(cam.shop.filter(s=>!s.th).length<want){const p=SPOT.door;cam.shop.push({x:p[0],y:p[1],tx:p[0],ty:p[1],f:pick(FACES),w:0});}
+  const want=m&&m.open?(m.sw||clamp(2+(m.d||1),3,8)):0;
+  while(cam.shop.filter(s=>!s.th&&!s.gone).length<want){const p=SPOT.door;cam.shop.push({x:p[0],y:p[1],tx:p[0],ty:p[1],f:pick(FACES),w:0});}
   let di=0;
   cam.shop.forEach(s=>{
     /* Ladrón (thiefTick): se queda en su pasillo hasta que sale hacia la puerta. */
     if(s.th){const th=run&&run.th&&run.th.find(x=>x.id===s.th);if(th&&th.ph==='look'&&!s.gone){s.tx=laneX(th.a)+(Math.sin(performance.now()/1500+th.y)>0?14:-4);s.ty=th.y;s.w=1e9;}else if(!s.gone){s.tx=SPOT.door[0];s.ty=SPOT.door[1]+12;}}
-    else if(di++>=want&&!s.gone){s.gone=1;s.tx=SPOT.door[0];s.ty=SPOT.door[1]+12;}
+    else if(!s.gone&&di++>=want){s.gone=1;s.tx=SPOT.door[0];s.ty=SPOT.door[1]+12;}
     const dx=s.tx-s.x,dy=s.ty-s.y,dd=Math.hypot(dx,dy),v=sp*0.7;
     s.mv=dd>1;
     if(dd<=v){s.x=s.tx;s.y=s.ty;if(s.gone)s.dead=1;else if(!s.th&&(s.w-=dt)<=0){const p=aislePt();s.tx=p[0];s.ty=p[1];s.w=rnd(1,4);}}
@@ -9815,6 +9817,18 @@ function rushTick(){
         run.rushHelp={id:f.id,to:run.dur*(P.e-9)/12};f.moral=clamp(f.moral+1,0,100);toast('🧾 '+f.face+' '+f.name+' abre otra caja para la hora punta.','good');}});
   });
 }
+/* Cliente despachado en una caja: sale andando con su bolsa hacia la puerta (cámaras y tienda en directo). Como mucho uno cada 0,3 s por caja. */
+function tillExit(n){if(!cam||!cam.shop||document.hidden)return;const k='x'+n,now=performance.now();cam.xt=cam.xt||{};if(now-(cam.xt[k]||0)<300)return;cam.xt[k]=now;
+  const p=n===1?[52,214]:n===2?[120,214]:[SPOT.till[0],SPOT.till[1]-14];if(cam.shop.length>40)return;
+  cam.shop.push({x:p[0],y:p[1],tx:SPOT.door[0],ty:SPOT.door[1]+12,f:pick(FACES),w:0,gone:1,b:'🛍️'});}
+/* Estado de cada caja en directo (cabecera de la tienda en directo y de las cámaras): quién la lleva y cuántos clientes lleva hoy. */
+function tillStatus(){
+  if(!run||run.over||run.remote)return '';const T=run.tc||{},OT=offTills(),R=Object.values(run.tills||{});
+  const c=n=>{const o=OT.find(x=>x.n===n),r=R.find(x=>x.n===n),em=o?o.e:r?empById(r.eid):null,t=T[n]||{n:0};
+    return `<b>Caja ${n}</b> ${em?esc(em.name.split(' ')[0]):'🚫 cerrada'} · ${t.n}`;};
+  const me=run.away?(run.away.cover&&empById(run.away.cover)?esc(empById(run.away.cover).name.split(' ')[0]):'vacía'):'tú';
+  return c(1)+' │ '+c(2)+` │ <b>Caja 3</b> ${me} · ${(run.served||0)+((T[3]||{}).n||0)}`;
+}
 /* Cajas 1 y 2 que llevan los cajeros NPC libres (las que no ocupa un cajero real). */
 function offTills(){if(!run||run.remote)return [];const used=Object.values(run.tills||{}).map(t=>t.n),fr=staffOf('atc').filter(e=>!e.real&&isFree(e)&&!run.duty[e.id].slack),out=[];
   xtList().forEach(e=>{const n=run.xt[e.id];if(!used.includes(n)&&out.length<2){out.push({n,e});used.push(n);}});
@@ -9831,11 +9845,15 @@ function offTick(dt){
   const dem=OFF.dem*(0.2+0.16*meta.rep)*(1-0.6*out)*(1+0.03*Math.min(meta.day,10))*(meta.promo===meta.day?1.15:1)*(meta.champ===meta.day?0.96:1)*dowF(meta.day)*calF(meta.day)*(meta.spyTo>=meta.day?0.97:1)*(meta.spyUp>=meta.day?1.03:1)*(1+0.02*PA.length)*(1-rivalDrop());
   /* La curva de horas punta reparte el día sin cambiar el total: el tope de las cajas es diario (en la punta van a tope, en el valle se rascan la barriga). */
   const rate=Math.min(dem,n*OFF.cap)*rushF()/(run.dur||100);
+  /* Lo que se ve tiene que ser lo que pasa: tanta gente en los pasillos como clientes despachan las cajas ahora mismo. */
+  run.sw=clamp(Math.round(3+rate*(run.dur||100)/40),3,14);
+  OT.forEach(o=>{(run.tw=run.tw||{})[o.n]=o.e.name;});if(cv){const ce=empById(run.away.cover);if(ce)(run.tw=run.tw||{})[3]=ce.name;}
   run.offAcc=(run.offAcc||0)+dt*rate;
   while(run.offAcc>=1){run.offAcc--;let v=Math.round(OFF.ticket*custRng(()=>rnd(0.4,1.6),'or'));const c=Math.round(v*(SUPS[0].cf+OFF.merma));
     if(rivalCut())v=Math.round(v*0.98);
     run.offS+=v;run.offC+=c;run.offN++;meta.money+=v-c;
-    {const r=ri(0,n-1);if(r>=OT.length){run.cvS=(run.cvS||0)+v;run.cvN=(run.cvN||0)+1;}if(r<OT.length){const q=oq[OT[r].n],tg=clamp(Math.round(rushF()*1.6+Math.random()),1,4);q.shift();while(q.length<tg)q.push({id:run.oqId=(run.oqId||0)+1,f:pick(FACES)});}}
+    {const r=ri(0,n-1),tn=r<OT.length?OT[r].n:3,T=run.tc=run.tc||{1:{n:0,v:0},2:{n:0,v:0},3:{n:0,v:0}};T[tn].n++;T[tn].v+=v;tillExit(tn);
+     if(r>=OT.length){run.cvS=(run.cvS||0)+v;run.cvN=(run.cvN||0)+1;}if(r<OT.length){const q=oq[OT[r].n],tg=clamp(Math.round(rushF()*1.6+Math.random()),1,4);q.shift();while(q.length<tg)q.push({id:run.oqId=(run.oqId||0)+1,f:pick(FACES)});}}
     /* Ticket con promo: se lleva la pareja o el trío de la estantería (unidades de verdad; su coste ya se pagó al comprarlas). */
     if(PA.length&&Math.random()<0.04*PA.length){const p=pick(PA),y=CAT.find(z=>z.id===p.id),P=PROMO[p.t],u=Math.min(meta.stock[p.id]||0,p.t==='20'?ri(1,2):P.k);
       if(y&&u>0){meta.stock[p.id]-=u;const d=promoDiscN(p.t,u,y.p),nv=u*y.p-d,pc=u*unitCost(y,'hac');
@@ -9898,7 +9916,7 @@ function step(ts,hid){
   if(isHost())pubState(false);
   if(hid)return;
   if(tab!=='caja'&&!isMember()&&(ts-(window._dT||0))>700){window._dT=ts;renderDept();if(tab==='dir')dirLive();}
-  sceneSync();drawCams();drawIso();if(tab!=='caja'&&!isMember())drawDeptScene();till3d();if((iso.infoT=(iso.infoT||0)+1)%20===0)isoInfo();
+  sceneSync();drawCams();drawIso();if(tab!=='caja'&&!isMember())drawDeptScene();till3d();if((iso.infoT=(iso.infoT||0)+1)%20===0){isoInfo();const h=tillStatus();['isocap','camtill'].forEach(id=>{const el=document.getElementById(id);if(el&&h&&el.dataset.h!==h){el.dataset.h=h;el.innerHTML=h;}});}
 }
 /* Con la pestaña oculta el navegador no pinta (no hay requestAnimationFrame): si llevas la tienda, se sigue moviendo en segundo plano. */
 /* El reloj de fondo va en un Worker: los temporizadores de la pestaña se congelan (Chrome los baja a uno por minuto
