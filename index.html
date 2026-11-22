@@ -1689,6 +1689,8 @@ body::before{content:'';position:fixed;top:0;left:0;right:0;height:env(safe-area
   .tab i{position:absolute;top:-6px;right:4px;box-shadow:0 0 0 2px var(--ink-game)}
   .tab.help{display:none}
 }
+/* HUD móvil: solo lo necesario (reloj, bote, reputación y ajustes) */
+@media (max-width:820px){#hStaffB,#hGoalB,#hWeekB,#muteBtn,.mute.camb{display:none!important}}
 </style>
 </head>
 <body>
