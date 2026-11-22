@@ -1738,6 +1738,32 @@ body::before{content:'';position:fixed;top:0;left:0;right:0;height:env(safe-area
   #register:has([data-act=pay]) .row .btn.go:disabled{background:#6b3a3b;box-shadow:0 5px 0 #3d2223;opacity:.8}
   #register:has([data-act=pay]) .kbd,#register:has([data-act=pay]) .sup,#register:has([data-act=pay]) [data-act=sup]{grid-column:1/-1;grid-row:3}
 }
+
+/* ===== FASE 9 · Cobrar en efectivo fiel al tablero (móvil) ===== */
+.traychips{display:none}
+@media (max-width:820px){
+  #register:has(.denoms){display:grid!important;grid-template-columns:repeat(3,1fr);gap:8px;padding:12px 14px;background:#faf6ea;align-content:start}
+  #register:has(.denoms)>*{grid-column:1/-1}
+  #register:has(.denoms) .led{grid-column:1;grid-row:1;background:#fff;border:0;border-radius:16px;padding:8px 10px;box-shadow:0 4px 14px rgba(27,31,29,.08);display:block}
+  #register:has(.denoms) .led small{color:#56635d;font-size:12px;font-weight:800;text-transform:uppercase}
+  #register:has(.denoms) .led b{color:#1b1f1d;font-size:19px;white-space:nowrap;text-shadow:none;display:block}
+  #register:has(.denoms) .cashrow:not(.tray){display:block;border-radius:16px;padding:8px 10px;background:#fff;box-shadow:0 4px 14px rgba(27,31,29,.08);grid-column:auto;grid-row:1}
+  #register:has(.denoms) .cashrow:not(.tray) span{display:block;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:#56635d}
+  #register:has(.denoms) .cashrow:not(.tray) b{font-size:19px;display:block;white-space:nowrap}
+  #register:has(.denoms) .cashrow.due{background:#e3f3ea}
+  #register:has(.denoms) .cashrow.due span,#register:has(.denoms) .cashrow.due b{color:#1f7a46}
+  #register:has(.denoms) .cashrow.tray{display:flex;background:#fff;border-radius:16px 16px 0 0;padding:10px 14px 0;margin-top:2px}
+  #register:has(.denoms) .cashrow.tray span{font-family:'Fredoka',sans-serif;font-weight:600;font-size:16px}
+  #register:has(.denoms) .cashrow.tray b{font-size:18px;color:#56635d}
+  #register:has(.denoms) .traychips{display:flex;flex-wrap:wrap;gap:6px;align-items:center;min-height:56px;margin-top:-8px;padding:8px 14px 12px;background:#fff;border-radius:0 0 16px 16px;box-shadow:0 4px 14px rgba(27,31,29,.1)}
+  #register:has(.denoms) .traychips em{font-size:13px;color:#56635d;font-style:normal}
+  #register:has(.denoms) .tchp{min-width:36px;height:36px;border-radius:18px;padding:0 8px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;background:#d9b872;color:#1b1f1d}
+  #register:has(.denoms) .tchp.bill{border-radius:8px;background:#b7d9c4}
+  #register:has(.denoms) .denoms{grid-template-columns:repeat(4,1fr);gap:8px}
+  #register:has(.denoms) .dn{padding:0;height:46px;font-size:15px}
+  #register:has(.denoms) .row.cashbtns{display:grid;grid-template-columns:1fr 1fr 48px;gap:8px}
+  #register:has(.denoms) .row.cashbtns .btn.go{grid-column:1/-1;min-height:60px;font-size:24px;border-radius:16px;background:#e5383b;color:#fff;box-shadow:0 5px 0 #8f1d20}
+}
 </style>
 </head>
 <body>
@@ -6256,7 +6282,7 @@ function dailyExit(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.22-138';
+const APPV='2026.11.22-139';
 /* Compara versiones por números («-9» < «-11»), no como texto. */
 const verCmp=(a,b)=>{const x=String(a).split(/[.-]/).map(Number),y=String(b).split(/[.-]/).map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
 try{const vt=document.createElement('div');vt.id='vtag';vt.textContent='v'+APPV;document.body.appendChild(vt);}catch(e){}
@@ -8984,9 +9010,10 @@ function renderRegister(){
       const n=run.tray.filter(x=>x===v).length;
       return `<button class="dn ${k}" data-act="den" data-v="${v}">${l}${n?`<span class="cnt">${n}</span>`:''}</button>`;
     }).join('');
-    h+=billHtml(c)+`<div class="cashrow"><span>Cliente entrega</span><b>${fmt(c.given)}</b></div>
-      <div class="cashrow due"><span>Cambio a dar</span><b>${fmt(c.given-t)}</b></div>
+    h+=billHtml(c)+`<div class="cashrow"><span>Te da</span><b>${fmt(c.given)}</b></div>
+      <div class="cashrow due"><span>Cambio</span><b>${fmt(c.given-t)}</b></div>
       <div class="cashrow tray"><span>Cambio en bandeja</span><b>${fmt(traySum())}</b></div>
+      <div class="traychips">${run.tray.length?run.tray.map(v=>{const d=DENOMS.find(x=>x[0]===v);return `<span class="tchp ${d?d[2]:''}" data-v="${v}">${d?d[1]:v}</span>`;}).join(''):'<em>Toca billetes y monedas para armar el cambio</em>'}</div>
       <div class="denoms">${d}</div>
       <div class="row cashbtns"><button class="btn ${c.bag?'on':''}" data-act="bag" title="Bolsa +0,15 €">🛍️ Bolsa</button><button class="btn" data-act="undo" title="Quitar la última moneda o billete" ${run.tray.length?'':'disabled'}>↩️ Quitar</button><button class="btn" data-act="clear" title="Vaciar la bandeja" ${run.tray.length?'':'disabled'}>🗑️</button><button class="btn go" data-act="deliver">Dar cambio</button></div>`;
   }
