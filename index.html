@@ -1778,6 +1778,19 @@ body::before{content:'';position:fixed;top:0;left:0;right:0;height:env(safe-area
   #scene.show:has(.dnic) .dnic-warn{display:block;margin-top:8px;font-size:13px;line-height:18px;color:#7a4f00;font-weight:800}
   #scene.show:has(.dnic) .scn-ch button{min-height:56px;font-size:18px;border-radius:16px}
 }
+
+/* ===== FASE 11 · Reclamación como hoja inferior del tablero (móvil) ===== */
+.rec-mark{display:none}
+@media (max-width:820px){
+  #scene.show:has(.rec-mark){top:0;padding:0;align-items:flex-end;background:rgba(27,31,29,.62)}
+  #scene.show:has(.rec-mark) .scn-wrap{width:100%;border-radius:28px 28px 0 0;padding-bottom:env(safe-area-inset-bottom,0)}
+  #scene.show:has(.rec-mark) .scn{border-radius:28px 28px 0 0}
+  #scene.show:has(.rec-mark) .scn-ch{display:grid!important;grid-template-columns:1fr!important;grid-auto-rows:auto!important;gap:8px}
+  #scene.show:has(.rec-mark) .scn-ch button{height:auto!important;width:100%;margin:0!important;display:flex;align-items:center;gap:10px;text-align:left;min-height:56px;border-radius:16px;background:#faf6ea;color:#1b1f1d;border:0;box-shadow:none;font-size:16px;font-weight:800;padding:8px 14px}
+  #scene.show:has(.rec-mark) .scn-ch button small{display:block;font-size:13px;font-weight:600;color:#56635d;margin-left:auto}
+  #scene.show:has(.rec-mark) .scn-ch button.no{background:#fde7e7;color:#9f1d20}
+  #scene.show:has(.rec-mark) .scn-ch button.go{background:#e3f3ea}
+}
 </style>
 </head>
 <body>
@@ -4327,8 +4340,8 @@ function cajaScenes(){
   if(c.phase==='complaint'){
     const q=c.complaint;
     scene({k:'rec:'+c.id,who:c.face,sprite:c.id,head:'📋 HOJA DE RECLAMACIONES',name:esc(q.title),tag:'📣 Reclamación',prio:3,txt:'«'+esc(q.t)+'»',
-      body:'<div class="scn-hint">💶 Dinero → Backoffice · 🗣️ Trato y redes → RR.PP. · 📦 Agotados → Almacén · ❓ Dudas → tú</div>',
-      choices:[['atc','🙋 Resolver yo','go','RESUELTO'],['back','💼 Backoffice','','DERIVADO'],['rrpp','📣 RR.PP.','','DERIVADO'],['alm','📦 Almacén','','DERIVADO'],['no','✋ Rechazar','no','RECHAZADO']].map(([d,t,cls,st],i)=>({t,k:d,cls,key:String(i+1),act:'route',attrs:`data-d="${d}"`,stamp:d===q.dept||(d==='atc'&&q.dept==='atc')?st:d==='no'?st:d==='atc'?'':'MAL DERIVADO',sc:d===q.dept?'ok':'bad'})),
+      body:'<i class="rec-mark"></i><div class="scn-hint">¿A quién se lo pasas?</div>',
+      choices:[['atc','🙋 Resolver yo<small>Solo para dudas</small>','go','RESUELTO'],['back','💼 Backoffice<small>Dinero y cobros</small>','','DERIVADO'],['rrpp','📣 RR.PP.<small>Trato y redes</small>','','DERIVADO'],['alm','📦 Almacén<small>Producto agotado</small>','','DERIVADO'],['no','✋ Rechazar<small>Sin razón</small>','no','RECHAZADO']].map(([d,t,cls,st],i)=>({t,k:d,cls,key:String(i+1),act:'route',attrs:`data-d="${d}"`,stamp:d===q.dept||(d==='atc'&&q.dept==='atc')?st:d==='no'?st:d==='atc'?'':'MAL DERIVADO',sc:d===q.dept?'ok':'bad'})),
       alive:()=>tillOn()&&front()===c&&c.phase==='complaint'});
     return;
   }
@@ -5121,7 +5134,7 @@ function pickProduct(arr){
 }
 function ret(i){if(!i.ret){i.ret=1;meta.stock[i.pid]=(meta.stock[i.pid]||0)+1;if(run&&run.remote)run.outRet.push(i.pid);}}
 function newCustomer(){
-  if(Math.random()<COMPL_P)return complaintCustomer();
+  if(Math.random()<(NORMA==='queja'?1:COMPL_P))return complaintCustomer();
   const day=meta.day;
   const n=ri(3,5+Math.min(day,4));
   const items=[];
@@ -6296,7 +6309,7 @@ function dailyExit(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.22-140';
+const APPV='2026.11.22-141';
 /* Compara versiones por números («-9» < «-11»), no como texto. */
 const verCmp=(a,b)=>{const x=String(a).split(/[.-]/).map(Number),y=String(b).split(/[.-]/).map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
 try{const vt=document.createElement('div');vt.id='vtag';vt.textContent='v'+APPV;document.body.appendChild(vt);}catch(e){}
