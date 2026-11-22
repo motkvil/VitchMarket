@@ -1699,6 +1699,11 @@ body::before{content:'';position:fixed;top:0;left:0;right:0;height:env(safe-area
   #register .row:has([data-act=pay]) .btn.go{flex:2.2;font-size:22px}
   #register .row:has([data-act=pay]) .btn:not(.go){flex:1}
 }
+/* FASE 3 · plantilla de minijuegos: instrucción en caja amarilla + «?» */
+.mg-ins{display:flex;align-items:center;gap:10px;background:#ffd23f;color:#1b1f1d;border:3px solid #1b1f1d;border-radius:16px;padding:8px 8px 8px 14px;box-shadow:0 4px 0 #1b1f1d}
+.mg-ins b{flex:1;font-family:var(--display);font-weight:600;font-size:16px;line-height:20px}
+.mg-q{flex:none;width:44px;height:44px;border-radius:22px;border:3px solid #1b1f1d;background:#fff;color:#1b1f1d;font-family:var(--display);font-weight:700;font-size:20px;cursor:pointer}
+#mg .card.mgc>.supd:nth-of-type(1){font-size:13px}
 </style>
 </head>
 <body>
@@ -6188,7 +6193,7 @@ function dailyExit(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.22-127';
+const APPV='2026.11.22-128';
 /* Compara versiones por números («-9» < «-11»), no como texto. */
 const verCmp=(a,b)=>{const x=String(a).split(/[.-]/).map(Number),y=String(b).split(/[.-]/).map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
 try{const vt=document.createElement('div');vt.id='vtag';vt.textContent='v'+APPV;document.body.appendChild(vt);}catch(e){}
@@ -8205,6 +8210,8 @@ function startMG(t){
   if(t.remote&&run&&run.remote){run.away={mult:2.2};room.panel=false;hideOverlay();}
   renderMG();
 }
+const MGI={shelf:['Coloca las 6 unidades del producto en el lineal.','Toca solo las cajas del producto pedido. Cada fallo resta un 20 %.'],mop:['Pon el cartel y friega los charcos.','Si friegas sin cartel, alguien puede caerse y reclamar.'],ask:['Mándale al pasillo correcto.','Elige el pasillo donde está el producto que pregunta.'],tk:['Elige la respuesta correcta. Solo hay una oportunidad.','Lee la queja y decide qué haces.'],rot:['Coloca la mercancía en su sitio: lo nuevo, detrás.','Retira lo caducado o roto y pon la etiqueta que dice la PDA.'],recv:['Revisa el albarán y ubica cada caja.','Marca bien, falta o roto; luego lleva cada caja a su zona. Lo frío, primero.'],spill2:['Cartel, cristales, fregar y retirar el producto roto.','Sin cartel o con el suelo mojado, alguien se cae.'],agot:['Mira el stock y da una solución.','Comprueba si queda en el almacén y elige qué ofrecerle.'],inv:['Cuenta las unidades y apúntalas.','Cuenta en la góndola y teclea el número en la PDA.'],order:['Pide lo que se va a acabar.','Marca lo que tiene 2 o menos sin pasarte del presupuesto.'],refund:['Encuentra el error y devuelve el dinero exacto.','Marca la línea mal cobrada, prepara el importe y devuélvelo por donde pagó.'],cash:['Cuenta el cajón y di si cuadra.','Suma los montones y compara con el informe Z.'],social:['Responde al cliente sin enfadarle más.','Monta saludo, explicación y compensación; mira el medidor de enfado.'],map:['Lleva al cliente a su producto.','Elige el pasillo en el plano y señala el producto.'],cv:['Entrevista y decide si contratas.','Marca 🚩 lo que no cuadra y decide el sueldo.'],feud:['Resuelve la bronca entre compañeros.','Lee las dos versiones y da la razón a quien la tenga, o media.']};
+const MGI_DEF=['Coloca cada caja en su zona del almacén.','Mira qué es cada caja y llévala a la zona que le toca.'];
 function renderMG(){
   if(!mg||mg.kind==='sup')return;
   const t=mg.t,cv=run&&run.away&&run.away.cover&&empById(run.away.cover);
@@ -8242,11 +8249,13 @@ function renderMG(){
   const TH={rot:'alm',recv:'alm',spill2:'alm',agot:'alm',inv:'alm',order:'alm',refund:'back',cash:'back',social:'rrpp',map:'rrpp',cv:'rrhh',feud:'rrhh'}[mg.kind];
   const THN={alm:'📦 ALMACÉN',back:'💼 BACKOFFICE',rrpp:'📣 RELACIONES PÚBLICAS',rrhh:'🗂️ RECURSOS HUMANOS'}[TH];
   openMG(`<div class="card mgc ${TH?'th-'+TH:''}">${TH?`<span class="dept-badge">${THN}</span>`:''}<h3>${t.ic} ${t.s}</h3>
+    <div class="mg-ins"><b>${(MGI[mg.kind]||MGI_DEF)[0]}</b><button class="mg-q" data-act="mghelp" aria-label="Ver cómo se juega">?</button></div>
     <div class="supd">${mg.remote?'Tienes '+REAL_LIM+' s desde que lo cogiste. El jefe lo ve todo.':cv?cv.face+' '+cv.name+' te cubre la caja.':'Tu caja está cerrada y la cola espera. Date prisa.'}</div>${body}</div>`);
   if(mg&&mg.fx){const el=document.querySelector('#mg '+mg.fx.sel);if(el)el.classList.add('fx-'+mg.fx.k);mg.fx=null;}
 }
 function mgAct(a,b){
   if(!mg||mg.kind==='sup')return;
+  if(a==='mghelp'){toast('ℹ️ '+(MGI[mg.kind]||MGI_DEF)[1]);return;}
   if(mg.kind==='agot'){if(a==='mgagot'){const o=mg.opts[+b.dataset.i];if(o)return endMG(o[1]);}return;}
   if(mg.kind==='inv'||mg.kind==='order')return invAct(a,b);
   if(mg.kind==='rot'||mg.kind==='recv'||mg.kind==='spill2')return almAct(a,b);
