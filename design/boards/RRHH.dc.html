@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>VitchMarket · RR.HH. y plantilla</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800&family=Pixelify+Sans:wght@500;700&display=swap">
+<style>
+body{margin:0}
+.vm{--brand:#d92d30;--brand-dk:#9f1d20;--brand-soft:#fde7e7;--paper:#faf6ea;--card:#ffffff;--ink:#1b1f1d;--mute:#56635d;--line:rgba(27,31,29,0.12);--tag:#ffd23f;--ok:#1f7a46;--ok-soft:#e3f3ea;--warn:#7a4f00;--warn-soft:#fff1c2;--floor:#17352f}
+.vm a{text-decoration:none;color:inherit}
+.vm button{font-family:inherit;cursor:pointer}
+</style>
+</helmet>
+<div class="vm" style="position:relative;width:390px;height:844px;overflow:hidden;box-sizing:border-box;background:var(--paper);color:var(--ink);font-family:'Nunito',system-ui,sans-serif;">
+
+  <header style="position:absolute;top:0;left:0;right:0;height:96px;box-sizing:border-box;padding:44px 8px 0;background:var(--brand);border-bottom:5px solid var(--brand-dk);color:#fff;display:flex;align-items:center;">
+    <a href="Menu.dc.html" aria-label="Volver" style="width:44px;height:44px;display:flex;align-items:center;justify-content:center;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></a>
+    <div style="flex:1;font-family:'Fredoka',sans-serif;font-weight:600;font-size:18px;">RR.HH. y plantilla</div>
+    <div style="padding-right:8px;font-size:14px;font-weight:800;">4/5 en tienda</div>
+  </header>
+
+  <div style="position:absolute;top:108px;left:16px;right:16px;display:flex;flex-direction:column;gap:12px;">
+
+    <section style="border-radius:20px;background:var(--card);box-shadow:0 4px 14px rgba(27,31,29,0.1);padding:6px 16px;">
+      <div style="display:flex;align-items:center;gap:12px;min-height:64px;border-bottom:1px solid var(--line);">
+        <div style="flex:none;width:44px;height:44px;border-radius:22px;background:var(--paper);display:flex;align-items:center;justify-content:center;font-size:26px;">🧔</div>
+        <div style="flex:1;min-width:0;"><b style="display:block;font-size:15px;line-height:20px;">Óscar</b><span style="font-size:13px;line-height:18px;color:var(--mute);">Almacén · reponiendo pasillo 4</span></div>
+        <span style="border-radius:999px;padding:3px 10px;background:var(--ok-soft);color:var(--ok);font-size:13px;font-weight:800;">Currando</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;min-height:64px;border-bottom:1px solid var(--line);">
+        <div style="flex:none;width:44px;height:44px;border-radius:22px;background:var(--paper);display:flex;align-items:center;justify-content:center;font-size:26px;">👩</div>
+        <div style="flex:1;min-width:0;"><b style="display:block;font-size:15px;line-height:20px;">Lucía</b><span style="font-size:13px;line-height:18px;color:var(--mute);">Almacén · inventario</span></div>
+        <span style="border-radius:999px;padding:3px 10px;background:var(--ok-soft);color:var(--ok);font-size:13px;font-weight:800;">Currando</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;min-height:64px;border-bottom:1px solid var(--line);">
+        <div style="flex:none;width:44px;height:44px;border-radius:22px;background:var(--paper);display:flex;align-items:center;justify-content:center;font-size:26px;">👩‍🦰</div>
+        <div style="flex:1;min-width:0;"><b style="display:block;font-size:15px;line-height:20px;">Marta</b><span style="font-size:13px;line-height:18px;color:var(--mute);">Backoffice</span></div>
+        <span style="border-radius:999px;padding:3px 10px;background:var(--warn-soft);color:var(--warn);font-size:13px;font-weight:800;">Con el móvil</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;min-height:64px;border-bottom:1px solid var(--line);">
+        <div style="flex:none;width:44px;height:44px;border-radius:22px;background:var(--paper);display:flex;align-items:center;justify-content:center;font-size:26px;">🧑‍🦱</div>
+        <div style="flex:1;min-width:0;"><b style="display:block;font-size:15px;line-height:20px;">Camille</b><span style="font-size:13px;line-height:18px;color:var(--mute);">RR.PP. · habla francés</span></div>
+        <span style="border-radius:999px;padding:3px 10px;background:var(--ok-soft);color:var(--ok);font-size:13px;font-weight:800;">Libre</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;min-height:64px;">
+        <div style="flex:none;width:44px;height:44px;border-radius:22px;background:var(--paper);display:flex;align-items:center;justify-content:center;font-size:26px;">🧑</div>
+        <div style="flex:1;min-width:0;"><b style="display:block;font-size:15px;line-height:20px;">Hugo</b><span style="font-size:13px;line-height:18px;color:var(--mute);">Caja · no ha llegado</span></div>
+        <span style="border-radius:999px;padding:3px 10px;background:var(--brand-soft);color:var(--brand-dk);font-size:13px;font-weight:800;">Tarde</span>
+      </div>
+    </section>
+
+    <section style="border-radius:20px;background:var(--card);box-shadow:0 4px 14px rgba(27,31,29,0.1);padding:14px 16px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <span style="font-family:'Fredoka',sans-serif;font-weight:600;font-size:16px;">Vacante · Caja</span>
+        <div style="display:flex;align-items:center;gap:6px;"><button aria-label="Quitar una vacante" style="width:44px;height:44px;border:0;border-radius:22px;background:var(--paper);font-size:20px;font-weight:800;">−</button><b style="min-width:20px;text-align:center;font-family:'Pixelify Sans',monospace;font-size:20px;">1</b><button aria-label="Añadir una vacante" style="width:44px;height:44px;border:0;border-radius:22px;background:var(--ink);color:#fff;font-size:20px;font-weight:800;">+</button></div>
+      </div>
+      <div style="margin-top:6px;font-size:13px;line-height:18px;color:var(--mute);">Con vacante abierta llegan candidatos. Contratar cuesta 100 €.</div>
+    </section>
+
+    <section style="border-radius:20px;background:var(--card);box-shadow:0 4px 14px rgba(27,31,29,0.1);padding:14px 16px;">
+      <div style="font-family:'Fredoka',sans-serif;font-weight:600;font-size:16px;">Candidatos · 2</div>
+      <div style="margin-top:8px;display:flex;align-items:center;gap:12px;min-height:64px;border-bottom:1px solid var(--line);">
+        <div style="flex:none;width:44px;height:44px;border-radius:22px;background:var(--paper);display:flex;align-items:center;justify-content:center;font-size:26px;">🧑‍🦰</div>
+        <div style="flex:1;min-width:0;"><b style="display:block;font-size:15px;line-height:20px;">Iván · 2 años en súper</b><span style="font-size:13px;line-height:18px;color:var(--mute);">Pide 1.425 €/mes</span></div>
+        <a href="Entrevista.dc.html" style="flex:none;height:44px;border-radius:999px;padding:0 16px;background:var(--ink);color:#fff;font-size:15px;font-weight:800;display:flex;align-items:center;">Entrevistar</a>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;min-height:64px;">
+        <div style="flex:none;width:44px;height:44px;border-radius:22px;background:var(--paper);display:flex;align-items:center;justify-content:center;font-size:26px;">👱‍♀️</div>
+        <div style="flex:1;min-width:0;"><b style="display:block;font-size:15px;line-height:20px;">Noa · sin experiencia</b><span style="font-size:13px;line-height:18px;color:var(--mute);">Pide 1.370 €/mes</span></div>
+        <a href="Entrevista.dc.html" style="flex:none;height:44px;border-radius:999px;padding:0 16px;background:var(--ink);color:#fff;font-size:15px;font-weight:800;display:flex;align-items:center;">Entrevistar</a>
+      </div>
+    </section>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>
