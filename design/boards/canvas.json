@@ -185,6 +185,54 @@
       "w": 390,
       "x": 2820,
       "y": 0
+    },
+    "Reembolso.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "Minijuego · Reembolso",
+      "w": 390,
+      "x": 0,
+      "y": 3900
+    },
+    "Perdido.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "Minijuego · Cliente perdido",
+      "w": 390,
+      "x": 470,
+      "y": 3900
+    },
+    "Bronca.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "Minijuego · Bronca",
+      "w": 390,
+      "x": 940,
+      "y": 3900
+    },
+    "Inventario.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "Minijuego · Inventario",
+      "w": 390,
+      "x": 1410,
+      "y": 3900
+    },
+    "Pedido.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "Minijuego · Pedido",
+      "w": 390,
+      "x": 1880,
+      "y": 3900
+    },
+    "Agotado.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "Minijuego · Agotado",
+      "w": 390,
+      "x": 2350,
+      "y": 3900
     }
   },
   "createdOnFiles": {
@@ -219,6 +267,14 @@
       "w": 240,
       "x": 0,
       "y": 2340
+    },
+    "t-mini": {
+      "kind": "title1",
+      "maxW": 2820,
+      "text": "Resto de minijuegos",
+      "w": 240,
+      "x": 0,
+      "y": 3640
     }
   },
   "order": [
@@ -244,7 +300,13 @@
     "Arqueo.dc.html",
     "Queja.dc.html",
     "Camion.dc.html",
-    "Derrame.dc.html"
+    "Derrame.dc.html",
+    "Reembolso.dc.html",
+    "Perdido.dc.html",
+    "Bronca.dc.html",
+    "Inventario.dc.html",
+    "Pedido.dc.html",
+    "Agotado.dc.html"
   ],
   "pages": [],
   "title": "VitchMarket"

@@ -6,7 +6,7 @@ Carpeta de referencia para que el aspecto no cambie al implementar. **No la carg
 design/
   tokens.css        colores, tipografía, tamaños, radios
   sprites/          personajes y piezas en SVG píxel (editables, sin dependencias)
-  boards/           las 23 pantallas del rediseño (.dc.html) + canvas.json (posiciones)
+  boards/           las 29 pantallas del rediseño (.dc.html) + canvas.json (posiciones)
   DESIGN.md         este archivo
 ```
 
@@ -42,7 +42,7 @@ Zonas tocables de la Caja (sobre la escena): lineal vacío → Avisos, cliente e
 
 ## Minijuegos: plantilla única
 Una instrucción de una línea en caja amarilla → progreso arriba → zona de juego en medio → **un solo** botón de acción abajo → «?» con la demo → consecuencia visible antes de decidir → sin cronómetro la primera vez → deshacer siempre posible → 20–45 s.
-Pantallas: `Reponer`, `Entrevista`, `Arqueo`, `Queja`, `Camion`, `Derrame`.
+Pantallas: `Reponer`, `Entrevista`, `Arqueo`, `Queja`, `Camion`, `Derrame`, `Reembolso`, `Perdido`, `Bronca`, `Inventario`, `Pedido`, `Agotado`.
 
 ## Mecánicas tipo Among Us (diseñadas)
 - **Barra de tareas común** (6/10): pastilla en la Caja y barra en el Mapa; al llenarla acaba el turno con bonus.
