@@ -3,7 +3,7 @@
    - Lo demás de la propia web (catálogo, sprites, iconos, fuentes de Google): primero la copia, y se refresca por detrás.
    - Firebase y sus scripts (gstatic, firebaseio…) nunca se guardan: la tienda compartida va siempre en directo.
    Sube CACHE en cada cambio de esta lista para borrar las copias viejas. */
-const CACHE='vitchmarket-v27';
+const CACHE='vitchmarket-v28';
 const SHELL=['./','./index.html','./productos.js','./firebase-config.js','./manifest.webmanifest',
   './assets/pix/urban.png','./assets/pix/indoor.png',
   './assets/icons/icon-192.png','./assets/icons/icon-512.png','./assets/icons/maskable-192.png','./assets/icons/maskable-512.png',

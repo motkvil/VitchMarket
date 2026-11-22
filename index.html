@@ -1896,6 +1896,13 @@ body::before{content:'';position:fixed;top:0;left:0;right:0;height:env(safe-area
   .vac small{font-size:12px!important}
   .card.screen .scr-body>.zone-title,.card.screen h4{color:#56635d!important;font-family:'Nunito',sans-serif;font-size:12px!important;letter-spacing:.06em;text-transform:uppercase}
 }
+
+/* ===== FASE 17 · acción principal de cada minijuego siempre visible (móvil) ===== */
+@media (max-width:820px){
+  #mg{overflow-y:auto}
+  #mg .card.mgc>.btn:last-child{position:sticky;bottom:8px;z-index:4;min-height:56px;max-height:72px;border-radius:16px;font-size:18px;box-shadow:0 0 0 6px #faf6ea,0 6px 0 rgba(0,0,0,.25)}
+  #mg .card.mgc>.btn.mini:last-child{margin:auto auto 8px}
+}
 </style>
 </head>
 <body>
@@ -4510,6 +4517,7 @@ function cutScene(nc){
    rechazar uno bueno = −0,12 de reputación y −15 % de paciencia. Las dos van también en la caja del cajero real (las pérdidas, por fines). */
 const ruleOn=k=>run&&run.remote?meta.day>=unlDay(k):unl(k);
 /* Pruebas: ?norma=dni (todos llevan un +18), ?norma=billete (todos los billetes falsos), cupon (todos con cupón) o ladron (un ladrón a los 3 s y siempre avisa la plantilla). */
+const MGQ=(()=>{try{return new URLSearchParams(location.search).get('mg')||'';}catch(e){return '';}})();
 const NORMA=(()=>{try{return new URLSearchParams(location.search).get('norma')||'';}catch(e){return '';}})();
 const fakeP=()=>NORMA==='billete'?1:Math.min(0.15,0.03+0.006*(meta.day||1));
 const NOTE_F=[['Holograma','Al moverlo sale el retrato de Europa y la cifra','Plateado y plano: al moverlo no cambia nada'],
@@ -4976,6 +4984,21 @@ function rivalHtml(){
   return `<div class="supd rivind on">🏪 <b>Competencia:</b> ${r.ic} ${esc(r.n)} · −${Math.round(rivalDrop()*100)} % de clientes en las otras cajas hoy · ${r.resp==='precio'?(k<5?'precios bajos ('+(5-k)+' turnos)':'precios normales'):r.resp==='barrio'?'campaña de barrio':'aguantando'} · se pasa en ${r.len-k} ${r.len-k===1?'turno':'turnos'}</div>`;
 }
 /* 9 · Charla antes de abrir tras un día de récord o un mal día: felicitar, bronca general o nada. */
+/* Prueba: ?mg=repo|spill|truck|cash|cv|feud|help|tour|inv|order|refund|agot|social abre ese minijuego al empezar. */
+function mgDebug(k){
+  if(mg)return;const p=CAT.find(x=>!x.age)||CAT[0];
+  const t={id:'dbg'+(++uid),k,ic:'🧪',s:'Prueba',txt:'Prueba',roles:['atc'],n:aisleOf(p.id),pid:p.id,dept:'',refund:0,sev:2,mis:false,who:'me',until:Infinity,span:1,dur:10,pen:0,match:true,dl:run.t+999};
+  if(k==='inv'){t.inv=invData(t.n);}
+  if(k==='order'){t.ord=ordData();}
+  if(k==='cv'){t.cand=makeCand()||undefined;}
+  if(k==='feud'){t.fd=makeFeud();}
+  if(k==='tour'){t.lang='en';}
+  if(k==='truck'){t.bk=Object.keys(meta.back).filter(id=>meta.back[id]>0).map(Number).slice(0,12);}
+  if(k==='refund'){t.k='tk';t.dept='back';t.refund=ri(200,1500);}
+  if(k==='agot'){t.k='tk';t.dept='alm';}
+  if(k==='social'){t.k='tk';t.dept='rrpp';t.sev=3;t.txt='Me trataron fatal en caja. No vuelvo.';t.tkid=0;}
+  startMG(t);renderAll();
+}
 function dayTalk(){
   const H=meta.hist||[],h=H[H.length-1];if(!h||h.d!==meta.day-1||meta.talkD===meta.day||!bossScn()||!unl('dir'))return;
   const prev=H.slice(0,-1),best=prev.length>=2&&h.n>0&&h.s>Math.max(...prev.map(x=>x.s)),bad=!best&&(h.n<-80000||(prev.length>=2&&h.n<0&&h.n<Math.min(...prev.map(x=>x.n))));
@@ -5479,6 +5502,7 @@ function startDay(){
   if(!(room&&room.sim))openGuide('j_'+tab,true);
   /* Escenas de Dirección al abrir: charla tras un récord o un mal día y, de vez en cuando, el dividendo. */
   try{dayTalk();divScene();}catch(e){console.warn('dirScenes',e);}
+  if(MGQ&&!window.__mgq){window.__mgq=1;setTimeout(()=>{try{mgDebug(MGQ);}catch(e){console.warn('mg',e);}},1500);}
   try{storyOpen();}catch(e){console.warn('storyOpen',e);}
 }
 function frontChanged(){run.tray=[];run.card=false;run.pendingId=null;}
@@ -6414,7 +6438,7 @@ function dailyExit(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.22-147';
+const APPV='2026.11.22-148';
 /* Compara versiones por números («-9» < «-11»), no como texto. */
 const verCmp=(a,b)=>{const x=String(a).split(/[.-]/).map(Number),y=String(b).split(/[.-]/).map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
 try{const vt=document.createElement('div');vt.id='vtag';vt.textContent='v'+APPV;document.body.appendChild(vt);}catch(e){}
