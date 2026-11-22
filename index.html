@@ -6256,7 +6256,7 @@ function dailyExit(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.22-137';
+const APPV='2026.11.22-138';
 /* Compara versiones por números («-9» < «-11»), no como texto. */
 const verCmp=(a,b)=>{const x=String(a).split(/[.-]/).map(Number),y=String(b).split(/[.-]/).map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
 try{const vt=document.createElement('div');vt.id='vtag';vt.textContent='v'+APPV;document.body.appendChild(vt);}catch(e){}
@@ -9609,6 +9609,8 @@ function pixTill(slot){
     if(it.pr&&PROMO[it.pr]){g.fillStyle='#ffd23f';g.fillRect(X(x)-S*.56,Y(y)-S*.5,S*.5,S*.24);g.fillStyle='#5c0a0d';g.font='700 '+Math.round(S*.17)+'px sans-serif';g.fillText(PROMO[it.pr].b,X(x)-S*.31,Y(y)-S*.38);}});
   /* rótulo del frontal del mostrador */
   g.save();g.font='700 '+Math.round(8*v.k)+'px "Fredoka","Pixelify Sans",sans-serif';g.fillStyle='#fff';g.strokeStyle='#5c0a0d';g.lineWidth=Math.max(2,v.k);g.lineJoin='round';{const ty0=Y(cy+ch+5+(BH-(cy+ch+5)-2)/2);g.strokeText('CAJA 3',cv.width/2,ty0);g.fillText('CAJA 3',cv.width/2,ty0);}g.restore();
+  /* letrero de pared VITCHMARKET (tablero Escena) */
+  g.save();{const fs=Math.round(7*v.k),w=Math.min(cv.width*.62,fs*8.6),h=fs*1.7,x0=cv.width/2-w/2,y0=Y(6);g.fillStyle='#8f1d20';g.fillRect(x0,y0+h*.12,w,h);g.fillStyle='#e5383b';g.fillRect(x0,y0,w,h);g.strokeStyle='#fff';g.lineWidth=Math.max(1,v.k*.7);g.strokeRect(x0+v.k,y0+v.k,w-2*v.k,h-2*v.k);g.font='700 '+fs+'px "Fredoka","Pixelify Sans",sans-serif';g.fillStyle='#fff';g.fillText('VITCHMARKET',cv.width/2,y0+h*.54);}g.restore();
   const bc=Math.max(1,Math.floor((bw-4)/10));
   /* al caer en la cesta: aplastado y rebote (~260 ms) */
   ptl.bask.forEach((b,j)=>{const x=X(bxx+7+(j%bc)*10),y=Y(byy+bh-8-Math.floor(j/bc)*6),p=RM||!b.t?1:Math.min(1,(now-b.t)/260);g.font=Math.round(9*v.k)+'px sans-serif';
