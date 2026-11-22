@@ -1903,6 +1903,17 @@ body::before{content:'';position:fixed;top:0;left:0;right:0;height:env(safe-area
   #mg .card.mgc>.btn:last-child{position:sticky;bottom:8px;z-index:4;min-height:56px;max-height:72px;border-radius:16px;font-size:18px;box-shadow:0 0 0 6px #faf6ea,0 6px 0 rgba(0,0,0,.25)}
   #mg .card.mgc>.btn.mini:last-child{margin:auto auto 8px}
 }
+
+/* Reponer (tablero): caja → estante */
+.rp-lab{font:800 12px/1 var(--f-ui,inherit);letter-spacing:.08em;color:var(--mute,#6b5a58);margin:10px 2px 6px}
+.rp-boxes{display:flex;gap:10px;justify-content:center}
+.rp-box{flex:1;max-width:110px;min-height:84px;border:0;border-radius:10px;background:linear-gradient(160deg,#d7b07a,#c49358 70%,#b98549);box-shadow:0 3px 0 rgba(0,0,0,.3);font-size:38px;display:flex;align-items:center;justify-content:center}
+.rp-box.sel{outline:4px solid #ffd23f;transform:translateY(-3px)}
+.rp-box.done{background:#e9f4ea;box-shadow:none;font-size:24px;color:#1f7a3a}
+.rp-shelves{display:flex;flex-direction:column;gap:8px}
+.rp-sh{display:flex;align-items:center;gap:12px;min-height:56px;padding:8px 14px;border:2px solid #ead9d6;border-radius:12px;background:#fff;text-align:left;color:inherit;font:inherit}
+.rp-sh span{font-size:28px}.rp-sh b{flex:1;font-size:15px}.rp-sh em{font-style:normal;font-size:13px;font-weight:800;color:#c4252a}
+.rp-sh.hot{border-color:#ffd23f;background:#fff8dc}.rp-sh.ok{background:#e9f4ea;border-color:#8fd19e}.rp-sh.ok em{color:#1f7a3a}
 </style>
 </head>
 <body>
@@ -6438,7 +6449,7 @@ function dailyExit(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.22-149';
+const APPV='2026.11.22-150';
 /* Compara versiones por números («-9» < «-11»), no como texto. */
 const verCmp=(a,b)=>{const x=String(a).split(/[.-]/).map(Number),y=String(b).split(/[.-]/).map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
 try{const vt=document.createElement('div');vt.id='vtag';vt.textContent='v'+APPV;document.body.appendChild(vt);}catch(e){}
@@ -7904,7 +7915,7 @@ function startRot(t,p){
   }
   if(!front.some(u=>u&&u.bad)){const i=front.findIndex(u=>u);const k=i<0?0:i;front[k]={bad:per?'cad':'roto',d:per?-ri(1,5):null,out:false};}
   const pda=shuffle([p].concat(sameA.slice(0,2).length?sameA.slice(0,2):decoys.slice(0,2))).map(x=>({id:x.id,n:x.n,f:x.f||'',p:x.p}));
-  return {kind:'rot',t,p,step:0,crates:shuffle([p].concat(decoys)).map(x=>({id:x.id,e:x.e,n:x.n,f:x.f||''})),front,back:[null,null,null,null],newLeft:4,
+  return {kind:'rot',t,p,step:0,crates:shuffle([p].concat(decoys.concat(sameA).filter((x,i,ar)=>x.e!==p.e&&ar.findIndex(y=>y.e===x.e)===i).slice(0,2))).map(x=>({id:x.id,e:x.e,n:x.n,f:x.f||''})),sel:-1,placed:[],front,back:[null,null,null,null],newLeft:4,
     wrongBox:0,goodOut:0,badOut:0,rotErr:0,priceErr:false,pda};
 }
 function startRecv(t){
@@ -8023,9 +8034,13 @@ function almBody(){
       <div class="gshelf back"><em>FONDO</em>${mg.back.map((u,i)=>unitB(u,'b',i)).join('')}</div>${rail}
       <div class="gshelf front"><em>FRENTE</em>${mg.front.map((u,i)=>unitB(u,'f',i)).join('')}</div>${rail}</div>`;
     let h=steps(['Coger','Retirar','Colocar','Etiqueta'],mg.step);
-    if(mg.step===0)h+=`<div class="brief">📋 <b>Orden de reposición:</b> ${p.e} ${p.n}${p.f?' · '+esc(p.f):''} · pasillo ${aisleOf(p.id)}. Búscala en la estantería del almacén: hay cajas parecidas.</div>
-      <div class="wh"><div class="rack"><i class="up l"></i><i class="up r"></i>${[0,1].map(lv=>`<div class="lvl">${mg.crates.slice(lv*2,lv*2+2).map((c,j)=>{const i=lv*2+j;return `<button class="cbox" data-act="mgcrate" data-i="${i}"><i class="tape"></i><span class="lbl"><b>${c.n}</b><small>${esc(c.f)}</small><i class="bc"></i></span></button>`;}).join('')}</div><i class="beam"></i>`).join('')}</div></div>
-      ${mg.wrongBox?`<div class="supd bad">❌ Cajas equivocadas: ${mg.wrongBox}</div>`:''}`;
+    if(mg.step===0){const left=mg.crates.filter(c=>!mg.placed.includes(c.id)).length;
+      h+=`<div class="brief">📦 <b>Reponer pasillo ${aisleOf(p.id)}.</b> Lleva cada caja a su estante: toca una caja y luego el estante que lleva su dibujo. Si te equivocas, la caja vuelve y no pasa nada.</div>
+      <div class="rp-lab">CAJAS · ${mg.crates.length-left} de ${mg.crates.length}</div>
+      <div class="rp-boxes">${mg.crates.map((c,i)=>mg.placed.includes(c.id)?'<span class="rp-box done">✓</span>':`<button class="rp-box ${mg.sel===i?'sel':''}" data-act="mgcrate" data-i="${i}" aria-label="${esc(c.n)}"><span>${c.e}</span></button>`).join('')}</div>
+      <div class="rp-lab">ESTANTES</div>
+      <div class="rp-shelves">${mg.crates.slice().sort((x,y)=>x.id-y.id).map(c=>mg.placed.includes(c.id)?`<div class="rp-sh ok"><span>${c.e}</span><b>${esc(c.n)}</b><em>✓ Colocada</em></div>`:`<button class="rp-sh ${mg.sel>=0?'hot':''}" data-act="mgshelf" data-id="${c.id}"><span>${c.e}</span><b>${esc(c.n)}</b><em>${mg.sel>=0?'Toca aquí':''}</em></button>`).join('')}</div>
+      ${mg.wrongBox?`<div class="supd bad">❌ Cajas equivocadas: ${mg.wrongBox}</div>`:''}`;}
     else if(mg.step===1)h+=`<div class="brief">📅 Hoy es <b>${dShort(today0)}</b>. Toca lo <b>caducado</b> (fecha anterior a hoy) o <b>roto</b> para retirarlo a merma. Lo bueno, ni lo toques.</div>${lin}<button class="btn go" data-act="mgnext">Lineal revisado ▶</button>`;
     else if(mg.step===2)h+=`<div class="brief">📦 Te quedan <b>${mg.newLeft}</b> ${mg.newLeft===1?'unidad nueva':'unidades nuevas'} en la mano. Al <b>fondo</b>: lo viejo, al frente, que se venda antes.</div>${lin}`;
     else h+=`<div class="brief">🏷️ Escanea la PDA y pon en el riel la etiqueta de <b>${p.n}</b>${p.f?' ('+esc(p.f)+')':''}.</div>
@@ -8074,7 +8089,10 @@ function almBody(){
 }
 function almAct(a,b){
   if(mg.kind==='rot'){
-    if(a==='mgcrate'){const c=mg.crates[+b.dataset.i];if(!c)return;if(c.id===mg.p.id){mg.step=1;sBeep();}else{mg.wrongBox++;sBad();mg.fx={sel:`[data-act=mgcrate][data-i="${b.dataset.i}"]`,k:'bad'};toast(c.n+' no es lo que hay que reponer','bad');}}
+    if(a==='mgcrate'){const i=+b.dataset.i,c=mg.crates[i];if(!c||mg.placed.includes(c.id))return;mg.sel=mg.sel===i?-1:i;sCoin();}
+    else if(a==='mgshelf'){const c=mg.crates[mg.sel];if(!c)return;
+      if(c.id===+b.dataset.id){mg.placed.push(c.id);mg.sel=-1;sBeep();mg.fx={sel:`[data-act=mgshelf][data-id="${c.id}"]`,k:'ok'};if(mg.placed.length>=mg.crates.length)mg.step=1;}
+      else{mg.wrongBox++;mg.sel=-1;sBad();mg.fx={sel:`[data-act=mgshelf][data-id="${b.dataset.id}"]`,k:'bad'};toast(c.n+' no va en ese estante: vuelve a la caja','bad');}}
     else if(a==='mgout'){const u=mg.front[+b.dataset.i];if(!u||u.out)return;u.out=true;if(u.bad){mg.badOut++;sCoin();}else{mg.goodOut++;sBad();mg.fx={sel:'.gondola',k:'bad'};toast('Eso estaba bien: lo has tirado','bad');}}
     else if(a==='mgnext'){mg.front=mg.front.map(u=>u&&u.out?null:u);mg.step=2;}
     else if(a==='mgput'){
