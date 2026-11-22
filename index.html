@@ -1720,6 +1720,24 @@ body::before{content:'';position:fixed;top:0;left:0;right:0;height:env(safe-area
 #mg .card.mgc{background:#faf6ea;border:4px solid #1b1f1d;box-shadow:0 6px 0 #1b1f1d}
 #mg .card.mgc .btn,#mg .card.mgc .box,#mg .card.mgc .unit,#mg .card.mgc .crate{min-height:48px}
 #mg .card.mgc .btn.go{border:3px solid #1b1f1d;box-shadow:0 4px 0 #1b1f1d;font-size:18px}
+/* FIX · contraste de las píldoras oscuras del HUD */
+.stat b,.stat span,.stat em{color:#fff}
+.stat.neg b{color:#ffb3b3}
+.stat.s-task b{color:#fff;text-shadow:0 1px 0 #1b1f1d}
+
+/* ===== FASE 7 · Caja fiel al tablero Escena (móvil) ===== */
+@media (max-width:820px){
+  #register:has([data-act=pay]){display:grid!important;grid-template-columns:1fr 1fr;gap:8px;align-items:stretch;padding:10px 12px;background:#1b1f1d}
+  #register:has([data-act=pay]) .receipt{display:none}
+  #register:has([data-act=pay]) .led{grid-column:1;grid-row:1;margin:0;background:#0e1411;border:2px solid #2a3a30;border-radius:12px;padding:6px 10px;display:flex;flex-direction:column;justify-content:center}
+  #register:has([data-act=pay]) .led small{color:#8be0a3;font-size:12px;letter-spacing:.08em}
+  #register:has([data-act=pay]) .led b{color:#5dff8a;font-family:'Pixelify Sans',monospace;font-size:26px;text-shadow:0 0 8px rgba(93,255,138,.55)}
+  #register:has([data-act=pay]) .row{display:contents}
+  #register:has([data-act=pay]) .row .btn:not(.go){grid-column:2;grid-row:1;background:#fff;color:#1b1f1d;border:2px solid #fff;border-radius:12px;font-size:16px;min-height:0}
+  #register:has([data-act=pay]) .row .btn.go{grid-column:1/-1;grid-row:2;min-height:64px;font-size:26px;letter-spacing:.04em;border-radius:16px;background:#e5383b;color:#fff;box-shadow:0 5px 0 #8f1d20}
+  #register:has([data-act=pay]) .row .btn.go:disabled{background:#6b3a3b;box-shadow:0 5px 0 #3d2223;opacity:.8}
+  #register:has([data-act=pay]) .kbd,#register:has([data-act=pay]) .sup,#register:has([data-act=pay]) [data-act=sup]{grid-column:1/-1;grid-row:3}
+}
 </style>
 </head>
 <body>
@@ -6238,7 +6256,7 @@ function dailyExit(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.22-135';
+const APPV='2026.11.22-137';
 /* Compara versiones por números («-9» < «-11»), no como texto. */
 const verCmp=(a,b)=>{const x=String(a).split(/[.-]/).map(Number),y=String(b).split(/[.-]/).map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
 try{const vt=document.createElement('div');vt.id='vtag';vt.textContent='v'+APPV;document.body.appendChild(vt);}catch(e){}
@@ -9443,7 +9461,7 @@ function pixStatic(){
   for(let x=0;x<400;x+=16)for(let y=0;y<262;y+=16){
     if(x>=262&&y<156){c.fillStyle=((x/16+y/16)%2)?'#cfcac4':'#c6c0b9';c.fillRect(x,y,16,16);}
     else if(x>=262){c.fillStyle='#c99a6d';c.fillRect(x,y,16,16);c.fillStyle='#b8895e';c.fillRect(x,y+7,16,1);c.fillRect(x,y+15,16,1);c.fillRect(x+((y/16)%2?4:11),y,1,7);c.fillRect(x+((y/16)%2?12:3),y+8,1,7);}
-    else{c.fillStyle=((x/16+y/16)%2)?'#f6f2ee':'#ebe4de';c.fillRect(x,y,16,16);}
+    else{c.fillStyle=((x/16+y/16)%2)?'#efe3c8':'#e6d6b4';c.fillRect(x,y,16,16);}
   }
   /* pared del fondo blanca con banda roja y escaparates */
   c.fillStyle='#ffffff';c.fillRect(0,0,262,14);c.fillStyle='#e5383b';c.fillRect(0,11,262,3);
@@ -9538,7 +9556,7 @@ function pixTill(slot){
   const k=Math.max(2,Math.round(Math.min(cv.height/190,cv.width/230))),BW=Math.ceil(cv.width/k),BH=Math.ceil(cv.height/k);
   if(!ptl.buf||ptl.bw!==BW||ptl.bh!==BH){ptl.buf=document.createElement('canvas');ptl.buf.width=BW;ptl.buf.height=BH;ptl.bw=BW;ptl.bh=BH;}
   const c=ptl.buf.getContext('2d'),now=performance.now(),dt=Math.min(.1,(now-(ptl.last||now))/1000);ptl.last=now;c.imageSmoothingEnabled=false;
-  for(let x=0;x<BW;x+=16)for(let y=0;y<BH;y+=16){c.fillStyle=((x/16+y/16)%2)?'#f6f2ee':'#ebe4de';c.fillRect(x,y,16,16);}
+  for(let x=0;x<BW;x+=16)for(let y=0;y<BH;y+=16){c.fillStyle=((x/16+y/16)%2)?'#efe3c8':'#e6d6b4';c.fillRect(x,y,16,16);}
   if(!ptl.wall||ptl.wall.width!==BW)ptl.wall=pixWall(BW);c.drawImage(ptl.wall,0,0);
   /* medidas: la cinta manda */
   let cy,ch,bx0=4,bx1,bw,bh,bxx,byy;
