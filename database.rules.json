@@ -122,6 +122,9 @@
             "on": {
               ".validate": "newData.isBoolean()"
             },
+            "av": {
+              ".validate": "newData.isString() && newData.val().matches(/^[0-5]\\.[0-3]\\.[0-6]$/)"
+            },
             "$other": {
               ".validate": false
             },
