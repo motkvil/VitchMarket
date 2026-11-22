@@ -3365,6 +3365,31 @@ const STORY2=[
      if(k==='apl'){mor(x,8);ndAdd(x,'estima',15);return 'Aplausos en la sala para '+x.name+', que enseña la medalla a todo el que pasa.';}return 'Domingo de maratón. Medio barrio en chándal.';}})}
 ];
 STORY.push(...STORY2);
+/* ---- Fase 4: sabotaje en tienda y reunión de emergencia (estilo Among Us) ---- */
+STORY.push(
+ {id:'caida',cat:'suspense',ten:2,cd:8,when:c=>c.ws.length?{n:1+Math.floor(Math.random()*2)}:null,
+  run:(c,{n})=>stScene('caida',{who:'🔌',name:'Cuadro de luces',look:'pa',head:'🔌 ¡PROBLEMA EN TIENDA!',tag:'La Caja '+n+' se ha caído',ser:true,def:'no',
+   txt:'La Caja '+n+' se ha caído y los clientes se amontonan. Arréglala antes de que se acabe el tiempo.',
+   hint:'🔧 Ir a arreglarla: vuelves a tener la caja en seguida (80 % de acierto; si falla, −0,05 ★). 🙅 Ahora no: se van unos clientes y pierdes unos 80 € y 0,15 ★.',
+   ch:[['fix','🔧 Ir a arreglarla','go'],['no','🙅 Ahora no','no']],
+   go:k=>{if(k==='fix'){if(Math.random()<0.8)return 'Reinicias el TPV de la Caja '+n+': «Siempre es el cable». Todo vuelve a funcionar.';repAdd(-0.05,'La Caja '+n+' se cayó y tardaste en arreglarla');return 'Tardas un buen rato en dar con el cable. Algún cliente se ha ido.';}
+     meta.money-=8000;repAdd(-0.15,'La Caja '+n+' se cayó y no fuiste');return 'La Caja '+n+' sigue muerta. Se van unos cuantos clientes: −80 €.';}}) },
+ {id:'cuadro',cat:'suspense',ten:2,cd:12,when:c=>{const w=c.ws.filter(e=>!e.real);if(w.length<3)return null;const t=w.slice().sort(()=>Math.random()-.5).slice(0,3);return {t,cul:t[Math.floor(Math.random()*3)]};},
+  run:(c,{t,cul})=>{const lines=t.map(e=>{const o=t.find(x=>x!==e&&x!==cul)||t.find(x=>x!==e);
+     if(e===cul)return e.face+' «Estuve reponiendo todo el rato. Preguntad.»';
+     if(o===cul||Math.random()<.5)return e.face+' «Vi a '+esc(cul.name)+' salir del almacén justo antes del apagón.»';
+     return e.face+' «Yo estaba en caja, preguntadle a los clientes.»';});
+   return stScene('cuadro',{who:'⚡',name:'Reunión de emergencia',look:'letter',head:'🚨 REUNIÓN DE EMERGENCIA',tag:'¿Quién tocó el cuadro de luz?',ser:true,def:'skip',
+   txt:'Se ha ido la luz un minuto. Lee las pistas y vota. Si aciertas, el culpable se va a la calle.',
+   body:'<div class="scn-doc"><b>PISTAS</b><br>'+lines.join('<br>')+'</div>',
+   hint:'🗳️ Votar a alguien lo despide ya: si es el culpable, bien; si te equivocas, es un despido improcedente y pagas 300 € (el resto pierde 8 de ánimo). ⏭️ Saltar: no pasa nada y el misterio queda sin resolver.',
+   ch:t.map(e=>['v'+e.id,'🗳️ Votar a '+e.name,'no']).concat([['skip','⏭️ Saltar']]),
+   go:k=>{if(k==='skip')return 'Nadie lo reconoce. El cuadro de luz tiene ahora un candado.';
+     const e=t.find(x=>'v'+x.id===k);if(!e)return;
+     if(e===cul){dropEmp(e,'Reunión de emergencia: él tocó el cuadro');meta.emp.forEach(o=>{if(!o.real)mor(o,3);});return e.name+' lo confiesa y se va. Justicia poética.';}
+     dropEmp(e,'Votado por error en la reunión de emergencia');meta.money-=30000;meta.emp.forEach(o=>{if(!o.real)mor(o,-8);});return 'Te equivocas: el culpable era '+cul.name+'. '+e.name+' se lleva 300 € de indemnización por despido improcedente.';}}); }}
+);
+
 function storyPick(L,force){
   const F=/^st-/.test(VIDA_T)?VIDA_T.slice(3):'';
   const c=STORY.filter(s=>F?s.id===F:L(s)&&(force||!(meta.storyCd&&meta.storyCd[s.id]>meta.day)));if(!c.length)return null;const ctx=storyCtx();
@@ -6197,7 +6222,7 @@ function dailyExit(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.22-129';
+const APPV='2026.11.22-130';
 /* Compara versiones por números («-9» < «-11»), no como texto. */
 const verCmp=(a,b)=>{const x=String(a).split(/[.-]/).map(Number),y=String(b).split(/[.-]/).map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
 try{const vt=document.createElement('div');vt.id='vtag';vt.textContent='v'+APPV;document.body.appendChild(vt);}catch(e){}
