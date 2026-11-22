@@ -1708,7 +1708,7 @@ body::before{content:'';position:fixed;top:0;left:0;right:0;height:env(safe-area
 .stat.s-task{background:linear-gradient(90deg,#2a9d5c var(--tp,0%),var(--pill-bg) var(--tp,0%));cursor:pointer}
 @media (max-width:820px){.stat.s-task span{display:none}}
 /* FASE 5 · avatar */
-.avab{display:flex;gap:6px;flex-wrap:wrap}.avab-c{padding:4px;min-width:48px;min-height:48px}.avab-c canvas{width:40px;height:40px;image-rendering:pixelated;display:block}
+.avab{display:flex;gap:6px;flex-wrap:wrap}.avak{min-width:44px;min-height:44px;padding:0 8px}.avab-c{padding:4px;min-width:48px;min-height:48px}.avab-c canvas{width:40px;height:40px;image-rendering:pixelated;display:block}
 /* FASE 4 · mapa */
 #mapw{position:fixed;inset:0;z-index:24;display:none;align-items:center;justify-content:center;background:rgba(27,31,29,.6);padding:12px}
 #mapw.show{display:flex}.mapc{width:100%;max-width:520px;max-height:100%;overflow:auto}.mapslot{width:100%;border:3px solid #1b1f1d;border-radius:14px;overflow:hidden;background:#17352f}
@@ -4028,7 +4028,7 @@ function ajHtml(){
   const opt=(k,v,l)=>`<button class="btn ${AJ[k]===v?'go':''}" data-act="aj" data-k="${k}" data-v="${v}" aria-pressed="${AJ[k]===v}">${l}</button>`;
   const row=(t,d,btns)=>`<div class="up ajr"><div class="t"><b>${t}</b>${d}</div><div class="ajb">${btns}</div></div>`;
   const yn=k=>opt(k,0,'No')+opt(k,1,'Sí');
-  const ava=`<div class="up ajr"><div class="t"><b>🧑‍🎤 Tu avatar</b>Elige personaje y complemento. Se ve en tu tienda (la corona sigue siendo tuya).</div><div class="ajb avab">${AVA_ROWS.map((r,i)=>`<button class="btn avab-c ${AVA.c===i?'go':''}" data-act="avset" data-c="${i}" aria-label="Personaje ${i+1}"><canvas width="32" height="32" data-ava="${i}"></canvas></button>`).join('')}</div><div class="ajb">${AVA_ACC.map((n,i)=>`<button class="btn ${AVA.a===i?'go':''}" data-act="avset" data-a="${i}">${n}</button>`).join('')}</div></div>`;
+  const ava=`<div class="up ajr"><div class="t"><b>🧑‍🎤 Tu avatar</b>Elige personaje, camiseta y complemento. Se ve en tu tienda (la corona sigue siendo tuya).</div><div class="ajb avab">${AVA_ROWS.map((r,i)=>`<button class="btn avab-c ${AVA.c===i?'go':''}" data-act="avset" data-c="${i}" aria-label="Personaje ${i+1}"><canvas width="32" height="32" data-ava="${i}"></canvas></button>`).join('')}</div><div class="ajb">${AVA_COL.map((k,i)=>`<button class="btn avak ${AVA.k===i?'go':''}" data-act="avset" data-k="${i}" aria-label="Camiseta ${i?i:'original'}" style="${k?'background:'+k+';color:#fff':''}">${k?'':'Original'}</button>`).join('')}</div><div class="ajb">${AVA_ACC.map((n,i)=>`<button class="btn ${AVA.a===i?'go':''}" data-act="avset" data-a="${i}">${n}</button>`).join('')}</div></div>`;
   return `<div class="ajs">
     ${ava}
     ${row('🐢 Ritmo del turno','Relajado: los clientes aguantan un 40 % más y el turno dura más. La partida queda en «modo relajado», fuera del ranking. Desde el próximo turno.',opt('ritmo','norm','Normal')+opt('ritmo','rel','Relajado'))}
@@ -6230,7 +6230,7 @@ function dailyExit(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.22-132';
+const APPV='2026.11.22-133';
 /* Compara versiones por números («-9» < «-11»), no como texto. */
 const verCmp=(a,b)=>{const x=String(a).split(/[.-]/).map(Number),y=String(b).split(/[.-]/).map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
 try{const vt=document.createElement('div');vt.id='vtag';vt.textContent='v'+APPV;document.body.appendChild(vt);}catch(e){}
@@ -9390,6 +9390,7 @@ function pPerson(c,x,y,o){ /* x,y = pies; o:{ch,dir,mv,t,s,staff,boss,role,hl} *
   const px=x-8*s,py=y-15*s;
   c.fillStyle='rgba(60,20,30,.25)';c.fillRect(Math.round(x-5*s),Math.round(y-1*s),10*s,2*s);
   tU(c,row*27+col,px,py,s);
+  if(o.boss&&AVA.k&&o.dir!=='u'){c.fillStyle=AVA_COL[AVA.k];c.fillRect(Math.round(x-3*s),Math.round(py+9*s),6*s,4*s);}
   if(o.boss&&AVA.a&&o.dir!=='u')avaAcc(c,x,py,s,AVA.a);
   if(o.staff){c.fillStyle=o.role&&ROLE_PIX[o.role]||'#e5383b';c.fillRect(Math.round(x-3*s),Math.round(py+9*s),6*s,4*s);}
   if(o.boss){c.fillStyle='#ffd23f';c.fillRect(Math.round(x-3*s),Math.round(py-2*s),7*s,2*s);c.fillRect(Math.round(x-3*s),Math.round(py-3*s),1*s,1*s);c.fillRect(Math.round(x),Math.round(py-3*s),1*s,1*s);c.fillRect(Math.round(x+3*s),Math.round(py-3*s),1*s,1*s);}
@@ -9397,7 +9398,8 @@ function pPerson(c,x,y,o){ /* x,y = pies; o:{ch,dir,mv,t,s,staff,boss,role,hl} *
 }
 /* ---- Fase 5: avatar del jugador (6 personajes de Kenney + complemento), solo en este navegador ---- */
 const AVA_ROWS=[0,3,6,9,12,15],AVA_ACC=['Nada','Gorra','Gafas','Lazo'];
-let AVA={c:0,a:0};try{const j=JSON.parse(localStorage.getItem('vitchmarket.avatar')||'null');if(j&&AVA_ROWS[j.c]!=null){AVA.c=j.c|0;AVA.a=(j.a|0)%AVA_ACC.length;}}catch(e){}
+const AVA_COL=[null,'#d92d30','#2f6db5','#2a9d5c','#7b4bb7','#f08a24','#1b1f1d'];
+let AVA={c:0,a:0,k:0};try{const j=JSON.parse(localStorage.getItem('vitchmarket.avatar')||'null');if(j&&AVA_ROWS[j.c]!=null){AVA.c=j.c|0;AVA.a=(j.a|0)%AVA_ACC.length;AVA.k=(j.k|0)%AVA_COL.length;}}catch(e){}
 function avaSave(){try{localStorage.setItem('vitchmarket.avatar',JSON.stringify(AVA));}catch(e){}}
 function avaAcc(c,x,py,s,acc){ /* complemento sobre la cabeza del sprite (x = centro, py = arriba del sprite) */
   if(acc===1){c.fillStyle='#d92d30';c.fillRect(Math.round(x-4*s),Math.round(py+1*s),8*s,2*s);c.fillRect(Math.round(x-2*s),Math.round(py),5*s,1*s);c.fillStyle='#9f1d20';c.fillRect(Math.round(x+1*s),Math.round(py+3*s),5*s,1*s);}
@@ -10141,7 +10143,7 @@ function onClick(e){
   else if(a==='aj')ajSet(b.dataset.k,b.dataset.v);
   else if(a==='ajopen'){ajw=true;ajRender();}
   else if(a==='ajclose'){ajw=false;ajRender();}
-  else if(a==='avset'){if(b.dataset.c!=null)AVA.c=+b.dataset.c;if(b.dataset.a!=null)AVA.a=+b.dataset.a;avaSave();ajRender();}
+  else if(a==='avset'){if(b.dataset.c!=null)AVA.c=+b.dataset.c;if(b.dataset.a!=null)AVA.a=+b.dataset.a;if(b.dataset.k!=null)AVA.k=+b.dataset.k;avaSave();ajRender();}
   else if(a==='endover'){run.endOver=false;run.over=false;checkRep();}
   else if(a==='retry'&&turnSnap){const best=meta.best;meta=JSON.parse(turnSnap);ensureMeta();meta.best=Math.max(best||0,meta.best||0);
     meta.runId=Math.random().toString(36).slice(2,10)+Date.now().toString(36);meta.retries=(meta.retries||0)+1;meet=null;startDay();toast('🔁 Repites el turno '+meta.day+'. Esta vez, con cabeza.','good');}
