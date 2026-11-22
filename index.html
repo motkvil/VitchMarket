@@ -1720,6 +1720,10 @@ body::before{content:'';position:fixed;top:0;left:0;right:0;height:env(safe-area
 #mg .card.mgc{background:#faf6ea;border:4px solid #1b1f1d;box-shadow:0 6px 0 #1b1f1d}
 #mg .card.mgc .btn,#mg .card.mgc .box,#mg .card.mgc .unit,#mg .card.mgc .crate{min-height:48px}
 #mg .card.mgc .btn.go{border:3px solid #1b1f1d;box-shadow:0 4px 0 #1b1f1d;font-size:18px}
+/* FIX · contraste de las píldoras oscuras del HUD */
+.stat b,.stat span,.stat em{color:#fff}
+.stat.neg b{color:#ffb3b3}
+.stat.s-task b{color:#fff;text-shadow:0 1px 0 #1b1f1d}
 </style>
 </head>
 <body>
@@ -6238,7 +6242,7 @@ function dailyExit(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.22-135';
+const APPV='2026.11.22-136';
 /* Compara versiones por números («-9» < «-11»), no como texto. */
 const verCmp=(a,b)=>{const x=String(a).split(/[.-]/).map(Number),y=String(b).split(/[.-]/).map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
 try{const vt=document.createElement('div');vt.id='vtag';vt.textContent='v'+APPV;document.body.appendChild(vt);}catch(e){}
