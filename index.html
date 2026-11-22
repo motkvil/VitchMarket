@@ -1704,6 +1704,9 @@ body::before{content:'';position:fixed;top:0;left:0;right:0;height:env(safe-area
 .mg-ins b{flex:1;font-family:var(--display);font-weight:600;font-size:16px;line-height:20px}
 .mg-q{flex:none;width:44px;height:44px;border-radius:22px;border:3px solid #1b1f1d;background:#fff;color:#1b1f1d;font-family:var(--display);font-weight:700;font-size:20px;cursor:pointer}
 #mg .card.mgc>.supd:nth-of-type(1){font-size:13px}
+/* FASE 4 · barra de tareas del turno (estilo Among Us) */
+.stat.s-task{background:linear-gradient(90deg,#2a9d5c var(--tp,0%),var(--pill-bg) var(--tp,0%));cursor:pointer}
+@media (max-width:820px){.stat.s-task span{display:none}}
 </style>
 </head>
 <body>
@@ -1713,6 +1716,7 @@ body::before{content:'';position:fixed;top:0;left:0;right:0;height:env(safe-area
     <div class="stat s-clock"><i>📅</i><span id="hDow">Lunes</span><b id="hClock">09:00</b><em class="rushc" id="hRush" role="status" aria-label="Hora punta" title="Hora punta: viene más gente" hidden></em></div>
     <div class="stat s-money"><i>💰</i><span>Bote</span><b id="hMoney">0,00 €</b></div>
     <div class="stat s-rep"><i>⭐</i><span>Reputación</span><b id="hRep">★ 5.0</b></div>
+    <button class="stat s-task" id="hTaskB" data-act="staffinfo" title="Tareas del turno: hechas / total" aria-label="Tareas del turno"><i>🧰</i><span>Tareas</span><b id="hTask">0/0</b></button>
     <div class="stat s-tk"><i>📨</i><span>Reclamac.</span><b id="hTk">0</b></div>
     <div class="stat s-out"><i>📦</i><span>Agotados</span><b id="hOut">0</b></div>
     <button class="stat s-staff" id="hStaffB" data-act="staffinfo" title="Plantilla: en tienda / total" aria-label="Plantilla" hidden><i>👥</i><span>Plantilla</span><b id="hStaff">0/0</b></button><button class="stat s-goal" id="hGoalB" data-act="goals" title="Objetivos del turno" aria-label="Objetivos del turno" hidden><i>🏆</i><span>Turno</span><b id="hGoal">0/3</b></button>
@@ -6193,7 +6197,7 @@ function dailyExit(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.22-128';
+const APPV='2026.11.22-129';
 /* Compara versiones por números («-9» < «-11»), no como texto. */
 const verCmp=(a,b)=>{const x=String(a).split(/[.-]/).map(Number),y=String(b).split(/[.-]/).map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
 try{const vt=document.createElement('div');vt.id='vtag';vt.textContent='v'+APPV;document.body.appendChild(vt);}catch(e){}
@@ -8824,9 +8828,11 @@ function renderHud(){
   {const gb=$('#hGoalB'),T=run&&!run.remote&&!isMember()?turnGoals():null;if(gb){gb.hidden=!T;if(T)$('#hGoal').textContent=(run.stars!=null?run.stars:T.filter(g=>g[1]>=1).length)+'/3';}}
   {const rs=$('#hRush'),dw=$('#hDow');if(rs&&dw){if(run&&run.remote){const st=room.state||{};dw.textContent=DOW[dowOf(st.day)].slice(0,3);$('#hDowB').textContent=DOW[dowOf(st.day)];rs.hidden=!((st.t||0)<(st.dur||100)&&rushRaw(9+12*Math.min(1,(st.t||0)/(st.dur||100)))>=1.5);}
     else{dw.textContent=DOW[dowOf(meta.day)].slice(0,3)+(dowF(meta.day)>1?' 🔥':'');$('#hDowB').textContent=DOW[dowOf(meta.day)]+(dowF(meta.day)>1?' 🔥 +15 %':dowF(meta.day)<1?' · −10 %':'');rs.hidden=!rushOn();}}}
+  {const tb=$('#hTaskB');if(tb)tb.hidden=!!(run&&run.remote);}
   if(run&&run.remote){const st=room.state||{};$('#hTill').textContent=run.till;$('#hDay').textContent=st.day||1;$('#hMoney').textContent=fmt(st.money||0);$('#hMoney').parentNode.classList.toggle('neg',(st.money||0)<0);$('#hRep').textContent='★ '+repT(+st.rep||0);
     $('#hTk').textContent=st.dep&&st.dep.tk?Object.values(st.dep.tk).reduce((a,b)=>a+(+b||0),0):0;$('#hOut').textContent=(st.dep&&st.dep.out)||0;const c=clockOf(st.t,st.dur);$('#hClock').textContent=c;$('#hBar').style.width=Math.min(1,(st.t||0)/(st.dur||100))*100+'%';return;}
   $('#hTill').textContent='3';
+  {const tb=$('#hTask');if(tb){const d=run?run.tdone|0:0,o=run?run.tasks.filter(t=>t.k!=='tk'&&!t.hide).length:0,tot=d+(run?run.tlost|0:0)+o;tb.textContent=d+'/'+tot;const bar=tb.parentNode;bar.style.setProperty('--tp',(tot?Math.round(d/tot*100):0)+'%');}}
   $('#hDay').textContent=meta.day;
   $('#hMoney').textContent=fmt(meta.money);$('#hMoney').parentNode.classList.toggle('neg',meta.money<0);
   $('#hTk').textContent=run?run.tickets.length:0;
