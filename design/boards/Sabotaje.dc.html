@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>VitchMarket · Sabotaje</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800&family=Pixelify+Sans:wght@500;700&display=swap">
+<style>
+body{margin:0}
+.vm{--brand:#d92d30;--brand-dk:#9f1d20;--brand-soft:#fde7e7;--paper:#faf6ea;--card:#ffffff;--ink:#1b1f1d;--mute:#56635d;--line:rgba(27,31,29,0.12);--tag:#ffd23f;--ok:#1f7a46;--ok-soft:#e3f3ea;--warn:#7a4f00;--warn-soft:#fff1c2;--floor:#17352f}
+.vm a{text-decoration:none;color:inherit}
+.vm button{font-family:inherit;cursor:pointer}
+@keyframes vmpulse{0%,100%{box-shadow:0 0 0 0 rgba(217,45,48,0.5)}50%{box-shadow:0 0 0 14px rgba(217,45,48,0)}}
+</style>
+</helmet>
+<div class="vm" style="position:relative;width:390px;height:844px;overflow:hidden;box-sizing:border-box;background:var(--brand);color:#fff;font-family:'Nunito',system-ui,sans-serif;">
+
+  <div style="position:absolute;top:0;left:0;right:0;height:96px;box-sizing:border-box;padding:44px 16px 0;display:flex;align-items:center;justify-content:space-between;">
+    <span style="font-family:'Fredoka',sans-serif;font-weight:600;font-size:18px;">¡Problema en tienda!</span>
+    <a href="Mapa.dc.html" style="height:44px;display:flex;align-items:center;font-size:14px;font-weight:800;text-decoration:underline;">Ver mapa</a>
+  </div>
+
+  <div style="position:absolute;top:120px;left:16px;right:16px;text-align:center;">
+    <div style="font-size:64px;line-height:72px;">🔌</div>
+    <div style="margin-top:8px;font-family:'Fredoka',sans-serif;font-weight:700;font-size:30px;line-height:36px;">La caja 2 se ha caído</div>
+    <div style="margin-top:6px;font-size:16px;line-height:22px;">Los clientes se amontonan. Arréglala antes de que se acabe el tiempo.</div>
+  </div>
+
+  <div style="position:absolute;top:340px;left:0;right:0;text-align:center;">
+    <div style="font-family:'Pixelify Sans',monospace;font-size:88px;line-height:96px;">0:24</div>
+    <div style="font-size:14px;font-weight:800;">segundos que quedan</div>
+  </div>
+
+  <section style="position:absolute;top:490px;left:16px;right:16px;border-radius:20px;background:var(--card);color:var(--ink);padding:14px 16px;">
+    <div style="font-size:12px;line-height:14px;color:var(--mute);font-weight:800;">SI NO LA ARREGLAS</div>
+    <div style="margin-top:4px;font-size:15px;line-height:22px;font-weight:700;">Se van 6 clientes y pierdes unos 80 € y 1 estrella de reputación.</div>
+    <div style="margin-top:12px;font-size:12px;line-height:14px;color:var(--mute);font-weight:800;">QUIÉN PUEDE ARREGLARLA</div>
+    <div style="margin-top:8px;display:flex;gap:8px;">
+      <div style="flex:1;border-radius:14px;background:var(--ok-soft);padding:8px 10px;text-align:center;"><div style="font-size:26px;">🙂</div><div style="font-size:13px;line-height:18px;font-weight:800;">Tú · 12 s</div></div>
+      <div style="flex:1;border-radius:14px;background:var(--paper);padding:8px 10px;text-align:center;"><div style="font-size:26px;">🧔</div><div style="font-size:13px;line-height:18px;font-weight:800;">Óscar · 30 s</div></div>
+    </div>
+  </section>
+
+  <div style="position:absolute;left:16px;right:16px;bottom:24px;display:flex;flex-direction:column;gap:10px;">
+    <a href="Cobrar.dc.html" style="height:56px;border-radius:16px;background:#fff;box-shadow:0 4px 0 rgba(0,0,0,0.25);color:var(--brand-dk);display:flex;align-items:center;justify-content:center;font-family:'Fredoka',sans-serif;font-weight:700;font-size:20px;animation:vmpulse 1.4s infinite;">Ir a arreglarla</a>
+    <a href="Main.dc.html" style="height:44px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;text-decoration:underline;">Ahora no</a>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

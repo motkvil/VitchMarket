@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>VitchMarket · Bronca</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800&family=Pixelify+Sans:wght@500;700&display=swap">
+<style>
+body{margin:0}
+.vm{--brand:#d92d30;--brand-dk:#9f1d20;--brand-soft:#fde7e7;--paper:#faf6ea;--card:#ffffff;--ink:#1b1f1d;--mute:#56635d;--line:rgba(27,31,29,0.12);--tag:#ffd23f;--ok:#1f7a46;--ok-soft:#e3f3ea;--warn:#7a4f00;--warn-soft:#fff1c2;--floor:#17352f}
+.vm a{text-decoration:none;color:inherit}
+.vm button{font-family:inherit;cursor:pointer}
+</style>
+</helmet>
+<div class="vm" style="position:relative;width:390px;height:844px;overflow:hidden;box-sizing:border-box;background:var(--paper);color:var(--ink);font-family:'Nunito',system-ui,sans-serif;">
+
+  <header style="position:absolute;top:0;left:0;right:0;height:96px;box-sizing:border-box;padding:44px 8px 0;background:var(--brand);border-bottom:5px solid var(--brand-dk);color:#fff;display:flex;align-items:center;">
+    <a href="RRHH.dc.html" aria-label="Salir" style="width:44px;height:44px;display:flex;align-items:center;justify-content:center;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></a>
+    <div style="flex:1;font-family:'Fredoka',sans-serif;font-weight:600;font-size:18px;">Bronca en la tienda</div>
+    <button aria-label="Ver cómo se juega" style="width:44px;height:44px;border:0;border-radius:22px;background:rgba(255,255,255,0.2);color:#fff;font-family:'Fredoka',sans-serif;font-weight:700;font-size:20px;">?</button>
+  </header>
+
+  <div style="position:absolute;top:108px;left:16px;right:16px;display:flex;flex-direction:column;gap:12px;">
+
+    <section style="border-radius:20px;background:var(--tag);padding:12px 16px;">
+      <div style="font-family:'Fredoka',sans-serif;font-weight:600;font-size:20px;line-height:26px;">Decide quién tiene la razón.</div>
+      <div style="margin-top:2px;font-size:13px;line-height:18px;">Lee las dos versiones y mira sus fichas antes de elegir.</div>
+    </section>
+
+    <section style="display:flex;flex-direction:column;gap:8px;">
+      <div style="border-radius:20px;background:var(--card);box-shadow:0 4px 14px rgba(27,31,29,0.1);padding:12px 14px;display:flex;gap:12px;align-items:flex-start;">
+        <div style="flex:none;width:48px;height:48px;border-radius:24px;background:var(--paper);display:flex;align-items:center;justify-content:center;font-size:28px;">🧔</div>
+        <div style="flex:1;min-width:0;"><b style="font-size:15px;line-height:20px;">Óscar · Almacén</b><div style="margin-top:2px;font-size:14px;line-height:20px;">«Marta se dejó la caja abierta y me lo cargaron a mí.»</div><div style="margin-top:4px;font-size:12px;line-height:16px;color:var(--mute);font-weight:800;">3 turnos sin quejas · ánimo 😐</div></div>
+      </div>
+      <div style="text-align:center;font-family:'Fredoka',sans-serif;font-weight:700;font-size:16px;color:var(--brand);">🥊 contra 🥊</div>
+      <div style="border-radius:20px;background:var(--card);box-shadow:0 4px 14px rgba(27,31,29,0.1);padding:12px 14px;display:flex;gap:12px;align-items:flex-start;">
+        <div style="flex:none;width:48px;height:48px;border-radius:24px;background:var(--paper);display:flex;align-items:center;justify-content:center;font-size:28px;">👩‍🦰</div>
+        <div style="flex:1;min-width:0;"><b style="font-size:15px;line-height:20px;">Marta · Backoffice</b><div style="margin-top:2px;font-size:14px;line-height:20px;">«Yo no toqué nada. Él siempre echa la culpa a otro.»</div><div style="margin-top:4px;font-size:12px;line-height:16px;color:var(--mute);font-weight:800;">1 toque por retraso · ánimo 🙂</div></div>
+      </div>
+    </section>
+
+    <section style="border-radius:14px;background:var(--warn-soft);padding:8px 12px;font-size:13px;line-height:18px;color:var(--warn);font-weight:700;">Si das la razón a quien no la tiene, el otro baja de ánimo. Si están igual, puedes mediar.</section>
+  </div>
+
+  <div style="position:absolute;left:16px;right:16px;bottom:24px;display:flex;flex-direction:column;gap:10px;">
+    <div style="display:flex;gap:10px;">
+      <a href="RRHH.dc.html" style="flex:1;height:56px;border-radius:16px;background:var(--brand);box-shadow:0 4px 0 var(--brand-dk);color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Fredoka',sans-serif;font-weight:600;font-size:18px;">Razón a Óscar</a>
+      <a href="RRHH.dc.html" style="flex:1;height:56px;border-radius:16px;background:var(--brand);box-shadow:0 4px 0 var(--brand-dk);color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Fredoka',sans-serif;font-weight:600;font-size:18px;">Razón a Marta</a>
+    </div>
+    <a href="RRHH.dc.html" style="height:44px;border-radius:14px;background:var(--card);box-shadow:inset 0 0 0 2px var(--line);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;">Mediar entre los dos</a>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

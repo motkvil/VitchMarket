@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>VitchMarket · Pedido</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800&family=Pixelify+Sans:wght@500;700&display=swap">
+<style>
+body{margin:0}
+.vm{--brand:#d92d30;--brand-dk:#9f1d20;--brand-soft:#fde7e7;--paper:#faf6ea;--card:#ffffff;--ink:#1b1f1d;--mute:#56635d;--line:rgba(27,31,29,0.12);--tag:#ffd23f;--ok:#1f7a46;--ok-soft:#e3f3ea;--warn:#7a4f00;--warn-soft:#fff1c2;--floor:#17352f}
+.vm a{text-decoration:none;color:inherit}
+.vm button{font-family:inherit;cursor:pointer}
+.row{display:flex;align-items:center;gap:12px;min-height:64px;border-top:1px solid var(--line)}
+.bar{display:flex;gap:3px}.bar i{display:block;width:10px;height:14px;border-radius:3px;background:var(--line)}
+.bar i.on{background:var(--ok)}.bar i.lo{background:var(--brand)}
+</style>
+</helmet>
+<div class="vm" style="position:relative;width:390px;height:844px;overflow:hidden;box-sizing:border-box;background:var(--paper);color:var(--ink);font-family:'Nunito',system-ui,sans-serif;">
+
+  <header style="position:absolute;top:0;left:0;right:0;height:96px;box-sizing:border-box;padding:44px 8px 0;background:var(--brand);border-bottom:5px solid var(--brand-dk);color:#fff;display:flex;align-items:center;">
+    <a href="Almacen.dc.html" aria-label="Salir" style="width:44px;height:44px;display:flex;align-items:center;justify-content:center;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></a>
+    <div style="flex:1;font-family:'Fredoka',sans-serif;font-weight:600;font-size:18px;">Pedido a Hacendado</div>
+    <button aria-label="Ver cómo se juega" style="width:44px;height:44px;border:0;border-radius:22px;background:rgba(255,255,255,0.2);color:#fff;font-family:'Fredoka',sans-serif;font-weight:700;font-size:20px;">?</button>
+  </header>
+
+  <div style="position:absolute;top:108px;left:16px;right:16px;display:flex;flex-direction:column;gap:12px;">
+
+    <section style="border-radius:20px;background:var(--tag);padding:12px 16px;">
+      <div style="font-family:'Fredoka',sans-serif;font-weight:600;font-size:20px;line-height:26px;">Pide lo que se va a acabar.</div>
+      <div style="margin-top:2px;font-size:13px;line-height:18px;">Marca lo que tiene 2 o menos. No te pases del presupuesto.</div>
+    </section>
+
+    <section style="display:flex;align-items:center;gap:12px;">
+      <div style="flex:1;height:14px;border-radius:7px;background:var(--line);overflow:hidden;"><div style="width:62%;height:100%;background:var(--warn);"></div></div>
+      <b style="font-family:'Pixelify Sans',monospace;font-size:16px;">38 € de 60 €</b>
+    </section>
+
+    <section style="border-radius:20px;background:var(--card);box-shadow:0 4px 14px rgba(27,31,29,0.1);padding:4px 16px;">
+      <div class="row" style="border-top:0;background:var(--ok-soft);margin:0 -16px;padding:0 16px;border-radius:14px;box-shadow:inset 0 0 0 3px var(--ok);">
+        <span style="font-size:30px;">🥛</span>
+        <span style="flex:1;"><b style="display:block;font-size:15px;line-height:20px;">Leche entera</b><span class="bar" style="display:flex;"><i class="lo"></i><i></i><i></i><i></i><i></i><i></i></span></span>
+        <span style="text-align:right;"><b style="display:block;font-family:'Pixelify Sans',monospace;font-size:20px;">quedan 0</b><span style="font-size:12px;color:var(--ok);font-weight:800;">✔ PEDIR · 7,20 €</span></span>
+      </div>
+      <div class="row">
+        <span style="font-size:30px;">🥣</span>
+        <span style="flex:1;"><b style="display:block;font-size:15px;line-height:20px;">Yogures naturales</b><span class="bar"><i class="lo"></i><i class="lo"></i><i></i><i></i><i></i><i></i></span></span>
+        <span style="text-align:right;"><b style="display:block;font-family:'Pixelify Sans',monospace;font-size:20px;">quedan 2</b><span style="font-size:12px;color:var(--mute);font-weight:800;">Tocar para pedir</span></span>
+      </div>
+      <div class="row">
+        <span style="font-size:30px;">🍝</span>
+        <span style="flex:1;"><b style="display:block;font-size:15px;line-height:20px;">Espaguetis</b><span class="bar"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span></span>
+        <span style="text-align:right;"><b style="display:block;font-family:'Pixelify Sans',monospace;font-size:20px;">quedan 5</b><span style="font-size:12px;color:var(--mute);font-weight:800;">No hace falta</span></span>
+      </div>
+    </section>
+
+    <section style="font-size:13px;line-height:18px;color:var(--mute);"><b style="color:var(--ink);">Quedan</b> = estantería + almacén + en camino. Rojo = 2 o menos. Pedir de más se paga igual.</section>
+  </div>
+
+  <div style="position:absolute;left:16px;right:16px;bottom:24px;">
+    <a href="Almacen.dc.html" style="height:56px;border-radius:16px;background:var(--brand);box-shadow:0 4px 0 var(--brand-dk);color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Fredoka',sans-serif;font-weight:600;font-size:20px;">Enviar pedido · 7,20 €</a>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>
