@@ -6438,7 +6438,7 @@ function dailyExit(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.22-148';
+const APPV='2026.11.22-149';
 /* Compara versiones por números («-9» < «-11»), no como texto. */
 const verCmp=(a,b)=>{const x=String(a).split(/[.-]/).map(Number),y=String(b).split(/[.-]/).map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
 try{const vt=document.createElement('div');vt.id='vtag';vt.textContent='v'+APPV;document.body.appendChild(vt);}catch(e){}
@@ -6861,7 +6861,7 @@ async function resign(){
 }
 async function register(){
   if(!nameOk()||!room)return;
-  try{await fb.update(rRef('members/'+room.uid),{name:playerName()});presence();room.msg=null;}catch(e){console.warn(e);room.msg={t:'⚠️ No se pudo registrar tu nombre ('+errMsg(e)+'). Si pone PERMISSION_DENIED, las reglas de Firebase no están bien publicadas.',bad:true};toast(room.msg.t,'bad');}
+  try{await fb.update(rRef('members/'+room.uid),{name:playerName(),av:avaStr()});presence();room.msg=null;}catch(e){console.warn(e);room.msg={t:'⚠️ No se pudo registrar tu nombre ('+errMsg(e)+'). Si pone PERMISSION_DENIED, las reglas de Firebase no están bien publicadas.',bad:true};toast(room.msg.t,'bad');}
   room.lastHtml='';renderMember();
 }
 function hubMsg(t,bad){if(!room)return;room.msg={t,bad:!!bad};toast(t,bad?'bad':'good');room.lastHtml='';renderMember();}
@@ -7031,6 +7031,7 @@ function syncRealEmps(){
       toast('🎮 '+nm+' entra en '+ROLES[m.role].n,'good');
     }
     if(e.role!==m.role||e.name!==nm){e.role=m.role;e.name=nm;ch=true;}
+    if((e.av||'')!==(m.av||'')){e.av=m.av||'';ch=true;}
     if(run&&!run.over&&run.duty){
       const d=run.duty[e.id];
       if(m.on&&(!d||d.st==='gone')){
@@ -9206,14 +9207,14 @@ function camModel(){
     else if(otn[e.id]&&!d.soc){const k=otn[e.id];w={k:'till',n:k};b='🧾';x='en la Caja '+k+' ('+((run.oq&&run.oq[k]||[]).length)+' en cola)';}
     else if(d.soc){const o=empById(d.soc.w);b=d.soc.ic;x=(SOCS[d.soc.k]||'de charla con')+' '+(o?o.name:'alguien');
       if(o&&d.soc.lead){const od=run.duty[o.id],t=od&&od.busy&&run.tasks.find(y=>y.id===od.task);let oi=0;for(const z of meta.emp){if(z.role===o.role){if(z===o)break;oi++;}}w=Object.assign({},t?taskSpot(t):{k:'post',r:o.role,i:oi},{dx:10});}}
-    staff.push({id:e.id,f:e.face,n:e.name,u:e.real||'',r:e.role,w,b,x,sl:d.slack&&!d.busy?1:0,bz:d.busy||(run.away&&run.away.cover===e.id)?1:0});
+    staff.push({id:e.id,f:e.face,n:e.name,u:e.real||'',av:e.real?(e.av||''):'',r:e.role,w,b,x,sl:d.slack&&!d.busy?1:0,bz:d.busy||(run.away&&run.away.cover===e.id)?1:0});
   });
   let me={w:{k:'till'},b:'',x:'en la caja 3'};
   if(run.away){
     if(mg&&mg.t)me={w:taskSpot(mg.t),b:mg.t.ic,x:'fuera de caja: '+mg.t.s};
     else me={w:{k:'roam'},b:run.away.auto?'📋':'👀',x:run.away.auto?'dirigiendo la tienda':'supervisando la tienda'};
   }
-  me.n=isHost()?(playerName()||'Jefe'):'Tú';
+  me.n=isHost()?(playerName()||'Jefe'):'Tú';me.av=avaStr();
   return {d:meta.day,t:Math.round(run.t),dur:run.dur,open:!run.closing,sw:run.sw||0,me,staff,
     q:run.queue.map(c=>({id:c.id,f:c.face,a:c.p<c.max*0.3?1:0})),
     oq:OT.map(o=>({n:o.n,c:((run.oq&&run.oq[o.n])||[]).map(c=>({id:c.id,f:c.f}))})).concat(Object.values(run.tills||{}).map(t=>({n:t.n,c:Object.keys(t.out||{}).map(k=>({id:'r'+k,f:'🧑'}))}))),
@@ -9234,10 +9235,10 @@ function camTargets(m){
   if(!m)return T;
   toArr(m.staff).forEach((s,j)=>{
     const p=camPos(s.w||{},j),you=isMember()&&s.u===myUid;
-    T['s'+s.id]={r:s.r,x:p[0],y:p[1],f:s.f,lab:you?'Tú':s.n+(s.u?' 🎮':''),nt:you?'Tú':String(s.n||'').split(' ')[0],ntu:s.u?1:0,bz:s.bz?1:0,b:s.b||'',hl:you,eid:s.id,u:s.u||'',sl:s.sl?1:0,info:(you?'Tú':s.n)+' · '+(ROLES[s.r]?ROLES[s.r].n:'')+' · '+(s.x||'')};
+    T['s'+s.id]={r:s.r,x:p[0],y:p[1],f:s.f,lab:you?'Tú':s.n+(s.u?' 🎮':''),nt:you?'Tú':String(s.n||'').split(' ')[0],ntu:s.u?1:0,bz:s.bz?1:0,b:s.b||'',hl:you,eid:s.id,u:s.u||'',av:you?avaStr():(s.av||''),sl:s.sl?1:0,info:(you?'Tú':s.n)+' · '+(ROLES[s.r]?ROLES[s.r].n:'')+' · '+(s.x||'')};
   });
   const me=m.me||{w:{k:'till'}},p=camPos(me.w||{},0);
-  T.me={x:p[0],y:p[1],f:'🧑‍💼',lab:isMember()?'👑 '+(me.n||'Jefe'):'Tú',nt:isMember()?String(me.n||'Jefe').split(' ')[0]:'Tú',boss:1,b:me.b||'',hl:!isMember(),info:(isMember()?'👑 '+(me.n||'El jefe'):'Tú')+' · '+(me.x||'')};
+  T.me={x:p[0],y:p[1],av:isMember()?(me.av||''):avaStr(),f:'🧑‍💼',lab:isMember()?'👑 '+(me.n||'Jefe'):'Tú',nt:isMember()?String(me.n||'Jefe').split(' ')[0]:'Tú',boss:1,b:me.b||'',hl:!isMember(),info:(isMember()?'👑 '+(me.n||'El jefe'):'Tú')+' · '+(me.x||'')};
   toArr(m.oq).forEach(o=>{const x0=o.n===1?60:128;toArr(o.c).forEach((c,i)=>{T['o'+c.id]={x:x0-10*i,y:196-9*i,f:c.f,lab:'',b:'',hl:false,cust:1,info:i===0?'Cliente en la Caja '+o.n:'Cliente en la cola de la Caja '+o.n+' ('+(i+1)+'º)'};});});
   toArr(m.q).forEach((c,i)=>{T['c'+c.id]={x:200-10*i,y:196-9*i,f:c.f,lab:'',b:c.a?'😠':'',hl:false,cust:1,info:i===0?'Cliente en caja':'Cliente en la cola ('+(i+1)+'º)'};});
   return T;
@@ -9596,14 +9597,15 @@ const tI=(c,idx,x,y,s)=>{const sx=(idx%26)*17,sy=Math.floor(idx/26)*17;s=s||1;c.
 /* personas: 6 personajes × 3 fotogramas; columnas 23 lado →, 24 frente, 25 espaldas, 26 lado ← */
 const PCH=[0,3,6,12,15],PWORK=9;
 function pPerson(c,x,y,o){ /* x,y = pies; o:{ch,dir,mv,t,s,staff,boss,role,hl} */
-  if(o.boss)o=Object.assign({},o,{ch:AVA_ROWS[AVA.c]});
+  const A=o.av||(o.boss?AVA:null);
+  if(A)o=Object.assign({},o,{ch:AVA_ROWS[A.c]});
   const s=o.s||1,fr=o.mv?[0,1,0,2][Math.floor((o.t||0)/150)%4]:0,col=23+({r:3,d:1,u:2,l:0}[o.dir||'d']),row=o.ch+fr;
   const px=x-8*s,py=y-15*s;
   c.fillStyle='rgba(60,20,30,.25)';c.fillRect(Math.round(x-5*s),Math.round(y-1*s),10*s,2*s);
   tU(c,row*27+col,px,py,s);
-  if(o.boss&&AVA.k&&o.dir!=='u'){c.fillStyle=AVA_COL[AVA.k];c.fillRect(Math.round(x-3*s),Math.round(py+9*s),6*s,4*s);}
-  if(o.boss&&AVA.a&&o.dir!=='u')avaAcc(c,x,py,s,AVA.a);
-  if(o.staff){c.fillStyle=o.role&&ROLE_PIX[o.role]||'#e5383b';c.fillRect(Math.round(x-3*s),Math.round(py+9*s),6*s,4*s);}
+  if(A&&A.k&&o.dir!=='u'){c.fillStyle=AVA_COL[A.k];c.fillRect(Math.round(x-3*s),Math.round(py+9*s),6*s,4*s);}
+  if(A&&A.a&&o.dir!=='u')avaAcc(c,x,py,s,A.a);
+  if(o.staff&&!(A&&A.k)){c.fillStyle=o.role&&ROLE_PIX[o.role]||'#e5383b';c.fillRect(Math.round(x-3*s),Math.round(py+9*s),6*s,4*s);}
   if(o.boss){c.fillStyle='#ffd23f';c.fillRect(Math.round(x-3*s),Math.round(py-2*s),7*s,2*s);c.fillRect(Math.round(x-3*s),Math.round(py-3*s),1*s,1*s);c.fillRect(Math.round(x),Math.round(py-3*s),1*s,1*s);c.fillRect(Math.round(x+3*s),Math.round(py-3*s),1*s,1*s);}
   if(o.hl){c.strokeStyle='#ffd23f';c.lineWidth=1;c.strokeRect(Math.round(px)+.5,Math.round(py)+.5,16*s-1,16*s-1);}
 }
@@ -9611,7 +9613,11 @@ function pPerson(c,x,y,o){ /* x,y = pies; o:{ch,dir,mv,t,s,staff,boss,role,hl} *
 const AVA_ROWS=[0,3,6,9,12,15],AVA_ACC=['Nada','Gorra','Gafas','Lazo'];
 const AVA_COL=[null,'#d92d30','#2f6db5','#2a9d5c','#7b4bb7','#f08a24','#1b1f1d'];
 let AVA={c:0,a:0,k:0};try{const j=JSON.parse(localStorage.getItem('vitchmarket.avatar')||'null');if(j&&AVA_ROWS[j.c]!=null){AVA.c=j.c|0;AVA.a=(j.a|0)%AVA_ACC.length;AVA.k=(j.k|0)%AVA_COL.length;}}catch(e){}
-function avaSave(){try{localStorage.setItem('vitchmarket.avatar',JSON.stringify(AVA));}catch(e){}}
+function avaSave(){try{localStorage.setItem('vitchmarket.avatar',JSON.stringify(AVA));}catch(e){}avaPush();}
+const avaStr=()=>AVA.c+'.'+AVA.a+'.'+AVA.k;
+function avaParse(t){const m=/^([0-5])\.([0-3])\.([0-6])$/.exec(String(t||''));return m?{c:+m[1],a:+m[2],k:+m[3]}:null;}
+/* Tienda compartida: tu avatar viaja en members/{uid}/av ("personaje.complemento.camiseta") para que los demás te vean igual. */
+function avaPush(){try{if(typeof fb!=='undefined'&&fb&&room&&room.uid&&room.code)fb.update(rRef('members/'+room.uid),{av:avaStr()}).catch(()=>{});}catch(e){}}
 function avaAcc(c,x,py,s,acc){ /* complemento sobre la cabeza del sprite (x = centro, py = arriba del sprite) */
   if(acc===1){c.fillStyle='#d92d30';c.fillRect(Math.round(x-4*s),Math.round(py+1*s),8*s,2*s);c.fillRect(Math.round(x-2*s),Math.round(py),5*s,1*s);c.fillStyle='#9f1d20';c.fillRect(Math.round(x+1*s),Math.round(py+3*s),5*s,1*s);}
   else if(acc===2){c.fillStyle='#1b1f1d';c.fillRect(Math.round(x-4*s),Math.round(py+5*s),8*s,2*s);c.fillStyle='#8fd3ff';c.fillRect(Math.round(x-3*s),Math.round(py+5*s),2*s,1*s);c.fillRect(Math.round(x+1*s),Math.round(py+5*s),2*s,1*s);}
@@ -9685,7 +9691,7 @@ function pixStore(slot,m,zone,cover){
   pst.hits=[];
   ppl.forEach(({id,s})=>{const dx=(s.tx==null?0:s.tx-s.x),dy=(s.ty==null?0:s.ty-s.y);const dir=Math.abs(dx)>Math.abs(dy)?(dx>0?'r':'l'):(dy<0?'u':'d');
     const staff=id[0]==='s',boss=id==='me';
-    pPerson(c,s.x,s.y+6,{ch:staff&&s.r==='alm'?PWORK:pChar(id),dir:s.mv?dir:'d',mv:s.mv,t:now,staff,role:s.r,boss,hl:s.hl});
+    pPerson(c,s.x,s.y+6,{ch:staff&&s.r==='alm'?PWORK:pChar(id),dir:s.mv?dir:'d',mv:s.mv,t:now,staff,role:s.r,boss,hl:s.hl,av:(staff||boss)?avaParse(s.av):null});
     if(s.th){const hx=Math.round(s.x),hy=Math.round(s.y+6-15);c.fillStyle='#2b2d42';c.fillRect(hx-5,hy+1,10,3);c.fillRect(hx-5,hy+3,2,5);c.fillRect(hx+3,hy+3,2,5);c.fillStyle='#000';c.fillRect(hx-3,hy+6,6,1);}
     pst.hits.push({x:s.x,y:s.y-2,s});
     if(s.sl){const hx=Math.round(s.x),hy=Math.round(s.y+6-15),on=Math.floor(now/450)%2;
