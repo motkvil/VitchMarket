@@ -1712,6 +1712,14 @@ body::before{content:'';position:fixed;top:0;left:0;right:0;height:env(safe-area
 /* FASE 4 · mapa */
 #mapw{position:fixed;inset:0;z-index:24;display:none;align-items:center;justify-content:center;background:rgba(27,31,29,.6);padding:12px}
 #mapw.show{display:flex}.mapc{width:100%;max-width:520px;max-height:100%;overflow:auto}.mapslot{width:100%;border:3px solid #1b1f1d;border-radius:14px;overflow:hidden;background:#17352f}
+/* FASE 6 · chip de tareas dentro de la escena de la caja */
+#till3d{position:relative}
+.tchip{position:absolute;top:6px;right:6px;z-index:2;height:32px;padding:0 12px;border-radius:16px;border:3px solid #1b1f1d;background:linear-gradient(90deg,#2a9d5c var(--tp,0%),#fff var(--tp,0%));color:#1b1f1d;font-family:'Pixelify Sans',monospace;font-weight:700;font-size:14px;cursor:pointer;box-shadow:0 3px 0 #1b1f1d}
+/* FASE 6 · plantilla de minijuegos: consecuencia visible, tamaños táctiles y aspecto de papel */
+.mg-cons{background:#fff1c2;color:#7a4f00;border-radius:12px;padding:6px 12px;font-size:14px;line-height:18px;font-weight:700}
+#mg .card.mgc{background:#faf6ea;border:4px solid #1b1f1d;box-shadow:0 6px 0 #1b1f1d}
+#mg .card.mgc .btn,#mg .card.mgc .box,#mg .card.mgc .unit,#mg .card.mgc .crate{min-height:48px}
+#mg .card.mgc .btn.go{border:3px solid #1b1f1d;box-shadow:0 4px 0 #1b1f1d;font-size:18px}
 </style>
 </head>
 <body>
@@ -6230,7 +6238,7 @@ function dailyExit(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.22-133';
+const APPV='2026.11.22-135';
 /* Compara versiones por números («-9» < «-11»), no como texto. */
 const verCmp=(a,b)=>{const x=String(a).split(/[.-]/).map(Number),y=String(b).split(/[.-]/).map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
 try{const vt=document.createElement('div');vt.id='vtag';vt.textContent='v'+APPV;document.body.appendChild(vt);}catch(e){}
@@ -8248,6 +8256,7 @@ function startMG(t){
   renderMG();
 }
 const MGI={shelf:['Coloca las 6 unidades del producto en el lineal.','Toca solo las cajas del producto pedido. Cada fallo resta un 20 %.'],mop:['Pon el cartel y friega los charcos.','Si friegas sin cartel, alguien puede caerse y reclamar.'],ask:['Mándale al pasillo correcto.','Elige el pasillo donde está el producto que pregunta.'],tk:['Elige la respuesta correcta. Solo hay una oportunidad.','Lee la queja y decide qué haces.'],rot:['Coloca la mercancía en su sitio: lo nuevo, detrás.','Retira lo caducado o roto y pon la etiqueta que dice la PDA.'],recv:['Revisa el albarán y ubica cada caja.','Marca bien, falta o roto; luego lleva cada caja a su zona. Lo frío, primero.'],spill2:['Cartel, cristales, fregar y retirar el producto roto.','Sin cartel o con el suelo mojado, alguien se cae.'],agot:['Mira el stock y da una solución.','Comprueba si queda en el almacén y elige qué ofrecerle.'],inv:['Cuenta las unidades y apúntalas.','Cuenta en la góndola y teclea el número en la PDA.'],order:['Pide lo que se va a acabar.','Marca lo que tiene 2 o menos sin pasarte del presupuesto.'],refund:['Encuentra el error y devuelve el dinero exacto.','Marca la línea mal cobrada, prepara el importe y devuélvelo por donde pagó.'],cash:['Cuenta el cajón y di si cuadra.','Suma los montones y compara con el informe Z.'],social:['Responde al cliente sin enfadarle más.','Monta saludo, explicación y compensación; mira el medidor de enfado.'],map:['Lleva al cliente a su producto.','Elige el pasillo en el plano y señala el producto.'],cv:['Entrevista y decide si contratas.','Marca 🚩 lo que no cuadra y decide el sueldo.'],feud:['Resuelve la bronca entre compañeros.','Lee las dos versiones y da la razón a quien la tenga, o media.']};
+const MGC={shelf:'Cada fallo resta un 20 % a la nota de reponer.',mop:'Sin cartel, 40 % de que alguien se caiga y reclame.',ask:'Si te equivocas, el cliente se va sin lo que buscaba.',tk:'Solo hay una oportunidad: elegir mal cuesta reputación.',rot:'Lo caducado en el lineal acaba en reclamación o multa.',recv:'Lo que no reclames del albarán lo pagas igualmente.',spill2:'Sin cartel o con el suelo mojado, caída y reclamación.',agot:'Dejarle sin solución le enfada y baja la reputación.',inv:'Un recuento malo hace que no se pida a tiempo.',order:'Pedir de más se paga igual; de menos, te quedas sin existencias.',refund:'Devolver de menos: se queja. De más: dinero regalado.',cash:'Un arqueo mal hecho deja el faltante sin encontrar.',social:'Si el enfado sigue alto, la queja se vuelve viral (−0,25 ★).',map:'Llevarle al pasillo equivocado le hace perder tiempo.',cv:'Contratar a alguien flojo cuesta sueldo y ánimo al equipo.',feud:'Dar la razón a quien no la tiene hunde el ánimo del agraviado.'};
 const MGI_DEF=['Coloca cada caja en su zona del almacén.','Mira qué es cada caja y llévala a la zona que le toca.'];
 function renderMG(){
   if(!mg||mg.kind==='sup')return;
@@ -8287,6 +8296,7 @@ function renderMG(){
   const THN={alm:'📦 ALMACÉN',back:'💼 BACKOFFICE',rrpp:'📣 RELACIONES PÚBLICAS',rrhh:'🗂️ RECURSOS HUMANOS'}[TH];
   openMG(`<div class="card mgc ${TH?'th-'+TH:''}">${TH?`<span class="dept-badge">${THN}</span>`:''}<h3>${t.ic} ${t.s}</h3>
     <div class="mg-ins"><b>${(MGI[mg.kind]||MGI_DEF)[0]}</b><button class="mg-q" data-act="mghelp" aria-label="Ver cómo se juega">?</button></div>
+    <div class="mg-cons">⚠️ ${MGC[mg.kind]||'Colocar mal una caja resta nota.'}</div>
     <div class="supd">${mg.remote?'Tienes '+REAL_LIM+' s desde que lo cogiste. El jefe lo ve todo.':cv?cv.face+' '+cv.name+' te cubre la caja.':'Tu caja está cerrada y la cola espera. Date prisa.'}</div>${body}</div>`);
   if(mg&&mg.fx){const el=document.querySelector('#mg '+mg.fx.sel);if(el)el.classList.add('fx-'+mg.fx.k);mg.fx=null;}
 }
@@ -9613,6 +9623,8 @@ function till3d(){
   document.body.classList.toggle('b3d',on);document.body.classList.toggle('rem',!!(run&&run.remote));
   if(!on||!slot.offsetParent||run.over)return;
   pixTill(slot);
+  let ch=slot.querySelector('.tchip');if(!ch){ch=document.createElement('button');ch.className='tchip';ch.dataset.act='mapopen';ch.setAttribute('aria-label','Mapa de la tienda');slot.appendChild(ch);}
+  {const d=run.tdone|0,o=run.tasks.filter(t=>t.k!=='tk'&&!t.hide).length,tot=d+(run.tlost|0)+o,tx='TAREAS '+d+'/'+tot;if(ch.textContent!==tx)ch.textContent=tx;ch.style.setProperty('--tp',(tot?Math.round(d/tot*100):0)+'%');}
 }
 function isoClick(ev){
   const r=iso.cv.getBoundingClientRect(),k=iso.cv.width/r.width,x=(ev.clientX-r.left)*k,y=(ev.clientY-r.top)*k;
