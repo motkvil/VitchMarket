@@ -1637,9 +1637,11 @@ body.bigtx{--fs-xs:14px;--fs-s:16px;--fs-m:20px;--fs-l:26px;--fs-xl:34px;--fs-xx
 .ord.prow.bad{border-left:4px solid var(--danger)}.ord .neg{color:var(--danger)}.ord .pos{color:var(--gain)}
 .rivind{margin:6px 0;padding:6px 10px;border-radius:8px;background:var(--info-bg);border-left:4px solid var(--info)}.rivind.on{background:var(--warn-bg);border-left-color:var(--danger)}
 /* App instalada a pantalla completa: la franja de la cámara/notch (safe-area) se pinta del rojo de la marca y el juego empieza debajo. En el navegador normal env() vale 0 y no cambia nada. */
+@media (display-mode:standalone){
 body::before{content:'';position:fixed;top:0;left:0;right:0;height:env(safe-area-inset-top,0px);background:#ef4447;z-index:99999;pointer-events:none}
 #app{padding-top:env(safe-area-inset-top,0px)!important}
 .card.screen{top:env(safe-area-inset-top,0px)!important}
+}
 #scene.top{top:env(safe-area-inset-top,0px)}
 .h3why li.h3warn{background:#fff1e6;border-radius:8px;padding:6px 8px;border-left:4px solid var(--danger)}.h3why li.h3warn .wt{font-weight:800;white-space:normal;font-family:inherit;color:var(--danger,#b3181b)}
 /* ===== Vida social: 📻 Radio Pasillo, necesidades y pensamientos en la ficha ===== */
@@ -1834,6 +1836,12 @@ body::before{content:'';position:fixed;top:0;left:0;right:0;height:env(safe-area
   .dept .btn.go,.card.screen .btn.go{background:#1f7a46;color:#fff}
   .dept .btn.mini,.card.screen .btn.mini{min-height:44px}
   .tabs{background:#1b1f1d}
+}
+
+/* ===== FASE 14 · arreglos del móvil real ===== */
+@media (max-width:820px){
+  #scene{bottom:64px}
+  #scene.show:has(.dnic),#scene.show:has(.rec-mark){bottom:0}
 }
 </style>
 </head>
@@ -6353,7 +6361,7 @@ function dailyExit(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.22-144';
+const APPV='2026.11.22-145';
 /* Compara versiones por números («-9» < «-11»), no como texto. */
 const verCmp=(a,b)=>{const x=String(a).split(/[.-]/).map(Number),y=String(b).split(/[.-]/).map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
 try{const vt=document.createElement('div');vt.id='vtag';vt.textContent='v'+APPV;document.body.appendChild(vt);}catch(e){}
