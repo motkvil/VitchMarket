@@ -3597,6 +3597,47 @@ STORY.push(
      dropEmp(e,'Votado por error en la reunión de emergencia');meta.money-=30000;meta.emp.forEach(o=>{if(!o.real)mor(o,-8);});return 'Te equivocas: el culpable era '+cul.name+'. '+e.name+' se lleva 300 € de indemnización por despido improcedente.';}}); }}
 );
 
+/* ---- 🐀 El topo (modo Among Us): un NPC de tu plantilla sabotea a escondidas; las cámaras dejan pistas y se vota en una reunión de emergencia ---- */
+function topoOn(){return bossScn()&&!daily;}
+function topoPlan(){
+  run.topoAt=0;run.topoDone=0;if(!topoOn())return;
+  const T=meta.topo=meta.topo||{id:0,clues:[],n:0,next:4,caught:0,asked:0};
+  if(T.id&&!meta.emp.some(e=>e.id===T.id)){T.id=0;T.clues=[];T.next=meta.day+5;}
+  if(!T.id&&meta.day>=T.next){const c=meta.emp.filter(e=>!e.real);if(c.length>=3){T.id=shuffle(c)[0].id;T.clues=[];T.n=0;}}
+  if(T.id)run.topoAt=run.dur*rnd(0.25,0.75);
+  window.__topo=T;
+}
+function topoHour(){const m=Math.floor(540+720*Math.min(1,run.t/run.dur));return Math.floor(m/60)+':'+String(m%60).padStart(2,'0');}
+function topoAct(){
+  run.topoDone=1;const T=meta.topo;if(!T||!T.id||!topoOn())return;
+  const e=meta.emp.find(x=>x.id===T.id);if(!e||!working(e))return;
+  const K=pick([
+    {ic:'🔌',m:'Se va la luz del frío un rato: se echan a perder unos yogures.',v:ri(60,120)*100/100,rep:0.05,where:'del cuadro de luces'},
+    {ic:'💸',m:'Faltan unos euros de la caja y nadie sabe de dónde.',v:ri(40,150),rep:0,where:'de la trastienda'},
+    {ic:'🧊',m:'Aparece un congelador abierto y la mercancía blanda.',v:ri(50,110),rep:0.05,where:'del almacén'}]);
+  const v=K.v*100;meta.money-=v;run.fines+=v;if(K.rep)repAdd(-K.rep,'Sabotaje en la tienda');
+  T.n++;toast(K.ic+' ¡Sabotaje! '+K.m+' (−'+fmt(v)+')','bad');radio(K.ic,K.m);
+  const h=topoHour(),others=meta.emp.filter(x=>!x.real&&x.id!==e.id),liar=Math.random()<0.3&&others.length;
+  const sj=liar?pick(others):e;
+  T.clues.push({d:meta.day,h,id:sj.id,txt:'📹 '+h+' · '+sj.face+' '+sj.name+' salió '+K.where+' justo antes.'});
+  if(T.clues.length>8)T.clues.shift();
+}
+function topoMeet(){
+  const T=meta.topo;if(!T||!T.id||!topoOn()||T.clues.length<2||meta.day-(T.asked||0)<2)return;
+  const c=meta.emp.filter(e=>!e.real);if(c.length<2)return;
+  T.asked=meta.day;const cnt=e=>T.clues.filter(x=>x.id===e.id).length;
+  const cand=c.slice().sort((a,b)=>cnt(b)-cnt(a)).slice(0,4),topo=c.find(e=>e.id===T.id);
+  stScene('topo',{who:'🐀',name:'Reunión de emergencia',look:'letter',head:'🚨 REUNIÓN DE EMERGENCIA',tag:'Alguien sabotea la tienda',ser:true,def:'skip',
+   txt:'Llevas '+T.n+' sabotaje'+(T.n===1?'':'s')+' y hay un topo entre tu plantilla. Las cámaras dejaron esto (ojo: no todas las pistas dicen la verdad).',
+   body:'<div class="scn-doc"><b>PISTAS</b><br>'+T.clues.slice(-5).map(x=>'T'+x.d+' '+x.txt).join('<br>')+'</div>',
+   hint:'🗳️ Votar despide ya: si aciertas, se acaban los sabotajes (+0,15 ★, +3 de ánimo); si te equivocas, despido improcedente de 300 € y −8 de ánimo al resto, y el topo sigue. ⏭️ Saltar: sigue suelto.',
+   ch:cand.map(e=>['v'+e.id,'🗳️ Votar a '+e.name+(cnt(e)?' ('+cnt(e)+' pista'+(cnt(e)>1?'s':'')+')':''),'no']).concat([['skip','⏭️ Saltar']]),
+   go:k=>{if(k==='skip')return 'Nadie se atreve a acusar a nadie. El topo sigue ahí.';
+     const e=cand.find(x=>'v'+x.id===k);if(!e)return;
+     if(e===topo){dropEmp(e,'Era el topo: sabotajes en la tienda');meta.emp.forEach(o=>{if(!o.real)mor(o,3);});repAdd(0.15,'Pillaste al topo');T.id=0;T.clues=[];T.caught=(T.caught||0)+1;T.next=meta.day+6;return '🐀 '+e.name+' era el topo. Se acabaron los sabotajes (por ahora).';}
+     dropEmp(e,'Votado por error en la reunión de emergencia');meta.money-=30000;meta.emp.forEach(o=>{if(!o.real)mor(o,-8);});return 'Te equivocas: '+e.name+' era inocente (−300 €). El topo sigue suelto.';}});
+}
+
 function storyPick(L,force){
   const F=/^st-/.test(VIDA_T)?VIDA_T.slice(3):'';
   const c=STORY.filter(s=>F?s.id===F:L(s)&&(force||!(meta.storyCd&&meta.storyCd[s.id]>meta.day)));if(!c.length)return null;const ctx=storyCtx();
@@ -5496,6 +5537,7 @@ function startDay(){
   try{rivalPlan();}catch(e){console.warn('rival',e);}
   if(meta.day>=2&&Math.random()<0.3)run.pressAt=run.dur*rnd(0.2,0.65);
   run.arcAt=run.dur*(VIDA_T==='1'?0.06:rnd(0.15,0.55));
+  try{topoPlan();}catch(e){console.warn('topo',e);}
   inspPlan();thiefPlan();
   run.buy=meta.buyNext||0;meta.buyNext=0;run.m0=meta.money+run.buy;run.mo=meta.money;run.curve=[];
   meta.liveT=0;saveGame(false);
@@ -5512,7 +5554,7 @@ function startDay(){
   pubState(true);
   if(!(room&&room.sim))openGuide('j_'+tab,true);
   /* Escenas de Dirección al abrir: charla tras un récord o un mal día y, de vez en cuando, el dividendo. */
-  try{dayTalk();divScene();}catch(e){console.warn('dirScenes',e);}
+  try{dayTalk();divScene();topoMeet();}catch(e){console.warn('dirScenes',e);}
   if(MGQ&&!window.__mgq){window.__mgq=1;setTimeout(()=>{try{mgDebug(MGQ);}catch(e){console.warn('mg',e);}},1500);}
   try{storyOpen();}catch(e){console.warn('storyOpen',e);}
 }
@@ -6449,7 +6491,7 @@ function dailyExit(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.22-150';
+const APPV='2026.11.23-151';
 /* Compara versiones por números («-9» < «-11»), no como texto. */
 const verCmp=(a,b)=>{const x=String(a).split(/[.-]/).map(Number),y=String(b).split(/[.-]/).map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
 try{const vt=document.createElement('div');vt.id='vtag';vt.textContent='v'+APPV;document.body.appendChild(vt);}catch(e){}
@@ -7659,6 +7701,7 @@ function tickStaff(dt){
   quipTick();
   socTick(dt);
   if(!run.arcDone&&run.arcAt&&run.t>=run.arcAt)arcBeat();
+  if(!run.topoDone&&run.topoAt&&run.t>=run.topoAt)try{topoAct();}catch(e){console.warn('topo',e);}
   let dirty=false;
   meta.emp.forEach(e=>{const d=run.duty[e.id];if(d&&d.st==='late'&&!d.ann&&run.t>=d.at){d.ann=1;dirty=true;if(!lateScene(e))toast(e.face+' '+e.name+' llega tarde. «Perdón, el bus…»','bad');}});
   /* Escenas raras de Dirección y RR.HH.: un aumento que te piden y la oferta de un comercial. */
