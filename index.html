@@ -2505,6 +2505,88 @@ const SOCS={charla:'💬 de charla con',cotilla:'🤫 cuchicheando con',ayuda:'�
 const ofHome=e=>{const C=sArr(e.bio&&e.bio.circ),p=C.find(c=>['hijo','hija','madre','pareja','abuela'].includes(c.k));return p;};
 const freeMate=(e,f)=>meta.emp.filter(o=>o!==e&&!o.real&&isFree(o)&&!run.duty[o.id].slack&&!run.duty[o.id].soc&&!(run.away&&run.away.cover===o.id)&&(!f||f(o)));
 function socPair(e,o,k,ic,s){const u=run.t+rnd(5,9)*(run.dur||100)/100;run.duty[e.id].soc={k,w:o.id,u,ic,lead:1};if(!s)run.duty[o.id].soc={k,w:e.id,u,ic};}
+/* ===== 🗣️ Tertulia: motor de conversaciones por heurísticas (sin IA, hecho para VitchMarket) =====
+   Mezcla dos ideas de la investigación de IA en juegos: los intercambios sociales con condiciones y reglas de influencia de
+   Comme il Faut / Prom Week, y las plantillas que leen un modelo del mundo de Improv. tert(e,o,{tema,rum,why,noEff}) planifica una
+   conversación de 3–7 frases: saludo según la relación → tema elegido por peso (TERT_T[k].w: necesidad más baja, su vida —hijos,
+   pareja, barrio, sueño—, rumores que sabe, lo que pasa en la tienda o en Madrid, la relación) → respuesta del otro según su carácter,
+   su ánimo y lo que piensa de quien habla (acepta, cambia a su propio tema o corta; un pique puede escalar) → cierre según el
+   contexto. Plantillas con huecos {o},{hijo},{barrio},{asp},{pareja},{amigo},{enemigo},{ev},{rum},{prod},{why},{mascota}; si falta un
+   dato, esa plantilla no vale. {o|a} = género de quien escucha. Memoria por pareja (run.tmem) para no repetir tema. Devuelve
+   {L:[[persona,texto],…], out:'acc'|'desv'|'rej', k}; con noEff no toca relaciones (cuando el que llama ya aplicó los efectos). */
+const TERT_T={
+ hijos:{w:X=>X.hijo?1.4:0,open:[{t:'Ayer {hijo} me dijo que quiere ser youtuber. Youtuber, {o}.',acc:['Jajaja, déjale, que igual te retira.','Los críos de ahora, madre mía.']},{t:'{hijo} tiene fiebre otra vez y yo aquí, cobrando yogures.',acc:['Ay, pobre. Vete en cuanto puedas, que yo te cubro.','Seguro que mañana está mejor.']},{t:'¿Sabes que {hijo} ya lee solito? Me lo como.',acc:['¡Qué mono! Enséñame foto, anda.','Qué rápido crecen.']},{t:'{hijo} me ha pedido una PlayStation por su cumple. Con este sueldo, una piedra pintada.',acc:['Jajaja, una piedra con mando.','Dile que los Reyes también están en crisis.']}],
+  acc:['Los críos son así.','Uf, eso es criar, sí señor.'],rej:['Ya, ya… oye, ¿has visto dónde está el cúter?'],fol:['Luego te enseño el vídeo, que es para morirse.','A ver si mañana está mejor.']},
+ dinero:{w:X=>X.ndk==='dinero'?2.2:0.15,open:['Este mes no llego, {o}. El alquiler me ha subido otra vez.','¿Tú cómo llegas a fin de mes? Porque yo no.','He mirado la cuenta y me ha mirado ella a mí. Con pena.'],
+  acc:['Ni yo. Con el SMI no hay quien viva en Madrid.','Pide un aumento, que lo vales.','Te entiendo. Yo ya cocino con agua y fe.'],rej:['Pues gasta menos en tonterías.','Todos nos quejamos, ¿eh?'],fol:['A ver si en la reunión me atrevo a pedirlo.']},
+ cansancio:{w:X=>X.ndk==='energia'?2:0.2,open:['Llevo desde las seis en pie, {o}.','Me duermo de pie, te lo juro.','Anoche dormí tres horas. Tres.'],
+  acc:['Tómate un café, anda, que te cubro.','Y lo que queda de turno…','Yo igual, tengo los pies como botijos.'],rej:['Pues a currar, que despierta.'],fol:['Gracias. Te debo una.']},
+ sueno:{w:X=>X.asp?0.9:0,open:['Lo de {asp} va en serio, ¿eh? Esta semana he avanzado.','Un día de estos dejo esto y me pongo con {asp}. Un día de estos.'],
+  acc:['¡Tú puedes! Yo te veo.','Cuando lo consigas, no te olvides de los pobres.'],rej:['Ya, ya… como el año pasado.','Sueña, sueña, que es gratis.'],fol:['Ya verás. Ya verás.']},
+ barrio:{w:X=>X.barrio?0.7:0,open:['En {barrio} han abierto otra casa de apuestas. Ya van cuatro en la calle.','El autobús hasta {barrio} hoy era una sauna.','En {barrio} han subido los pisos otra vez. Me echan a Cuenca.'],
+  acc:['Madrid está imposible.','En mi barrio igual, no te creas.'],rej:['Pues múdate, qué quieres que te diga.']},
+ chisme:{w:X=>X.rum?1.3:0,open:['¿Te has enterado? {rum}.','No digas que te lo he dicho yo, pero {rum}.','Me han contado que {rum}. Yo no digo nada.'],
+  acc:['¡No me digas! ¿Y quién más lo sabe?','Ay, Dios… cuenta, cuenta.','Ya me parecía a mí…'],rej:['A mí no me cuentes esas cosas.','Eso es un bulo, seguro.','Déjate de chismes, anda.'],fol:['Tú, como si no supieras nada, ¿eh?']},
+ curro:{w:X=>(X.cola>=3?1.2:0.4),open:['¿Has visto la cola? Esto hoy es una locura.','El {prod} vuela hoy, ¿eh? No paro de reponer.','Me han pedido tres veces dónde está el {prod}. ¡Tres!'],
+  acc:['Pues anda que el muelle…','Y el jefe mirando las cámaras, seguro.','Hoy es de los días largos.'],rej:['Pues vuelve a tu puesto, que se nota.'],fol:['Venga, que esto lo sacamos.']},
+ jefe:{w:X=>X.mood<45?1:0.3,open:['¿Tú crees que el jefe se entera de algo?','El jefe hoy viene con una cara…','Dicen que el jefe mira las cámaras hasta en el baño.'],
+  acc:['El jefe vive en su mundo.','Calla, que lo ve todo por las cámaras.','Mientras pague, que mire lo que quiera.'],rej:['Tampoco te pases, que es buena gente.','Yo del jefe no hablo, que luego pasa lo que pasa.']},
+ madrid:{w:X=>X.ev?1.6:0.1,open:['{ev}'],acc:['Ya ves, la ciudad está loca.','Pues a mí me pilla de lleno.'],rej:['A mí plin.']},
+ comida:{w:()=>0.5,open:[{t:'¿Qué has traído hoy de táper?',acc:['Lentejas de mi madre. Ni te acerques.','Un sándwich triste, como mi vida.'],rej:['Lo que sea, no me preguntes.']},{t:'Hoy tengo un hambre que veo doble.',acc:['Yo igual, a ver si llega el descanso.','Coge una magdalena y ya la pago yo.'],rej:['Pues aguanta, que no es la hora.']},{t:'¿Quién se ha comido mis yogures de la nevera? Te lo pregunto a ti por algo.',acc:['Yo no he sido, lo juro por mi madre.','Pregúntale a los de Almacén, que tienen hambre eterna.'],rej:['Tus yogures me dan igual.','¿Me estás llamando ladr{o|a}?']}],
+  acc:['Ya te digo.'],rej:['Paso.']},
+ tele:{w:()=>0.5,open:[{t:'¿Viste anoche el partido?',acc:['Ni me lo recuerdes.','¡Qué golazo en el descuento!'],rej:['No veo fútbol, lo siento.']},{t:'¿Has visto la serie esa que dice todo el mundo?',acc:['Sí, ¡qué final!','Voy por el tercer capítulo, no me hagas spoiler.'],rej:['No tengo tiempo para series.']},{t:'Anoche me quedé hasta las tres viendo vídeos de gatos.',acc:['Yo igual, estoy enganchad{o|a}.','Jajaja, mándame alguno.'],rej:['Así vas, con esas ojeras.']}],acc:['Ya ves.'],rej:['No veo la tele, yo leo.']},
+ pareja:{w:X=>X.pareja?0.8:0,open:[{t:'{pareja} me ha dejado una nota en la nevera. Muy fría. Como la nevera.',acc:['Uy, eso huele a bronca.','Llévale flores al salir, hazme caso.']},{t:'Este finde me voy con {pareja} a la sierra.',acc:['Ay, qué bien, que os lo merecéis.','Qué envidia, yo a la sierra de mi sofá.']},{t:'{pareja} dice que trabajo demasiado. Lo dice desde el sofá.',acc:['Jajaja, clásico.','Pues que venga a reponer un sábado.']}],
+  acc:['Ya ves.'],rej:['Yo de parejas no opino.']},
+ mascota:{w:X=>X.mascota?0.7:0,open:['{mascota} se ha comido otra vez el mando de la tele.','Tengo que enseñarte lo último de {mascota}. Es tonto pero lo quiero.'],acc:['¡Enséñamelo ya!','Jajaja, qué personaje.'],rej:['No me gustan los bichos.']},
+ amigo:{w:X=>X.amigo?0.6:0,open:[{t:'¿Has hablado hoy con {amigo}? Está rarísimo.',acc:['Pues ahora que lo dices, sí.','Algo le pasa, sí. Habrá que preguntarle.'],rej:['Yo no me meto.']},{t:'{amigo} y yo vamos a ir al concierto ese. ¿Te apuntas?',acc:['¡Me apunto!','Si no cierro yo, voy.'],rej:['Paso, que no tengo un duro.']}],acc:['Ya.'],rej:['Paso.']},
+ enemigo:{w:X=>X.enemigo?0.6:0,open:['¿Tú aguantas a {enemigo}? Porque yo no.','{enemigo} ha vuelto a dejar el muelle hecho un cristo.'],acc:['Ni yo, hijo, ni yo.','Ya te digo, es de traca.'],rej:['Pues a mí me cae bien.','Eso díselo a la cara.']},
+ pique:{w:X=>X.af<-20||X.riv>35?1.5:0,open:['Oye, {o}, ¿otra vez dejaste el cúter donde no es?','Tú siempre tan rápid{o|a}… para el café.','¡Que no, {o}! ¡Que siempre igual con {why}!'],
+  acc:['Vale, vale, perdona.','Tienes razón, no volverá a pasar.'],rej:['¿Perdona? Mírate tú primero.','Mira, déjame en paz.','Habla tú, que te pasas el turno en el baño.'],esc:['A mí no me hables así.','Esto se lo cuento al jefe.','Tú y yo vamos a tener un problema.']},
+ piropo:{w:X=>X.rom>=20?1.2*X.rom/40:0,open:['Hoy vienes muy guap{o|a}, {o}.','¿Te traigo un café? Invito yo… a la máquina.','Si quieres, luego te ayudo con el palé.'],
+  acc:['Anda, calla… pero vale, acepto el café.','Jejeje… vale.','Qué tont{o|a} eres. Me encanta.'],rej:['Jajaja, céntrate, que hay cola.','Eh… gracias. Me voy a reponer.']},
+ ayuda:{w:X=>X.ndk==='calma'?1.5:0,open:['{o}, ¿me echas un cable? Voy de culo.','No puedo más con esto, ¿me ayudas un segundo?'],acc:['Claro, dime qué hago.','Venga, a medias.'],rej:['Ahora no puedo, lo siento.','Apáñatelas, que yo también voy hasta arriba.']}
+};
+const TERT_HI={amigo:['¡{o}! ¿Qué pasa, guap{o|a}?','Ey, {o}, ¿cómo lo llevas?','¡Mi {o} favorit{o|a}!'],mal:['{o}.','Hombre, {o}… qué sorpresa.','Ah, eres tú.'],norm:['Hola, {o}.','¿Qué tal, {o}?','Buenas, {o}.']};
+const TERT_BYE={cola:['Uy, que se me llena la caja. Luego seguimos.','Me voy, que hay cola y el jefe mira.'],gen:['Bueno, al lío.','Venga, que nos miran.','Luego me sigues contando.','Me voy, que el muelle no se vacía solo.','Anda, que si nos pillan…'],mal:['Bueno, adiós.','Ya hablaremos.']};
+/* Afinidad de cada carácter con cada tema (sube o baja la probabilidad de aceptarlo). */
+const TERT_P={chismoso:{chisme:0.35,jefe:0.15},timido:{chisme:-0.2,piropo:-0.1,pique:0.3},lider:{chisme:-0.25,jefe:-0.2,ayuda:0.3},currante:{curro:0.25,tele:-0.1,ayuda:0.2},pasota:{curro:-0.2,tele:0.2,jefe:0.15},
+ quejica:{dinero:0.3,jefe:0.25,cansancio:0.2},bromista:{tele:0.2,comida:0.2,mascota:0.2},capullo:{pique:-0.3,ayuda:-0.3,dinero:-0.2,hijos:-0.15},servicial:{ayuda:0.4,cansancio:0.2}};
+function tertX(e,o){
+  const G=gctx(e,o),r=rel(e,o)||{af:0,riv:0,rom:0},C=sArr(e.bio&&e.bio.circ),m=C.find(x=>x.k==='perro'||x.k==='gata'||x.k==='gato'),N=e.nd||{},low=N?ND_K.slice().sort((a,b)=>(N[a]==null?99:N[a])-(N[b]==null?99:N[b]))[0]:null;
+  const ru=sArr(e.know).filter(x=>x.a!==o.id&&x.b!==o.id);
+  return Object.assign({},G,{o:o.name,af:r.af||0,riv:r.riv||0,rom:canRom(e,o)?(r.rom||0):0,mood:e.moral,ndk:low&&N[low]<35?low:null,mascota:m&&m.n,
+    rum:ru.length?rumTxt(pick(ru)).replace(/^dicen que /,''):null,prod:(pick(CAT)||{}).n,cola:run?run.queue.length:0,why:pick(['el cúter','quién deja las cajas en medio','el turno del domingo','el aire acondicionado','quién se comió los yogures de la sala'])});
+}
+function tertFill(L,X,fem,keep){
+  const tx=x=>typeof x==='string'?x:x.t,ok=shuffle(L.slice()).find(t=>(tx(t).match(/\{(\w+)\}/g)||[]).every(m=>X[m.slice(1,-1)]!=null&&X[m.slice(1,-1)]!==''));
+  if(!ok)return null;const out=gx(tx(ok).replace(/\{(\w+)\}/g,(m,k)=>X[k]),fem);if(keep)keep.it=ok;return out;
+}
+function tertPick(e,o,X,not){
+  const mem=(run.tmem=run.tmem||{})[relK(e.id,o.id)]||[];
+  const W=Object.entries(TERT_T).filter(([k])=>k!==not).map(([k,T])=>[k,T.w(X)*(mem.includes(k)?0.2:1)]).filter(x=>x[1]>0);
+  let t=W.reduce((a,x)=>a+x[1],0)*Math.random();for(const [k,w] of W){t-=w;if(t<=0)return k;}return W.length?W[0][0]:'tele';
+}
+function tert(e,o,op){
+  op=op||{};const X=tertX(e,o),Y=tertX(o,e),fo=isFem(o),fe=isFem(e);if(op.rum)X.rum=String(op.rum).replace(/^dicen que /,'');if(op.why)X.why=op.why;
+  const k=op.tema&&TERT_T[op.tema]?op.tema:tertPick(e,o,X),T=TERT_T[k],L=[];
+  const hi=X.af>=40?'amigo':X.af<-20?'mal':'norm';if(k!=='pique'&&Math.random()<0.8)L.push([e,tertFill(TERT_HI[hi],X,fo)]);
+  const OP={};L.push([e,tertFill(T.open,X,fo,OP)||tertFill(TERT_T.curro.open,X,fo,OP)]);const IT=typeof OP.it==='object'?OP.it:{},TA=IT.acc||T.acc,TR=IT.rej||T.rej;
+  const ro=rel(o,e)||{af:0};let p=0.5+(ro.af||0)/200+((o.moral||50)-50)/200+((TERT_P[o.pers]||{})[k]||0)-((o.nd&&o.nd.calma<30)?0.2:0);
+  if(k==='piropo')p=(ro.rom||0)>=30?0.75:0.3;if(k==='pique')p=o.pers==='timido'?0.6:0.25;
+  const roll=Math.random(),out=roll<p?'acc':roll<p+(1-p)*0.45?'desv':'rej';
+  if(out==='acc'){L.push([o,tertFill(TA,Y,fe)]);if(T.fol&&Math.random()<0.6)L.push([e,tertFill(T.fol,X,fo)]);
+    if(Math.random()<0.35)tertSub(o,e,Y,X,k,L);}
+  else if(out==='desv'){L.push([o,pick(['Ya… oye, cambiando de tema:','Ajá. Por cierto…','Mmm. Oye, otra cosa:'])]);tertSub(o,e,Y,X,k,L);}
+  else{L.push([o,tertFill(TR,Y,fe)]);if(T.esc&&Math.random()<0.6)L.push([e,tertFill(T.esc,X,fo)],[o,tertFill(TERT_T.pique.rej,Y,fe)]);}
+  L.push([out==='rej'?o:e,tertFill(out==='rej'?TERT_BYE.mal:(X.cola>=3&&e.role==='atc'?TERT_BYE.cola:TERT_BYE.gen),X,fo)]);
+  const mk=relK(e.id,o.id),M=run.tmem[mk]=(run.tmem[mk]||[]).concat([k]).slice(-3);
+  if(!op.noEff){if(out==='acc'){relAdd(e,o,{af:3,conf:2});if(k==='chisme')spread(e,o);if(k==='piropo')relAdd(e,o,{rom:3});}
+    else if(out==='rej'){relAdd(e,o,{af:k==='pique'?-6:-2,riv:k==='pique'?6:0});if(k==='pique')ndAdd(o,'calma',-8);}}
+  return {L:L.filter(x=>x[0]&&x[1]),out,k};
+}
+function tertSub(a,b,A,B,not,L){const k2=tertPick(a,b,A,not),T2=TERT_T[k2],O2={},t=tertFill(T2.open,A,isFem(b),O2);if(!t)return;const it=typeof O2.it==='object'?O2.it:{};L.push([a,t],[b,tertFill(it.acc||T2.acc,B,isFem(a))]);}
+/* Lanza la conversación en el chat y mantiene juntos a los dos mientras dura. */
+function tertGo(e,o,ch,op){const R=tert(e,o,op),dur=convo(ch||'sala',R.L);[e,o].forEach(x=>{const dd=run.duty&&run.duty[x.id];if(dd&&dd.soc)dd.soc.u=Math.max(dd.soc.u,run.t+dur);});return R;}
 const SOC_ACT={
  cafe:{sc:(e,d,N)=>(d.n.cafe||0)>=2?null:{s:(100-N.energia)/35*(e.pers==='pasota'?1.4:e.pers==='currante'?0.5:1)*(e.role==='atc'&&run.queue.length>=3?0.4:1)},
   go:e=>{const d=run.duty[e.id];d.slack='☕ Tomándose un café';if(Math.random()<0.3)radio('☕',e.name+' se escapa a por un café.');}},
@@ -2514,18 +2596,17 @@ const SOC_ACT={
    const r=rel(e,o);if(canRom(e,o)&&r.af>30&&!r.par)r.rom=clamp(r.rom+ri(0,3),0,100);
    if(Math.random()<0.25)spread(e,o);
    const h=ofHome(e),L=[h?'¿Sabes lo que me ha dicho '+(h.k==='madre'?'mi madre':h.n)+'? Luego te cuento.':'¿Viste anoche el partido?','¿Tú también tienes la espalda hecha polvo?','Oye, '+o.name+', ¿hoy quién cierra?'].concat(TALK_G.slice(0,4));
-   const T=[[e,gram('charla',gctx(e,o))||pick(L)],[o,tcRep(o)]];if(Math.random()<0.7)T.push([e,pick((TALK[e.pers]||[]).concat(TALK_G))],[o,tcRep(o)]);if(Math.random()<0.4)T.push([e,pick(['Bueno, me vuelvo a lo mío.','Venga, luego seguimos.','Shh, que viene alguien.','Anda, que se me va la cola.'])]);
-   const dur=convo('sala',T);[e,o].forEach(x=>{const dd=run.duty[x.id];if(dd&&dd.soc)dd.soc.u=Math.max(dd.soc.u,run.t+dur);});
+   tertGo(e,o,'sala');
    if(Math.random()<0.4)radio('💬',gram('radio',gctx(e,o))||e.name+' y '+o.name+' charlan un rato junto a la máquina de café.');}},
  cotilla:{sc:(e,d,N)=>{if(e.pers!=='chismoso'||!sArr(e.know).length)return null;const L=freeMate(e);if(!L.length)return null;return {s:1+(100-N.social)/80,o:pick(L)};},
   go:(e,d,o)=>{socPair(e,o,'cotilla','🤫');const r=spread(e,o);ndAdd(e,'social',15);
-   socSay(e,r?'¿Te has enterado? '+capF(rumTxt(r))+'.':'Yo no digo nada, pero…');radio('🤫',e.name+' le cuenta algo en voz baja a '+o.name+'.');}},
+   tertGo(e,o,'sala',{tema:'chisme',rum:r?rumTxt(r):null,noEff:1});radio('🤫',e.name+' le cuenta algo en voz baja a '+o.name+'.');}},
  ayuda:{sc:(e,d,N)=>{const c=meta.emp.filter(o=>o!==e&&o.role===e.role&&inStore(o)&&run.duty[o.id].busy&&run.tasks.some(t=>t.who===o.id&&t.until-run.t>3));if(!c.length)return null;
    const o=c.sort((a,b)=>((a.nd||{}).calma||50)-((b.nd||{}).calma||50))[0];return {s:({servicial:1.2,lider:0.8,currante:0.8}[e.pers]||0.3)+(o.nd&&o.nd.calma<35?0.5:0)+(rel(e,o).af>40?0.3:0),o};},
   go:(e,d,o)=>{const t=run.tasks.find(x=>x.who===o.id);if(!t)return;t.until=run.t+(t.until-run.t)*0.7;socPair(e,o,'ayuda','🤝',1);
    relAdd(e,o,{af:5,conf:5});ndAdd(o,'calma',10);ndAdd(e,'estima',5);radio('🤝',e.name+' echa una mano a '+o.name+': '+t.s+'.');}},
  pide:{sc:(e,d,N)=>{if(N.calma>=30)return null;const L=freeMate(e,o=>rel(e,o).af>=20);if(!L.length)return null;return {s:(100-N.calma)/60,o:pick(L)};},
-  go:(e,d,o)=>{socPair(e,o,'charla','🙏');ndAdd(e,'calma',15);relAdd(e,o,{conf:4});socSay(e,o.name+', ¿me echas un cable? Voy de culo.');radio('🙏',e.name+' le pide ayuda a '+o.name+'. Hoy va de culo.');}},
+  go:(e,d,o)=>{socPair(e,o,'charla','🙏');ndAdd(e,'calma',15);relAdd(e,o,{conf:4});tertGo(e,o,e.role,{tema:'ayuda',noEff:1});radio('🙏',e.name+' le pide ayuda a '+o.name+'. Hoy va de culo.');}},
  queja:{sc:(e,d,N)=>d.n.queja||!(e.pers==='quejica'||N.dinero<30||N.energia<20)?null:{s:0.5+(e.pers==='quejica'?0.7:0)+Math.max(0,30-Math.min(N.dinero,N.energia))/40},
   go:e=>{const d=run.duty[e.id],N=e.nd,t=N.dinero<30?'Jefe, con lo que cobro no llego. Que lo sepas.':N.energia<20?'Jefe, no puedo más. Llevo todo el turno sin parar.':'Esto no puede ser, jefe. Siempre me toca a mí.';
    socSay(e,t,1);radio('😩',e.name+' se queja: «'+t+'»');
@@ -2535,7 +2616,7 @@ const SOC_ACT={
   go:(e,d,o)=>{socPair(e,o,'flirt','😊');const r=relAdd(e,o,{rom:ri(3,8)*(singleE(e)&&singleE(o)?1:0.4),af:2});
    if(!singleE(e)||!singleE(o))r.rom=Math.min(r.rom,50);
    if(Math.random()<0.25)fact('flirt',e,o,0,ri(1,2));
-   socSay(e,pick(['Qué bien te queda el chaleco, '+o.name+'.','¿Te traigo un café? Invito yo… a la máquina.','Si quieres, luego te ayudo con el palé.']));
+   tertGo(e,o,'sala',{tema:'piropo',noEff:1});
    if(r.rom>=70&&r.af>=40&&!r.par&&singleE(e)&&singleE(o)&&!partnerOf(e)&&!partnerOf(o)){r.par=1;fact('romance',e,o);
      [e,o].forEach(x=>think(x,'💘',gx('Está enamorad{o|a}',isFem(x)),8,3,'amor'));radio('💘',e.name+' y '+o.name+' salen juntos del almacén. Muy juntos.');}}},
  discute:{sc:(e,d,N)=>{if(d.n.discute)return null;const L=meta.emp.filter(o=>o!==e&&inStore(o)&&!o.real&&!run.duty[o.id].busy);if(!L.length)return null;
@@ -2543,7 +2624,7 @@ const SOC_ACT={
    return {s:(e.pers==='capullo'?0.6:0)+r.riv/50+(N.calma<30?0.4:0)-(r.af>20?0.5:0),o};},
   go:(e,d,o)=>{socPair(e,o,'discute','😤');const r=relAdd(e,o,{af:-8,riv:10});ndAdd(e,'calma',-10);ndAdd(o,'calma',-10);
    const why=pick(['el cúter','quién deja las cajas en medio','el turno del domingo','el aire acondicionado','quién se comió los yogures de la sala']);
-   socSay(e,'¡Que no, '+o.name+'! ¡Que siempre igual con '+why+'!',1);radio('😤',e.name+' y '+o.name+' discuten por '+why+'.');fact('bronca',e,o,0,2);
+   tertGo(e,o,e.role,{tema:'pique',why,noEff:1});radio('😤',e.name+' y '+o.name+' discuten por '+why+'.');fact('bronca',e,o,0,2);
    if(r.riv>=60&&staffOf('rrhh').some(x=>inStore(x))&&!run.tasks.some(t=>t.k==='feud'))run.feudPair=[e.id,o.id,run.t];}},
  ofertas:{sc:(e,d,N)=>{const m=Math.min(N.dinero,N.estima,e.moral);return m<35&&!d.n.ofertas?{s:(45-m)/25}:null;},
   go:e=>{run.duty[e.id].slack='📱 Mirando ofertas de empleo';e.look=(e.look||0)+1;memo(e,'👀','Mira ofertas de empleo',0,3,'look');
@@ -6162,7 +6243,7 @@ function dailyExit(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.20-124';
+const APPV='2026.11.25-125';
 /* Compara versiones por números («-9» < «-11»), no como texto. */
 const verCmp=(a,b)=>{const x=String(a).split(/[.-]/).map(Number),y=String(b).split(/[.-]/).map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
 try{const vt=document.createElement('div');vt.id='vtag';vt.textContent='v'+APPV;document.body.appendChild(vt);}catch(e){}
@@ -7240,7 +7321,7 @@ function assignTask(tid,who){
   run.duty[e.id].slack=null;
   t.who=e.id;t.span=t.dur*(1.35-0.6*e.rap)*(t.match||e.pers==='servicial'?1:1.4)*(t.lang&&e.langs.includes(t.lang)?0.8:1);t.until=run.t+t.span;
   run.duty[e.id].busy=1;run.duty[e.id].task=t.id;
-  tc(e.role,e.face,e.name,pick(TC_TASK.go)+' '+t.ic+' '+t.s+(t.n?' (pasillo '+t.n+')':''));
+  tc(e.role,e.face,e.name,pick(TC_TASK.go)+' '+t.ic+' '+t.s+(t.n&&!/pasillo/.test(t.s)?' (pasillo '+t.n+')':''));
   sOk();renderAll();
 }
 /* Necesidad del servicio: el jefe saca a alguien de lo que esté haciendo. Su aviso vuelve a la lista
