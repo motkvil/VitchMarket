@@ -2085,6 +2085,46 @@ body.redmo .prod{transition:none!important}
 .ajbar{position:relative;flex:1;min-width:60px;height:8px;background:#eee;border-radius:4px;overflow:hidden}
 .ajbar u{position:absolute;top:0;bottom:0}
 .ajbar::after{content:'';position:absolute;left:50%;top:0;bottom:0;width:1px;background:#999}
+/* ===== PULIDO: retratos del elenco y escenas fuera de la tienda =====
+   .pt = retrato pixel art (SVG 16×16 de castPt): .ptm mini en la reunión, .ptb grande en la ficha (.ptcard), .tfp en los chats, .scn-pt
+   dentro de .scn-who. Looks de escena fuera de la tienda: .scn-cena (cena de Navidad: granate con guirnalda de luces), .scn-cumple
+   (confeti), .scn-bar (azulejos y barra de madera del bar de Manolo) y .scn-gig (sala de conciertos con focos). .scn-crew = fila de
+   retratos de quien va; .scn-night = momentos de la noche; .scn-cake = tarta. Nada por debajo de 12 px. */
+.pt{display:inline-block;width:1.6em;height:1.6em;vertical-align:middle;border-radius:5px;image-rendering:pixelated;flex:none}
+.pt.ptm{width:28px;height:28px;margin-right:4px}
+.pt.ptb{width:72px;height:72px;border:3px solid #fff;outline:1px solid #d9c6c6;border-radius:8px;box-shadow:0 2px 0 rgba(0,0,0,.15)}
+.pt.tfp{width:26px;height:26px;border-radius:6px}
+.ef .pt{width:40px;height:40px}.cvphoto .pt{width:100%;height:100%;border-radius:0}
+.talkb .pt{width:22px;height:22px}
+.ptcard{display:flex;gap:10px;align-items:center;margin:4px 0 6px}.ptcard>div{display:flex;flex-direction:column;gap:2px;min-width:0}
+.ptcard b{font-family:var(--display);font-size:16px;color:#4a1414}.ptcard small{font-size:12px;color:#7a5a5a}.ptcard i{font-size:13px;color:#5b3a3a}
+.scn-who.ptw{padding:0;overflow:hidden;background:#fff}.scn-who .scn-pt{width:100%;height:100%;border-radius:0}
+.scn-crew{display:flex;flex-wrap:wrap;gap:6px}.scn-crew span{display:flex;flex-direction:column;align-items:center;gap:1px}
+.scn-crew .pt{width:38px;height:38px;border:2px solid #fff;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.3)}.scn-crew small{font-size:12px;font-weight:700}
+.scn-night{display:flex;flex-direction:column;gap:3px}.scn-night p{margin:0;font-size:13px;line-height:1.35;padding:4px 8px;border-radius:8px;background:rgba(255,255,255,.82);color:#3a2323}
+.scn-cake{font-size:40px;text-align:center;line-height:1;animation:cakeB 1.4s ease-in-out infinite}
+@keyframes cakeB{50%{transform:translateY(-4px) rotate(-3deg)}}
+/* 🎄 cena de Navidad */
+.scn-cena{background:radial-gradient(circle at 10px 6px,#ffe27a 2px,transparent 3px) 0 0/22px 14px repeat-x,radial-gradient(circle at 21px 9px,#ff6b6b 2px,transparent 3px) 0 0/22px 14px repeat-x,linear-gradient(180deg,#5a1622,#341018 70%,#2a0d14)}
+.scn-cena .scn-head{background:linear-gradient(180deg,#2f8a4f,#17572f);color:#fff7d6}.scn-cena .scn-tag{color:#17572f}
+.scn-cena .scn-belt{animation:none;height:6px;background:repeating-linear-gradient(90deg,#e5383b 0 8px,#fff 8px 16px,#2f8a4f 16px 24px,#fff 24px 32px)}
+.scn-cena .scn-name,.scn-cena .scn-crew small{color:#ffe9a8}.scn-cena .scn-hint{color:#f3d9d9}
+/* 🎂 cumpleaños */
+.scn-cumple{background:radial-gradient(circle,#ff7eb6 2px,transparent 3px) 0 0/26px 26px,radial-gradient(circle,#7bd3f7 2px,transparent 3px) 13px 9px/26px 26px,radial-gradient(circle,#ffd23f 2px,transparent 3px) 6px 17px/26px 26px,linear-gradient(180deg,#fff6fb,#fde8f3)}
+.scn-cumple .scn-head{background:linear-gradient(90deg,#d6336c,#7b4bb7)}.scn-cumple .scn-tag{color:#7b4bb7}
+.scn-cumple .scn-belt{animation:none;height:6px;background:repeating-linear-gradient(90deg,#ffd23f 0 10px,#ff7eb6 10px 20px,#7bd3f7 20px 30px)}
+/* 🍺 bar de Manolo */
+.scn-bar{background:linear-gradient(180deg,transparent 72%,#7a4a22 72%,#5c3415),repeating-conic-gradient(#f5ecd8 0 25%,#e4eef7 0 50%) 0 0/24px 24px}
+.scn-bar .scn-head{background:linear-gradient(180deg,#8a5428,#4f2c12);color:#ffe9b8}.scn-bar .scn-tag{color:#4f2c12}
+.scn-bar .scn-belt{animation:none;height:6px;background:repeating-linear-gradient(90deg,#f5b800 0 14px,#fffbe8 14px 18px)}
+.scn-bar .scn-hint{background:rgba(255,255,255,.85);border-radius:6px;padding:3px 6px}
+/* 🎸 concierto de Los Lineales */
+.scn-gig{background:radial-gradient(ellipse 40% 70% at 20% 0,rgba(255,126,182,.45),transparent 70%),radial-gradient(ellipse 40% 70% at 80% 0,rgba(123,211,247,.4),transparent 70%),linear-gradient(180deg,#26123f,#140a24)}
+.scn-gig .scn-head{background:linear-gradient(90deg,#ff2e88,#7b4bb7);text-shadow:0 0 6px rgba(255,255,255,.6)}.scn-gig .scn-tag{color:#7b2fa0}
+.scn-gig .scn-belt{animation:none;height:5px;background:repeating-linear-gradient(90deg,#ff2e88 0 6px,#26123f 6px 12px)}
+.scn-gig .scn-name,.scn-gig .scn-crew small{color:#ffd6ef}.scn-gig .scn-hint{color:#e7dcff}
+@media (max-width:820px){.pt.ptb{width:56px;height:56px}.scn-crew .pt{width:32px;height:32px}.scn-cake{font-size:30px}.scn-night p{font-size:12px;padding:3px 6px}.scn-cena .scn-hint,.scn-gig .scn-hint{font-size:12px}}
+@media (prefers-reduced-motion:reduce){.scn-cake{animation:none}}
 </style>
 </head>
 <body>
@@ -2755,8 +2795,8 @@ let tcTab='all',tcU={},tcDirty=0;
 function tc(ch,face,name,txt,cls){
   if(!run||run.remote||!txt)return;const L=run.tch=run.tch||[],t=String(txt);
   const last=L[L.length-1];if(last&&last.ch===ch&&last.t===t&&last.n===name)return;
-  const cs=name&&meta&&meta.emp.some(x=>x.cast&&x.name===name)?1:0;
-  L.push({ch,h:clockOf(run.t,run.dur),f:face||'💬',n:name||'',t,c:cls||'',s:cs});if(L.length>400)L.splice(0,L.length-400);
+  const ce=name&&meta?meta.emp.find(x=>x.cast&&x.name===name):null;
+  L.push({ch,h:clockOf(run.t,run.dur),f:face||'💬',n:name||'',t,c:cls||'',s:ce?1:0,k:ce?ce.cast:'',r:ce?ce.role:''});if(L.length>400)L.splice(0,L.length-400);
   if(ch!==tcTab&&tcTab!=='all')tcU[ch]=(tcU[ch]||0)+1;tcDirty=1;
 }
 const tcWho=e=>e&&e.name?{face:e.face,name:e.name}:e;
@@ -2782,7 +2822,7 @@ function tcRender(force){
   const L=(run.tch||[]).filter(m=>tcTab==='all'||m.ch===tcTab).slice(-60),ty=tcTyping();
   const box=el.querySelector('.tcl'),atB=!box||box.scrollHeight-box.scrollTop-box.clientHeight<30;
   el.innerHTML=`<div class="zone-title">💬 CHATS DE LA TIENDA</div><div class="tct">${TCH.map(([k,ic,n])=>`<button class="tcb ${tcTab===k?'on':''}" data-act="tct" data-k="${k}">${ic} ${n}${tcU[k]&&tcTab!==k?`<i>${tcU[k]>99?'99+':tcU[k]}</i>`:''}</button>`).join('')}</div>`
-    +`<div class="tcl">${L.length?L.map(m=>`<div class="tcm ${m.c}"><span class="tf">${m.f}</span><div><b>${esc(m.n)}</b>${m.s?' <i class="cst" title="Elenco fijo">📛</i>':''}${tcTab==='all'&&m.ch!=='all'?` <small class="tcc">${(TCH.find(x=>x[0]===m.ch)||['','',''])[1]}</small>`:''} <small>${m.h}</small><p>${esc(m.t)}</p></div></div>`).join(''):'<div class="supd">Aquí sale todo lo que se dice en la tienda. De momento, silencio.</div>'}${ty.length?`<div class="tcty">✍️ ${esc(ty.slice(0,2).join(' y '))} ${ty.length>1?'están':'está'} escribiendo…</div>`:''}</div>`;
+    +`<div class="tcl">${L.length?L.map(m=>`<div class="tcm ${m.c}"><span class="tf">${m.k&&CAST_PT[m.k]?castPt(m.k,m.r,'tfp'):m.f}</span><div><b>${esc(m.n)}</b>${m.s?' <i class="cst" title="Elenco fijo">📛</i>':''}${tcTab==='all'&&m.ch!=='all'?` <small class="tcc">${(TCH.find(x=>x[0]===m.ch)||['','',''])[1]}</small>`:''} <small>${m.h}</small><p>${esc(m.t)}</p></div></div>`).join(''):'<div class="supd">Aquí sale todo lo que se dice en la tienda. De momento, silencio.</div>'}${ty.length?`<div class="tcty">✍️ ${esc(ty.slice(0,2).join(' y '))} ${ty.length>1?'están':'está'} escribiendo…</div>`:''}</div>`;
   const nb=el.querySelector('.tcl');if(nb&&atB)nb.scrollTop=nb.scrollHeight;
 }
 /* Respuestas para las conversaciones (según el carácter de quien contesta). */
@@ -3008,7 +3048,7 @@ function tert(e,o,op){
   const mk=relK(e.id,o.id),TM=run.tmem=run.tmem||{},M=TM[mk]=(TM[mk]||[]).concat([k]).slice(-3);
   if(!op.noEff){if(out==='acc'){relAdd(e,o,{af:3,conf:2});if(k==='chisme')spread(e,o);if(k==='piropo')relAdd(e,o,{rom:3});}
     else if(out==='rej'){relAdd(e,o,{af:k==='pique'?-6:-2,riv:k==='pique'?6:0});if(k==='pique')ndAdd(o,'calma',-8);}}
-  return {L:L.filter(x=>x[0]&&x[1]).map(x=>[x[0],castMul(x[0],x[1],0.2)]),out,k};
+  return {L:L.filter(x=>x[0]&&x[1]).map(x=>[x[0],castMul(x[0],castVoz(x[0],x[1],1),0.2)]),out,k};
 }
 function tertSub(a,b,A,B,not,L){const k2=tertPick(a,b,A,not),T2=TERT_T[k2],O2={},t=tertFill(tOpen(k2,a,b),A,isFem(b),O2);if(!t)return;const it=typeof O2.it==='object'?O2.it:{};L.push([a,t],[b,tertFill(it.acc||T2.acc,B,isFem(a))]);}
 /* Lanza la conversación en el chat y mantiene juntos a los dos mientras dura. */
@@ -3162,7 +3202,7 @@ function storyCtx(){
 }
 function stScene(id,o){
   const R=run;
-  return bScene({k:(o.ser?'histx:':'hist:')+id+':'+meta.day,dep:'rrhh',look:o.look||'label',who:o.who,sprite:o.sprite,role:o.role,head:o.head,tag:o.tag,name:o.name,prio:1,
+  return bScene({k:(o.ser?'histx:':'hist:')+id+':'+meta.day,dep:'rrhh',look:o.look||'label',who:o.who,sprite:o.sprite,role:o.role,cast:o.cast,head:o.head,tag:o.tag,name:o.name,prio:1,
     ...(o.ser?serio():{time:o.time||16}),def:o.def,txt:o.txt,body:(o.body||'')+'<div class="scn-hint">'+o.hint+'</div>',
     choices:o.ch.map(([k,t,cls,stp],i)=>({t,k,cls:cls||'',key:String(i+1),stamp:stp,sc:cls==='no'?'bad':'ok'})),
     alive:()=>run===R&&!R.over&&(!o.alive||o.alive()),
@@ -4383,6 +4423,100 @@ function larcTick(){
     return r.m;}});
 }
 
+/* ===== 🎉 Escenas fuera de la tienda: cena de Navidad, cumpleaños, cañas en el bar de Manolo y concierto de Los Lineales =====
+   Storylets de la categoría «fuera» con su propio fondo (look 'cena' | 'cumple' | 'bar' | 'gig', CSS sin imágenes, bloque «Escenas fuera
+   de la tienda» del <style>). Los lleva el director de ritmo como cualquier storylet (stScene). La cena sale al abrir el turno 52 del
+   calendario (entre la Lotería y Nochebuena, una vez por vuelta: meta.cenaC); el cumpleaños, al abrir el turno de CAST_BDAY[k] si esa
+   persona está en plantilla (meta.bdayY[k] = vuelta del calendario); cañas los viernes y sábados y el concierto si Inma o Toni están en
+   plantilla. Pruebas: ?vida=st-cena, st-cumple, st-canas, st-concierto. */
+const CAST_BDAY={rocio:[9,'unos zapatos de baile para el chotis con Fermín'],yeray:[2,'un anillo de luz para grabar vídeos'],awa:[13,'un fonendoscopio de verdad'],
+ andres:[6,'un cojín para el asiento de Jacinta'],kevin:[17,'unas zapatillas edición limitada (de las que no se pueden pagar)'],dmytro:[22,'un libro de puentes de Madrid'],
+ nerea:[27,'una agenda de 2027 para su plan quinquenal'],pili:[32,'un móvil con más memoria para el grupo de Moratalaz Informa'],wei:[37,'una taza que ponga «Excel es amor»'],
+ fer:[40,'una corbata nueva, que la de siempre ya brilla'],ioana:[44,'un álbum para las fotos de la boda que nunca llega'],vale:[49,'un aro de luz y un café colombiano'],
+ youssef:[55,'una tetera de plata como la de su abuelo'],toni:[57,'cuerdas nuevas para la guitarra'],tess:[61,'un billete a Manila (aunque sea de ida)'],
+ inma:[12,'una peluca nueva. Rosa. No preguntéis'],jhon:[28,'un diván para la sala de descanso']};
+const calDay=d=>((Math.max(1,d||1)-1)%CAL_P)+1;
+const calCyc=d=>Math.floor((Math.max(1,d||1)-1)/CAL_P);
+/* «Cumple en el turno N» (el próximo, o «¡hoy!»). */
+const bdayTxt=k=>{const b=CAST_BDAY[k];if(!b||!meta)return '';const n=(b[0]-calDay(meta.day)+CAL_P)%CAL_P;return n?'cumple en el turno '+(meta.day+n):'¡cumple hoy!';};
+const crewH=L=>'<div class="scn-crew">'+L.map(e=>`<span>${faceH(e)}<small>${esc(String(e.name).split(' ')[0])}</small></span>`).join('')+'</div>';
+/* A los postres (o a la segunda caña) alguien suelta su secreto: sale en la ficha (meta.secR) sin correr como rumor. */
+function secretSlip(L,p){
+  if(Math.random()>=p)return '';const S=meta.secR=meta.secR||{},e=shuffle(L.filter(x=>x.cast&&CASTK[x.cast]&&!S[x.cast]))[0];if(!e)return '';
+  S[e.cast]=1;logE(e,'Contó su secreto fuera del trabajo');return ' A los postres, '+e.name+' te confiesa que '+CASTK[e.cast].psy.rum+'.';
+}
+const OUT_M={inma:'Inma se arranca en el karaoke con «Mi gran noche» y canta como los ángeles. Toni la mira raro: «Esa voz me suena…»',
+ kevin:'Kevin pide chupitos de hierbas para todos «a cuenta de la casa». La casa eres tú.',pili:'Pili hace fotos de todo para «Moratalaz Informa». Hasta del cordero.',
+ andres:'Andrés brinda «por Jacinta, la carretilla, que nunca me ha fallado».',fer:'Fer da un discurso sobre la liquidez del turrón. Nadie lo entiende y todos aplauden.',
+ tess:'Tess ha traído lumpia en un táper gigante. Desaparece en tres minutos.',youssef:'Youssef no bebe, pero es el que más baila. Por mucho.',
+ rocio:'Rocío saca a bailar a todo el que se deja. Y al que no, también.',yeray:'Yeray graba un TikTok de la cena. 3.000 visualizaciones antes del postre.',
+ dmytro:'Dmytro, tras una copa de cava, explica cómo se calcula un puente. Le escuchan embobados.',wei:'Wei ha hecho un Excel para dividir la cuenta al céntimo. Nadie se atreve a discutirlo.',
+ vale:'Valentina enseña a bailar salsa a media mesa. La otra media se resiste.',jhon:'Jhon Fredy acaba escuchando los problemas de todos en la barra. Gratis.',
+ toni:'Toni saca la guitarra «solo una». Toca once.',nerea:'Nerea organiza el amigo invisible con una hoja de cálculo. Le toca Kevin. Le regala un cronómetro.',
+ ioana:'Ioana enseña fotos de Florin a todo el mundo. Y del vestido que todavía no tiene.',awa:'Awa se va pronto, que mañana tiene examen. Antes se lleva tres trozos de tarta para Aminata.'};
+const OUT_BAR={rocio:'Rocío pide «un vermú de grifo, Manolo, como en el 95».',andres:'Andrés y Manolo discuten de aceite de Jaén. Gana el aceite.',kevin:'Kevin apuesta una ronda a que el Atleti mete dos. Pierde. No paga.',
+ pili:'Pili ya sabe la vida de los de la mesa de al lado.',toni:'Toni canta una bulería con la tapa de las bravas.',yeray:'Yeray pide «una caña y unas papas». Manolo le trae patatas. Debate.',
+ youssef:'Youssef pide un té. Manolo saca uno de sobre. Youssef sonríe con mucha educación.',vale:'Valentina graba el brindis para su story: «Mis compas del súper, los amo».',
+ wei:'Wei calcula cuántas cañas lleva cada uno. Por si acaso.',fer:'Fer invita a una ronda «como en los viejos tiempos del banco» y luego pide factura.',
+ tess:'Tess se toma una caña y ya está cantando karaoke filipino sin karaoke.',jhon:'Jhon Fredy pregunta a Manolo cómo está de verdad. Manolo llora un poquito.',
+ dmytro:'Dmytro descubre las bravas. Pide otra ración. Y otra.',nerea:'Nerea apunta en un pósit quién paga la próxima.',inma:'Inma se va a las nueve en punto: «Tengo… cosas».',
+ ioana:'Ioana llama a Florin para que venga. Florin ya estaba en la puerta.',awa:'Awa se toma un mosto y se va pronto: le toca estudiar.'};
+const momH=(L,M,n)=>{const T=shuffle(L.filter(e=>e.cast&&M[e.cast])).slice(0,n).map(e=>M[e.cast]);return T.length?'<div class="scn-night">'+T.map(t=>'<p>'+esc(t)+'</p>').join('')+'</div>':'';};
+const pairUp=(L,o)=>{for(let i=0;i<L.length;i++)for(let j=i+1;j<L.length;j++)if(Math.random()<0.5)relAdd(L[i],L[j],o);};
+STORY.push(
+ {id:'cena',cat:'fuera',ten:2,cd:40,open:1,cal:'cena',w:2,
+  when:c=>{if(!c.F&&(calDay(c.day)!==52||meta.cenaC===calCyc(c.day)))return null;const L=c.all.filter(e=>!e.off);return L.length>=2?{L}:null;},
+  run:(c,{L})=>{meta.cenaC=calCyc(c.day);const n=L.length,cost=2500*(n+1),h=L.find(e=>e.pers==='lider')||L.find(e=>e.pers==='bromista')||L[0];
+   return stScene('cena',{...sEmp(h),look:'cena',head:'🎄 CENA DE EMPRESA · ASADOR EL LINEAL',tag:'🍷 Esta noche, al cerrar',def:'esc',
+    txt:'«Jefe, ¿qué hacemos con la cena de Navidad? Hay mesa para '+(n+1)+' en el asador de la esquina. El cordero ya está pedido.»',
+    body:crewH(L)+momH(L,OUT_M,3),
+    hint:'🍽️ Invito yo: '+fmt(cost)+' del bote (25 € por cabeza), +8 de ánimo a todos, se llevan mejor y a los postres alguien suelta algo. 🧾 A escote: +3 de ánimo; a los quejicas no les hace gracia (−3). 🙅 Este año no hay cena: −6 de ánimo a todos.',
+    ch:[['paga','🍽️ Invito yo','go','¡FELICES FIESTAS!'],['esc','🧾 A escote','','A ESCOTE'],['no','🙅 Este año no hay cena','no','SIN CENA']],
+    go:k=>{if(k==='paga'){meta.money-=cost;L.forEach(e=>{mor(e,8);ndAdd(e,'social',20);});pairUp(L,{af:6,conf:3});
+      return 'Cena de Navidad a cuenta de la casa: '+fmt(cost)+'. Hubo cordero, karaoke y un brindis por la tienda.'+secretSlip(L,0.4);}
+     if(k==='esc'){L.forEach(e=>{mor(e,e.pers==='quejica'?-3:3);ndAdd(e,'social',12);});pairUp(L,{af:3});return 'Cena a escote. '+(L.find(e=>e.pers==='quejica')?L.find(e=>e.pers==='quejica').name+' pide el ticket desglosado.':'Wei hace las cuentas.');}
+     L.forEach(e=>{mor(e,-6);memo(e,'🎄','Este año no hubo cena de Navidad',-6,3,'cena');});return 'Sin cena de Navidad. En la sala de descanso alguien ha colgado un espumillón. Con pena.';}});}},
+ {id:'cumple',cat:'fuera',ten:1,cd:3,open:1,cal:'cumple',w:2,
+  when:c=>{const d=calDay(c.day),y=calCyc(c.day),B=meta.bdayY||{};let e=c.all.find(x=>x.cast&&CAST_BDAY[x.cast]&&CAST_BDAY[x.cast][0]===d&&B[x.cast]!==y&&!x.off);
+   if(!e&&c.F)e=c.all.find(x=>x.cast&&CAST_BDAY[x.cast]);return e?{e}:null;},
+  run:(c,{e})=>{(meta.bdayY=meta.bdayY||{})[e.cast]=calCyc(c.day);const B=e.bio||{},age=(B.age||CASTK[e.cast].age)+1;if(e.bio)e.bio.age=age;
+   const M=c.all.filter(x=>x!==e&&!x.off),o=M.slice().sort((a,b)=>(rel(b,e)||{af:0}).af-(rel(a,e)||{af:0}).af)[0],g=CAST_BDAY[e.cast][1],col=ri(10,30)*100,mine=Math.min(1000,col),F=isFem(e);
+   return stScene('cumple',{...(o?sEmp(o):VIT),look:'cumple',head:'🎂 ¡FELIZ CUMPLEAÑOS!',tag:'🎈 '+esc(e.name)+' · '+age+' años',def:'nada',
+    txt:'«Jefe, que hoy '+esc(e.name)+' cumple '+age+' años y no ha dicho ni mu. ¿Hacemos algo? Le haría ilusión '+esc(g)+'.»',
+    body:crewH([e])+'<div class="scn-cake" aria-hidden="true">🎂</div>',
+    hint:'🍰 Tarta en la sala de descanso: 20 € del bote, +10 de ánimo a '+esc(e.name)+' y +2 al resto, que se lleva mejor con todos. 💶 Colecta: entre todos '+fmt(col)+' (pones tú '+fmt(mine)+') para '+esc(g)+': +7 de ánimo. 🤷 «Ni me acordaba»: −8 de ánimo; no se le olvida.',
+    ch:[['tarta','🍰 Tarta y velas','go','¡CUMPLEAÑOS FELIZ!'],['col','💶 Colecta para el regalo','','REGALO'],['nada','🤷 Ni me acordaba','no','OLVIDADO']],
+    alive:()=>meta.emp.includes(e),
+    go:k=>{if(k==='tarta'){meta.money-=2000;mor(e,10);M.forEach(x=>{mor(x,2);relAdd(e,x,{af:4,conf:2});});think(e,'🎂',gx('Se acordaron de su cumple',F),4,3,'cumple');logE(e,'Le celebrasteis el cumpleaños ('+age+')');
+      return 'Tarta de la pastelería de la esquina para '+e.name+'. Sopla '+age+' velas (bueno, dos números) y le cantan desafinando.';}
+     if(k==='col'){meta.money-=mine;mor(e,7);M.forEach(x=>relAdd(e,x,{af:3}));logE(e,'Colecta de cumpleaños: '+g);return 'Colecta para '+e.name+': '+fmt(col)+'. Le regaláis '+g+'.';}
+     mor(e,-8);memo(e,'😞','Nadie se acordó de su cumple',-8,3,'cumple');logE(e,'Nadie se acordó de su cumpleaños');return e.name+' cumple '+age+' años y nadie dice nada. Se come un donut a solas en el muelle.';}});}},
+ {id:'canas',cat:'fuera',ten:1,cd:6,w:1,
+  when:c=>{if(!c.F&&!(c.dow===4||c.dow===5))return null;const L=shuffle(c.all.filter(x=>inStore(x))).slice(0,4);return L.length>=2?{L}:null;},
+  run:(c,{L})=>stScene('canas',{who:'👨‍🦲',name:'Manolo, el del bar',look:'bar',head:'🍺 BAR MANOLO · A LA SALIDA',tag:'🍻 Cañas y bravas',def:'casa',
+   txt:'«¡Jefe! Que tu gente se viene a por unas cañas al cerrar. Tengo bravas recién hechas y el fútbol puesto. ¿Te vienes o qué?»',
+   body:crewH(L)+momH(L,OUT_BAR,2),
+   hint:'🍺 Voy y pago la primera ronda: 15 € del bote, +5 de ánimo, se llevan mejor y igual alguien te cuenta algo. 🍻 Voy, pero cada uno lo suyo: +2 de ánimo. 🏠 Me voy a casa: van sin ti; entre ellos se llevan mejor (y hablan del jefe).',
+   ch:[['ronda','🍺 Voy y pago la primera','go','¡SALUD!'],['cada','🍻 Voy, cada uno lo suyo'],['casa','🏠 Me voy a casa']],
+   go:k=>{if(k==='ronda'){meta.money-=1500;L.forEach(e=>{mor(e,5);ndAdd(e,'social',20);});pairUp(L,{af:5,conf:3});return 'Primera ronda en el bar de Manolo a cuenta del jefe.'+secretSlip(L,0.25);}
+    if(k==='cada'){L.forEach(e=>{mor(e,2);ndAdd(e,'social',12);});pairUp(L,{af:3});return 'Cañas en el bar de Manolo, cada uno lo suyo. Manolo apunta en la pizarra: «El jefe, 1 caña. Sin tapa».';}
+    L.forEach(e=>ndAdd(e,'social',12));pairUp(L,{af:4,conf:2});return L.map(e=>e.name).join(', ')+' se van de cañas sin el jefe. De qué hablan, mejor no saberlo.';}})},
+ {id:'concierto',cat:'fuera',ten:2,cd:12,w:0.9,
+  when:c=>{const L=c.all.filter(x=>x.cast==='inma'||x.cast==='toni');if(!c.F&&c.day<5)return null;if(!L.length&&!c.ws.length)return null;return {L};},
+  run:(c,{L})=>{const T=L.find(x=>x.cast==='toni'),I=L.find(x=>x.cast==='inma'),fan=c.ws.filter(x=>!L.includes(x)).slice(0,2);
+   /* Si Toni e Inma no trabajan aquí, Toni viene a pegar el cartel (retrato del elenco, sin ser de la plantilla). */
+   const sp=T||I?sEmp(T||I):{who:'🎸',name:'Toni, de Los Lineales',cast:'toni',role:'rrpp'};
+   return stScene('concierto',{...sp,look:'gig',head:'🎸 LOS LINEALES · SALA EL SÓTANO',tag:'🎤 Rumba-trap en directo',def:'paso',
+    txt:!T&&!I?'«Buenas, jefe. Soy Toni, guitarra de Los Lineales. ¿Me dejas pegar el cartel en el tablón? El sábado tocamos en Lavapiés. Canta La Reina del Mostrador: peluca rosa. Nadie sabe quién es.»':T?'«Jefe, el sábado tocamos en Lavapiés con Los Lineales. Te he guardado una entrada. Canta La Reina del Mostrador: peluca rosa y gafas de sol. Nadie sabe quién es.»':'«Jefe… el sábado hay un concierto en Lavapiés. Los Lineales. Dicen que la cantante es buenísima. No sé, igual te gusta. Yo, por supuesto, no voy.»',
+    body:crewH(L.concat(fan))+'<div class="scn-night"><p>🎟️ Cartel: Los Lineales + «La Reina del Mostrador». Entrada: 12 €. Sala El Sótano, Lavapiés.</p></div>',
+    hint:'🎸 Ir a primera fila: 12 € del bote, +10 de ánimo a la banda'+(L.length?'':' (que no trabaja aquí)')+' y +3 a quien viene contigo'+(I?' (y descubres quién es la Reina del Mostrador)':'')+'. 📣 Patrocinar el bolo: 80 €, cartel con el logo de VitchMarket, +0,05 ★ y +6 de ánimo a la banda. 🙉 Paso: −4 de ánimo a la banda.',
+    ch:[['fila','🎸 Ir a primera fila','go','¡OTRA, OTRA!'],['patro','📣 Patrocinar el bolo · 80 €','','PATROCINADO'],['paso','🙉 Paso','no']],
+    go:k=>{if(k==='fila'){meta.money-=1200;L.forEach(e=>{mor(e,10);logE(e,'El jefe fue a ver a Los Lineales');});fan.forEach(e=>{mor(e,3);ndAdd(e,'social',15);});
+      if(I){(meta.secR=meta.secR||{}).inma=1;return 'Primera fila en El Sótano. Cuando La Reina del Mostrador se quita las gafas… ¡es Inma! Te guiña un ojo: «Esto no sale de aquí, ¿estamos?»';}
+      return 'Primera fila en El Sótano. Toni rompe una cuerda en el segundo tema y sigue como si nada. La sala se viene abajo.';}
+     if(k==='patro'){meta.money-=8000;repAdd(0.05,'Patrocinio del concierto de Los Lineales');L.forEach(e=>mor(e,6));return 'Los Lineales tocan con una pancarta de VitchMarket detrás. Medio Lavapiés sabe ya dónde comprar las bravas.';}
+     L.forEach(e=>{mor(e,-4);memo(e,'🎸','El jefe no vino al concierto',-4,2,'lineales');});return 'Los Lineales tocan sin el jefe. Toni lo comenta en el muelle. Dos veces.';}});}}
+);
 /* ===== 🕵️ El topo: Among Us de supermercado =====
    Un turno con topo es un «caso». Al abrir, escena de presentación (y nota a cada jugador real con su papel, solo a él).
    · La tripulación (jefe, plantilla y reales) llena la barra de tareas de la tienda: cada aviso bien hecho +1, cada arreglo +1 y
@@ -4813,6 +4947,9 @@ function storyOpen(){
   const ev=calEv(meta.day);
   if(ev){try{calOpen(ev);storyPick(s=>s.cal===ev.k||s.id===ev.k,1);}catch(e){console.warn('cal',e);}}
   else if(meta.day>=2&&Math.random()<0.25)try{storyPick(s=>s.open&&!s.cal);}catch(e){console.warn('story',e);}
+  /* Fuera de la tienda: la cena de empresa (turno 52 del calendario) y los cumpleaños del elenco salen al abrir. */
+  try{const d=calDay(meta.day);if(d===52)storyPick(s=>s.id==='cena',1);
+    if(meta.emp.some(x=>x.cast&&!x.real&&CAST_BDAY[x.cast]&&CAST_BDAY[x.cast][0]===d))storyPick(s=>s.id==='cumple',1);}catch(e){console.warn('fuera',e);}
 }
 /* Ficha: necesidades, pensamientos, relaciones y lo que hay que saber (mini = reunión). */
 function socHtml(e,mini){
@@ -5464,6 +5601,174 @@ const CAST=[
    {t:'Hoy me ha escrito mi mamá desde Cali. Pregunta si ya soy jefe. Le he dicho que casi. Perdón, que miento.',acc:['Jajaja, tú dile que sí.','Tu mamá estaría orgullosa igual.'],rej:['Ya será menos.']}]}
 ];
 const CASTK={};CAST.forEach(C=>{CASTK[C.k]=C;});
+/* ===== 🎙️ Voces del elenco: cada uno de los 17 habla a su manera (Tertulia, chats y frases sueltas) =====
+   CAST_VOZ[k] = {sw:[[regex, sustituto]], swp (prob. de cada sustitución), pre/suf (coletillas al principio o al final), len ('s' corta
+   la frase a la primera oración a veces, 'l' a veces añade una de ext), ext}. castVoz(e,t,chat): las sustituciones (dialecto, palabras
+   suyas) se aplican siempre que hable (castMul las llama); las coletillas y el largo, solo en las charlas (chat = 1, desde tert).
+   Humor cariñoso: acentos y palabras de su tierra, nunca burla. Solo toca el texto fuera de etiquetas HTML. */
+const vKeep=(m,v)=>m[0]===m[0].toUpperCase()&&m[0]!==m[0].toLowerCase()?v[0].toUpperCase()+v.slice(1):v;
+const CAST_VOZ={
+ rocio:{pre:['Mira, mi alma.','Ay, hija.','Escúchame una cosa.'],suf:['¿Eh, mi vida?','Como te lo cuento.','Treinta años de caja, cariño.'],len:'l',
+  ext:['En mis tiempos esto se arreglaba con un cocido y una copla.','Que yo he visto de todo, ¿eh? Hasta pagar con pesetas en 2010.']},
+ yeray:{sw:[[/\bautobús\b/gi,'guagua'],[/\bpatatas\b/gi,'papas'],[/\bmuchacho\b/gi,'chiquillo']],pre:['¡Chacho!','¡Ños!','Mi niño.'],suf:['¡Fuerte!','Literal.','Qué fuerte, mi niño.'],len:'s'},
+ awa:{pre:['Bon.','Tranquila.','Mira.'],suf:['Poco a poco se llega.','Así es la vida, ¿no?','Y sonriendo, que es gratis.'],len:'m'},
+ andres:{sw:[[/\bpara\b/gi,'pa'],[/\b(\w{2,})ado\b/g,'$1ao'],[/\bnada\b/gi,'na']],swp:0.55,pre:['¡Ea!','Mira, choto.','Oye, criatura.'],suf:['Ea.','Por mi madre.','Como en Mercamadrid, ni más ni menos.','Lo que yo te diga.'],len:'m'},
+ kevin:{sw:[[/\bmuy\b/gi,'mazo'],[/\bamig[oa]\b/gi,'bro']],swp:0.7,pre:['Chaval.','A ver, fiera.','Hermano.'],suf:['Fácil.','Sin más.','Que lo sepas.','En plan, normal.'],len:'s'},
+ dmytro:{sw:[[/\bmadre mía\b/gi,'vaya'],[/\btío\b/gi,'compañero'],[/\bvale(?=[,.!…])/gi,'de acuerdo'],[/\bjoder\b/gi,'caramba']],pre:['Perdón.','Si entiendo bien…','Un momento, pienso.'],suf:['¿Se dice así?','Creo que es correcto.','Es como un puente: todo tiene su carga.'],len:'s'},
+ nerea:{sw:[[/\bchico\b/gi,'zagal']],swp:0.6,pre:['A ver, nene.','Plan.','Vamos por partes.'],suf:['Y punto.','Lo tengo apuntado.','Así no, nene.'],len:'m'},
+ pili:{pre:['Mira, yo no digo nada, pero…','Que conste que a mí me lo han contado.','Tú no sabes nada, ¿eh?'],suf:['Y hasta aquí puedo leer.','Pero tú, chitón.','Ya lo decía yo.'],len:'l',
+  ext:['Esto esta noche va al grupo de Moratalaz Informa, ya verás.','Y la del 3.º B lo sabía antes que yo, que tiene telepatía.']},
+ wei:{pre:['Dato curioso.','Técnicamente…','Hecho:'],suf:['Fin del informe.','Es estadística.','No es broma. Bueno, un poco.'],len:'s'},
+ fer:{sw:[[/\bproblema\b/gi,'incidencia'],[/\bdinero\b/gi,'liquidez']],swp:0.5,pre:['A día de hoy…','Con todo el respeto.','Te lo digo como ex director de oficina.'],
+  suf:['En términos de liquidez, ruina.','En mi banco eso era un riesgo inasumible.','Hay que diversificar.','Lo pongo en el Excel de mis desgracias.'],len:'l',
+  ext:['Cuando yo llevaba la sucursal de Getafe, esto lo firmábamos con pluma.','Que conste en acta.']},
+ ioana:{pre:['¡Hai!','Bine.','Uf, Doamne.'],suf:['Bine, bine.','Lo hago yo, no pasa nada.','Como dice mi madre: el que madruga, factura.'],len:'m'},
+ vale:{sw:[[/\bmóvil\b/gi,'celular'],[/\bcoche\b/gi,'carro'],[/\bguay\b/gi,'bacano'],[/\bvale(?=[,.!…])/gi,'listo']],pre:['¡Ay, parce!','¡Ave María!','Oís, mirá.'],suf:['¿Sí o qué?','¡Qué cosa tan bacana!','Pues sí, mor.'],len:'m'},
+ youssef:{pre:['Hermano.','Amigo mío.','Escucha, escucha.'],suf:['Hamdulillah.','Wallah, te lo juro.','En Tánger decimos: paciencia y té.'],len:'m'},
+ toni:{sw:[[/\bpara\b/gi,'pa'],[/\b(\w{2,})ado\b/g,'$1ao'],[/\bmuy\b/gi,'mu'],[/\bnada\b/gi,'na']],pre:['¡Quillo!','Ojú.','Pisha.'],suf:['¡Arsa!','Esto en Cádiz lo arreglamos con una chirigota.','Ojú, qué arte.'],len:'m'},
+ tess:{sw:[[/\bmadre mía\b/gi,'Diyos ko']],pre:['¡Ay, naku!','¡Ay, sus!','Grabe.'],suf:['Talaga.','Sige na, sige na.','Grabe, ha.'],len:'m'},
+ inma:{pre:['A ver, orden.','Vamos a ver.','Un segundo, que lo apunto.'],suf:['¿Estamos?','Lo apunto en tu carpeta.','Y esto no es negociable.'],len:'m'},
+ jhon:{sw:[[/\bmóvil\b/gi,'celular'],[/\bguay\b/gi,'chévere'],[/\bvale(?=[,.!…])/gi,'listo']],pre:['¡Ve!','Mire.','Con todo respeto.'],suf:['¿Y eso cómo te hace sentir?','¿Sí me entiende?','Con mucho gusto.'],len:'s'}
+};
+function castVoz(e,t,chat){
+  const C=e&&e.cast&&CAST_VOZ[e.cast];if(!C||t==null||t==='')return t;t=String(t);
+  if(C.sw)t=t.split(/(<[^>]*>)/).map(s=>s[0]==='<'?s:C.sw.reduce((a,[r,v])=>a.replace(r,(...m)=>Math.random()<(C.swp==null?1:C.swp)?vKeep(m[0],v.replace(/\$1/g,m[1]||'')):m[0]),s)).join('');
+  if(!chat||/</.test(t))return t;
+  if(C.len==='s'&&t.length>70&&Math.random()<0.45){const m=t.match(/^.+?[.!?…]+(?=\s+[¡¿«A-ZÁÉÍÓÚÑ])/);if(m&&m[0].length>=18)t=m[0];}
+  if(/[:,]$/.test(t)||t.length<14)return t;
+  if(C.len==='l'&&C.ext&&t.length>40&&Math.random()<0.22)t+=' '+pick(C.ext);
+  const r=Math.random(),lo=t.toLowerCase(),has=x=>lo.includes(x.toLowerCase().replace(/[¡!¿?.…,]/g,'').trim().split(' ').slice(0,3).join(' '));
+  if(r<0.16&&C.pre&&!/^[¡¿«]?(Ay|Mira|Oye|Ea|Chacho|Quillo)\b/.test(t)){const x=pick(C.pre);if(!has(x))t=x+' '+t;}
+  else if(r<0.34&&C.suf){const x=pick(C.suf);if(!has(x))t=t+(/[.!?…»]$/.test(t)?' ':'. ')+x;}
+  return t;
+}
+/* Más temas propios para la Tertulia (se suman a CAST[].tert al arrancar): dos o tres por personaje, con sus respuestas. */
+const CAST_TERT2={
+ rocio:[{t:'{o}, hoy me ha dicho una clienta que tengo manos de pianista. De cobrar, hija, de cobrar.',acc:['Jajaja, Rocío, eres un arte.','Y de bailar chotis, que lo sé yo.'],rej:['Ya, Rocío, ya.']},
+  {t:'Chispa se ha comido la zapatilla de Fermín. La izquierda. Solo la izquierda. Ese perro tiene criterio.',acc:['¡Jajaja! Dale un premio.','Ese perro sabe más que nosotros.'],rej:['No me gustan los perros, Rocío.']}],
+ yeray:[{t:'{o}, ¿tú sabes lo que es un barraquito? Pues aquí nadie, y así está Madrid.',acc:['Ni idea, pero suena rico.','Invítame uno cuando vayas a la isla.'],rej:['Un café es un café, Yeray.']},
+  {t:'Mi vídeo de la gaviota va por 12.000. Mi abuela ya firma autógrafos en el mercado.',acc:['¡Tu abuela es una estrella!','Que me firme uno a mí.'],rej:['Céntrate en la caja, anda.']}],
+ awa:[{t:'{o}, Aminata ha dibujado la tienda. Tú sales con capa. Yo no le he dicho nada.',acc:['¡Me lo quedo! Lo pongo en la taquilla.','Qué niña más lista.'],rej:['Ahora no, Awa, que hay cola.']},
+  {t:'El domingo hay thieboudienne en mi casa. Si vienes, trae pan. Mucho pan.',acc:['¡Voy seguro!','Me apunto, que lo huelo desde aquí.'],rej:['El domingo libro, lo siento.']}],
+ andres:[{t:'{o}, a Jacinta le he cambiado la batería. Ahora sube los palés como una chavala de veinte.',acc:['Jajaja, Andrés y su Jacinta.','Cuídala, que es la mejor del muelle.'],rej:['Es una carretilla, Andrés.']},
+  {t:'En Jaén ahora están con la aceituna. Yo aquí con los yogures. Cosas de la vida, criatura.',acc:['Tráete un poco de aceite cuando vayas.','Pues aquí también se te quiere, Andrés.'],rej:['Pues vuélvete, hombre.']}],
+ kevin:[{t:'{o}, he bajado cuarenta palés en una hora. Récord del muelle. Apúntalo.',acc:['Eres una máquina, Kevin.','Vale, vale, el más rápido.'],rej:['Y rompiste tres cajas, Kevin.']},
+  {t:'¿Tú has visto mis zapatillas nuevas? Edición limitada. No preguntes cuánto.',acc:['Brutales.','Te quedan de lujo.'],rej:['¿Y el dinero de Rocío, qué?']}],
+ dmytro:[{t:'{o}, he medido la balda del pasillo 4. Está torcida 3 milímetros. Lo digo con respeto.',acc:['Tú y tus milímetros, Dmytro.','Arréglala, que tú sabes.'],rej:['Nadie mira tanto una balda, hombre.']},
+  {t:'Sofía ha sacado un diez en lengua. En español. Ella habla mejor que yo. Estoy muy orgulloso.',acc:['¡Felicidades, Dmytro!','Normal, sale a su padre.'],rej:['Ya me lo contaste ayer.']}],
+ nerea:[{t:'{o}, mira mi plan: carretillera, jefa de turno, encargada. En cinco años. Lo tengo en un pósit.',acc:['Tú lo consigues fijo.','Ese pósit es oro.'],rej:['Kevin dice lo mismo.']},
+  {t:'En Albacete hay más navajas que gente. Y todas me las regaló mi abuelo.',acc:['Jajaja, pues no te enfades nunca.','Eso es patrimonio.'],rej:['Qué miedo das, Nerea.']}],
+ pili:[{t:'{o}, ¿tú sabías que la del quinto se ha cambiado de peluquería? Eso es que pasa algo.',acc:['¡Pili, eres el CNI!','Cuenta, cuenta.'],rej:['Pili, déjala vivir.']},
+  {t:'Anoche oí pasos en el almacén. Paco, el de 1987. Lo sé.',acc:['Uy, Pili, qué yuyu.','Yo también los oí, ¿eh?'],rej:['Serían las ratas, Pili.']}],
+ wei:[{t:'{o}, he calculado cuántos minutos de mi vida he pasado en la cola del Metro. Mejor no te lo digo.',acc:['Dímelo, me da morbo.','Jajaja, qué horror.'],rej:['No quiero saberlo.']},
+  {t:'Mi madre quiere que me case. Le he hecho un Excel de candidatas. Ninguna supera la columna C.',acc:['¿Qué hay en la columna C?','Jajaja, Wei, eres único.'],rej:['Qué frío eres, Wei.']}],
+ fer:[{t:'{o}, mi hija me ha preguntado qué tal en el banco. Le he dicho que hoy hemos cerrado una operación. De yogures.',acc:['Técnicamente no mientes.','Ánimo, Fer.'],rej:['Algún día se lo tendrás que contar.']},
+  {t:'El aire acondicionado está a 26. Pili lo ha vuelto a tocar. Esto es la guerra.',acc:['Yo estoy contigo, Fer.','Ponlo a 23 y corre.'],rej:['Déjalo, que hace bueno.']}],
+ ioana:[{t:'{o}, Florin me ha mandado un vídeo de su madre preguntando por la boda. Otra vez.',acc:['Pues poned fecha ya.','Jajaja, qué presión.'],rej:['Eso es cosa tuya, Ioana.']},
+  {t:'He cuadrado el arqueo a la primera. Tres semanas seguidas. Bine.',acc:['¡Eres una crack!','Enséñame tu truco.'],rej:['Será casualidad.']}],
+ vale:[{t:'{o}, en Medellín ahora es la feria de las flores y yo aquí con el frío. Qué pesar.',acc:['Ay, qué bonito suena.','Tráenos flores algún día.'],rej:['En Madrid también hay flores.']},
+  {t:'¿Me dejas grabarte para una story? Diez segundos, parce. Sales divino.',acc:['Venga, pero de mi lado bueno.','Bueno, pero rápido.'],rej:['Ni de broma, Valentina.']}],
+ youssef:[{t:'{o}, el viernes traigo té con hierbabuena. El de verdad, con espuma. No el de sobre.',acc:['¡El viernes es el mejor día!','Guárdame un vaso.'],rej:['Yo soy más de café.']},
+  {t:'Hoy he hablado con un turista en cuatro idiomas. Ha comprado un chicle.',acc:['Jajaja, rentabilidad cero.','Eres el mejor guía de Madrid.'],rej:['Pues vaya negocio.']}],
+ toni:[{t:'{o}, tengo una letra nueva: «Reponiendo mi corazón en el lineal del amor». Rumba-trap.',acc:['¡Eso es un temazo!','Ponle palmas.'],rej:['Toni, no.']},
+  {t:'En Cádiz ahora mismo hay levante y yo aquí, sin mar. Me muero.',acc:['Vete al Retiro, que tiene estanque.','Ojú, qué pena.'],rej:['Pues aquí hay piscina en verano.']}],
+ tess:[{t:'{o}, mi hijo me ha enviado foto de su primera nómina. Talaga, he llorado en el Metro.',acc:['¡Qué orgullo, Tess!','Te lo mereces todo.'],rej:['Ya será menos.']},
+  {t:'He traído lumpia para todos. Si alguien dice que es un rollito, no le doy.',acc:['¡Yo no digo nada, dame dos!','Lumpia, lumpia, lo prometo.'],rej:['Estoy a dieta, Tess.']}],
+ inma:[{t:'{o}, he hecho un cuadrante nuevo de turnos. Con colores. Nadie podrá quejarse.',acc:['Precioso, Inma.','El del domingo me lo cambias, ¿eh?'],rej:['Siempre hay alguien que se queja.']},
+  {t:'Anoche me acosté tardísimo. No preguntes. Tenía… ensayo de algo.',acc:['¿Ensayo de qué, Inma?','Uy, qué misterio.'],rej:['No pregunto, no pregunto.']}],
+ jhon:[{t:'{o}, te noto tenso. Respira conmigo: cuatro segundos dentro, cuatro fuera.',acc:['Vale… uf, sí que ayuda.','Gracias, Jhon Fredy.'],rej:['Estoy bien, de verdad.']},
+  {t:'En Cali ahora mismo están bailando salsa en la calle. Aquí bailan los carros del súper.',acc:['Enséñame un paso.','Jajaja, qué nostalgia.'],rej:['Yo no bailo, Jhon.']}]
+};
+Object.keys(CAST_TERT2).forEach(k=>{if(CASTK[k])CASTK[k].tert=CASTK[k].tert.concat(CAST_TERT2[k]);});
+
+/* ===== 🎨 Retratos pixel art del elenco (SVG en línea, 16×16, sin archivos) =====
+   CAST_PT[k] = {sk piel, hc pelo, h peinado, g gafas, b barba ('full'|'must'|'stub'), ac complementos, lip labios, fr pecas, old arrugas}.
+   castPt(k,rol,cls) devuelve el <svg> (camiseta del color del puesto, ROLE_PIX) y se guarda en caché. faceH(e) = retrato si es del
+   elenco y si no, su emoji de siempre. El sprite de la tienda (pChar) no cambia: el retrato es la cara de su ficha. */
+const CAST_PT={
+ rocio:{sk:'#f3cbaa',hc:'#d9c08a',h:'bob',ac:['hoop'],lip:'#d4506a',old:1,blush:1},
+ yeray:{sk:'#d9a57c',hc:'#4a2c17',h:'curly',ac:['phones']},
+ awa:{sk:'#5e3a22',hc:'#1d120b',h:'wrap',ac:['hoop'],lip:'#7a2a2a'},
+ andres:{sk:'#d49c73',hc:'#c9c9c9',h:'cap',b:'must',old:1},
+ kevin:{sk:'#f1c7a3',hc:'#2b1d12',h:'buzz',ac:['chain']},
+ dmytro:{sk:'#f7dcc4',hc:'#e2c46a',h:'side',g:1,b:'stub'},
+ nerea:{sk:'#f5cdb0',hc:'#c4502a',h:'pony',fr:1},
+ pili:{sk:'#f3cbaa',hc:'#a991bf',h:'perm',g:1,ac:['gchain'],old:1},
+ wei:{sk:'#efcfa3',hc:'#141414',h:'fringe'},
+ fer:{sk:'#f1c1a4',hc:'#5b4636',h:'bald',g:1,ac:['tie']},
+ ioana:{sk:'#f6d6bd',hc:'#e8cf87',h:'braid'},
+ vale:{sk:'#dea77f',hc:'#2b1a10',h:'longcurly',ac:['hoop'],lip:'#c9365a'},
+ youssef:{sk:'#c68a5e',hc:'#1c1410',h:'side',b:'full'},
+ toni:{sk:'#d9a179',hc:'#3b2616',h:'wavy',b:'full',ac:['stud']},
+ tess:{sk:'#c99168',hc:'#121212',h:'bangs',lip:'#c22a4a',ac:['stud']},
+ inma:{sk:'#f2c9a8',hc:'#7a3b1e',h:'big',lip:'#d0213c'},
+ jhon:{sk:'#a8714a',hc:'#151010',h:'side',g:1,b:'must'}
+};
+const ptShade=(h,f)=>{const n=parseInt(h.slice(1),16),c=[n>>16,(n>>8)&255,n&255].map(v=>clamp(Math.round(f<1?v*f:v+(255-v)*(f-1)),0,255));return '#'+c.map(v=>v.toString(16).padStart(2,'0')).join('');};
+const PT_C={};
+function castPt(k,role,cls){
+  const P=CAST_PT[k];if(!P)return '';const ck=k+'|'+(role||'')+'|'+(cls||'');if(PT_C[ck])return PT_C[ck];
+  const G=[];for(let y=0;y<16;y++)G.push(new Array(16).fill(null));
+  const px=(x,y,c)=>{if(x>=0&&x<16&&y>=0&&y<16)G[y][x]=c;},rect=(x0,y0,x1,y1,c)=>{for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++)px(x,y,c);};
+  const sk=P.sk,sd=ptShade(sk,0.82),hc=P.hc,hd=ptShade(hc,0.72),hl=ptShade(hc,1.25),rc=(typeof ROLE_PIX!=='undefined'&&ROLE_PIX[role])||'#e5383b';
+  /* ropa, cuello, cara y orejas */
+  rect(2,13,13,15,rc);rect(6,13,9,13,ptShade(rc,1.35));rect(7,11,8,12,sd);
+  rect(4,4,11,11,sk);px(4,11,null);px(11,11,null);px(4,4,null);px(11,4,null);rect(3,7,3,8,sk);rect(12,7,12,8,sk);
+  /* peinado: lo de atrás primero */
+  const H=P.h;
+  if(H==='long'||H==='longcurly'){rect(2,4,3,12,hc);rect(12,4,13,12,hc);if(H==='longcurly'){[5,7,9,11].forEach(y=>{px(1,y,hc);px(14,y+1,hc);px(2,y+1,hd);px(13,y,hd);});}}
+  if(H==='big'){rect(2,3,3,11,hc);rect(12,3,13,11,hc);px(1,6,hc);px(14,6,hc);px(1,8,hd);px(14,8,hd);}
+  if(H==='pony'){rect(12,5,13,6,hc);rect(13,7,14,10,hc);px(14,11,hd);px(13,6,'#2f6db5');}
+  if(H==='braid'){rect(12,5,12,7,hc);[8,9,10,11,12,13].forEach((y,i)=>{px(12,y,i%2?hd:hc);px(13,y,i%2?hc:hd);});px(12,14,'#d6336c');}
+  if(H==='bob'||H==='bangs'){rect(3,4,3,10,hc);rect(12,4,12,10,hc);px(3,10,hd);px(12,10,hd);}
+  /* rasgos */
+  const brow=P.old&&H!=='perm'?ptShade(hc,1.1):hd;
+  px(5,6,brow);px(6,6,brow);px(9,6,brow);px(10,6,brow);
+  px(6,7,'#1d1a1a');px(9,7,'#1d1a1a');px(5,7,'#fff');px(10,7,'#fff');
+  px(8,8,sd);rect(7,10,8,10,P.lip||ptShade(sk,0.62));if(!P.lip)px(6,10,null);
+  if(P.old){px(5,8,sd);px(10,8,sd);}
+  if(P.blush){px(5,9,'#f29a9a');px(10,9,'#f29a9a');}
+  if(P.fr){px(5,9,'#c07a4a');px(6,8,'#c07a4a');px(10,9,'#c07a4a');px(9,8,'#c07a4a');}
+  /* barba */
+  if(P.b==='full'){rect(4,9,11,11,hc);px(4,8,hc);px(11,8,hc);rect(5,12,10,12,hc);rect(7,10,8,10,ptShade(sk,0.62));px(6,9,hd);px(9,9,hd);}
+  if(P.b==='must'){rect(6,9,9,9,P.old?ptShade(hc,1.05):hd);}
+  if(P.b==='stub'){[[5,10],[6,11],[9,11],[10,10],[7,11],[8,11],[4,9],[11,9]].forEach(([x,y])=>px(x,y,ptShade(hc,0.85)));}
+  /* lo de arriba del pelo */
+  if(H==='bob'){rect(4,2,11,3,hc);rect(3,3,12,4,hc);px(4,5,hc);px(11,5,hc);px(6,2,hl);px(7,2,hl);}
+  if(H==='bangs'){rect(4,2,11,3,hc);rect(3,3,12,5,hc);px(5,5,sk);px(8,5,sk);px(10,5,sk);px(6,2,hl);}
+  if(H==='curly'){rect(4,2,11,4,hc);[3,5,7,9,11].forEach(x=>px(x,1,hc));rect(3,3,3,6,hc);rect(12,3,12,6,hc);[4,8,10].forEach(x=>px(x,3,hd));px(6,2,hl);px(9,2,hl);}
+  if(H==='wrap'){rect(3,1,12,4,'#f08a24');rect(10,0,12,1,'#f08a24');[4,7,10].forEach(x=>px(x,2,'#ffd23f'));[5,8,11].forEach(x=>px(x,3,'#2a9d5c'));px(12,0,'#c95f0c');rect(3,4,12,4,'#c95f0c');}
+  if(H==='cap'){rect(4,1,11,3,'#3f6b4a');rect(3,3,12,3,'#3f6b4a');rect(2,4,8,4,'#2c4c34');px(6,1,'#5c8c66');px(3,5,hc);px(12,5,hc);px(3,6,hc);px(12,6,hc);}
+  if(H==='buzz'){rect(4,3,11,4,hd);px(4,5,hd);px(11,5,hd);[5,7,9].forEach(x=>px(x,3,hc));}
+  if(H==='side'){rect(4,2,11,4,hc);rect(3,3,3,6,hc);rect(12,3,12,5,hc);px(7,2,hl);px(8,2,hl);rect(4,5,6,5,hc);px(9,3,hd);}
+  if(H==='wavy'){rect(4,2,11,4,hc);rect(3,3,3,8,hc);rect(12,3,12,8,hc);[4,6,8,10].forEach(x=>px(x,1,hc));px(5,5,hc);px(10,5,hc);px(7,3,hl);}
+  if(H==='perm'){rect(3,1,12,4,hc);[2,13].forEach(x=>rect(x,3,x,7,hc));[3,5,7,9,11].forEach(x=>{px(x,1,hl);px(x+1,3,hd);});px(4,0,hc);px(7,0,hc);px(10,0,hc);}
+  if(H==='fringe'){rect(4,2,11,3,hc);rect(4,4,9,5,hc);px(10,4,hc);px(3,4,hd);px(12,4,hd);rect(3,5,3,6,'#4a4a4a');rect(12,5,12,6,'#4a4a4a');px(6,2,'#3a3a3a');}
+  if(H==='bald'){rect(3,5,4,7,hc);rect(11,5,12,7,hc);px(6,4,ptShade(sk,1.25));px(7,4,ptShade(sk,1.25));px(5,4,sk);px(10,4,sk);}
+  if(H==='long'||H==='longcurly'){rect(4,2,11,3,hc);rect(3,3,12,4,hc);px(4,5,hc);px(5,5,hc);px(11,5,hc);px(7,2,hl);if(H==='longcurly'){[4,6,8,10].forEach(x=>px(x,1,hc));px(5,3,hd);px(9,3,hd);}}
+  if(H==='big'){rect(3,1,12,4,hc);rect(2,2,13,3,hc);[3,6,9,12].forEach(x=>px(x,0,hc));px(4,5,hc);px(11,5,hc);px(5,2,hl);px(8,1,hl);px(10,2,hl);}
+  if(H==='pony'){rect(4,2,11,4,hc);rect(3,3,3,6,hc);px(4,5,hc);px(6,2,hl);px(9,3,hd);}
+  if(H==='braid'){rect(4,2,11,4,hc);rect(3,3,3,7,hc);px(4,5,hc);px(11,5,hc);px(7,2,hl);px(8,3,hd);}
+  /* gafas */
+  if(P.g){const f='#2a2430',l='#cfe9f7';[5,6,7,8,9,10].forEach(x=>px(x,6,f));px(5,7,l);px(7,7,f);px(8,7,f);px(10,7,l);px(4,7,f);px(11,7,f);}
+  /* complementos */
+  const A=P.ac||[];
+  if(A.includes('hoop')){px(3,9,'#e8b923');px(12,9,'#e8b923');px(3,10,'#c99a10');px(12,10,'#c99a10');}
+  if(A.includes('stud'))px(12,9,'#e8e8f0');
+  if(A.includes('phones')){rect(5,12,10,12,'#2b2b3a');px(4,12,'#e5383b');px(11,12,'#e5383b');px(4,11,'#2b2b3a');px(11,11,'#2b2b3a');}
+  if(A.includes('chain')){[5,6,7,8,9,10].forEach(x=>px(x,13,'#ffd23f'));px(7,14,'#ffd23f');px(8,14,'#e8b923');}
+  if(A.includes('gchain')){px(4,8,'#e8b923');px(3,9,'#e8b923');px(3,10,'#e8b923');px(3,11,'#e8b923');}
+  if(A.includes('tie')){rect(2,13,13,15,'#3a3f4b');rect(6,13,9,13,'#fff');rect(7,13,8,15,'#c51d22');px(6,14,'#fff');px(9,14,'#fff');}
+  /* a <path> por color */
+  const by={};for(let y=0;y<16;y++)for(let x=0;x<16;x++){const c=G[y][x];if(c)(by[c]=by[c]||[]).push('M'+x+' '+y+'h1v1h-1z');}
+  const bg=ptShade(rc,1.82);
+  const svg=`<svg class="pt${cls?' '+cls:''}" viewBox="0 0 16 16" shape-rendering="crispEdges" role="img" aria-label="Retrato de ${esc(CASTK[k]?CASTK[k].n:k)}"><rect width="16" height="16" fill="${bg}"/>${Object.keys(by).map(c=>`<path fill="${c}" d="${by[c].join('')}"/>`).join('')}</svg>`;
+  PT_C[ck]=svg;return svg;
+}
+/* Cara para listas, chats y fichas: retrato si es del elenco, emoji si no. */
+const faceH=(e,cls)=>e&&e.cast&&CAST_PT[e.cast]?castPt(e.cast,e.role,cls):(e&&e.face)||'🙂';
+/* De qué personaje del elenco es una escena (por su sprite 's'+id o por cast). */
+const scnCast=s=>{if(s.cast&&CAST_PT[s.cast])return s.cast;const m=/^s(\d+)$/.exec(s.sprite||''),e=m&&meta&&meta.emp?meta.emp.find(x=>x.id===+m[1]):null;return e&&e.cast&&CAST_PT[e.cast]?e.cast:null;};
 /* Relaciones de partida entre los del elenco: [a, b, {af, conf, rom, riv, par}, nota que sale en la ficha]. */
 const CAST_REL=[
  ['rocio','kevin',{af:-15,conf:25,riv:10},'Kevin le debe dinero a Rocío'],
@@ -5541,7 +5846,7 @@ function castLeave(e,why){
 }
 /* Muletillas: a veces las mete al principio o al final de lo que dice. */
 function castMul(e,t,p){
-  const C=e&&e.cast&&CASTK[e.cast];if(!C||!t||Math.random()>=(p==null?0.3:p))return t;
+  const C=e&&e.cast&&CASTK[e.cast];if(!C||!t)return t;t=castVoz(e,t,0);if(Math.random()>=(p==null?0.3:p))return t;
   const m=pick(C.mul),end=/[.!?…»]$/.test(m);t=String(t);
   if(Math.random()<0.5&&!/^[«¡¿]/.test(t))return m+(end?' ':'. ')+t;
   return t+' '+m+(end?'':'.');
@@ -5550,8 +5855,8 @@ function castMul(e,t,p){
 function castPsyHtml(e,mini){
   const C=e&&e.cast&&CASTK[e.cast];if(!C)return e&&e.old?'<div class="es bio">🕰️ <i>De antes: llegó antes de que la tienda tuviera su plantilla de siempre.</i></div>':'';
   const P=C.psy,sec=meta&&meta.secR&&meta.secR[e.cast],RN=castRelNotes(e);
-  if(mini)return `<div class="es bio">🧠 <b>${esc(P.def)}</b> <i>«${esc(C.mul[0])}»</i></div>`;
-  return `<div class="sdoc bio"><h6><span>🧠 Cómo es</span><span>📛 ${esc(C.n)} ${esc(C.sur)}</span></h6><dl>
+  if(mini)return `<div class="es bio">${castPt(e.cast,e.role,'ptm')} 🧠 <b>${esc(P.def)}</b> <i>«${esc(C.mul[0])}»</i></div>`;
+  return `<div class="sdoc bio"><h6><span>🧠 Cómo es</span><span>📛 ${esc(C.n)} ${esc(C.sur)}</span></h6><div class="ptcard">${castPt(e.cast,e.role,'ptb')}<div><b>${esc(C.n)} ${esc(C.sur)}</b><small>${C.age} años · ${esc(C.from)} · ${esc(ROLES[e.role]?ROLES[e.role].n:'')}${CAST_BDAY[e.cast]?' · 🎂 '+bdayTxt(e.cast):''}</small><i>«${esc(C.mul[0])}»</i></div></div><dl>
     <dt>En una frase</dt><dd>${esc(P.def)}</dd><dt>Con agobio</dt><dd>${esc(P.estres)}</dd><dt>Le hace feliz</dt><dd>${esc(P.feliz)}</dd>
     <dt>No soporta</dt><dd>${esc(P.odia)}</dd><dt>Siempre dice</dt><dd>${C.mul.map(m=>'«'+esc(m)+'»').join(' · ')}</dd>
     ${RN.length?`<dt>Historias</dt><dd>${RN.map(esc).join(' · ')}</dd>`:''}
@@ -5973,10 +6278,10 @@ function sceneShow(s){
   const h=document.querySelector('#app .hud'),r=h&&h.getBoundingClientRect();
   el.style.setProperty('--scnT',(r&&r.bottom>0&&r.bottom<innerHeight/3?Math.round(r.bottom):0)+'px');
   const ch=(s.choices||[]).map(c=>`<button class="btn ${c.cls||''}" data-act="${c.act||'scene'}" data-k="${c.k}"${String(c.k)===String(s.def)?' data-def="1"':''}${c.key?` data-key="${String(c.key).toLowerCase()}"`:''} ${c.attrs||''}>${c.key?`<i class="kk">${c.key}</i>`:''}${c.t}</button>`).join('');
-  const spr=s.sprite!=null&&PIX.ok,look=s.look||'ticket';
+  const pk=scnCast(s),spr=!pk&&s.sprite!=null&&PIX.ok,look=s.look||'ticket';
   el.innerHTML=`<div class="scn-wrap"><div class="scn scn-${look}" aria-label="${esc(String(s.name||'').replace(/<[^>]+>/g,''))}">
     <div class="scn-head"><span>${look==='pa'?'🔔 ding-dong · ':''}${s.head||'🛒 VITCHMARKET'}</span>${s.tag?`<span class="scn-tag">${s.tag}</span>`:''}</div><div class="scn-belt"></div>
-    <div class="scn-row"><div class="scn-who${spr?' spr':''}">${spr?'<canvas width="18" height="17"></canvas><span class="scn-face">'+(s.who||'🙂')+'</span>':(s.who||'🙂')}</div>
+    <div class="scn-row"><div class="scn-who${spr?' spr':''}${pk?' ptw':''}">${pk?castPt(pk,s.role||(CASTK[pk]||{}).role,'scn-pt'):spr?'<canvas width="18" height="17"></canvas><span class="scn-face">'+(s.who||'🙂')+'</span>':(s.who||'🙂')}</div>
     <div class="scn-main">${s.name?`<b class="scn-name">${s.name}</b>`:''}<div class="scn-say">${s.txt||''}</div>${s.body||''}</div></div>
     <div class="scn-ch">${ch}</div>${s.time?'<div class="scn-bar"><i></i></div>':''}</div></div>`;
   if(spr)try{const cv=el.querySelector('.scn-who canvas'),g=cv.getContext('2d');g.imageSmoothingEnabled=false;pPerson(g,9,16,{ch:s.role==='alm'?PWORK:pChar(s.sprite),dir:'d',s:1,staff:!!s.role,role:s.role});}catch(e){}
@@ -6365,7 +6670,7 @@ function dropEmp(e,why){
 function mgN(){return parseInt(String(mg&&mg.t&&mg.t.id||'').replace(/\D/g,''),10)||0;}
 function candScene(t){
   const c=t.cand;if(!c)return;
-  bScene({k:'cand:'+t.id,tid:t.id,who:c.face,sprite:'c'+t.id,head:'🚪 PUERTA DE PERSONAL',tag:'🧑‍💼 Candidato',name:empTag(c),prio:1,time:14,def:'wait',
+  bScene({k:'cand:'+t.id,tid:t.id,who:c.face,sprite:'c'+t.id,cast:c.cast,head:'🚪 PUERTA DE PERSONAL',tag:'🧑‍💼 Candidato',name:empTag(c),prio:1,time:14,def:'wait',
     txt:'Hola… vengo por la vacante de <b>'+ROLES[c.role].n+'</b>.',
     body:`<div class="sdoc"><h6><span>📄 Currículum</span><span>${c.exp} ${c.exp===1?'año':'años'} de experiencia</span></h6><dl><dt>Antes</dt><dd>${esc(c.prev)}</dd><dt>Pide</dt><dd class="pix">${monthTxt(c.wage)}</dd></dl></div>`,
     choices:[{t:'🧑‍💼 Entrevistarle ya',k:'now',cls:'go',key:'E'},{t:'⏳ Que espere',k:'wait',key:'W'},{t:'🚪 Hoy no',k:'no',cls:'no',key:'N',stamp:'HOY NO',sc:'bad'}],
@@ -8070,7 +8375,7 @@ function dailyExit(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.25-171';
+const APPV='2026.11.25-191';
 /* Compara versiones por números («-9» < «-11»), no como texto. */
 const verCmp=(a,b)=>{const x=String(a).split(/[.-]/).map(Number),y=String(b).split(/[.-]/).map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
 try{const vt=document.createElement('div');vt.id='vtag';vt.textContent='v'+APPV;document.body.appendChild(vt);}catch(e){}
@@ -10191,9 +10496,9 @@ function rrhhBody(){
   const steps=(names,cur)=>'<div class="mgsteps">'+names.map((n,i)=>`<span class="${i===cur?'on':i<cur?'ok':''}">${i<cur?'✔':i+1} ${n}</span>`).join('')+'</div>';
   if(mg.kind==='cv'){
     const c=mg.c,R=ROLES[c.role],N=NATS[c.nat]||NATS[0];
-    let h=steps(['Entrevista','Decisión'],mg.step)+(mg.step?`<div class="cvmini"><span class="cvphoto">${c.face}</span><div><b>${c.name}</b> · ${R.n} · pide ${monthTxt(c.wage)}<br><small>${mg.notes.length?mg.notes.map(n=>'📎 '+n).join(' '):'Sin notas en el currículum.'}</small></div></div>`:'')+(mg.step?'':`<div class="office cvdesk">
+    let h=steps(['Entrevista','Decisión'],mg.step)+(mg.step?`<div class="cvmini"><span class="cvphoto">${faceH(c)}</span><div><b>${c.name}</b> · ${R.n} · pide ${monthTxt(c.wage)}<br><small>${mg.notes.length?mg.notes.map(n=>'📎 '+n).join(' '):'Sin notas en el currículum.'}</small></div></div>`:'')+(mg.step?'':`<div class="office cvdesk">
       <div class="cvpaper"><div class="cvband">CURRÍCULUM VITAE</div>
-        <div class="cvtop"><span class="cvphoto">${c.face}</span><div><b>${c.name}${castB(c)}</b><small>${N.f} ${N.c}</small><small>Solicita: <b>${R.n}</b></small><small>Pide: <b>${monthTxt(c.wage)}</b> bruto</small></div></div>
+        <div class="cvtop"><span class="cvphoto">${faceH(c)}</span><div><b>${c.name}${castB(c)}</b><small>${N.f} ${N.c}</small><small>Solicita: <b>${R.n}</b></small><small>Pide: <b>${monthTxt(c.wage)}</b> bruto</small></div></div>
         <div class="cvsec"><b>Experiencia</b><span>${c.exp?c.exp+(c.exp===1?' año':' años'):'Ninguna'} · ${c.prev}</span></div>
         <div class="cvsec"><b>Idiomas</b><span>${c.langs.map(l=>LANG[l]).join(', ')}</span></div></div>
       ${mg.notes.length?`<div class="postits">${mg.notes.map((n,i)=>`<div class="postit" style="--r:${i%2?2:-3}deg">📎 ${n}</div>`).join('')}</div>`:''}</div>`);
@@ -10727,7 +11032,7 @@ function showMeeting(){
       <button class="btn${!e.real&&e.moral<20?' no':''}" data-act="emp" data-e="${e.id}" data-k="warn" title="${!e.real&&e.moral<20?'Tiene el ánimo por los suelos: con un toque, 3 de cada 10 se van en el acto.':'Amonestación por escrito: −12 de ánimo, se pone las pilas 3 turnos.'}">⚠️ Toque${!e.real&&e.moral<20?' (riesgo: se puede ir)':''}</button>
       <button class="btn" data-act="emp" data-e="${e.id}" data-k="raise">💶 +5%</button>
       <button class="btn no" data-act="emp" data-e="${e.id}" data-k="fire">Despedir</button></div>`;
-    return `<div class="emp ${meet.firing===e.id&&!a?'firing':''}"><div class="eh"><span class="ef">${e.face}</span><div class="t"><b>${e.name}</b>${tag}</div><span class="mood" title="Ánimo">${mood(e)}</span></div>
+    return `<div class="emp ${meet.firing===e.id&&!a?'firing':''}"><div class="eh"><span class="ef">${faceH(e)}</span><div class="t"><b>${e.name}</b>${tag}</div><span class="mood" title="Ánimo">${mood(e)}</span></div>
       <div class="duty"><b>Su trabajo:</b> ${ROLES[e.role].duties.join(' · ')}.</div>
       <ul class="did">${didList(e)}</ul>
       ${e.log&&e.log.length?'<div class="es">📒 Lo último: '+e.log.slice(-3).join(' · ')+'</div>':''}${e.bio?bioHtml(e,1):''}
@@ -10749,7 +11054,7 @@ function showMeeting(){
     const qa=c.qa.map(x=>`<div class="qa">${x.q}<i>«${x.a}»</i></div>`).join('');
     const btn=(c.hired?'':c.integ?`<div class="qa">🧪 Integridad: <b>${c.integ}</b> (aprox.)</div>`:`<button class="btn" data-act="integc" data-c="${i}" ${meta.money<INTEG?'disabled':''}>🧪 Test de integridad · ${fmt(INTEG)}</button>`)+(c.hired?'<div class="supd">Fichado. Empieza el próximo turno, en periodo de prueba.</div>'
       :`<button class="btn go" data-act="hirec" data-c="${i}" ${full||meta.money<HIRE?'disabled':''}>${full?'Puesto completo':'Contratar · '+fmt(HIRE)}</button>`);
-    return `<div class="emp">${c.ref?'<div class="qa">🤝 '+c.ref+'</div>':''}<div class="eh"><span class="ef">${c.face}</span><div class="t"><b>${c.name}</b>${castB(c)}${flag(c)} ${(NATS[c.nat]||NATS[0]).c} · para ${ROLES[c.role].n} · habla ${c.langs.map(l=>LANG[l]).join(', ')} ·${c.exp?c.exp+(c.exp===1?' año':' años')+' de experiencia':'sin experiencia'} · pide ${monthTxt(c.wage)}</div></div>${c.prev?'<div class="qa">📄 '+esc(c.prev)+'</div>':''}${qa}${btn}</div>`;
+    return `<div class="emp">${c.ref?'<div class="qa">🤝 '+c.ref+'</div>':''}<div class="eh"><span class="ef">${faceH(c)}</span><div class="t"><b>${c.name}</b>${castB(c)}${flag(c)} ${(NATS[c.nat]||NATS[0]).c} · para ${ROLES[c.role].n} · habla ${c.langs.map(l=>LANG[l]).join(', ')} ·${c.exp?c.exp+(c.exp===1?' año':' años')+' de experiencia':'sin experiencia'} · pide ${monthTxt(c.wage)}</div></div>${c.prev?'<div class="qa">📄 '+esc(c.prev)+'</div>':''}${qa}${btn}</div>`;
   });
   const duties=Object.keys(ROLES).map(k=>`<div class="up"><div class="t"><b>${ROLES[k].n} · ${staffOf(k).length}/${ROLES[k].max}</b>${ROLES[k].duties.join(' · ')}</div></div>`).join('');
   const ap=isHost()?appsList().length:0,c=cols();
@@ -11419,7 +11724,7 @@ const onFloor=e=>{const d=run&&run.duty&&run.duty[e.id];return !!d&&!['gone','ab
 function staffInfo(){
   if(!run||run.remote)return;
   const E=meta.emp,cnt={};E.forEach(e=>{cnt[e.role]=(cnt[e.role]||0)+1;});
-  const rows=E.map(e=>`<dt>${e.real?`${e.face} ${esc(e.name)} 🎮`:`<button class="btn mini talkb" data-act="talk" data-e="${e.id}" title="Su ficha y hablar con ${esc(e.name)}">${e.face} ${esc(e.name)} 🗣️</button>`}${castB(e)}${e.trial>0?' 🧪':''}${e.enc===2?' ⭐':e.enc?' 🎖️':''}</dt><dd>${ROLES[e.role].s} · ${staffState(e)}</dd>`).join('');
+  const rows=E.map(e=>`<dt>${e.real?`${e.face} ${esc(e.name)} 🎮`:`<button class="btn mini talkb" data-act="talk" data-e="${e.id}" title="Su ficha y hablar con ${esc(e.name)}">${faceH(e)} ${esc(e.name)} 🗣️</button>`}${castB(e)}${e.trial>0?' 🧪':''}${e.enc===2?' ⭐':e.enc?' 🎖️':''}</dt><dd>${ROLES[e.role].s} · ${staffState(e)}</dd>`).join('');
   const B=(meta.bajas||[]).slice(0,5).map(b=>`<dt>${b.f} ${esc(b.n)} · T${b.d}</dt><dd>${esc(b.why)}</dd>`).join('');
   scene({k:'plant:'+Date.now(),over:true,head:'👥 PLANTILLA · TURNO '+meta.day,tag:E.filter(onFloor).length+' en tienda / '+E.length,who:'👑',name:'Tu equipo',prio:1,time:40,def:'ok',
     txt:'Toca a alguien para ver su vida y hablar con él o ella. '+Object.keys(ROLES).map(k=>ROLES[k].s+' '+(cnt[k]||0)).join(' · ')+'. Nómina: '+fmt(E.reduce((s,e)=>s+empCost(e.wage),0))+' por turno con Seguridad Social.',
@@ -11838,12 +12143,12 @@ function poolHtml(){
   const P=poolFill();
   if(!P.length)return '<div class="zone-title">🧑‍💼 CANDIDATOS DISPONIBLES</div><div class="supd">No hay nadie esperando: publica una vacante (＋ en el puesto que quieras) y aquí te salen candidatos al momento.</div>';
   return '<div class="zone-title">🧑‍💼 CANDIDATOS DISPONIBLES · CONTRATAS AHORA</div><div class="supd">Empiezan el turno siguiente, en prueba 3 turnos. Contratar cuesta '+fmt(HIRE)+' (anuncio y reconocimiento médico). Ojo: en la entrevista a veces se venden mejor de lo que son.</div><div class="shop">'
-    +P.map((c,i)=>`<div class="up"><div class="t"><b>${c.face} ${esc(c.name)}${castB(c)} · ${ROLES[c.role].n}</b>${flag(c)} ${c.exp?c.exp+' años de experiencia':'Sin experiencia'}${c.prev?' · antes: '+esc(c.prev):''} · pide ${monthTxt(c.wage)}${(c.qa||[]).map(q=>`<br><small>«${esc(q.q)}» — <i>${esc(q.a)}</i></small>`).join('')}</div><button class="btn go" data-act="poolhire" data-i="${i}" ${meta.money<HIRE?'disabled':''}>🤝 Contratar</button></div>`).join('')+'</div>';
+    +P.map((c,i)=>`<div class="up"><div class="t"><b>${faceH(c)} ${esc(c.name)}${castB(c)} · ${ROLES[c.role].n}</b>${flag(c)} ${c.exp?c.exp+' años de experiencia':'Sin experiencia'}${c.prev?' · antes: '+esc(c.prev):''} · pide ${monthTxt(c.wage)}${(c.qa||[]).map(q=>`<br><small>«${esc(q.q)}» — <i>${esc(q.a)}</i></small>`).join('')}</div><button class="btn go" data-act="poolhire" data-i="${i}" ${meta.money<HIRE?'disabled':''}>🤝 Contratar</button></div>`).join('')+'</div>';
 }
 function rrhhHtml(){
   let nm=meta.day+1;while(nm%3!==1)nm++;
   const rr=staffOf('rrhh'),realRR=rr.find(e=>e.real&&run&&run.duty&&working(e));
-  const rows=meta.emp.map(e=>`<div class="up"><div class="t"><b>${e.face} ${e.real?'🎮':flag(e)} ${e.name} · ${ROLES[e.role].n}</b>${e.days} ${e.days===1?'turno':'turnos'} · ${monthTxt(e.wage)}${e.trial?' · en prueba ('+e.trial+')':''}${e.warn?' · ⚠️×'+e.warn:''}${e.enc?' · '+encT(e):''}</div><span class="mood">${mood(e)}</span>${e.real?'':`<button class="btn mini" data-act="talk" data-e="${e.id}">📖 Ficha</button>`}${encBtns(e)}${canShopFire()&&shopFire!==e.id&&!(room&&e.real&&e.real===room.uid)?`<button class="btn mini no" data-act="sfire" data-e="${e.id}">🔥 Despedir</button>`:''}</div>${canShopFire()&&shopFire===e.id?shopFireHtml(e):''}`).join('')||'<div class="supd">Plantilla vacía.</div>';
+  const rows=meta.emp.map(e=>`<div class="up"><div class="t"><b>${faceH(e)} ${e.real?'🎮':flag(e)} ${e.name} · ${ROLES[e.role].n}</b>${e.days} ${e.days===1?'turno':'turnos'} · ${monthTxt(e.wage)}${e.trial?' · en prueba ('+e.trial+')':''}${e.warn?' · ⚠️×'+e.warn:''}${e.enc?' · '+encT(e):''}</div><span class="mood">${mood(e)}</span>${e.real?'':`<button class="btn mini" data-act="talk" data-e="${e.id}">📖 Ficha</button>`}${encBtns(e)}${canShopFire()&&shopFire!==e.id&&!(room&&e.real&&e.real===room.uid)?`<button class="btn mini no" data-act="sfire" data-e="${e.id}">🔥 Despedir</button>`:''}</div>${canShopFire()&&shopFire===e.id?shopFireHtml(e):''}`).join('')||'<div class="supd">Plantilla vacía.</div>';
   return `<div class="dgrid"><div class="dpanel"><h2>🗂️ Recursos Humanos</h2>${staffBlock('rrhh')}
     ${isHost()?(appsHtml()||'<div class="zone-title">📝 SOLICITUDES DE EMPLEO</div><div class="supd">No hay solicitudes pendientes.</div>')+(realRR?`<div class="supd">${realRR.name} (RR.HH.) también puede tramitarlas desde su pantalla.</div>`:''):'<div class="supd">En solitario no llegan solicitudes de personas reales: contratas en la reunión de personal.</div>'}
     <div class="zone-title">📢 VACANTES</div><div class="supd">${rr.some(e=>!e.real)&&!realRR?'Tu gente de RR.HH. las publica sola cuando falta personal; tú también puedes.':realRR?realRR.name+' (RR.HH.) también las publica desde su puesto.':'Sin nadie en RR.HH., las publicas tú y entrevistas tú: cuando llega un candidato sale el aviso 🧑‍💼 «Entrevista» y vas con «Voy yo».'} Solo se presentan candidatos a puestos con vacante.</div>
