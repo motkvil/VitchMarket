@@ -86,7 +86,8 @@ const TOPO=!!process.env.TOPO,tp={hVote:0,hMeet:0,mVote:0,mSab:0,mBook:0,mScn:0}
 
 function hostBot(d){
   {const g=d.querySelector('#guide.show [data-act=gclose],#guide.show [data-act=gpg][data-d="1"]');if(g){(typeof stats!=='undefined'?stats:st).guide=((typeof stats!=='undefined'?stats:st).guide||0)+1;g.click();return;}}
-  {const tw=d.querySelector('#topow.show');if(tw){const x=tw.querySelector('[data-act=tvote]')?any(tw,'[data-act=tvote]'):tw.querySelector('[data-act=tclose]');if(x){if(x.dataset.act==='tvote')tp.hVote++;cl(x);}return;}}
+  {const tw=d.querySelector('#topow.show');if(tw){const q=Math.random()<.5&&tw.querySelector('[data-act=tdq]');if(q){tp.hAsk=(tp.hAsk||0)+1;cl(any(tw,'[data-act=tdq]'));return;}
+    const x=tw.querySelector('[data-act=tvote]')?any(tw,'[data-act=tvote]'):tw.querySelector('[data-act=tclose]');if(x){if(x.dataset.act==='tvote')tp.hVote++;cl(x);}return;}}
   if(Math.random()<.03&&/📋 Cuaderno \(/.test((d.querySelector('#topob')||{textContent:''}).textContent)){const m=d.querySelector('#topob [data-act=tmeet]:not([disabled])');if(m){tp.hMeet++;cl(m);return;}}
   const hire=d.querySelector('[data-act=rhire]:not([disabled])');if(hire){st.hired=(st.hired||0)+1;cl(hire);return;}
   const ov=d.querySelector('#overlay.show');
@@ -136,7 +137,7 @@ function memberBot(d){
   if(d.querySelector('[data-act=mgtk]'))tkSeen++;
   {const sc=d.querySelector('#scene.show');if(sc&&/CASO DEL TOPO/.test(sc.textContent)){const b=sc.querySelector('button[data-act=scene]');if(b){tp.mScn++;tp.role=(tp.role||'')+(/TOPO/.test(sc.querySelector('.scn-tag')?sc.querySelector('.scn-tag').textContent:'')?'T':'c');cl(b);return;}}}
   {const tw=d.querySelector('#topow.show');if(tw){const sb=any(tw,'[data-act=tsab]:not([disabled])'),v=any(tw,'[data-act=tvote]');
-    if(sb){tp.mSab++;cl(sb);return;}if(v){tp.mVote++;cl(v);return;}if(/Cuaderno/.test(tw.textContent))tp.mBook++;cl(tw.querySelector('[data-act=tclose]'));return;}}
+    if(sb){tp.mSab++;cl(sb);return;}{const q=any(tw,'[data-act=tdq]');if(q&&Math.random()<.5){tp.mAsk=(tp.mAsk||0)+1;cl(q);return;}}if(v){tp.mVote++;cl(v);return;}if(/Cuaderno/.test(tw.textContent))tp.mBook++;cl(tw.querySelector('[data-act=tclose]'));return;}}
   if(Math.random()<.05){const b=d.querySelector('#topob [data-act=topow][data-k=sab]')||(Math.random()<.3&&d.querySelector('#topob [data-act=topow][data-k=book]'));if(b){cl(b);return;}}
   const mgel=d.querySelector('#mg.show');
   if(mgel){const fx=mgel.querySelectorAll('[data-act=mgfix]');if(fx.length){const on=mgel.querySelector('.fixtg i.on'),b=[...fx].find(x=>on&&x.dataset.s===on.textContent);tp.fix=(tp.fix||0)+1;cl(b||fx[0]);return;}const x=any(mgel,'button:not([disabled])');if(x){st.mgB++;cl(x);}return;}
