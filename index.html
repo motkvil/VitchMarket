@@ -2134,6 +2134,12 @@ body.redmo .prod{transition:none!important}
 .scn-gig .scn-name,.scn-gig .scn-crew small{color:#ffd6ef}.scn-gig .scn-hint{color:#e7dcff}
 @media (max-width:820px){.pt.ptb{width:56px;height:56px}.scn-crew .pt{width:32px;height:32px}.scn-cake{font-size:30px}.scn-night p{font-size:12px;padding:3px 6px}.scn-cena .scn-hint,.scn-gig .scn-hint{font-size:12px}}
 @media (prefers-reduced-motion:reduce){.scn-cake{animation:none}}
+/* iPhone (Safari): con letra <16 px en un campo de texto, al tocarlo Safari amplía la página y no la devuelve:
+   la portada online (nombre) se veía más ancha que la pantalla, cortada a la derecha. 16 px en móvil y táctil;
+   sin inflado de texto; y lo largo (horario, errores) parte donde haga falta. En escritorio no cambia nada. */
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+@media (max-width:820px),(pointer:coarse){input:not([type=checkbox]):not([type=radio]):not([type=range]),select,textarea{font-size:16px!important}}
+.card.screen .supd,.card.screen .rerr,.card.screen .rok,.hline{overflow-wrap:anywhere;min-width:0;max-width:100%}
 </style>
 </head>
 <body>
@@ -8674,7 +8680,7 @@ function dailyExit(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.25-192';
+const APPV='2026.11.25-193';
 /* Compara versiones por números («-9» < «-11»), no como texto. */
 const verCmp=(a,b)=>{const x=String(a).split(/[.-]/).map(Number),y=String(b).split(/[.-]/).map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
 try{const vt=document.createElement('div');vt.id='vtag';vt.textContent='v'+APPV;document.body.appendChild(vt);}catch(e){}
