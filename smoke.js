@@ -4,7 +4,7 @@ const {JSDOM}=require('jsdom');const fs=require('fs');
 let html=fs.readFileSync('index.html','utf8');
 html=html.replace('dur:100','dur:12').replace('COMPL_P=0.14','COMPL_P=0.2').replace("Math.random()<0.55?'card'","Math.random()<0.05?'card'").replace("get('insp')||''","get('insp')||'1'").replace('next:1.5','next:0.5').replace('nextTask:6','nextTask:1').replace('const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));','const clamp=(v,a,b)=>Math.max(b===5?1:a,Math.min(b,v));').replace('rnd(14,24)*','rnd(2,4)*').replace('Math.max(5.5,9.5-meta.day*0.6)','2').replace("['alm',3,","['alm',2,").replace("['back',5,","['back',2,").replace("['rrpp',5,","['rrpp',3,").replace("['rrhh',7,","['rrhh',1,").replace("['dir',7,","['dir',3,").replace("['insp',10,","['insp',3,").replace("['ladron',3,","['ladron',1,").replace("['falso',4,","['falso',1,").replace("['cupon',6,","['cupon',2,").replace('<script src="productos.js"></script>','<script>'+fs.readFileSync('productos.js','utf8')+'</script>');
 const errs=[];
-const dom=new JSDOM(html,{runScripts:'dangerously',pretendToBeVisual:true,beforeParse(w){w.addEventListener('error',e=>errs.push(e.message));w.AudioContext=undefined;}});
+const dom=new JSDOM(html,{...(process.env.TOPO?{url:'http://localhost/?topo=1'}:{}),runScripts:'dangerously',pretendToBeVisual:true,beforeParse(w){w.addEventListener('error',e=>errs.push(e.message));w.AudioContext=undefined;}});
 const w=dom.window,d=w.document;
 const cl=el=>el&&el.click();
 const D=[5000,2000,1000,500,200,100,50,20,10,5,2,1];
@@ -32,6 +32,8 @@ setInterval(()=>{
   const rtn=d.querySelector('#register [data-act=return]');if(rtn&&Math.random()<.05){cl(rtn);return;}
   if(Math.random()<.1){const aa=d.querySelector('#aallBtn:not([disabled])');if(aa){const before=d.querySelectorAll('#alerts .alert').length;cl(aa);stats.aall=(stats.aall||0)+1;stats.aallFreed=(stats.aallFreed||0)+(before-d.querySelectorAll('#alerts .alert').length);return;}}
   if(Math.random()<.3){const as=any(d,'[data-act=assign]:not([disabled])');if(as){stats.assign++;cl(as);return;}}
+  {const tw=d.querySelector('#topow.show');if(tw){const x=any(tw,'button:not([disabled])');if(x){stats['topo_'+x.dataset.act]=(stats['topo_'+x.dataset.act]||0)+1;cl(x);}return;}}
+  if(Math.random()<.01){const x=any(d,'#topob.show button:not([disabled])');if(x){stats['topob_'+x.dataset.act]=(stats['topob_'+x.dataset.act]||0)+1;cl(x);return;}}
   {const sb=[...d.querySelectorAll('#scene.show button[data-act=scene]')];if(sb.length){const x=sb[Math.floor(Math.random()*sb.length)];stats['scn_'+x.dataset.k]=(stats['scn_'+x.dataset.k]||0)+1;cl(x);return;}}
   const rt=d.querySelector('[data-act=route]');
   if(rt){stats.complaints++;const k=['atc','back','rrpp','alm','no'];cl(d.querySelector('[data-act=route][data-d='+k[Math.floor(Math.random()*5)]+']'));return;}

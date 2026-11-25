@@ -27,6 +27,7 @@ setInterval(()=>{try{
     const b=ov.querySelector('[data-act=start],[data-act=next],[data-act=meeting],[data-act=endmeet]');cl(b);return;}
   if(!g||!g.run||g.run.over)return;
   const mg=d.querySelector('#mg.show');if(mg){cl(mg.querySelector('[data-act=leavecancel]')||mg.querySelector('button'));return;}
+  {const tw=d.querySelector('#topow.show [data-def]');if(tw){cl(tw);return;}}
   {const sb=d.querySelector('#scene.show button[data-act=scene][data-def]')||d.querySelector('#scene.show button[data-act=scene]');if(sb){cl(sb);return;}}
   const c=g.front();if(!c)return;
   if(c.phase==='complaint'){const q=c.complaint;cl(d.querySelector('[data-act=route][data-d='+(bad()?'no':q.dept)+']'));return;}
