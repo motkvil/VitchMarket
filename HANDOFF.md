@@ -9,7 +9,8 @@ Todo fusionado en `main` (PR #1–#22). Móvil ya fiel a los tableros: Caja (esc
 1. Minijuegos: la mecánica interna sigue siendo la de siempre; los tableros (p. ej. `Reponer`: caja → estante) imaginan otra más simple. Solo se maquetó, no se rehízo.
 2. **Firebase (lo último, pedido por Mor)**: que los demás vean el avatar (`AVA` hoy solo en localStorage `vitchmarket.avatar`): guardar en `members/{uid}`, leerlo en `syncRealEmps`/`camModel` y ampliar `database.rules.json`. **Mor debe publicar las reglas a mano** en la consola de Firebase.
 3. Revisar en móvil real (solo Mor; Brave Android).
-4. Opcional: recolor real píxel a píxel, modo oscuro, «topo» (solo multijugador).
+4. Opcional: recolor real píxel a píxel, modo oscuro.
+5. **Topo rehecho (25-11-2026, `APPV` 2026.11.25-154)** como Among Us de súper: barra de tareas, sabotajes con cuenta atrás y arreglo, 📋 Cuaderno con pistas, 🚨 reunión con coartadas y votación, topo real en la tienda compartida (rol solo por `notes/{uid}`). Ver «🕵️ Topo» en `CLAUDE.md`. Sin cambios en `database.rules.json` (los acts van como `k:'soc'`). Pruebas: `node smoke-topo.js`, `TOPO=1|real node smoke-sala.js`. Falta probarlo con gente de verdad y equilibrar la meta de la barra en turnos online largos.
 
 ## Trucos
 - Sube `APPV` (index.html) y `CACHE` (sw.js) en cada cambio. Hoy: `2026.11.22-147` y `vitchmarket-v27`.

@@ -1914,6 +1914,50 @@ body::before{content:'';position:fixed;top:0;left:0;right:0;height:env(safe-area
 .rp-sh{display:flex;align-items:center;gap:12px;min-height:56px;padding:8px 14px;border:2px solid #ead9d6;border-radius:12px;background:#fff;text-align:left;color:inherit;font:inherit}
 .rp-sh span{font-size:28px}.rp-sh b{flex:1;font-size:15px}.rp-sh em{font-style:normal;font-size:13px;font-weight:800;color:#c4252a}
 .rp-sh.hot{border-color:#ffd23f;background:#fff8dc}.rp-sh.ok{background:#e9f4ea;border-color:#8fd19e}.rp-sh.ok em{color:#1f7a3a}
+/* ===== 🕵️ Topo (Among Us de súper): barra del caso #topob, panel #topow (cuaderno, reunión, sabotajes) y apagón ===== */
+#topob{position:fixed;right:12px;bottom:12px;width:min(340px,calc(100vw - 24px));z-index:21;display:none;flex-direction:column;gap:6px;padding:8px 10px;border-radius:14px;background:#1d1430;color:#fff;border:2px solid #e5383b;box-shadow:0 6px 20px rgba(0,0,0,.35);font-size:var(--fs-s,14px)}
+#topob.show{display:flex}
+.tpb-row{display:flex;align-items:center;gap:8px}.tpb-t{white-space:nowrap;font-family:Fredoka,sans-serif;font-size:var(--fs-s,14px)}.tpb-t em{color:#ffb3b5;font-style:normal}
+.tpb-bar{position:relative;flex:1;height:22px;border-radius:11px;background:#3b2d55;overflow:hidden;min-width:90px}
+.tpb-bar i{position:absolute;inset:0 auto 0 0;background:linear-gradient(90deg,#2fbf71,#7be495);transition:width .4s}
+.tpb-bar small{position:relative;display:block;text-align:center;line-height:22px;font-size:12px;font-weight:800;text-shadow:0 1px 2px #000}
+.tpb-sab{display:grid;grid-template-columns:1fr auto;align-items:center;gap:6px;padding:6px 8px;border-radius:10px;background:#5a3a10}
+.tpb-sab.crit{background:#7a0d12;animation:tpblink 1s steps(2) infinite}
+.tpb-sab b{font-size:var(--fs-s,14px)}.tpb-sab .btn{margin:0}.tpb-sab span{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:4px}.tpb-sab em{font-style:normal;font-size:12px;background:rgba(255,255,255,.14);padding:2px 6px;border-radius:8px}.tpb-sab em.ok{background:#1f7a46}
+@keyframes tpblink{50%{background:#a8161c}}
+.tpb-btns{display:flex;gap:6px}.tpb-btns .btn{margin:0;flex:1;white-space:nowrap}
+.tp-sabb{background:#3b2d55;color:#fff;border-color:#ffb3b5}
+.tp-doc{border:2px dashed #e0c9a8;border-radius:10px;padding:8px 10px;margin:6px 0;background:#fffaf0;font-size:var(--fs-s,14px);line-height:1.45;color:#2a1a1a}
+#topow{position:fixed;inset:0;z-index:23;display:none;align-items:center;justify-content:center;padding:12px;background:rgba(20,10,30,.72)}
+#topow.show{display:flex}
+.tpw{max-width:720px;width:100%;margin:0;max-height:calc(100dvh - 24px);display:flex;flex-direction:column;padding:0;overflow:hidden}
+.tpw-h{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 14px;background:#e5383b;color:#fff;font-family:Fredoka,sans-serif;font-size:var(--fs-l,20px)}
+.tpw-h .gs-mini{background:rgba(255,255,255,.2);color:#fff;border:0;border-radius:8px;min-width:32px;min-height:32px;cursor:pointer}
+.tpw-b{overflow:auto;padding:10px 14px;flex:1}.tpw-f{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;padding:10px 14px;border-top:1px solid #eee}
+.tp-hint{font-size:var(--fs-s,14px);background:#fff6d6;border-left:4px solid #f2b705;padding:8px 10px;border-radius:8px;margin-bottom:8px;color:#3a2a00}
+.tp-clue{border:2px solid #f0d7d8;border-radius:10px;padding:8px 10px;margin-bottom:8px;background:#fffdfb;color:#2a1a1a}
+.tp-clue h6{margin:0 0 4px;font-size:var(--fs-m,16px);display:flex;gap:6px;align-items:center;flex-wrap:wrap}.tp-clue h6 em{font-style:normal;font-size:12px;padding:1px 6px;border-radius:8px;background:#eee}.tp-clue h6 em.ok{background:#d4f5e2}.tp-clue h6 em.bad{background:#ffd6d6}
+.tp-clue p{margin:3px 0;font-size:var(--fs-s,14px)}.tp-clue.rum{background:#f6f0ff;border-color:#e0d0ff}
+.tp-s{display:flex;flex-wrap:wrap;align-items:center;gap:6px}.tp-s.out{opacity:.5;text-decoration:line-through}
+.tp-ev{display:inline-flex;gap:4px;flex-wrap:wrap}.tp-ev i{font-style:normal;font-size:12px;background:#fdecec;border-radius:8px;padding:1px 5px}
+.tp-meet{display:flex;flex-direction:column;gap:6px}
+.tp-sus{display:flex;align-items:center;gap:10px;border:2px solid #eee;border-radius:12px;padding:8px;color:#2a1a1a}
+.tp-sus.gone{border-color:#e5383b;background:#fff0f0}
+.tp-face{font-size:30px;line-height:1}.tp-mid{flex:1;min-width:0}.tp-mid q{display:block;margin:3px 0;font-size:var(--fs-s,14px)}
+.tp-bad{display:block;font-style:normal;font-size:12px;color:#a8161c;font-weight:800}.tp-acc{display:block;font-size:12px;color:#6b5a7a}
+.tp-n{font-size:var(--fs-l,20px);font-weight:800;white-space:nowrap}
+.tp-res{margin-top:10px;padding:10px;border-radius:12px;background:#2b2140;color:#fff;display:flex;flex-direction:column;gap:2px}.tp-res.win{background:#1f7a46}
+.tp-sabs{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}.tp-sabs .btn{display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px;margin:0}.tp-sabs span{font-size:28px}.tp-sabs small{font-size:12px}
+.tp-end .tp-who{display:flex;align-items:center;gap:10px;margin-bottom:6px}.tp-end .tp-who span{font-size:40px}.tp-end .tp-who small{display:block;font-size:12px}.tp-sum{font-size:var(--fs-s,14px);font-weight:700}
+.tp-rules{font-size:var(--fs-s,14px)}
+.tp-cfg{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 10px}.tp-cfg small{font-size:12px;opacity:.85}
+.fixpad{display:grid;grid-template-columns:repeat(auto-fit,minmax(64px,1fr));gap:8px;margin:10px 0}.fixpad .btn{font-size:26px;min-height:56px;margin:0}
+.fixtg{display:flex;gap:8px;justify-content:center;font-size:28px;margin:8px 0;padding:8px;background:#fff6d6;border-radius:10px}.fixtg i{font-style:normal;opacity:.35}.fixtg i.on{opacity:1}
+body.topo-dark #camwin canvas,body.topo-dark #isostore canvas,body.topo-dark #dircams canvas,body.topo-dark #deptscene canvas,body.topo-dark #isoslotw canvas{filter:brightness(.12) grayscale(1)}
+body.topo-dark #dircams::after{content:'📵 APAGÓN · SIN IMAGEN';position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);color:#fff;font-weight:800;background:rgba(0,0,0,.6);padding:4px 10px;border-radius:8px;pointer-events:none}
+body.topo-dark #dircams{position:relative}
+@media (max-width:820px){#topob{left:8px;right:8px;width:auto;bottom:auto;top:120px;padding:5px 8px;gap:4px;flex-direction:row;flex-wrap:wrap;align-items:center}#topob .tpl{display:none}.tpb-row{flex:1 1 auto;min-width:0}.tpb-btns{flex:0 0 auto}.tpb-btns .btn{font-size:14px;padding:4px 8px;min-height:30px}.tpb-sab{flex:1 1 100%;order:3;padding:4px 6px}.tp-sus{flex-wrap:wrap}.tp-sus>.btn{flex:1 1 100%}}
+@media (prefers-reduced-motion:reduce){.tpb-sab.crit{animation:none}.tpb-bar i{transition:none}}
 </style>
 </head>
 <body>
@@ -2832,7 +2876,7 @@ function tert(e,o,op){
   else if(out==='desv'){L.push([o,pick(['Ya… oye, cambiando de tema:','Ajá. Por cierto…','Mmm. Oye, otra cosa:'])]);tertSub(o,e,Y,X,k,L);}
   else{L.push([o,tertFill(TR,Y,fe)]);if(T.esc&&Math.random()<0.6)L.push([e,tertFill(T.esc,X,fo)],[o,tertFill(TERT_T.pique.rej,Y,fe)]);}
   L.push([out==='rej'?o:e,tertFill(out==='rej'?TERT_BYE.mal:(X.cola>=3&&e.role==='atc'?TERT_BYE.cola:TERT_BYE.gen),X,fo)]);
-  run.tmem=run.tmem||{};const mk=relK(e.id,o.id),M=run.tmem[mk]=(run.tmem[mk]||[]).concat([k]).slice(-3);
+  const mk=relK(e.id,o.id),TM=run.tmem=run.tmem||{},M=TM[mk]=(TM[mk]||[]).concat([k]).slice(-3);
   if(!op.noEff){if(out==='acc'){relAdd(e,o,{af:3,conf:2});if(k==='chisme')spread(e,o);if(k==='piropo')relAdd(e,o,{rom:3});}
     else if(out==='rej'){relAdd(e,o,{af:k==='pique'?-6:-2,riv:k==='pique'?6:0});if(k==='pique')ndAdd(o,'calma',-8);}}
   return {L:L.filter(x=>x[0]&&x[1]).map(x=>[x[0],castMul(x[0],x[1],0.2)]),out,k};
@@ -3680,7 +3724,7 @@ STORY.push({id:'secreto',cat:'chisme',ten:2,cd:6,w:1.2,
      return e.name+' y el jefe hablan a puerta cerrada.';}
    fact('secreto',e,null,0);mor(e,-10);memo(e,'😣',gx('Su secreto corre por la tienda',F),-10,3,'secreto');relAdd(e,t,{af:-30,riv:20});logE(e,'Su secreto corrió por la tienda');
    return 'Todo el súper sabe ya que '+e.name+' '+C.psy.rum+'.';}});}});
-/* ---- Fase 4: sabotaje en tienda y reunión de emergencia (estilo Among Us) ---- */
+/* ---- Fase 4: caída de una caja (el caso del topo va en su bloque, más abajo) ---- */
 STORY.push(
  {id:'caida',cat:'suspense',ten:2,cd:8,when:c=>c.ws.length?{n:1+Math.floor(Math.random()*2)}:null,
   run:(c,{n})=>stScene('caida',{who:'🔌',name:'Cuadro de luces',look:'pa',head:'🔌 ¡PROBLEMA EN TIENDA!',tag:'La Caja '+n+' se ha caído',ser:true,def:'no',
@@ -3688,62 +3732,407 @@ STORY.push(
    hint:'🔧 Ir a arreglarla: vuelves a tener la caja en seguida (80 % de acierto; si falla, −0,05 ★). 🙅 Ahora no: se van unos clientes y pierdes unos 80 € y 0,15 ★.',
    ch:[['fix','🔧 Ir a arreglarla','go'],['no','🙅 Ahora no','no']],
    go:k=>{if(k==='fix'){if(Math.random()<0.8)return 'Reinicias el TPV de la Caja '+n+': «Siempre es el cable». Todo vuelve a funcionar.';repAdd(-0.05,'La Caja '+n+' se cayó y tardaste en arreglarla');return 'Tardas un buen rato en dar con el cable. Algún cliente se ha ido.';}
-     meta.money-=8000;repAdd(-0.15,'La Caja '+n+' se cayó y no fuiste');return 'La Caja '+n+' sigue muerta. Se van unos cuantos clientes: −80 €.';}}) },
- {id:'cuadro',cat:'suspense',ten:2,cd:12,when:c=>{const w=c.ws.filter(e=>!e.real);if(w.length<3)return null;const t=w.slice().sort(()=>Math.random()-.5).slice(0,3);return {t,cul:t[Math.floor(Math.random()*3)]};},
-  run:(c,{t,cul})=>{const lines=t.map(e=>{const o=t.find(x=>x!==e&&x!==cul)||t.find(x=>x!==e);
-     if(e===cul)return e.face+' «Estuve reponiendo todo el rato. Preguntad.»';
-     if(o===cul||Math.random()<.5)return e.face+' «Vi a '+esc(cul.name)+' salir del almacén justo antes del apagón.»';
-     return e.face+' «Yo estaba en caja, preguntadle a los clientes.»';});
-   return stScene('cuadro',{who:'⚡',name:'Reunión de emergencia',look:'letter',head:'🚨 REUNIÓN DE EMERGENCIA',tag:'¿Quién tocó el cuadro de luz?',ser:true,def:'skip',
-   txt:'Se ha ido la luz un minuto. Lee las pistas y vota. Si aciertas, el culpable se va a la calle.',
-   body:'<div class="scn-doc"><b>PISTAS</b><br>'+lines.join('<br>')+'</div>',
-   hint:'🗳️ Votar a alguien lo despide ya: si es el culpable, bien; si te equivocas, es un despido improcedente y pagas 300 € (el resto pierde 8 de ánimo). ⏭️ Saltar: no pasa nada y el misterio queda sin resolver.',
-   ch:t.map(e=>['v'+e.id,'🗳️ Votar a '+e.name,'no']).concat([['skip','⏭️ Saltar']]),
-   go:k=>{if(k==='skip')return 'Nadie lo reconoce. El cuadro de luz tiene ahora un candado.';
-     const e=t.find(x=>'v'+x.id===k);if(!e)return;
-     if(e===cul){dropEmp(e,'Reunión de emergencia: él tocó el cuadro');meta.emp.forEach(o=>{if(!o.real)mor(o,3);});return e.name+' lo confiesa y se va. Justicia poética.';}
-     dropEmp(e,'Votado por error en la reunión de emergencia');meta.money-=30000;meta.emp.forEach(o=>{if(!o.real)mor(o,-8);});return 'Te equivocas: el culpable era '+cul.name+'. '+e.name+' se lleva 300 € de indemnización por despido improcedente.';}}); }}
+     meta.money-=8000;repAdd(-0.15,'La Caja '+n+' se cayó y no fuiste');return 'La Caja '+n+' sigue muerta. Se van unos cuantos clientes: −80 €.';}}) }
 );
 
-/* ---- 🐀 El topo (modo Among Us): un NPC de tu plantilla sabotea a escondidas; las cámaras dejan pistas y se vota en una reunión de emergencia ---- */
-function topoOn(){return bossScn()&&!daily;}
+/* ===== 🕵️ El topo: Among Us de supermercado =====
+   Un turno con topo es un «caso». Al abrir, escena de presentación (y nota a cada jugador real con su papel, solo a él).
+   · La tripulación (jefe, plantilla y reales) llena la barra de tareas de la tienda: cada aviso bien hecho +1, cada arreglo +1 y
+     cada 4 clientes cobrados en caja +1 (run.topo.done + cobros). Barra llena antes de cerrar = gana la tripulación.
+   · El topo (un NPC o, en la tienda compartida, a veces un jugador real) sabotea: ❄️ frío y 🔒 TPV son críticos (si no se arreglan
+     a tiempo, gana el topo), 💡 apagón deja las cámaras a oscuras y 🚨 alarma vacía la cola. Se arreglan con avisos «fix» (minijuego
+     de pulsar en orden) que puede coger cualquiera.
+   · Cada sabotaje deja pistas legibles en el 📋 Cuaderno: quién salía en cámara cerca (lo que se ve es lo que pasa: el topo camina hasta
+     allí con d.topoW), quién tenía tarea a esa hora (coartada) y quién no, un objeto de un departamento (75 % del suyo), quién «arregló»
+     y lo dejó peor, y rumores sin confirmar. En la 🚨 reunión cada sospechoso da su coartada (el topo NPC miente: «no cuadra con el
+     registro»), los NPC acusan y se vota. Expulsado = se va a casa el resto del turno; si era el topo, caso cerrado.
+   run.topo = T (solo quien lleva la tienda: solitario o jefe); los reales ven topoView() en state.topo y mandan acts k:'soc' con
+   a = tsab (sabotear, o = tipo), tvot (votar, o = id o 'skip'), tmet (pedir reunión) o tq (¿cuál es mi papel?). El papel del real
+   solo va en notes/{uid} (k:'topo'). Config: meta.topoCfg = auto (turno 4 y cada 5) | hoy | off; ?topo=1 fuerza un caso en cada turno
+   (?topo=real: y si hay jugadores reales en tienda, el topo es uno de ellos). */
+const TOPO_Q=(()=>{try{return new URLSearchParams(location.search).get('topo')||'';}catch(e){return '';}})();
+const TOPO_SAB={
+ frio:{ic:'❄️',n:'Avería de la cámara frigorífica',w:'la cámara frigorífica',crit:1,t:35,spot:{k:'dock'},fx:'seq',
+   parts:[['🧊','Compresor del frío','Rearma los fusibles del compresor en orden',{k:'dock'}],['🌡️','Termostato de la oficina','Mete el código del termostato',{k:'post',r:'back',i:2}]],
+   bad:'La cámara se ha calentado: lo fresco, a la basura.'},
+ tpv:{ic:'🔒',n:'TPV bloqueado',w:'el servidor de las cajas',crit:1,t:35,spot:{k:'post',r:'back',i:3},
+   parts:[['🖥️','Servidor de las cajas','Mete el PIN del servidor',{k:'post',r:'back',i:3}],['💳','Datáfono de la Caja 1','Reinicia el datáfono en orden',{k:'till',n:1}]],
+   bad:'Las cajas siguen muertas y la gente se ha ido sin pagar.'},
+ luz:{ic:'💡',n:'Apagón',w:'el cuadro de luces',crit:0,t:25,spot:{k:'post',r:'rrhh',i:0},
+   parts:[['💡','Cuadro de luces','Sube los diferenciales en orden',{k:'post',r:'rrhh',i:0}]],bad:'La luz vuelve sola, pero las cámaras no han grabado nada.'},
+ alarma:{ic:'🚨',n:'Alarma de incendios falsa',w:'el pulsador de la entrada',crit:0,t:25,spot:{k:'door'},
+   parts:[['🚨','Panel de la alarma','Mete el código de la alarma',{k:'door'}]],bad:'Con la alarma pitando, la cola entera se ha ido a la calle.'}
+};
+const TOPO_OBJ={atc:'un rollo de tiques de caja 🧾',alm:'un guante de Almacén 🧤',back:'un boli con el logo de Backoffice 🖊️',rrpp:'una acreditación de RR.PP. 🪪',rrhh:'un clip de expediente de RR.HH. 📎'};
+const TOPO_PRE={capullo:'¿Me estáis acusando a mí? Manda narices. ',quejica:'Siempre me toca a mí… ',bromista:'Soy más inocente que un yogur natural. ',timido:'Eh… yo… ',chismoso:'Pues mira, yo os cuento: ',pasota:'Bah. ',lider:'Calma, equipo. ',currante:'Yo estaba currando, como siempre. ',servicial:'Lo que necesitéis, ¿eh? '};
+const TOPO_FAKE=()=>pick(['reponiendo en el pasillo '+ri(1,9),'cubriendo la Caja '+ri(1,2),'descargando el camión','con un cliente perdido en el pasillo '+ri(1,9),'contando el cajón en la oficina']);
+const TOPO_ROLES=['atc','alm','back','rrpp','rrhh'];
+let topoW=null;
+const tpFix=x=>String(x).replace(/\b(a|de) el /g,(m,p)=>p+'l ');
+const topoOn=()=>bossScn()&&!daily;
+const topoT=()=>run&&!run.over&&run.topo&&!run.topo.end?run.topo:null;
+const topoNoCust=()=>{const T=topoT();return !!(T&&T.sab&&T.sab.k==='alarma');};
+const topoTpv=()=>{if(isMember()){const v=room&&room.state&&room.state.topo;return !!(v&&v.sab&&v.sab.k==='tpv');}const T=topoT();return !!(T&&T.sab&&T.sab.k==='tpv');};
+const topoHere=()=>run&&run.topo&&(!run.over||run.topo.end)?run.topo:null;
+const topoSus=T=>meta.emp.filter(e=>onFloor(e)&&!T.out[e.id]);
+const topoDone=T=>T.done+Math.max(0,Math.floor((run.served-T.s0)/4));
+const topoH=()=>clockOf(run.t,run.dur);
+const topoNm=e=>e?esc(e.name)+(e.real?' 🎮':''):'?';
+/* ¿Hay caso hoy? Lo decide meta.topoCfg (Dirección) o ?topo=1. Se llama tras prepShift. */
 function topoPlan(){
-  run.topoAt=0;run.topoDone=0;if(!topoOn())return;
-  const T=meta.topo=meta.topo||{id:0,clues:[],n:0,next:4,caught:0,asked:0};
-  if(T.id&&!meta.emp.some(e=>e.id===T.id)){T.id=0;T.clues=[];T.next=meta.day+5;}
-  if(!T.id&&meta.day>=T.next){const c=meta.emp.filter(e=>!e.real);if(c.length>=3){T.id=shuffle(c)[0].id;T.clues=[];T.n=0;}}
-  if(T.id)run.topoAt=run.dur*rnd(0.25,0.75);
+  run.topo=null;if(meta.topo&&meta.topo.clues)delete meta.topo;
+  if(!topoOn())return;
+  const cfg=meta.topoCfg||'auto',force=/^(1|on|si|sí|real)$/i.test(TOPO_Q);
+  let go=force||(cfg==='hoy')||(cfg==='auto'&&meta.day>=4&&(meta.day-4)%5===0);
+  if(cfg==='off'&&!force)go=false;
+  if(!go)return;
+  if(cfg==='hoy')meta.topoCfg='auto';
+  const pool=meta.emp.filter(e=>{const d=run.duty[e.id];return d&&(d.st==='ok'||d.st==='late');}),npc=pool.filter(e=>!e.real),reals=pool.filter(e=>e.real);
+  if(pool.length<3||!npc.length){if(force||cfg==='hoy')toast('🕵️ Hoy no hay caso del topo: hacen falta al menos 3 personas trabajando.','bad');return;}
+  /* Al final el topo NPC se va: mejor alguien de un puesto con más gente (nunca el único cajero si se puede evitar). */
+  const two=npc.filter(e=>meta.emp.filter(x=>x.role===e.role).length>1),noCaja=npc.filter(e=>e.role!=='atc');
+  const topo=reals.length&&(TOPO_Q==='real'||Math.random()<0.5)?pick(reals):pick(two.length?two:noCaja.length?noCaja:npc);
+  const T=run.topo={c:Math.floor(Math.random()*1e6),day:meta.day,who:topo.id,real:topo.real||'',goal:Math.max(6,Math.round(TOPO_K*run.dur/100)),done:0,s0:run.served||0,
+    sab:null,nSab:0,maxSab:topo.real?4:3,next:run.dur*(force?0.08:rnd(0.12,0.2)),cdTo:run.dur*0.06,cl:[],rum:[],ev:{},out:{},meet:null,meets:0,mb:{},my:{},end:null,log:[],dark:0};
   window.__topo=T;
+  meta.topoS=meta.topoS||{n:0,crew:0,topo:0};meta.topoS.n++;
+  scene({k:'topoi:'+meta.day,over:true,who:'🕵️',head:'🕵️ HOY HAY UN TOPO EN LA TIENDA',tag:'Caso del topo · turno '+meta.day,name:'Vitchi 🐶, de seguridad',prio:5,...serio(),def:'ok',
+    txt:'Alguien de la plantilla es <b>el topo</b>: va a sabotear la tienda (el frío, las cajas, la luz, la alarma). Vosotros sois <b>la tripulación</b>: haced las tareas para llenar la barra antes de las 21:00 y arreglad cada avería antes de que se acabe su cuenta atrás. Cada sabotaje deja pistas en el <b>📋 Cuaderno</b>: con ellas, pulsa <b>🚨 Reunión</b> y votad quién es.',
+    body:`<div class="tp-doc tp-rules"><b>🏁 Gana la tripulación</b> si la barra de tareas llega a ${T.goal} o si votáis al topo.<br><b>🐀 Gana el topo</b> si una avería crítica (❄️ frío o 🔒 TPV) no se arregla a tiempo o si cierra la tienda con la barra a medias.<br><b>🗳️ Votar a un inocente</b>: se va a casa el resto del turno y el topo sigue suelto.</div><div class="scn-hint">Sospechosos: ${pool.length} personas trabajando hoy${reals.length?' (contando a '+reals.length+' jugador'+(reals.length>1?'es':'')+' de verdad)':''}. Las pistas de cámara dicen quién estaba cerca; el registro de tareas, quién tenía coartada.</div>`,
+    choices:[{t:'🕵️ ¡A investigar!',k:'ok',cls:'go',key:'S',stamp:'CASO ABIERTO',sc:'ok'}]});
+  reals.forEach(e=>topoNoteRole(e));
+  radio('🕵️','Hoy hay un topo en la tienda. Nadie se fía de nadie.');
 }
-function topoHour(){const m=Math.floor(540+720*Math.min(1,run.t/run.dur));return Math.floor(m/60)+':'+String(m%60).padStart(2,'0');}
-function topoAct(){
-  run.topoDone=1;const T=meta.topo;if(!T||!T.id||!topoOn())return;
-  const e=meta.emp.find(x=>x.id===T.id);if(!e||!working(e))return;
-  const K=pick([
-    {ic:'🔌',m:'Se va la luz del frío un rato: se echan a perder unos yogures.',v:ri(60,120)*100/100,rep:0.05,where:'del cuadro de luces'},
-    {ic:'💸',m:'Faltan unos euros de la caja y nadie sabe de dónde.',v:ri(40,150),rep:0,where:'de la trastienda'},
-    {ic:'🧊',m:'Aparece un congelador abierto y la mercancía blanda.',v:ri(50,110),rep:0.05,where:'del almacén'}]);
-  const v=K.v*100;meta.money-=v;run.fines+=v;if(K.rep)repAdd(-K.rep,'Sabotaje en la tienda');
-  T.n++;toast(K.ic+' ¡Sabotaje! '+K.m+' (−'+fmt(v)+')','bad');radio(K.ic,K.m);
-  const h=topoHour(),others=meta.emp.filter(x=>!x.real&&x.id!==e.id),liar=Math.random()<0.3&&others.length;
-  const sj=liar?pick(others):e;
-  T.clues.push({d:meta.day,h,id:sj.id,txt:'📹 '+h+' · '+sj.face+' '+sj.name+' salió '+K.where+' justo antes.'});
-  if(T.clues.length>8)T.clues.shift();
+const TOPO_K=12;
+function topoNoteRole(e){
+  const T=run&&run.topo;if(!T||!e.real)return;
+  const me=T.who===e.id;
+  note(e.real,me?'🕵️ ERES EL TOPO. Sabotea la tienda (botón 🕵️ en la barra del caso) sin que te pillen: si una avería crítica no se arregla o la barra no se llena antes de cerrar, ganas. En las reuniones, defiéndete en el chat.'
+    :'🧑‍🔧 Eres de la tripulación. Hay un topo en la plantilla: haz tus tareas, arregla las averías y mira el 📋 Cuaderno. Si sospechas de alguien, 🚨 Reunión.',false,'topo',{c:T.c,r:me?'topo':'crew'});
 }
-function topoMeet(){
-  const T=meta.topo;if(!T||!T.id||!topoOn()||T.clues.length<2||meta.day-(T.asked||0)<2)return;
-  const c=meta.emp.filter(e=>!e.real);if(c.length<2)return;
-  T.asked=meta.day;const cnt=e=>T.clues.filter(x=>x.id===e.id).length;
-  const cand=c.slice().sort((a,b)=>cnt(b)-cnt(a)).slice(0,4),topo=c.find(e=>e.id===T.id);
-  stScene('topo',{who:'🐀',name:'Reunión de emergencia',look:'letter',head:'🚨 REUNIÓN DE EMERGENCIA',tag:'Alguien sabotea la tienda',ser:true,def:'skip',
-   txt:'Llevas '+T.n+' sabotaje'+(T.n===1?'':'s')+' y hay un topo entre tu plantilla. Las cámaras dejaron esto (ojo: no todas las pistas dicen la verdad).',
-   body:'<div class="scn-doc"><b>PISTAS</b><br>'+T.clues.slice(-5).map(x=>'T'+x.d+' '+x.txt).join('<br>')+'</div>',
-   hint:'🗳️ Votar despide ya: si aciertas, se acaban los sabotajes (+0,15 ★, +3 de ánimo); si te equivocas, despido improcedente de 300 € y −8 de ánimo al resto, y el topo sigue. ⏭️ Saltar: sigue suelto.',
-   ch:cand.map(e=>['v'+e.id,'🗳️ Votar a '+e.name+(cnt(e)?' ('+cnt(e)+' pista'+(cnt(e)>1?'s':'')+')':''),'no']).concat([['skip','⏭️ Saltar']]),
-   go:k=>{if(k==='skip')return 'Nadie se atreve a acusar a nadie. El topo sigue ahí.';
-     const e=cand.find(x=>'v'+x.id===k);if(!e)return;
-     if(e===topo){dropEmp(e,'Era el topo: sabotajes en la tienda');meta.emp.forEach(o=>{if(!o.real)mor(o,3);});repAdd(0.15,'Pillaste al topo');T.id=0;T.clues=[];T.caught=(T.caught||0)+1;T.next=meta.day+6;return '🐀 '+e.name+' era el topo. Se acabaron los sabotajes (por ahora).';}
-     dropEmp(e,'Votado por error en la reunión de emergencia');meta.money-=30000;meta.emp.forEach(o=>{if(!o.real)mor(o,-8);});return 'Te equivocas: '+e.name+' era inocente (−300 €). El topo sigue suelto.';}});
+/* Cada fotograma (tickStaff): cuenta atrás de la avería, sabotajes del topo NPC, reunión online y final. */
+function topoTick(){
+  const T=topoT();if(!T)return;
+  if(T.end)return;
+  if(run.closing){topoEnd(topoDone(T)>=T.goal?'crew':'topo',topoDone(T)>=T.goal?'tareas':'cierre');return;}
+  if(topoDone(T)>=T.goal){topoEnd('crew','tareas');return;}
+  const S=T.sab;
+  if(S&&run.t>=S.dl){topoSabEnd(false);if(run.topo.end)return;}
+  /* El topo NPC: sabotea cuando le toca y está libre; a veces «se ofrece» a arreglar una avería (y la deja peor). */
+  const e=empById(T.who);
+  if(e&&!e.real&&inStore(e)&&!T.out[e.id]){
+    if(!T.sab&&!T.meet&&T.nSab<T.maxSab&&run.t>=T.next&&isFree(e)){topoSab(T.nSab===0?pick(['frio','tpv','luz']):pick(Object.keys(TOPO_SAB).filter(k=>k!==T.lastK)),e);T.next=run.t+run.dur*rnd(0.2,0.28);}
+    else if(T.sab&&isFree(e)&&!T.sab.vol&&run.t-T.sab.t0>4){T.sab.vol=1;const t=run.tasks.find(x=>x.k==='fix'&&x.sid===T.sab.id&&!x.who);if(t&&Math.random()<0.4)assignTask(t.id,String(e.id));}
+  }
+  if(T.meet&&!T.meet.res&&room&&run.t>=T.meet.end)topoResolve();
+  if(T.meet&&T.meet.res&&room&&run.t-T.meet.resT>8){T.meet=null;if(topoW&&topoW.mode==='meet')topoW=null;topoRender();}
+}
+/* Empieza un sabotaje: el topo camina hasta el sitio (cámaras), se apuntan las pistas y salen los avisos para arreglarlo. */
+function topoSab(k,e){
+  const T=topoT(),K=TOPO_SAB[k];if(!T||!K||T.sab)return;
+  T.nSab++;T.lastK=k;const h=topoH(),d=run.duty[e.id];
+  if(d){d.slack=null;d.soc=null;d.topoW={w:K.spot,u:run.t+8};}
+  /* A veces pasa alguien inocente por allí (y sale en cámara de verdad). */
+  const by=topoSus(T).filter(x=>x!==e&&!x.real&&isFree(x));if(by.length&&Math.random()<0.5){const x=pick(by),dx=run.duty[x.id];dx.slack=null;dx.topoW={w:K.spot,u:run.t+8};}
+  const sp=camPos(K.spot,0),near=[];
+  if(!T.dark){const cm=camModel();toArr(cm&&cm.staff).forEach(s=>{const p=camPos(s.w,0);if(Math.hypot(p[0]-sp[0],p[1]-sp[1])<70&&(s.id!==e.id||Math.random()<0.85))near.push(s.id);});}
+  const reg=[],free=[];
+  topoSus(T).forEach(x=>{const dx=run.duty[x.id];let w='';
+    if(run.away&&run.away.cover===x.id)w='en tu Caja 3';
+    else if(dx.task==='xcaja'&&run.xt&&run.xt[x.id])w='en la Caja '+run.xt[x.id];
+    else if(dx.busy&&x!==e){const t=run.tasks.find(y=>y.id===dx.task);w=t?'con «'+t.s+'»':'con un aviso';}
+    else if(x.real&&run.tills&&run.tills[x.real])w='en la Caja '+run.tills[x.real].n;
+    if(w)reg.push([x.id,w]);else free.push(x.id);});
+  const roles=[...new Set(topoSus(T).map(x=>x.role))].filter(r=>r!==e.role),orole=Math.random()<0.75||!roles.length?e.role:pick(roles);
+  const C={id:T.nSab,h,k,ic:K.ic,n:K.n,w:K.w,cam:T.dark?null:near,reg,free,obj:orole,fix:[]};
+  T.cl.push(C);
+  const ev=id=>T.ev[id]=T.ev[id]||{cam:0,free:0,obj:0,fix:0,contra:0};
+  near.forEach(id=>ev(id).cam++);free.forEach(id=>ev(id).free++);topoSus(T).filter(x=>x.role===orole).forEach(x=>ev(x.id).obj++);
+  T.log.push(h+' · '+K.ic+' '+K.n);
+  const S=T.sab={id:++uid,k,ic:K.ic,n:K.n,crit:K.crit,t0:run.t,dl:run.t+K.t,parts:K.parts.map(p=>({ic:p[0],n:p[1],done:0,by:''}))};
+  K.parts.forEach((p,i)=>topoPart(S,i));
+  if(k==='luz')T.dark=1;
+  toast(K.ic+' ¡SABOTAJE! '+K.n+(K.crit?' · CRÍTICO: arregladlo en '+K.t+' s o gana el topo':' · arregladlo cuanto antes'),'bad');
+  try{beep(220,.25,'square',.08);setTimeout(()=>beep(180,.3,'square',.08),260);}catch(x){}
+  radio(K.ic,K.n+' a las '+h+'. ¿Accidente? Ya, claro.');
+  /* Rumor sin confirmar (a veces apunta al topo, a veces no). */
+  if(Math.random()<0.6){const s=topoSus(T).filter(x=>x!==e),r=Math.random()<0.55||!s.length?e:pick(s),src=pick(topoSus(T).filter(x=>!x.real&&x!==r))||null;
+    const t=tpFix('Dicen que vieron a '+r.name+' '+pick(['rondando '+K.w,'muy nervioso/a antes de '+(k==='luz'?'que se fuera la luz':'la avería'),'mirando el móvil al lado de '+K.w,'salir con prisa de por allí'])+'.');
+    T.rum.push([h,t,src?src.name:'']);radio('🤫',t+(src?' (lo cuenta '+src.name+')':''));}
+  topoRender();renderAll();
+}
+function topoPart(S,i){
+  const K=TOPO_SAB[S.k],p=K.parts[i];
+  run.tasks.push({id:++uid,k:'fix',ic:p[0],roles:TOPO_ROLES.slice(),dur:9,pen:0,pid:CAT[0].id,n:0,sid:S.id,pi:i,sab:S.k,t0:run.t,spot:p[3],
+    s:'Arreglar: '+p[1],txt:S.ic+' '+S.n+': '+p[2]+'. ¡Cuenta atrás!',dl:S.dl+2,who:null,until:0,span:1,match:true});
+}
+/* Resultado de un arreglo (NPC, jefe con «Voy yo» o real desde su navegador). El topo NPC siempre lo deja peor. */
+function topoFixRes(t,ok,e){
+  const T=topoT(),S=T&&T.sab;if(!S||S.id!==t.sid)return 'Esa avería ya estaba resuelta.';
+  const P=S.parts[t.pi];if(!P||P.done)return 'Esa parte ya estaba arreglada.';
+  if(e&&e.id===T.who&&!e.real)ok=false;
+  const nm=e?e.name:(isHost()?playerName()||'El jefe':'Tú');
+  if(ok){P.done=1;P.by=nm;T.done++;const k=e&&e.real?e.real:e?null:'boss';if(k)T.my[k]=(T.my[k]||0)+1;
+    if(S.parts.every(x=>x.done)){topoSabEnd(true);return '✅ '+S.ic+' '+S.n+': ¡arreglado! (+1 a la barra)';}
+    topoRender();return '✅ '+P.ic+' '+P.n+' listo. Falta la otra parte.';}
+  if(e&&e.id===T.who){const C=T.cl[T.cl.length-1];if(C)C.fix.push(e.id);(T.ev[e.id]=T.ev[e.id]||{cam:0,free:0,obj:0,fix:0,contra:0}).fix++;radio('🔧',e.name+' dice que ha arreglado '+P.n.toLowerCase()+'… y sigue igual.');}
+  if(run.t<S.dl)topoPart(S,t.pi);
+  topoRender();return '❌ '+P.n+' sigue roto. ¡Otra vez!';
+}
+function topoSabEnd(fixed){
+  const T=topoT(),S=T&&T.sab;if(!S)return;T.sab=null;
+  run.tasks.filter(x=>x.k==='fix'&&x.sid===S.id).forEach(x=>{if(typeof x.who==='number'){const d=run.duty[x.who];if(d){d.busy=0;d.task=null;}}});
+  run.tasks=run.tasks.filter(x=>!(x.k==='fix'&&x.sid===S.id));
+  if(S.k==='luz')T.dark=0;
+  const C=T.cl.find(c=>c.id===T.nSab)||T.cl[T.cl.length-1];if(C)C.ok=fixed?1:0;
+  if(fixed){toast(S.ic+' '+S.n+': ¡arreglado a tiempo! Mirad el 📋 Cuaderno.','good');sOk();
+    if(S.crit&&!T.meet)setTimeout(()=>{if(run&&run.topo===T&&!T.end)topoMeetStart('Avería crítica arreglada: toca hablar','auto');},600);}
+  else{const K=TOPO_SAB[S.k];toast(S.ic+' '+K.bad,'bad');sBad();
+    if(S.k==='frio'){CAT.filter(x=>zoneOf(x.id)==='frio').forEach(x=>{meta.stock[x.id]=Math.floor((meta.stock[x.id]||0)/2);});repAdd(-0.1,'Sabotaje: la cámara frigorífica se calentó');}
+    else if(S.k==='tpv')repAdd(-0.1,'Sabotaje: las cajas bloqueadas');
+    else if(S.k==='alarma'){run.queue.forEach(c=>c.items.forEach(ret));const n=run.queue.length;run.queue=[];frontChanged();if(n)repAdd(-0.1,'Sabotaje: alarma de incendios falsa');}
+    if(S.crit){topoEnd('topo','crit:'+S.k);return;}}
+  topoRender();renderAll();
+}
+/* 🚨 Reunión de emergencia: coartadas, acusaciones y votación. */
+function topoMeetStart(why,who){
+  const T=topoT();if(!T||T.meet||T.end)return false;
+  if(T.sab&&T.sab.crit){toast('🚨 Con una avería crítica no hay reunión que valga: ¡arregladla primero!','bad');return false;}
+  if(!T.cl.length){toast('🚨 Aún no ha pasado nada: sin sabotajes no hay pistas que discutir.','bad');return false;}
+  const sus=topoSus(T);if(sus.length<2)return false;
+  T.meets++;const L=T.cl[T.cl.length-1],al={},acc={};
+  sus.forEach(x=>{const r=L.reg.find(y=>y[0]===x.id),ev=T.ev[x.id]=T.ev[x.id]||{cam:0,free:0,obj:0,fix:0,contra:0};let t,bad=0;
+    if(x.real)t=r?'(registro: '+r[1]+') Lo cuenta en el chat.':'Lo cuenta en el chat.';
+    else if(r)t='Estaba '+r[1]+'. Preguntad a quien queráis.';
+    else if(x.id===T.who&&Math.random()<0.65){t='Estaba '+TOPO_FAKE()+'.';bad=1;}
+    else if(x.id!==T.who&&Math.random()<0.2){t='Estaba '+TOPO_FAKE()+'.';bad=1;}
+    else{const d=run.duty[x.id];t=d&&d.slack?'Vale, estaba en el café. Pero yo no he tocado nada.':pick(['Estaba en mi puesto, a lo mío.','En mi puesto, como siempre. ¿Qué pasa?','Por mi zona. No he visto nada raro.']);}
+    if(bad)ev.contra++;
+    al[x.id]={t:(x.real?'':(TOPO_PRE[x.pers]||''))+t,bad};});
+  sus.filter(x=>!x.real).forEach(x=>{const o=topoBlame(T,x,sus);if(o)acc[x.id]=o.id;});
+  T.meet={n:T.meets,t0:run.t,end:room?run.t+45:Infinity,sus:sus.map(x=>x.id),al,acc,votes:{},res:null,why,who};
+  radio('🚨','Reunión de emergencia: '+why+'.');
+  convo('all',sus.filter(x=>!x.real).slice(0,4).map(x=>[x,'«'+al[x.id].t+'»']));
+  toast('🚨 REUNIÓN DE EMERGENCIA · '+why,'bad');try{beep(880,.15,'square',.07);setTimeout(()=>beep(660,.2,'square',.07),180);}catch(x){}
+  if(isHost()||!room){topoW={mode:'meet'};topoRender();}
+  pubState(true);return true;
+}
+/* A quién culpa x (los NPC razonan con las pistas; el topo NPC culpa al inocente que peor pinta). */
+function topoSusp(T,id,from){const ev=T.ev[id]||{},e=empById(id),r=from&&e?rel(from,e):null;return (ev.cam||0)*2+(ev.free||0)+(ev.fix||0)*3+(ev.obj||0)*0.7+(ev.contra||0)*1.5-(r?(r.af||0)/40:0)+Math.random()*2;}
+function topoBlame(T,x,sus){const c=sus.filter(y=>y!==x&&!(x.id===T.who&&y.id===T.who));if(!c.length)return null;return c.map(y=>[y,topoSusp(T,y.id,x)]).sort((a,b)=>b[1]-a[1])[0][0];}
+function topoVote(key,v){
+  const T=topoT(),M=T&&T.meet;if(!M||M.res)return;
+  if(v!=='skip'&&!M.sus.includes(+v))return;
+  M.votes[key]=v==='skip'?'skip':+v;
+  if(!room&&key==='boss'){topoResolve();return;}
+  const need=['boss'].concat(M.sus.map(empById).filter(e=>e&&e.real&&inStore(e)).map(e=>e.real));
+  if(need.every(k=>M.votes[k]!=null))topoResolve();else topoRender();
+  pubState(true);
+}
+function topoResolve(){
+  const T=topoT(),M=T&&T.meet;if(!M||M.res)return;
+  M.sus.map(empById).filter(e=>e&&!e.real&&inStore(e)).forEach(e=>{if(M.votes['n'+e.id]!=null)return;M.votes['n'+e.id]=Math.random()<0.15||!M.acc[e.id]?'skip':M.acc[e.id];});
+  const tal={};let skip=0;
+  Object.entries(M.votes).forEach(([k,v])=>{const w=k==='boss'?2:1;if(v==='skip')skip+=w;else tal[v]=(tal[v]||0)+w;});
+  const L=Object.entries(tal).sort((a,b)=>b[1]-a[1]),top=L[0],tie=L[1]&&top&&L[1][1]===top[1];
+  const out=top&&!tie&&top[1]>skip?+top[0]:null,e=out!=null?empById(out):null;
+  M.res={tal:L.map(([id,n])=>[+id,n]),skip,out,topo:out===T.who?1:0,txt:''};M.resT=run.t;
+  if(e==null)M.res.txt=tie?'Empate: nadie sale. El topo se frota las manos.':'Gana «saltar»: nadie sale. El topo sigue suelto.';
+  else if(out===T.who){M.res.txt='🐀 '+e.name+' ERA EL TOPO. ¡Pillado/a!';setTimeout(()=>{if(run&&run.topo===T&&!T.end)topoEnd('crew','voto');},50);}
+  else{M.res.txt='😬 '+e.name+' no era el topo. Se va a casa el resto del turno y el topo sigue suelto.';
+    T.out[e.id]=1;if(run.duty[e.id]&&(run.duty[e.id].busy||(run.away&&run.away.cover===e.id)))pullOff(e);
+    if(!e.real){run.duty[e.id].st='off';mor(e,-8);logE(e,'La votaron fuera en la reunión de emergencia (era inocente)');}
+    else note(e.real,'🗳️ Te han votado fuera de la reunión… y eras inocente. Ya no votas ni cuentas como sospechoso en este caso.',true);
+    meta.emp.filter(o=>!o.real&&o!==e).forEach(o=>mor(o,-2));repAdd(-0.05,'Votasteis fuera a un inocente');
+    T.next=Math.min(T.next,run.t+run.dur*0.1);}
+  radio('🗳️',M.res.txt);toast('🗳️ '+M.res.txt,M.res.topo?'good':'bad');
+  topoRender();renderAll();pubState(true);checkRep();
+}
+function topoEnd(win,why){
+  const T=topoT();if(!T||T.end)return;
+  const S=T.sab;if(S){run.tasks=run.tasks.filter(x=>!(x.k==='fix'&&x.sid===S.id));T.sab=null;}T.dark=0;
+  meta.emp.forEach(x=>{const d=run.duty[x.id];if(d&&d.busy&&!run.tasks.some(y=>y.id===d.task)&&d.task!=='caja'&&d.task!=='xcaja'){d.busy=0;d.task=null;}});
+  const e=empById(T.who)||{name:'?',face:'❓',role:'atc'},ev=T.ev[T.who]||{};
+  const ptr=[];T.cl.forEach(c=>{if(c.cam&&c.cam.includes(T.who))ptr.push('📹 '+c.h+': salía en cámara junto a '+c.w+'.');if(c.free.includes(T.who))ptr.push('🕳️ '+c.h+': no tenía ninguna tarea.');if(c.obj===e.role)ptr.push('🔍 '+c.h+': '+TOPO_OBJ[e.role]+' junto a '+c.w+'.');if(c.fix.includes(T.who))ptr.push('🔧 '+c.h+': «arregló» la avería y siguió rota.');});
+  if(ev.contra)ptr.push('❗ Su coartada no cuadraba con el registro de tareas.');
+  const crew=win==='crew',WHY={tareas:'¡Barra de tareas completa!',voto:'¡Lo votasteis en la reunión!',cierre:'Cerró la tienda con la barra a medias.','crit:frio':'La cámara frigorífica no se arregló a tiempo.','crit:tpv':'El TPV siguió bloqueado.'};
+  T.end={win,why:WHY[why]||why,id:e.id,f:e.face,n:e.name,r:e.role,real:T.real,log:T.log.slice(),ptr:ptr.slice(0,6).map(tpFix),done:topoDone(T),goal:T.goal};
+  meta.topoS=meta.topoS||{n:0,crew:0,topo:0};meta.topoS[crew?'crew':'topo']++;
+  if(crew){repAdd(+0.1,'Caso del topo resuelto');meta.emp.forEach(o=>{if(!o.real&&o!==e)mor(o,3);});}
+  else{const v=ri(150,300)*100;meta.money-=v;run.fines+=v;T.end.v=v;repAdd(-0.15,'El topo se salió con la suya');}
+  if(!e.real&&meta.emp.includes(e)){dropEmp(e,crew?'Era el topo: despido disciplinario por sabotear la tienda':'Era el topo: se largó con el botín');try{if(!daily){setVac(e.role,1);poolFill();T.end.vac=1;}}catch(x){console.warn('topo',x);}}
+  if(T.meet&&!T.meet.res)T.meet=null;
+  topoW=null;
+  const txt=(crew?'🏆 GANA LA TRIPULACIÓN. ':'🐀 GANA EL TOPO. ')+T.end.why+' El topo era '+e.name+'.';
+  radio(crew?'🏆':'🐀',txt);
+  meta.emp.filter(x=>x.real).forEach(x=>note(x.real,txt,!crew===(x.id!==T.who),'topoend',{c:T.c}));
+  topoEndScene(T.end);
+  topoRender();renderAll();pubState(true);checkRep();
+}
+function topoEndHtml(E){
+  return tpFix(`<div class="tp-end ${E.win}"><div class="tp-who"><span>${E.f}</span><b>${esc(E.n)}${E.real?' 🎮':''}</b><small>${ROLES[E.r]?ROLES[E.r].n:''} · era el topo</small></div>
+   <div class="tp-doc"><b>Lo que hizo</b><br>${toArr(E.log).map(esc).join('<br>')||'Nada: no le dio tiempo.'}</div>
+   <div class="tp-doc"><b>Las pistas que le delataban</b><br>${toArr(E.ptr).map(esc).join('<br>')||'Ninguna clara: un topo fino.'}</div>
+   <div class="tp-sum">Barra: ${E.done}/${E.goal}${E.v?' · se llevó '+fmt(E.v):''}${E.vac?' · 📢 Vacante de '+(ROLES[E.r]?ROLES[E.r].n:'')+' publicada: tienes candidatos en RR.HH.':''}</div></div>`);
+}
+function topoEndScene(E){
+  const crew=E.win==='crew';
+  scene({k:'topoe:'+meta.day+':'+E.id,over:true,who:crew?'🏆':'🐀',head:'🕵️ CASO DEL TOPO · CERRADO',tag:crew?'Gana la tripulación':'Gana el topo',name:crew?'¡Caso resuelto!':'El topo se sale con la suya',prio:5,...serio(),def:'ok',
+    txt:esc(E.why)+' '+(crew?'+0,1 ★ y +3 de ánimo a la plantilla.':'−0,15 ★ y el botín que se ha llevado.'),body:topoEndHtml(E),
+    choices:[{t:crew?'🎉 ¡Justicia!':'😤 La próxima, no se escapa',k:'ok',cls:crew?'go':'no',key:'S',stamp:crew?'CASO CERRADO':'SE ESCAPÓ',sc:crew?'ok':'bad'}]});
+}
+/* Lo que ven todos (state.topo): sin decir quién es el topo hasta el final. */
+function topoView(){
+  const T=topoHere();if(!T)return null;
+  const N=id=>{const e=empById(id);return e?e.name:'?';};
+  const S=T.sab,M=T.meet;
+  return {c:T.c,day:T.day,bar:[topoDone(T),T.goal],dark:T.dark?1:0,n:T.nSab,
+    sab:S?{k:S.k,ic:S.ic,n:S.n,crit:S.crit?1:0,left:Math.max(0,Math.round(S.dl-run.t)),p:S.parts.map(p=>[p.ic,p.n,p.done?1:0,p.by||''])}:null,
+    cl:T.cl.map(c=>({h:c.h,ic:c.ic,n:c.n,w:c.w,cam:c.cam?c.cam.map(N):[],off:c.cam?0:1,reg:c.reg.map(r=>[N(r[0]),r[1]]),free:c.free.map(N),obj:TOPO_OBJ[c.obj]||'',fix:c.fix.map(N),ok:c.ok==null?-1:c.ok})),
+    rum:T.rum.slice(-6),
+    sus:meta.emp.filter(e=>T.ev[e.id]||(M&&M.sus.includes(e.id))||onFloor(e)).map(e=>{const v=T.ev[e.id]||{};return [e.id,e.face,e.name,e.role,e.real||'',T.out[e.id]?1:0,v.cam||0,v.free||0,v.obj||0,v.fix||0,v.contra||0];}),
+    meet:M?{n:M.n,why:M.why,left:isFinite(M.end)?Math.max(0,Math.round(M.end-run.t)):-1,sus:M.sus,al:M.sus.map(id=>[id,(M.al[id]||{}).t||'',(M.al[id]||{}).bad?1:0,M.acc[id]||0]),voted:Object.keys(M.votes),
+      res:M.res?{tal:M.res.tal,skip:M.res.skip,out:M.res.out==null?-1:M.res.out,txt:M.res.txt}:null}:null,
+    my:T.my,end:T.end||null};
+}
+/* Acciones de los jugadores reales (act k:'soc', a = tsab | tvot | tmet | tq). */
+function topoActReal(e,a){
+  const T=topoT();
+  if(a.a==='tq'){if(T)topoNoteRole(e);return;}
+  if(!T){note(e.real,'🕵️ Hoy no hay caso del topo (o ya se ha cerrado).',true);return;}
+  if(a.a==='tvot'){if(T.out[e.id])return note(e.real,'Te votaron fuera: en este caso ya no votas.',true);topoVote(e.real,a.o==='skip'?'skip':String(+a.o));return;}
+  if(a.a==='tmet'){T.mb[e.real]=T.mb[e.real]||0;if(T.mb[e.real]>=1)return note(e.real,'🚨 Ya gastaste tu reunión de emergencia de hoy.',true);
+    if(topoMeetStart('La ha pedido '+e.name,e.name))T.mb[e.real]++;else note(e.real,'🚨 Ahora no se puede: '+(T.meet?'ya hay una reunión':T.sab&&T.sab.crit?'primero arreglad la avería crítica':'aún no hay pistas')+'.',true);return;}
+  if(a.a==='tsab'){
+    if(T.who!==e.id)return;
+    const k=String(a.o||'');let why='';
+    if(!TOPO_SAB[k])why='ese sabotaje no existe';else if(T.sab)why='ya hay una avería en marcha';else if(T.meet)why='estáis en plena reunión';
+    else if(T.out[e.id])why='te han votado fuera';else if(!inStore(e))why='no estás en la tienda';else if(!isFree(e))why='termina primero tu aviso (que no te pillen)';
+    else if(run.t<T.cdTo)why='espera '+Math.ceil(T.cdTo-run.t)+' s, que se nota mucho';else if(T.nSab>=T.maxSab)why='ya has hecho bastante por hoy';
+    if(why)return note(e.real,'🕵️ No puedes: '+why+'.',true);
+    topoSab(k,e);T.cdTo=run.t+Math.max(40,run.dur*0.15);note(e.real,'🕵️ Hecho: '+TOPO_SAB[k].ic+' '+TOPO_SAB[k].n+'. Ahora, cara de póker.',false,'topo',{c:T.c,r:'topo',cd:Math.round(T.cdTo-run.t)});
+  }
+}
+/* ---- UI: barra del caso (#topob), cuaderno, reunión y sabotajes (#topow). Jefe/solitario con run.topo; el real con state.topo. ---- */
+function topoVM(){
+  if(isMember()){const st=room&&room.state,v=st&&st.topo;if(!v||!st||(st.ts&&srvNow()-st.ts>6000))return null;const me=(room.members||{})[room.uid]||{};
+    const R=room.topoMe&&room.topoMe.c===v.c?room.topoMe.r:'';
+    const meE=toArr(v.sus).find(s=>s[4]===room.uid);
+    return {v,me:{host:0,key:room.uid,id:meE?meE[0]:null,role:me.role,topo:R==='topo',known:!!R,out:!!(meE&&meE[5]),cd:room.topoMe&&room.topoMe.cdT?Math.max(0,Math.ceil((room.topoMe.cdT-Date.now())/1000)):0}};}
+  const v=topoView();return v?{v,me:{host:1,key:'boss',id:null,role:'jefe',topo:false,known:true,out:false}}:null;
+}
+function topoRender(){
+  const VM=topoVM();
+  document.body.classList.toggle('topo-dark',!!(VM&&VM.v.dark&&!VM.v.end));
+  let b=$('#topob');
+  if(!VM||(VM.v.end&&!isMember()&&run&&run.over)){if(b)b.classList.remove('show');if(topoW){topoW=null;}const w=$('#topow');if(w)w.classList.remove('show');return;}
+  if(!b){b=document.createElement('div');b.id='topob';b.setAttribute('aria-live','polite');document.body.appendChild(b);}
+  const {v,me}=VM,[dn,gl]=toArr(v.bar),pc=Math.min(100,Math.round(dn/Math.max(1,gl)*100)),S=v.sab;
+  let h=`<div class="tpb-row"><b class="tpb-t">${v.end?(v.end.win==='crew'?'🏆<span class="tpl"> CASO CERRADO</span>':'🐀<span class="tpl"> GANÓ EL TOPO</span>'):'🕵️<span class="tpl"> HAY UN TOPO</span>'}${me.topo?' <em>· ERES EL TOPO</em>':''}</b><span class="tpb-bar" title="Tareas de la tienda"><i style="width:${pc}%"></i><small>Tareas ${dn}/${gl}</small></span></div>`;
+  if(S)h+=`<div class="tpb-sab ${S.crit?'crit':''}"><b>${S.ic} ${esc(S.n)} · ${S.left} s</b>${me.host?'<button class="btn mini go" data-act="tfix">🔧 Voy yo</button>':''}<span>${toArr(S.p).map(p=>`<em class="${p[2]?'ok':''}">${p[2]?'✅':p[0]} ${esc(p[1])}</em>`).join('')}</span></div>`;
+  h+=`<div class="tpb-btns"><button class="btn mini" data-act="topow" data-k="book">📋<span class="tpl"> Cuaderno</span>${toArr(v.cl).length?' ('+toArr(v.cl).length+')':''}</button>${v.end?`<button class="btn mini" data-act="topow" data-k="end">🕵️<span class="tpl"> Ver el final</span></button>`:`<button class="btn mini no" data-act="tmeet" ${v.meet?'disabled':''}>🚨<span class="tpl"> Reunión</span></button>`}${me.topo&&!v.end?`<button class="btn mini tp-sabb" data-act="topow" data-k="sab">🕵️<span class="tpl"> Sabotear</span>${me.cd?' · '+me.cd+' s':''}</button>`:''}</div>`;
+  if(b.dataset.h!==h){b.dataset.h=h;b.innerHTML=h;}
+  b.classList.add('show');b.classList.toggle('mem',!!isMember());
+  /* En el móvil va arriba, justo debajo del HUD (abajo está el botón de cobrar). */
+  if(innerWidth<=820){const hd=[...document.querySelectorAll('#overlay.show .gs-hud,#app .hud')].find(x=>x.getBoundingClientRect().height>0),r=hd&&hd.getBoundingClientRect();b.style.top=Math.max(0,r?r.bottom:0)+4+'px';}else b.style.top='';
+  /* La reunión se abre sola en todos los navegadores. */
+  if(v.meet&&!v.meet.res&&(!topoW||topoW.mode!=='meet')&&topoW!=='x'+v.meet.n&&(!topoW||topoW.n!==v.meet.n))topoW={mode:'meet',n:v.meet.n};
+  topoPanel(VM);
+}
+const TP_EV=(s)=>[[s[6],'📹','en cámara'],[s[7],'🕳️','sin tarea'],[s[8],'🔍','objeto de su dpto.'],[s[9],'🔧','arreglo fallido'],[s[10],'❗','coartada que no cuadra']].filter(x=>x[0]).map(x=>`<i title="${x[2]}">${x[1]}${x[0]>1?'×'+x[0]:''}</i>`).join('');
+function topoPanel(VM){
+  let w=$('#topow');
+  if(!topoW||!VM||typeof topoW!=='object'){if(w)w.classList.remove('show');return;}
+  if(!w){w=document.createElement('div');w.id='topow';w.setAttribute('role','dialog');w.setAttribute('aria-modal','true');document.body.appendChild(w);}
+  const {v,me}=VM,mode=topoW.mode,N=id=>{const s=toArr(v.sus).find(x=>x[0]===id);return s?s[1]+' '+esc(s[2])+(s[4]?' 🎮':''):'?';};
+  let t='',b='',f='';
+  if(mode==='book'){
+    t='📋 Cuaderno del detective';
+    b=`<div class="tp-hint">Cada sabotaje deja pistas. Busca a quien sale <b>en cámara</b> y <b>sin tarea</b> varias veces, con <b>objetos</b> de su departamento o con una coartada que <b>no cuadra</b>. Ojo: a veces pasa un inocente por allí, y los rumores 🤫 no están confirmados.</div>`;
+    b+=toArr(v.cl).map(c=>`<div class="tp-clue"><h6>${c.ic} ${c.h} · ${esc(c.n)} ${c.ok===1?'<em class="ok">arreglado</em>':c.ok===0?'<em class="bad">no se arregló</em>':'<em>en marcha</em>'}</h6>
+      <p>📹 ${!c.off?(toArr(c.cam).length?'Cámara junto a '+esc(c.w)+': se ve a <b>'+toArr(c.cam).map(esc).join('</b> y <b>')+'</b>.':'Cámara junto a '+esc(c.w)+': no se ve a nadie (¿una sombra?).'):'Sin imagen: había un apagón.'}</p>
+      <p>✅ Con tarea a esa hora (coartada): ${toArr(c.reg).map(r=>'<b>'+esc(r[0])+'</b> '+esc(r[1])).join(' · ')||'nadie'}.</p>
+      <p>🕳️ Sin tarea a esa hora: ${toArr(c.free).map(x=>'<b>'+esc(x)+'</b>').join(', ')||'nadie'}.</p>
+      <p>🔍 Junto a ${esc(c.w)} había ${esc(c.obj)}. ¿Se le cayó a alguien… o lo dejaron ahí a propósito?</p>
+      ${toArr(c.fix).length?`<p>🔧 <b>${toArr(c.fix).map(esc).join(', ')}</b> fue a arreglarlo y siguió roto.</p>`:''}</div>`).join('')||'<div class="tp-hint">Todavía no ha habido ningún sabotaje. Paciencia: el topo atacará.</div>';
+    if(toArr(v.rum).length)b+=`<div class="tp-clue rum"><h6>🤫 Rumores (sin confirmar)</h6>${toArr(v.rum).map(r=>`<p><i>${esc(r[0])}</i> ${esc(r[1])}${r[2]?' <small>· lo cuenta '+esc(r[2])+'</small>':''}</p>`).join('')}</div>`;
+    b+=`<div class="tp-clue"><h6>👥 Sospechosos</h6>${toArr(v.sus).map(s=>`<p class="tp-s ${s[5]?'out':''}">${s[1]} <b>${esc(s[2])}</b>${s[4]?' 🎮':''} <small>${ROLES[s[3]]?ROLES[s[3]].s:''}${s[5]?' · votado fuera':''}</small> <span class="tp-ev">${TP_EV(s)||'<i>sin pistas</i>'}</span></p>`).join('')}</div>`;
+    f=v.meet&&!v.meet.res?'<button class="btn no" data-act="topow" data-k="meet" data-def="1">↩️ Volver a la reunión</button>'
+      :`<button class="btn" data-act="tclose" data-def="1">Cerrar</button>${!v.end&&!v.meet?'<button class="btn no" data-act="tmeet">🚨 Reunión de emergencia</button>':''}`;
+  }else if(mode==='sab'){
+    t='🕵️ Sabotajes (solo los ves tú)';
+    b=`<div class="tp-hint">Elige qué rompes. <b>❄️</b> y <b>🔒</b> son críticos: si no lo arreglan en 35 s, ganas. Tienes que estar libre (sin aviso) y las cámaras pueden pillarte cerca. ${me.cd?'<b>Espera '+me.cd+' s.</b>':''}</div><div class="tp-sabs">`+Object.entries(TOPO_SAB).map(([k,K])=>`<button class="btn ${K.crit?'no':''}" data-act="tsab" data-k="${k}" ${v.sab||v.meet||me.cd||me.out?'disabled':''}><span>${K.ic}</span><b>${K.n}</b><small>${K.crit?'Crítico · '+K.t+' s':k==='luz'?'Cámaras a oscuras':'La cola se va'}</small></button>`).join('')+'</div>';
+    f='<button class="btn" data-act="tclose" data-def="1">Cerrar</button>';
+  }else if(mode==='end'&&v.end){t='🕵️ Final del caso';b=topoEndHtml(v.end);f='<button class="btn go" data-act="tclose" data-def="1">Cerrar</button>';}
+  else if(mode==='meet'&&v.meet){
+    const M=v.meet,R=M.res,voted=toArr(M.voted).includes(me.key),canV=!R&&!voted&&!me.out&&(me.host||me.id!=null);
+    t='🚨 Reunión de emergencia #'+M.n;
+    b=`<div class="tp-hint">${esc(M.why)}. Cada uno cuenta dónde estaba en el último sabotaje. ${R?'':M.left>=0?'<b>Quedan '+M.left+' s para votar.</b>':'Vota tú: tu voto vale doble (eres el jefe).'} Compara con el <button class="btn mini" data-act="topow" data-k="book">📋 Cuaderno</button>.</div>`;
+    b+='<div class="tp-meet">'+toArr(M.al).map(a=>{const s=toArr(v.sus).find(x=>x[0]===a[0])||[a[0],'❓','?','atc','',0,0,0,0,0,0];const n=R?toArr(R.tal).find(x=>x[0]===a[0]):null;
+      return `<div class="tp-sus ${R&&R.out===a[0]?'gone':''}"><div class="tp-face">${s[1]}</div><div class="tp-mid"><b>${esc(s[2])}${s[4]?' 🎮':''}</b> <small>${ROLES[s[3]]?ROLES[s[3]].s:''}</small> <span class="tp-ev">${TP_EV(s)}</span>
+        <q>${esc(a[1])}</q>${a[2]?'<em class="tp-bad">❗ No cuadra: el registro dice que a esa hora no tenía tarea.</em>':''}${a[3]?'<small class="tp-acc">🤨 Sospecha de '+N(a[3])+'</small>':''}</div>
+        ${R?`<span class="tp-n">${n?n[1]:0} 🗳️</span>`:canV&&a[0]!==me.id?`<button class="btn mini no" data-act="tvote" data-v="${a[0]}">🗳️ Votar</button>`:''}</div>`;}).join('')+'</div>';
+    if(R)b+=`<div class="tp-res ${R.out>=0&&R.out===(v.end&&v.end.id)?'win':''}"><b>${esc(R.txt)}</b><small>Saltar: ${R.skip} 🗳️</small></div>`;
+    else if(voted)b+='<div class="tp-hint">✅ Has votado. Esperando al resto…</div>';
+    if(room)b+=chatBox('tpchat');
+    f=R?`<button class="btn go" data-act="tclose" data-def="1">Seguir</button>`:canV?`<button class="btn" data-act="tvote" data-v="skip" data-def="1">⏭️ Saltar voto</button>`:`<button class="btn" data-act="tclose" data-def="1">Cerrar</button>`;
+  }else{topoW=null;w.classList.remove('show');return;}
+  const h=tpFix(`<div class="card tpw"><div class="tpw-h"><b>${t}</b><button class="gs-mini" data-act="tclose" aria-label="Cerrar">✕</button></div><div class="tpw-b">${b}</div><div class="tpw-f">${f}</div></div>`);
+  if(w.dataset.h!==h){w.dataset.h=h;const sc=w.querySelector('.tpw-b'),y=sc?sc.scrollTop:0;keepInputs(()=>{w.innerHTML=h;});const s2=w.querySelector('.tpw-b');if(s2)s2.scrollTop=y;}
+  w.classList.add('show');
+}
+function topoClick(a,b){
+  const VM=topoVM();
+  if(a==='topow'){const M=VM&&VM.v.meet;topoW={mode:b.dataset.k,n:M?M.n:undefined};topoRender();return;}
+  if(a==='tclose'){const M=VM&&VM.v.meet;if(M&&topoW&&topoW.mode==='meet'){topoW='x'+M.n;if(!isMember()&&!room&&M.res){const T=topoT()||run.topo;if(T)T.meet=null;}}else topoW=null;topoRender();return;}
+  if(!VM)return;
+  if(a==='tmeet'){if(isMember())roomAct({k:'soc',a:'tmet'});else{const T=topoT();if(!T)return;T.mb.boss=T.mb.boss||0;if(T.mb.boss>=2){toast('🚨 Ya has convocado dos reuniones hoy. Usa el cuaderno.','bad');return;}if(topoMeetStart('La convoca el jefe','jefe'))T.mb.boss++;}return;}
+  if(a==='tvote'){const x=b.dataset.v;if(isMember())roomAct({k:'soc',a:'tvot',o:String(x)});else topoVote('boss',x);
+    if(isMember()&&VM.v.meet){(room.topoVoted=room.topoVoted||{})[VM.v.meet.n]=1;toast('🗳️ Voto enviado.','good');}return;}
+  if(a==='tsab'&&isMember()){roomAct({k:'soc',a:'tsab',o:b.dataset.k});room.topoMe=Object.assign(room.topoMe||{},{cdT:Date.now()+3000});topoW=null;topoRender();return;}
+  if(a==='tfix'){const T=topoT();if(!T||!T.sab)return;const t=run.tasks.find(x=>x.k==='fix'&&x.sid===T.sab.id&&!x.who);if(!t){toast('Ya hay alguien con cada parte de la avería.','bad');return;}assignTask(t.id,'me');}
+}
+/* En el navegador del real: su papel (nota k:'topo'), pedirlo si no lo sabe y el final del caso. */
+function topoMember(){
+  const st=room&&room.state,v=st&&st.topo;
+  if(v&&!v.end&&(!room.topoMe||room.topoMe.c!==v.c)&&Date.now()-(room.topoAsk||0)>8000){room.topoAsk=Date.now();const me=(room.members||{})[room.uid]||{};if(ROLES[me.role])roomAct({k:'soc',a:'tq'});}
+  if(v&&v.end&&room.topoEndSeen!==v.c){room.topoEndSeen=v.c;topoEndScene(v.end);}
+  try{topoRender();}catch(e){console.warn('topo',e);}
+}
+function topoNote(v){
+  if(v.k==='topo'){const was=room.topoMe&&room.topoMe.c===v.c&&room.topoMe.r===v.r;room.topoMe={c:v.c,r:v.r,cdT:v.cd?Date.now()+v.cd*1000:(room.topoMe&&room.topoMe.cdT)||0};
+    if(was)return v.cd?false:true;
+    const tp=v.r==='topo';
+    return scene({k:'topon:'+v.c,over:true,who:tp?'🕵️':'🧑‍🔧',head:'🕵️ CASO DEL TOPO',tag:tp?'Tu papel: TOPO':'Tu papel: tripulación',name:tp?'Eres el topo':'Eres de la tripulación',prio:4,def:'ok',
+      txt:esc(v.m),body:`<div class="scn-hint">${tp?'Botón «🕵️ Sabotear» en la barra del caso (abajo). Que no te vean las cámaras… o que no te importe.':'Barra «Tareas de la tienda» abajo: cada aviso bien hecho la llena. 🔧 Las averías se arreglan cogiendo su aviso.'}</div>`,
+      choices:[{t:tp?'😈 Entendido':'💪 ¡A currar!',k:'ok',cls:tp?'no':'go',key:'S',stamp:tp?'TOPO':'TRIPULACIÓN',sc:tp?'bad':'ok'}]});}
+  if(v.k==='topoend')return true;
+  return false;
+}
+/* Minijuego de arreglo (aviso «fix»): pulsar en orden lo que dice la nota (fusibles de colores o un código). Cada fallo vuelve a empezar y resta un 25 %. */
+function startFix(t){
+  const K=TOPO_SAB[t.sab]||TOPO_SAB.luz,p=K.parts[t.pi||0]||K.parts[0],pin=/código|PIN/.test(p[2]);
+  const syms=pin?['1','2','3','4','5','6','7','8','9','0']:shuffle(['🔴','🟢','🔵','🟡','🟣','🟠']).slice(0,5);
+  const target=pin?Array.from({length:4},()=>pick(syms)):shuffle(syms).slice(0,4);
+  return {kind:'fix',t,pin,syms:pin?syms:shuffle(syms),target,i:0,err:0,ins:p[2],ic:K.ic,n:K.n};
+}
+function fixBody(){
+  return `<div class="supd">${mg.ic} <b>${esc(mg.n)}</b> · ${esc(mg.ins)}. ${mg.pin?'El código está en el pósit pegado al panel.':'El orden está en la pegatina del cuadro.'}</div>
+    <div class="fixtg">${mg.pin?'📝 ':'🏷️ '}${mg.target.map((s,i)=>`<i class="${i>=mg.i?'on':''}">${i<mg.i?'✔':s}</i>`).join('')}</div>
+    <div class="fixpad">${mg.syms.map(s=>`<button class="btn" data-act="mgfix" data-s="${s}">${s}</button>`).join('')}</div>
+    <div class="supd">Fallos: ${mg.err}${mg.err?' (vuelves a empezar)':''}</div>`;
+}
+function fixAct(a,b){
+  if(a!=='mgfix')return;
+  if(b.dataset.s===mg.target[mg.i]){mg.i++;sBeep();if(mg.i>=mg.target.length)return endMG(clamp(1-0.25*mg.err,0,1));}
+  else{mg.err++;mg.i=0;sBad();mg.fx={sel:'.fixpad',k:'bad'};if(mg.err>=4)return endMG(0);}
+  renderMG();
+}
+/* 👑 Dirección: el jefe decide si hay topo. */
+function topoCfgHtml(){
+  const c=meta.topoCfg||'auto',S=meta.topoS||{n:0,crew:0,topo:0},T=topoHere();
+  const o=[['auto','🔁 Automático','turno 4 y cada 5'],['hoy','🎯 El próximo turno','solo una vez'],['off','🚫 Nunca','sin topo']];
+  return `<div class="zone-title">🕵️ MODO TOPO (AMONG US DE SÚPER)</div><div class="supd">${T&&!T.end?'<b>Hoy hay un topo suelto.</b> ':''}Casos: ${S.n} · resueltos ${S.crew} · ganó el topo ${S.topo}.</div><div class="tp-cfg">${o.map(([k,n,s])=>`<button class="btn mini ${c===k?'go':''}" data-act="topocfg" data-k="${k}">${n}<small> · ${s}</small></button>`).join('')}</div>`;
 }
 
 function storyPick(L,force){
@@ -5573,6 +5962,7 @@ const NOTE_SC={hire:['🪪 FICHA DE PERSONAL','🎉','🙌 ¡A currar!','CONTRAT
   praise:['👏 DE PARTE DEL JEFE','👏','😊 ¡Gracias!','¡BIEN HECHO!','ok','⭐'],team:['📣 CHARLA DEL JEFE','📣','👍 Vale','','ok','']};
 function noteScene(v){
   if(v&&v.k==='soc')return socNoteScene(v);
+  if(v&&(v.k==='topo'||v.k==='topoend'))return topoNote(v);
   const S=NOTE_SC[v&&v.k];if(!S)return false;
   const inf=room.info||{},bn=cleanName(((room.members||{})[inf.host]||{}).name||inf.name||'El jefe'),doc=v.k==='fire'||v.k==='hire';
   return scene({k:'nota:'+v.ts,over:true,who:S[1],head:S[0],tag:'📻 '+esc(bn),name:doc?'VitchMarket, S.L.':esc(bn),prio:3,def:'ok',
@@ -6024,11 +6414,11 @@ function startDay(){
   try{rivalPlan();}catch(e){console.warn('rival',e);}
   if(meta.day>=2&&Math.random()<0.3)run.pressAt=run.dur*rnd(0.2,0.65);
   run.arcAt=run.dur*(VIDA_T==='1'?0.06:rnd(0.15,0.55));
-  try{topoPlan();}catch(e){console.warn('topo',e);}
   inspPlan();thiefPlan();
   run.buy=meta.buyNext||0;meta.buyNext=0;run.m0=meta.money+run.buy;run.mo=meta.money;run.curve=[];
   meta.liveT=0;saveGame(false);
   const notes=prepShift();
+  try{topoPlan();}catch(e){console.warn('topo',e);}
   const rr=receiveDeliveries();
   if(!(room&&room.sim))hideOverlay();renderAll();
   try{truckScenes(rr);}catch(e){console.warn('truckScenes',e);}
@@ -6041,7 +6431,7 @@ function startDay(){
   pubState(true);
   if(!(room&&room.sim))openGuide('j_'+tab,true);
   /* Escenas de Dirección al abrir: charla tras un récord o un mal día y, de vez en cuando, el dividendo. */
-  try{dayTalk();divScene();topoMeet();}catch(e){console.warn('dirScenes',e);}
+  try{dayTalk();divScene();}catch(e){console.warn('dirScenes',e);}
   if(MGQ&&!window.__mgq){window.__mgq=1;setTimeout(()=>{try{mgDebug(MGQ);}catch(e){console.warn('mg',e);}},1500);}
   try{storyOpen();}catch(e){console.warn('storyOpen',e);}
 }
@@ -6982,7 +7372,7 @@ function dailyExit(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.25-153';
+const APPV='2026.11.25-156';
 /* Compara versiones por números («-9» < «-11»), no como texto. */
 const verCmp=(a,b)=>{const x=String(a).split(/[.-]/).map(Number),y=String(b).split(/[.-]/).map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
 try{const vt=document.createElement('div');vt.id='vtag';vt.textContent='v'+APPV;document.body.appendChild(vt);}catch(e){}
@@ -7659,6 +8049,7 @@ function onAct(a){
     return;
   }
   if(!run||run.over)return;
+  if(a.k==='soc'&&/^t(sab|vot|met|q)$/.test(a.a||'')){topoActReal(e,a);pubState(true);return;}
   if(a.k==='soc'){socAct(e,a);pubState(true);return;}
   if(a.k==='take'&&onBreak(e)){note(e.real,'☕ Estás en el café: termínatelo y luego coges avisos.',true);return;}
   if(a.k==='take'&&+a.t<0){toolTask(e,+a.t);renderAll();pubState(true);return;}
@@ -7688,6 +8079,7 @@ function realFail(t){
   const e=empById(t.who);run.tasks=run.tasks.filter(x=>x!==t);
   if(e){const d=run.duty[e.id];if(d){d.busy=0;d.task=null;}}
   if(t.k==='tk'){if(e)note(e.real,'Se te pasó el tiempo con la reclamación. Se queda en la bandeja.',true);renderAll();return;}
+  if(t.k==='fix'){if(e)note(e.real,topoFixRes(t,false,e),true);renderAll();return;}
   repAdd(-t.pen/2,'Avisos que salieron mal');tStat(t,false,e);
   if(e){e.st.tfail++;logE(e,'Dejó a medias un aviso: '+t.s);note(e.real,'Se te pasó el tiempo: '+t.s,true);toast('🎮 '+e.name+' no ha terminado a tiempo: '+t.s,'bad');}
   if(t.chk)albApply(false);
@@ -7703,11 +8095,11 @@ function pubState(force){
     const e=typeof t.who==='number'?empById(t.who):null,left=(t.who?t.until:t.dl)-run.t;
     return {id:t.id,k:t.k,ic:t.ic,s:t.s,txt:t.txt,n:t.n||0,cand:t.cand||null,fd:t.fd||null,pid:t.pid||0,lang:t.lang||'',roles:t.roles,npc:t.npc?1:0,left:isFinite(left)?Math.max(0,Math.round(left)):-1,
       who:t.who==='me'?'jefe':e?(e.real||e.name):'',inv:t.k==='inv'?(t.inv||(t.inv=invData(t.n))):null,ord:t.k==='order'?(t.ord||(t.ord=ordData())):null,bk:t.k==='truck'?Object.keys(meta.back).filter(id=>meta.back[id]>0).map(Number).slice(0,12):[],
-      dept:t.dept||'',mis:!!t.mis,refund:t.refund||0};
+      dept:t.dept||'',mis:!!t.mis,refund:t.refund||0,sab:t.sab||'',pi:t.pi||0};
   }):[];
   const phase=!run?'lobby':run.over?(run.dead?'dead':meet?'meeting':'shop'):run.closing?'closing':'open';
   fb.set(rRef('state'),plain({day:meta.day,t:run?Math.round(run.t):0,dur:run?run.dur:(room.info.dur||100),money:Math.round(meta.money),rep:Math.round(meta.rep*10)/10,
-    q:run?run.queue.length:0,v:APPV,tills:run&&run.tills?Object.fromEntries(Object.entries(run.tills).map(([u,t])=>[u,t.n])):{},tq:run&&run.tills?Object.fromEntries(Object.entries(run.tills).map(([u,t])=>[t.n,Object.keys(t.out).length])):{},up:meta.up,dep:depData(),cnt:Object.fromEntries(Object.keys(ROLES).map(r=>[r,staffOf(r).length])),vac:Object.fromEntries(Object.keys(ROLES).map(r=>[r,vacOpen(r)])),phase,away:!!(run&&run.away),tasks,rpt:run&&run.over&&room.rpt||null,cam:run&&!run.over?camModel():null,soc:socView(),ts:fb.serverTimestamp()})).catch(()=>{});
+    q:run?run.queue.length:0,v:APPV,tills:run&&run.tills?Object.fromEntries(Object.entries(run.tills).map(([u,t])=>[u,t.n])):{},tq:run&&run.tills?Object.fromEntries(Object.entries(run.tills).map(([u,t])=>[t.n,Object.keys(t.out).length])):{},up:meta.up,dep:depData(),cnt:Object.fromEntries(Object.keys(ROLES).map(r=>[r,staffOf(r).length])),vac:Object.fromEntries(Object.keys(ROLES).map(r=>[r,vacOpen(r)])),phase,away:!!(run&&run.away),tasks,rpt:run&&run.over&&room.rpt||null,cam:run&&!run.over?camModel():null,soc:socView(),topo:topoView(),ts:fb.serverTimestamp()})).catch(()=>{});
   if(!room.sim&&!room.waitRelay&&!relayActive()&&(force||now-room.lastHb>10000)){room.lastHb=now;fb.update(rRef('info'),{hb:fb.serverTimestamp(),day:meta.day,status:run&&!run.over?'open':run?'closed':'lobby'}).catch(()=>{});}
 }
 
@@ -7928,6 +8320,7 @@ function renderMember(){
   if(mg&&mg.remote&&st&&!stale&&!tasks.some(t=>t.id===mg.t.id&&t.who===room.uid)){mg=null;closeMG();if(run&&run.remote)run.away=null;toast('Se acabó el tiempo para ese aviso.','bad');}
   if(role&&!mine)openGuide(role,true);
   if(mine&&!mg&&!room.done[mine.id])startMG(Object.assign({remote:1},mine,{roles:toArr(mine.roles),bk:toArr(mine.bk)}));
+  topoMember();
 }
 setInterval(()=>{if(isMember())renderMember();},2000);
 function showOverlay(html){const o=$('#overlay');const st=o.scrollTop,ol=o.querySelector('.ordlist'),ost=ol?ol.scrollTop:0;o.innerHTML=html;o.classList.add('show');const cd=o.querySelector('.card');if(cd&&cd.children.length>6&&!cd.classList.contains('screen'))cd.classList.add('wide');o.scrollTop=st;const nl=o.querySelector('.ordlist');if(nl)nl.scrollTop=ost;}
@@ -8094,7 +8487,8 @@ function assignAll(){
   toast(n?'⚡ '+n+(n===1?' aviso asignado':' avisos asignados')+(left?'. Quedan '+left+' sin nadie libre de su departamento.':'.'):'No hay nadie libre del departamento que toca.',n?'good':'bad');
 }
 /* Avisos hechos/perdidos por departamento (para el cierre): cuenta el puesto de quien lo hizo o el del aviso. */
-function tStat(t,ok,e){if(ok)run.tdone++;else run.tlost++;const r=(e&&e.role)||(t.roles&&t.roles[0])||'alm',D=run.dstat=run.dstat||{},d=D[r]=D[r]||{ok:0,ko:0};d[ok?'ok':'ko']++;}
+function tStat(t,ok,e){if(ok)run.tdone++;else run.tlost++;
+  {const T=topoT();if(T&&ok&&t.k!=='fix'&&!(e&&e.id===T.who)){T.done++;const k=e&&e.real?e.real:e?null:'boss';if(k)T.my[k]=(T.my[k]||0)+1;}}const r=(e&&e.role)||(t.roles&&t.roles[0])||'alm',D=run.dstat=run.dstat||{},d=D[r]=D[r]||{ok:0,ko:0};d[ok?'ok':'ko']++;}
 /* Palé acordonado (rotScene): mientras nadie lo limpia, alguien pasa la cinta. 20 %: caída, reclamación a Backoffice y −0,2. */
 function cordFall(t,silent){if(Math.random()>=0.2)return false;addTicket('back','Un cliente pasó la cinta del pasillo '+t.n+' y se resbaló',ri(1500,4000),3,false);repAdd(-0.2,'Caída en un pasillo acordonado');if(!silent)toast('🚧 Alguien ha pasado la cinta del pasillo '+t.n+' y se ha caído. Reclamación a Backoffice.','bad');return true;}
 function moveStock(id,max){const mv=Math.min(max,meta.back[id]||0);if(mv>0){meta.back[id]-=mv;meta.stock[id]=(meta.stock[id]||0)+mv;}return mv;}
@@ -8103,6 +8497,7 @@ function finishTask(t){
   let ok=true,nm='Tú';
   if(t.who==='me'){run.away=null;if(t.lang&&t.lang!=='en'&&Math.random()<0.5)ok=false;}
   else{const e=empById(t.who);if(e){nm=e.name;const d=run.duty[e.id];if(d){d.busy=0;d.task=null;}ok=Math.random()<perf(e,t.match,t.lang);if(ok)e.st.tasks++;else e.st.tfail++;tc(e.role,e.face,e.name,pick(ok?TC_TASK.ok:TC_TASK.ko)+' '+t.ic+' '+t.s,ok?'':'bad');logE(e,(ok?'Resolvió':'Hizo mal')+' un aviso: '+t.s);}}
+  if(t.k==='fix'){const m=topoFixRes(t,ok,empById(t.who));toast((t.who==='me'?'':nm+': ')+m,/✅/.test(m)?'good':'bad');renderAll();return;}
   if(t.k==='order'){tStat(t,true,empById(t.who));autoOrder(empById(t.who)||{name:'Tú',st:{}},ok);renderAll();return;}
   if(t.k==='inv'){tStat(t,true,empById(t.who));const e=empById(t.who),inc=incoming(),ps=CAT.filter(x=>aisleOf(x.id)===t.n);
     const out=ps.filter(x=>!(meta.stock[x.id]>0)),low=ps.filter(x=>meta.stock[x.id]>0&&meta.stock[x.id]<=2);
@@ -8125,7 +8520,7 @@ function finishTask(t){
 }
 function expireTask(t){
   run.tasks=run.tasks.filter(x=>x!==t);
-  if(t.k==='tk'){renderAll();return;}
+  if(t.k==='tk'||t.k==='fix'){renderAll();return;}
   if(t.k==='inv'||t.k==='order'){toast('Nadie de Almacén pudo con: '+t.ic+' '+t.s,'bad');renderAll();return;}
   tStat(t,false);if(t.chk)albApply(false);
   if(tVis(t))repAdd(-t.pen,'Avisos que caducaron sin atender');
@@ -8139,7 +8534,7 @@ function tickStaff(dt){
   if(isHost()&&(run.tillT=(run.tillT||0)+dt)>2){run.tillT=0;syncTills();}
   if(!run.closing){
     run.nextTask-=dt;
-    if(run.nextTask<=0){if(run.tasks.filter(t=>!t.who&&t.k!=='tk').length<3)spawnTask();run.nextTask=rnd(14,24)*Math.max(0.6,1-meta.day*0.04);}
+    if(run.nextTask<=0){if(run.tasks.filter(t=>!t.who&&t.k!=='tk'&&t.k!=='fix').length<(topoT()?4:3))spawnTask();run.nextTask=rnd(14,24)*Math.max(0.6,1-meta.day*0.04)*(topoT()?0.6:1);}
   }
   /* Escaqueos: quien está libre a veces se pone a otra cosa. Menos si tiene actitud o le has visto pasar. */
   meta.emp.forEach(e=>{
@@ -8157,7 +8552,7 @@ function tickStaff(dt){
   /* Cada uno hace su trabajo sin que se lo manden: quien está libre (y no escaqueándose) coge solo
      los avisos de su departamento a los 3 s de salir (antes el jefe puede elegir a quién mandar). */
   if(!run.remote)run.tasks.forEach(t=>{
-    if(run.over||t.who||t.k==='tk'||TLIFE-(t.dl-run.t)<3)return;
+    if(run.over||t.who||t.k==='tk'||(t.k==='fix'?run.t-t.t0<7:TLIFE-(t.dl-run.t)<3))return;
     /* No se lo quitan al jefe mientras decide: «Voy yo» pendiente o el desplegable de ese aviso abierto. */
     if(pendingLeave&&run.hold===t.id)return;
     if(sceneHold(t.id))return;
@@ -8196,7 +8591,7 @@ function tickStaff(dt){
   quipTick();
   socTick(dt);
   if(!run.arcDone&&run.arcAt&&run.t>=run.arcAt)arcBeat();
-  if(!run.topoDone&&run.topoAt&&run.t>=run.topoAt)try{topoAct();}catch(e){console.warn('topo',e);}
+  try{topoTick();}catch(e){console.warn('topo',e);}
   let dirty=false;
   meta.emp.forEach(e=>{const d=run.duty[e.id];if(d&&d.st==='late'&&!d.ann&&run.t>=d.at){d.ann=1;dirty=true;if(!lateScene(e))toast(e.face+' '+e.name+' llega tarde. «Perdón, el bus…»','bad');}});
   /* Escenas raras de Dirección y RR.HH.: un aumento que te piden y la oferta de un comercial. */
@@ -8997,6 +9392,7 @@ function startMG(t){
   else if(t.k==='help'||t.k==='tour')mg=startMap(t);
   else if(t.k==='cv')mg=startCv(t);
   else if(t.k==='feud')mg=startFeud(t);
+  else if(t.k==='fix')mg=startFix(t);
   else if(false){
     const dec=CAT.filter(x=>x.e!==p.e&&!x.age),boxes=[];
     for(let i=0;i<6;i++)boxes.push({e:p.e,ok:1});
@@ -9015,8 +9411,8 @@ function startMG(t){
   if(t.remote&&run&&run.remote){run.away={mult:2.2};room.panel=false;hideOverlay();}
   renderMG();
 }
-const MGI={shelf:['Coloca las 6 unidades del producto en el lineal.','Toca solo las cajas del producto pedido. Cada fallo resta un 20 %.'],mop:['Pon el cartel y friega los charcos.','Si friegas sin cartel, alguien puede caerse y reclamar.'],ask:['Mándale al pasillo correcto.','Elige el pasillo donde está el producto que pregunta.'],tk:['Elige la respuesta correcta. Solo hay una oportunidad.','Lee la queja y decide qué haces.'],rot:['Coloca la mercancía en su sitio: lo nuevo, detrás.','Retira lo caducado o roto y pon la etiqueta que dice la PDA.'],recv:['Revisa el albarán y ubica cada caja.','Marca bien, falta o roto; luego lleva cada caja a su zona. Lo frío, primero.'],spill2:['Cartel, cristales, fregar y retirar el producto roto.','Sin cartel o con el suelo mojado, alguien se cae.'],agot:['Mira el stock y da una solución.','Comprueba si queda en el almacén y elige qué ofrecerle.'],inv:['Cuenta las unidades y apúntalas.','Cuenta en la góndola y teclea el número en la PDA.'],order:['Pide lo que se va a acabar.','Marca lo que tiene 2 o menos sin pasarte del presupuesto.'],refund:['Encuentra el error y devuelve el dinero exacto.','Marca la línea mal cobrada, prepara el importe y devuélvelo por donde pagó.'],cash:['Cuenta el cajón y di si cuadra.','Suma los montones y compara con el informe Z.'],social:['Responde al cliente sin enfadarle más.','Monta saludo, explicación y compensación; mira el medidor de enfado.'],map:['Lleva al cliente a su producto.','Elige el pasillo en el plano y señala el producto.'],cv:['Entrevista y decide si contratas.','Marca 🚩 lo que no cuadra y decide el sueldo.'],feud:['Resuelve la bronca entre compañeros.','Lee las dos versiones y da la razón a quien la tenga, o media.']};
-const MGC={shelf:'Cada fallo resta un 20 % a la nota de reponer.',mop:'Sin cartel, 40 % de que alguien se caiga y reclame.',ask:'Si te equivocas, el cliente se va sin lo que buscaba.',tk:'Solo hay una oportunidad: elegir mal cuesta reputación.',rot:'Lo caducado en el lineal acaba en reclamación o multa.',recv:'Lo que no reclames del albarán lo pagas igualmente.',spill2:'Sin cartel o con el suelo mojado, caída y reclamación.',agot:'Dejarle sin solución le enfada y baja la reputación.',inv:'Un recuento malo hace que no se pida a tiempo.',order:'Pedir de más se paga igual; de menos, te quedas sin existencias.',refund:'Devolver de menos: se queja. De más: dinero regalado.',cash:'Un arqueo mal hecho deja el faltante sin encontrar.',social:'Si el enfado sigue alto, la queja se vuelve viral (−0,25 ★).',map:'Llevarle al pasillo equivocado le hace perder tiempo.',cv:'Contratar a alguien flojo cuesta sueldo y ánimo al equipo.',feud:'Dar la razón a quien no la tiene hunde el ánimo del agraviado.'};
+const MGI={fix:['Arregla la avería: pulsa en orden lo que pone la nota.','Cada fallo te hace empezar de nuevo. Cuatro fallos y lo dejas peor.'],shelf:['Coloca las 6 unidades del producto en el lineal.','Toca solo las cajas del producto pedido. Cada fallo resta un 20 %.'],mop:['Pon el cartel y friega los charcos.','Si friegas sin cartel, alguien puede caerse y reclamar.'],ask:['Mándale al pasillo correcto.','Elige el pasillo donde está el producto que pregunta.'],tk:['Elige la respuesta correcta. Solo hay una oportunidad.','Lee la queja y decide qué haces.'],rot:['Coloca la mercancía en su sitio: lo nuevo, detrás.','Retira lo caducado o roto y pon la etiqueta que dice la PDA.'],recv:['Revisa el albarán y ubica cada caja.','Marca bien, falta o roto; luego lleva cada caja a su zona. Lo frío, primero.'],spill2:['Cartel, cristales, fregar y retirar el producto roto.','Sin cartel o con el suelo mojado, alguien se cae.'],agot:['Mira el stock y da una solución.','Comprueba si queda en el almacén y elige qué ofrecerle.'],inv:['Cuenta las unidades y apúntalas.','Cuenta en la góndola y teclea el número en la PDA.'],order:['Pide lo que se va a acabar.','Marca lo que tiene 2 o menos sin pasarte del presupuesto.'],refund:['Encuentra el error y devuelve el dinero exacto.','Marca la línea mal cobrada, prepara el importe y devuélvelo por donde pagó.'],cash:['Cuenta el cajón y di si cuadra.','Suma los montones y compara con el informe Z.'],social:['Responde al cliente sin enfadarle más.','Monta saludo, explicación y compensación; mira el medidor de enfado.'],map:['Lleva al cliente a su producto.','Elige el pasillo en el plano y señala el producto.'],cv:['Entrevista y decide si contratas.','Marca 🚩 lo que no cuadra y decide el sueldo.'],feud:['Resuelve la bronca entre compañeros.','Lee las dos versiones y da la razón a quien la tenga, o media.']};
+const MGC={fix:'Si no se arregla antes de la cuenta atrás, el topo se sale con la suya.',shelf:'Cada fallo resta un 20 % a la nota de reponer.',mop:'Sin cartel, 40 % de que alguien se caiga y reclame.',ask:'Si te equivocas, el cliente se va sin lo que buscaba.',tk:'Solo hay una oportunidad: elegir mal cuesta reputación.',rot:'Lo caducado en el lineal acaba en reclamación o multa.',recv:'Lo que no reclames del albarán lo pagas igualmente.',spill2:'Sin cartel o con el suelo mojado, caída y reclamación.',agot:'Dejarle sin solución le enfada y baja la reputación.',inv:'Un recuento malo hace que no se pida a tiempo.',order:'Pedir de más se paga igual; de menos, te quedas sin existencias.',refund:'Devolver de menos: se queja. De más: dinero regalado.',cash:'Un arqueo mal hecho deja el faltante sin encontrar.',social:'Si el enfado sigue alto, la queja se vuelve viral (−0,25 ★).',map:'Llevarle al pasillo equivocado le hace perder tiempo.',cv:'Contratar a alguien flojo cuesta sueldo y ánimo al equipo.',feud:'Dar la razón a quien no la tiene hunde el ánimo del agraviado.'};
 const MGI_DEF=['Coloca cada caja en su zona del almacén.','Mira qué es cada caja y llévala a la zona que le toca.'];
 function renderMG(){
   if(!mg||mg.kind==='sup')return;
@@ -9027,6 +9423,7 @@ function renderMG(){
   else if(mg.kind==='refund'||mg.kind==='cash')body=backBody();
   else if(mg.kind==='social'||mg.kind==='map')body=rrppBody();
   else if(mg.kind==='cv'||mg.kind==='feud')body=rrhhBody();
+  else if(mg.kind==='fix')body=fixBody();
   else if(mg.kind==='shelf'){
     const slots=Array.from({length:6},(_,i)=>`<span class="slot2">${i<mg.placed?mg.p.e:''}</span>`).join('');
     body=`<div class="supd">Coloca las 6 unidades de <b>${mg.p.e} ${mg.p.n}</b> en el lineal. Ojo, que en el carro hay cosas de otros pasillos.</div>
@@ -9069,6 +9466,7 @@ function mgAct(a,b){
   if(mg.kind==='refund'||mg.kind==='cash')return backAct(a,b);
   if(mg.kind==='social'||mg.kind==='map')return rrppAct(a,b);
   if(mg.kind==='cv'||mg.kind==='feud')return rrhhAct(a,b);
+  if(mg.kind==='fix')return fixAct(a,b);
   if(a==='mgbox'){
     const x=mg.boxes[+b.dataset.i];if(!x||x.done)return;
     if(x.ok){x.done=1;mg.placed++;sBeep();if(mg.placed>=6)return endMG(clamp(1-mg.miss*0.2,0,1));}
@@ -9086,7 +9484,7 @@ function mgAct(a,b){
   }
   renderMG();
 }
-const MGK={inv:'inv',order:'order',repo:'rot',call:'rot',spill:'spill2',help:'ask',tour:'ask',truck:'recv',tk:'tk',cash:'cash',cv:'cv',feud:'feud'};
+const MGK={fix:'fix',inv:'inv',order:'order',repo:'rot',call:'rot',spill:'spill2',help:'ask',tour:'ask',truck:'recv',tk:'tk',cash:'cash',cv:'cv',feud:'feud'};
 const TKO={back:[['💶 Comprobar el ticket y devolver lo que toca',1],['💸 Devolverle el doble para que se calle',0],['🙅 Decirle que sin ticket regalo no hay nada',0]],
  rrpp:[['🙏 Pedir perdón y ofrecerle un vale de 5 €',1],['😏 Contestarle en redes con ironía',0],['🙈 Ignorarlo, ya se cansará',0]],
  alm:[['📦 Mirar en el almacén y apartárselo',1],['🤷 Que vuelva otro día, a ver si hay suerte',0],['🙄 Decirle que ese producto no existe',0]]};
@@ -9107,6 +9505,7 @@ function endMG(sc){
 /* Efectos de un minijuego terminado (lo hagas tú o un empleado real desde su navegador). */
 function applyMG(t,sc,early,e,x){
   const kind=MGK[t.k]||'recv';x=x||{};
+  if(kind==='fix'){const g=sc>=0.6;return {msg:topoFixRes(t,g,e),good:g};}
   let msg='',good=sc>=0.6;
   const lose=(id,n)=>{n=Math.max(0,Math.round(+n||0));const s=Math.min(n,meta.stock[id]||0);meta.stock[id]=(meta.stock[id]||0)-s;return n;};
   if(kind==='inv'){
@@ -9752,7 +10151,7 @@ const aislePt=()=>[laneX(ri(1,9)),rnd(30,140)];
 const cam={on:false,zoom:-1,spr:{},shop:[],cv:null,ctx:null,noctx:false,last:0,hits:[]};
 try{const v=localStorage.getItem(CAM_KEY);cam.on=v==null?window.innerWidth>=900:v==='1';}catch(e){}
 function toggleCams(){cam.on=!cam.on;const w=$('#camwin');if(w)w.classList.toggle('show',cam.on);try{localStorage.setItem(CAM_KEY,cam.on?'1':'0');}catch(e){}}
-const taskSpot=t=>t.k==='truck'?{k:'dock'}:t.k==='order'?{k:'post',r:'alm',i:1}:t.k==='cash'?{k:'post',r:'back',i:1}:t.k==='cv'||t.k==='feud'?{k:'post',r:'rrhh',i:1}:t.k==='tk'?{k:'post',r:t.dept||'back',i:0}:{k:'aisle',n:t.n||1};
+const taskSpot=t=>t.k==='fix'?(t.spot||{k:'dock'}):t.k==='truck'?{k:'dock'}:t.k==='order'?{k:'post',r:'alm',i:1}:t.k==='cash'?{k:'post',r:'back',i:1}:t.k==='cv'||t.k==='feud'?{k:'post',r:'rrhh',i:1}:t.k==='tk'?{k:'post',r:t.dept||'back',i:0}:{k:'aisle',n:t.n||1};
 function camModel(){
   if(!run||run.over)return null;
   const idx={},staff=[],OT=offTills(),otn={};OT.forEach(o=>otn[o.e.id]=o.n);
@@ -9760,7 +10159,8 @@ function camModel(){
     const i=idx[e.role]=(idx[e.role]||0)+1,d=run.duty&&run.duty[e.id];
     if(!d||d.st==='abs'||d.st==='off'||d.st==='gone'||run.t<d.at)return;
     let w={k:'post',r:e.role,i:i-1},b='',x='en su puesto';
-    if(run.away&&run.away.cover===e.id){w={k:'till'};b='🧾';x='te está cubriendo la caja';}
+    if(d.topoW&&run.t<d.topoW.u&&!d.busy){w=d.topoW.w;x='por ahí';}
+    else if(run.away&&run.away.cover===e.id){w={k:'till'};b='🧾';x='te está cubriendo la caja';}
     else if(d.task==='xcaja'&&run.xt&&run.xt[e.id]){w={k:'till',n:run.xt[e.id]};b='🧾';x='en la Caja '+run.xt[e.id]+' ('+((run.oq&&run.oq[run.xt[e.id]])||[]).length+' en cola)';}
     else if(d.busy){const t=run.tasks.find(y=>y.id===d.task);if(t){w=taskSpot(t);b=t.ic;x='con un aviso: '+t.s;}}
     else if(run.tills&&e.real&&run.tills[e.real]){const tl=run.tills[e.real];w={k:'till',n:tl.n};b='🧾';x='en la Caja '+tl.n+' ('+Object.keys(tl.out).length+' en cola)';}
@@ -10557,7 +10957,7 @@ function dirHtml(){
   const card=(k,ic,n,txt)=>`<button class="dcard" data-act="tab" data-k="${k}"><b>${ic} ${n}</b><span>${txt}</span></button>`;
   const present=role=>staffOf(role).filter(e=>live&&inStore(e)).length+'/'+staffOf(role).length+' trabajando';
   const cv=live&&run.away&&run.away.cover&&empById(run.away.cover);
-  return `<div class="dgrid"><div class="dpanel"><h2>👑 Dirección</h2><div class="zone-title">🏦 BALANCE</div>${balHtml()}${rivalHtml()}<div class="zone-title">📊 HOY CONTRA AYER · EN DIRECTO</div><div id="dirlive"></div>
+  return `<div class="dgrid"><div class="dpanel"><h2>👑 Dirección</h2><div class="zone-title">🏦 BALANCE</div>${balHtml()}${rivalHtml()}${topoCfgHtml()}<div class="zone-title">📊 HOY CONTRA AYER · EN DIRECTO</div><div id="dirlive"></div>
     <div class="sum"><span>Turno</span><b>${meta.day}</b><span>Bote</span><b>${fmt(meta.money)}</b><span>Reputación</span><b>★ ${repT(meta.rep)}</b><span>Clientes atendidos</span><b>${r.served||0}</b><span>Se fueron enfadados</span><b>${r.angry||0}</b><span>Ventas</span><b>${fmt(r.sales||0)}</b></div>
     <div class="dcards">
       ${card('caja','🧾','Cajas',live?(cv?cv.face+' '+cv.name+' en la Caja 3':run.away?'Caja 3 sin nadie':'Tú en la Caja 3')+' · cola '+run.queue.length+Object.values(run.tills||{}).map(t=>{const e=empById(t.eid);return '<br>Caja '+t.n+': 🎮 '+(e?e.name:'?')+' · cola '+Object.keys(t.out).length;}).join(''):'Cerradas')}
@@ -10854,11 +11254,12 @@ function step(ts,hid){
   if(room&&(room.waitRelay||room.yieldR||room.stopping))return;
   quiet=!!(room&&room.sim);
   const dt=Math.min(0.1,(ts-last)/1000||0);last=ts;
-  if(run&&!run.over&&!guide&&!(ajw&&!room)&&!scenePaused()){
+  if(run&&!run.over&&!guide&&!(ajw&&!room)&&!(topoW&&typeof topoW==='object'&&!room)&&!scenePaused()){
     run.t+=dt;
     if(!run.closing&&run.t>=run.dur){run.closing=true;renderQueue();}
     if(!run.closing){
       run.next-=dt;
+      if(run.next<=0&&topoNoCust())run.next=1;
       if(run.next<=0){
         if(run.queue.length<5||(run.tills&&Object.values(run.tills).some(t=>Object.keys(t.out).length<TILL_MAX))){
           const nc=custRng(newCustomer);
@@ -10885,7 +11286,7 @@ function step(ts,hid){
       if(c.talk<=0){c.talk=rnd(7,13);if(c.p>0)say(c,i);}
       if(c.p<=0){leaveAngry(i);if(run.over)break;}
     }
-    if(run&&!run.remote&&!run.closing&&!run.over)offTick(dt);
+    if(run&&!run.remote&&!run.closing&&!run.over&&!topoTpv())offTick(dt);
     if(run&&!run.remote&&!run.over)rrppTick();
     if(run&&!run.remote&&!run.over)thiefTick();
     if(run&&!run.remote&&!run.over)rushTick();
@@ -10906,6 +11307,7 @@ function step(ts,hid){
   if(isHost())pubState(false);
   if(hid)return;
   if(tab!=='caja'&&!isMember()&&(ts-(window._dT||0))>700){window._dT=ts;renderDept();if(tab==='dir')dirLive();}
+  if(!isMember()&&((iso.tpT=(iso.tpT||0)+1)%10===0))try{topoRender();}catch(e){console.warn('topo',e);}
   sceneSync();drawCams();drawIso();if(tab!=='caja'&&!isMember())drawDeptScene();drawMapW();till3d();if((iso.infoT=(iso.infoT||0)+1)%20===0){isoInfo();tcRender();const h=tillStatus();['isocap','camtill'].forEach(id=>{const el=document.getElementById(id);if(el&&h&&el.dataset.h!==h){el.dataset.h=h;el.innerHTML=h;}});}
 }
 /* Con la pestaña oculta el navegador no pinta (no hay requestAnimationFrame): si llevas la tienda, se sigue moviendo en segundo plano. */
@@ -10936,6 +11338,9 @@ function onClick(e){
   const b=e.target.closest('[data-act]');if(!b||b.disabled)return;
   if(sceneCur&&b.closest('#scene'))sceneCur.hit=b.dataset.k;
   const a=b.dataset.act;
+  if(['topow','tclose','tmeet','tvote','tsab','tfix'].includes(a)){topoClick(a,b);return;}
+  if(a==='topocfg'){meta.topoCfg=b.dataset.k;saveGame(false);toast(b.dataset.k==='off'?'🚫 Sin topos. Paz y amor en la plantilla.':b.dataset.k==='hoy'?'🎯 El próximo turno habrá un topo. No se lo digas a nadie.':'🔁 Topo automático: en el turno 4 y luego cada 5.','good');renderDept(true);return;}
+  if(['scan','pay','card','deliver'].includes(a)&&topoTpv()){toast('🔒 TPV bloqueado por un sabotaje: no se puede cobrar hasta que lo arreglen.','bad');return;}
   if(run&&run.away&&['scan','idyes','idno','bag','pay','card','den','clear','deliver','route'].includes(a)){toast('Estás en el pasillo. Termina y vuelve a la caja.','bad');return;}
   if((a==='start'||a==='restart')&&$('#pname'))setPlayerName($('#pname').value);
   if(a==='daily'&&$('#pname')&&$('#pname').value.trim())setPlayerName($('#pname').value);

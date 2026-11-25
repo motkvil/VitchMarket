@@ -67,7 +67,7 @@ let html=fs.readFileSync('index.html','utf8');
 html=html.replace('COMPL_P=0.14','COMPL_P=0.3').replace("Math.random()<0.55?'card'","Math.random()<0.05?'card'").replace('next:1.5','next:0.5').replace('nextTask:6','nextTask:1')
   .replace('const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));','const clamp=(v,a,b)=>Math.max(b===5?1:a,Math.min(b,v));').replace('rnd(14,24)*','rnd(2,4)*')
   .replace('Math.max(5.5,9.5-meta.day*0.6)','2').replace('<script src="productos.js"></script>','<script>'+fs.readFileSync('productos.js','utf8')+'</script>')
-  .replace('<script src="firebase-config.js"></script>','');
+  .replace('<script src="firebase-config.js"></script>','').replace('const TOPO_K=12','const TOPO_K='+(process.env.TOPO?40:12));
 const errs=[];
 function browser(name,url){
   const dom=new JSDOM(html,{url,runScripts:'dangerously',pretendToBeVisual:true,beforeParse(w){
@@ -82,9 +82,12 @@ const cl=el=>el&&el.click();
 const any=(root,s)=>{const a=root.querySelectorAll(s);return a.length?a[Math.floor(Math.random()*a.length)]:null;};
 const D=[5000,2000,1000,500,200,100,50,20,10,5,2,1];
 const st={hostDays:0,takes:0,mgB:0,assignReal:0};
+const TOPO=!!process.env.TOPO,tp={hVote:0,hMeet:0,mVote:0,mSab:0,mBook:0,mScn:0};
 
 function hostBot(d){
   {const g=d.querySelector('#guide.show [data-act=gclose],#guide.show [data-act=gpg][data-d="1"]');if(g){(typeof stats!=='undefined'?stats:st).guide=((typeof stats!=='undefined'?stats:st).guide||0)+1;g.click();return;}}
+  {const tw=d.querySelector('#topow.show');if(tw){const x=tw.querySelector('[data-act=tvote]')?any(tw,'[data-act=tvote]'):tw.querySelector('[data-act=tclose]');if(x){if(x.dataset.act==='tvote')tp.hVote++;cl(x);}return;}}
+  if(Math.random()<.03&&/📋 Cuaderno \(/.test((d.querySelector('#topob')||{textContent:''}).textContent)){const m=d.querySelector('#topob [data-act=tmeet]:not([disabled])');if(m){tp.hMeet++;cl(m);return;}}
   const hire=d.querySelector('[data-act=rhire]:not([disabled])');if(hire){st.hired=(st.hired||0)+1;cl(hire);return;}
   const ov=d.querySelector('#overlay.show');
   if(ov){
@@ -94,7 +97,8 @@ function hostBot(d){
     if(b){if(b.dataset.act==='next'||b.dataset.act==='endmeet')st.hostDays++;cl(b);}return;
   }
   const mgel=d.querySelector('#mg.show');
-  if(mgel){const x=any(mgel,'button:not([disabled])');if(x)cl(x);return;}
+  if(mgel){const fx=mgel.querySelectorAll('[data-act=mgfix]');if(fx.length){const on=mgel.querySelector('.fixtg i.on'),b=[...fx].find(x=>on&&x.dataset.s===on.textContent);tp.fix=(tp.fix||0)+1;cl(b||fx[0]);return;}const x=any(mgel,'button:not([disabled])');if(x)cl(x);return;}
+  if(Math.random()<.2){const f=d.querySelector('#topob [data-act=tfix]');if(f){tp.hFix=(tp.hFix||0)+1;cl(f);return;}}
   const real=d.querySelector('#alerts [data-act=assign][data-e]:not([data-e=me])');
   if(real&&/🎮/.test(real.textContent)&&Math.random()<.3){st.assignReal++;cl(real);return;}
   {const sb=[...d.querySelectorAll('#scene.show button[data-act=scene]')];if(sb.length){cl(sb[Math.floor(Math.random()*sb.length)]);return;}}
@@ -130,8 +134,12 @@ function memberBot(d){
   {const g=d.querySelector('#guide.show [data-act=gclose],#guide.show [data-act=gpg][data-d="1"]');if(g){(typeof stats!=='undefined'?stats:st).guide=((typeof stats!=='undefined'?stats:st).guide||0)+1;g.click();return;}}
   if(!d.querySelector('#overlay.show')&&!d.querySelector('#mg.show')&&d.querySelector('#hTill')&&d.querySelector('#hTill').textContent!=='3'){st.tillSeen=1;if(cashier(d)){st.cashierActs=(st.cashierActs||0)+1;return;}}
   if(d.querySelector('[data-act=mgtk]'))tkSeen++;
+  {const sc=d.querySelector('#scene.show');if(sc&&/CASO DEL TOPO/.test(sc.textContent)){const b=sc.querySelector('button[data-act=scene]');if(b){tp.mScn++;tp.role=(tp.role||'')+(/TOPO/.test(sc.querySelector('.scn-tag')?sc.querySelector('.scn-tag').textContent:'')?'T':'c');cl(b);return;}}}
+  {const tw=d.querySelector('#topow.show');if(tw){const sb=any(tw,'[data-act=tsab]:not([disabled])'),v=any(tw,'[data-act=tvote]');
+    if(sb){tp.mSab++;cl(sb);return;}if(v){tp.mVote++;cl(v);return;}if(/Cuaderno/.test(tw.textContent))tp.mBook++;cl(tw.querySelector('[data-act=tclose]'));return;}}
+  if(Math.random()<.05){const b=d.querySelector('#topob [data-act=topow][data-k=sab]')||(Math.random()<.3&&d.querySelector('#topob [data-act=topow][data-k=book]'));if(b){cl(b);return;}}
   const mgel=d.querySelector('#mg.show');
-  if(mgel){const x=any(mgel,'button:not([disabled])');if(x){st.mgB++;cl(x);}return;}
+  if(mgel){const fx=mgel.querySelectorAll('[data-act=mgfix]');if(fx.length){const on=mgel.querySelector('.fixtg i.on'),b=[...fx].find(x=>on&&x.dataset.s===on.textContent);tp.fix=(tp.fix||0)+1;cl(b||fx[0]);return;}const x=any(mgel,'button:not([disabled])');if(x){st.mgB++;cl(x);}return;}
   const r=d.querySelector('[data-act=rapply][data-r='+(process.env.ROLE||'alm')+']:not([disabled])');if(r){st.applied=(st.applied||0)+1;cl(r);return;}
   const t=any(d,'[data-act=rtake]:not([disabled])');if(t&&Math.random()<.5){st.takes++;cl(t);}
 }
@@ -139,13 +147,13 @@ function memberBot(d){
 (async()=>{
   try{
     const code='VITCH';
-    const A=browser('jefe','http://localhost/?soc=1');await sleep(400);
+    const A=browser('jefe','http://localhost/?soc=1'+(TOPO?'&topo='+(process.env.TOPO==='real'?'real':'1'):''));await sleep(400);
     const da=A.document;
     da.querySelector('#pname').value='Jefa Test';
     cl(da.querySelector('[data-act=rreg]'));await sleep(200);
     cl(da.querySelector('[data-act=rapply][data-r=jefe]'));await sleep(400);
     st.hostLobby=!!da.querySelector('[data-act=ropen]');
-    setAt('rooms/'+code+'/info/dur',25);notify('rooms/'+code+'/info');
+    setAt('rooms/'+code+'/info/dur',TOPO?(process.env.TOPO==='real'?30:70):25);notify('rooms/'+code+'/info');
     const B=browser('empleada','http://localhost/');await sleep(400);
     const db=B.document;
     db.querySelector('#pname').value='Empleada <b>Test</b>';
@@ -174,6 +182,7 @@ function memberBot(d){
     st.chatDb=Object.values(getAt('rooms/'+code+'/chat')||{}).map(m=>m.n+': '+m.t);
     st.bossSeesChat=/hoy no hay quien aguante/.test((da.querySelector('.bchat .chatlog')||{textContent:''}).textContent);
     st.radioCafe=/máquina de café/.test(JSON.stringify(getAt('rooms/'+code+'/state/soc/radio')||[])+JSON.stringify((getAt('rooms/'+code+'/meta')||{}).radio||[]));
+    if(TOPO){const v=getAt('rooms/'+code+'/state/topo');tp.meets=(()=>{const x=getAt('rooms/'+code+'/state/topo');return x&&x.meet?x.meet.n:'?';})();tp.state=v?{bar:v.bar,n:v.n,cl:v.cl?Object.keys(v.cl).length:0,meet:!!v.meet,end:v.end?v.end.win+' · '+v.end.n+' · '+v.end.why:null}:null;tp.notes=noteLog.filter(m=>/^\[topo|🕵️|🗳️/.test(m)).slice(0,6).map(m=>m.slice(0,80));st.topo=tp;}
     st.acts=acts;st.tillSum=tillSum;st.actsLeft=Object.keys(getAt('rooms/'+code+'/acts')||{}).length;
     const metaDb=getAt('rooms/'+code+'/meta')||{};
     const realEmp=Object.values(metaDb.emp||{}).find(e=>e&&e.real);
