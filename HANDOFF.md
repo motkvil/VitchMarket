@@ -5,6 +5,9 @@ Mor (Vili, «mor») rediseña VitchMarket móvil (390×844, rojo/blanco, que par
 ## Estado (22-11-2026)
 Todo fusionado en `main` (PR #1–#22). Móvil ya fiel a los tableros: Caja (escena, panel LED + COBRAR), cobro en efectivo, DNI, reclamación, avisos, cierre, menú «Estado del turno», departamentos y cierre con tarjetas blancas, minijuegos a pantalla completa con la acción fija abajo, avatar en ajustes. Pruebas: `?norma=dni`, `?norma=queja`, `?norma=billete|cupon|ladron`.
 
+## Acera y lineal (25-11-2026)
+Pantalla de inicio nueva: la fachada en directo (`#acera`, `aceraShow`/`aceraEnter`, `?acera=0` la salta, `?hora=H` fuerza la luz) y el menú como estantería (`startShelf`, `cerealBox`). Ver «🏪 Acera y lineal» en CLAUDE.md. El horario de la tienda compartida (16–24 h Madrid) solo se pinta: falta aplicarlo al juego.
+
 ## Falta
 1. Minijuegos: la mecánica interna sigue siendo la de siempre; los tableros (p. ej. `Reponer`: caja → estante) imaginan otra más simple. Solo se maquetó, no se rehízo.
 2. **Firebase (lo último, pedido por Mor)**: que los demás vean el avatar (`AVA` hoy solo en localStorage `vitchmarket.avatar`): guardar en `members/{uid}`, leerlo en `syncRealEmps`/`camModel` y ampliar `database.rules.json`. **Mor debe publicar las reglas a mano** en la consola de Firebase.
