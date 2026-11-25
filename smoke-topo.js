@@ -3,7 +3,7 @@
 // El bot de caja cobra como siempre; vota al sospechoso con más pistas del cuaderno. Imprime el recorrido y errors: [].
 const {JSDOM}=require('jsdom');const fs=require('fs');
 let html=fs.readFileSync('index.html','utf8');
-html=html.replace('dur:100','dur:'+(+process.env.DUR||60)).replace('const dt=Math.min(0.1,(ts-last)/1000||0);','const dt=Math.min(0.1,(ts-last)/1000||0)*'+(+process.env.SPD||3)+';').replace('function renderAll(){','window.__g=()=>({run,meta,topoW});function renderAll(){')
+html=html.replace('dur:100','dur:'+(+process.env.DUR||60)).replace('const dt=Math.min(HC.on?HC.dt:0.1,(ts-last)/1000||0);','const dt=Math.min(HC.on?HC.dt:0.1,(ts-last)/1000||0)*'+(+process.env.SPD||3)+';').replace('function renderAll(){','window.__g=()=>({run,meta,topoW});function renderAll(){')
   .replace('<script src="productos.js"></script>','<script>'+fs.readFileSync('productos.js','utf8')+'</script>')
   .replace('<script src="firebase-config.js"></script>','<script>window.FIREBASE_CONFIG=null</script>');
 const errs=[];

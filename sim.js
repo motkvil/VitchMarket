@@ -4,7 +4,7 @@ const {JSDOM}=require('jsdom');const fs=require('fs');const path=require('path')
 const file=process.argv[2];const dir=path.dirname(file);
 const ERR=+process.env.ERR||0,DAYS=+process.env.DAYS||15,SPD=+process.env.SPD||6;
 let html=fs.readFileSync(file,'utf8');
-html=html.replace('const dt=Math.min(0.1,(ts-last)/1000||0);','const dt=Math.min(0.1,(ts-last)/1000||0)*'+SPD+';')
+html=html.replace('const dt=Math.min(HC.on?HC.dt:0.1,(ts-last)/1000||0);','const dt=Math.min(HC.on?HC.dt:0.1,(ts-last)/1000||0)*'+SPD+';')
  .replace('},1200);','},'+Math.round(1200/SPD)+');')
  .replace('function renderAll(){','window.__g=()=>({run,meta,lastEnd,front});function renderAll(){')
  .replace('<script src="productos.js"></script>','<script>'+fs.readFileSync(dir+'/productos.js','utf8')+'</script>')

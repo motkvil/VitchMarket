@@ -139,6 +139,12 @@
         "state": {
           ".write": "auth != null && (root.child('rooms/'+$code+'/info/host').val() === auth.uid || (root.child('rooms/'+$code+'/relay/uid').val() === auth.uid && now - root.child('rooms/'+$code+'/info/hb').val() > 20000))"
         },
+        "rpts": {
+          "$k": {
+            ".write": "auth != null && $k.matches(/^20[0-9][0-9]-[01][0-9]-[0-3][0-9]_[01]$/) && (root.child('rooms/'+$code+'/info/host').val() === auth.uid || (root.child('rooms/'+$code+'/relay/uid').val() === auth.uid && now - root.child('rooms/'+$code+'/info/hb').val() > 20000))",
+            ".validate": "!newData.exists() || newData.hasChildren(['day', 'date', 'end', 'rpt', 'ts'])"
+          }
+        },
         "meta": {
           ".write": "auth != null && (root.child('rooms/'+$code+'/info/host').val() === auth.uid || (root.child('rooms/'+$code+'/relay/uid').val() === auth.uid && now - root.child('rooms/'+$code+'/info/hb').val() > 20000))"
         },

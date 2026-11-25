@@ -144,17 +144,74 @@ function memberBot(d){
   const t=any(d,'[data-act=rtake]:not([disabled])');if(t&&Math.random()<.5){st.takes++;cl(t);}
 }
 
+/* HORARIO=1: horario real con la hora de Madrid falsa (?hora=…). La jefa entra a las 15:59:55 (cerrado, sin botón de abrir),
+   a las 16:00 el turno abre solo (4 h, reloj 16:00); luego se salta a las 19:59:50, la tienda se pone al día deprisa,
+   cierra a las 20:00 y el parte se guarda en /rpts para la empleada, que lo ve como «Parte de las 20:00». */
+async function horario(){
+  const P='rooms/VITCH',h={};
+  const A=browser('jefa (horario)','http://localhost/?soc=1&hora=15:59:55');await sleep(400);
+  const da=A.document;
+  da.querySelector('#pname').value='Jefa Horario';cl(da.querySelector('[data-act=rreg]'));await sleep(200);
+  cl(da.querySelector('[data-act=rapply][data-r=jefe]'));await sleep(500);
+  h.lobbyClosed=!da.querySelector('[data-act=ropen]')&&/Abre sola a las 16:00/.test(da.querySelector('#overlay').textContent);
+  h.lobbyCol=/en Colombia/.test(da.querySelector('#overlay').textContent);
+  h.phaseBefore=(getAt(P+'/state')||{}).phase;
+  const B=browser('empleada (horario)','http://localhost/?hora=15:59:56');await sleep(400);
+  const db=B.document;
+  db.querySelector('#pname').value='Empleada Horario';cl(db.querySelector('[data-act=rreg]'));await sleep(300);
+  const hB=setInterval(()=>{try{memberBot(db);}catch(e){errs.push('BOT empleada '+e.message);}},80);
+  await sleep(7000);
+  const s1=getAt(P+'/state')||{};h.opened={phase:s1.phase,dur:s1.dur,hs:s1.hs,hor:s1.hor,t:s1.t,day:s1.day};
+  h.clock=(da.querySelector('#hClock')||{}).textContent;h.hCol=(da.querySelector('#hCol')||{}).textContent;
+  h.metaSlot=(getAt(P+'/meta')||{}).horSlot;
+  const hA=setInterval(()=>{try{
+    const g=da.querySelector('#guide.show [data-act=gclose],#guide.show [data-act=gpg][data-d="1"]');if(g){g.click();return;}
+    const sb=da.querySelector('#scene.show button[data-act=scene]');if(sb){cl(sb);return;}
+    const hire=da.querySelector('[data-act=rhire]:not([disabled])');if(hire){cl(hire);return;}
+  }catch(e){errs.push('BOT jefa '+e.message);}},100);
+  await sleep(3000);
+  /* salto: casi las 20:00 → se simula deprisa lo que falta y cierra */
+  const t0=Date.now();A.__hora('19:59:50');
+  let rp=null;for(let i=0;i<240&&!rp;i++){await sleep(500);const r=getAt(P+'/rpts')||{};const k=Object.keys(r)[0];if(k)rp={k,end:r[k].end,day:r[k].day,served:r[k].served,money:r[k].money,rows:r[k].rpt&&r[k].rpt.alm?Object.keys(r[k].rpt.alm).length:0};}
+  h.catchUpS=Math.round((Date.now()-t0)/1000);h.rpt=rp;
+  const s2=getAt(P+'/state')||{};h.afterClose={phase:s2.phase,t:s2.t,day:s2.day};
+  await sleep(1500);
+  h.memberSeesRpt=/Parte de las 20:00/.test(db.body.textContent);
+  /* la jefa pasa del cierre: el turno siguiente (20:00–00:00) abre en el acto */
+  h.btns=[];
+  for(let i=0;i<30;i++){const s3=getAt(P+'/state')||{};if(s3.phase==='open'&&s3.hs===1200)break;
+    const nx=da.querySelector('#overlay [data-act=next],#overlay [data-act=meeting],#overlay [data-act=endmeet]');if(nx){h.btns.push(nx.dataset.act);cl(nx);}await sleep(500);}
+  {const s3=getAt(P+'/state')||{};h.second={phase:s3.phase,hs:s3.hs,day:s3.day,t:s3.t,clock:(da.querySelector('#hClock')||{}).textContent};}
+  clearInterval(hA);
+  /* la jefa cierra el navegador en el turno de 20:00 y vuelve a las 23:59:30: se retoma, se pone al día, cierra y guarda el parte de las 00:00 */
+  dead.add('uid1');A.close();await sleep(300);
+  setAt(P+'/members/uid3',{name:'Jefa Vuelve',role:'jefe',on:true});setAt(P+'/info/host','uid3');setAt(P+'/info/hb',Date.now()-60000);notify(P+'/info');
+  const E=browser('jefa vuelve (horario)','http://localhost/?hora=23:59:30');await sleep(500);
+  const de=E.document;
+  const hE=setInterval(()=>{try{const g=de.querySelector('#guide.show [data-act=gclose],#guide.show [data-act=gpg][data-d="1"]');if(g){g.click();return;}
+    const sb=de.querySelector('#scene.show button[data-act=scene]');if(sb)cl(sb);}catch(e){errs.push('BOT jefa vuelve '+e.message);}},100);
+  const t1=Date.now();let r2=null;
+  for(let i=0;i<300&&!r2;i++){await sleep(500);const r=getAt(P+'/rpts')||{};const k=Object.keys(r).find(x=>/_1$/.test(x));if(k)r2={k,end:r[k].end,day:r[k].day,served:r[k].served,money:r[k].money};}
+  h.resumeCatchS=Math.round((Date.now()-t1)/1000);h.rpt2=r2;
+  await sleep(1000);
+  for(let i=0;i<10;i++){const nx=de.querySelector('#overlay [data-act=next],#overlay [data-act=meeting],#overlay [data-act=endmeet]');if(!nx)break;cl(nx);await sleep(500);}
+  h.afterMidnight={phase:(getAt(P+'/state')||{}).phase,lobby:/Abre sola a las 16:00/.test((de.querySelector('#overlay')||{textContent:''}).textContent)};
+  h.memberRpts=(db.body.textContent.match(/Parte de las (20|00):00/g)||[]).length;
+  clearInterval(hE);clearInterval(hB);
+  st.horario=h;
+}
 (async()=>{
+  if(process.env.HORARIO){try{await horario();}catch(e){errs.push('TEST '+e.stack);}console.log(JSON.stringify(st,null,1));console.log('errors:',errs.slice(0,8));process.exit(0);}
   try{
     const code='VITCH';
-    const A=browser('jefe','http://localhost/?soc=1'+(TOPO?'&topo='+(process.env.TOPO==='real'?'real':'1'):''));await sleep(400);
+    const A=browser('jefe','http://localhost/?horario=0&soc=1'+(TOPO?'&topo='+(process.env.TOPO==='real'?'real':'1'):''));await sleep(400);
     const da=A.document;
     da.querySelector('#pname').value='Jefa Test';
     cl(da.querySelector('[data-act=rreg]'));await sleep(200);
     cl(da.querySelector('[data-act=rapply][data-r=jefe]'));await sleep(400);
     st.hostLobby=!!da.querySelector('[data-act=ropen]');
     setAt('rooms/'+code+'/info/dur',TOPO?(process.env.TOPO==='real'?30:70):25);notify('rooms/'+code+'/info');
-    const B=browser('empleada','http://localhost/');await sleep(400);
+    const B=browser('empleada','http://localhost/?horario=0');await sleep(400);
     const db=B.document;
     db.querySelector('#pname').value='Empleada <b>Test</b>';
     cl(db.querySelector('[data-act=rreg]'));await sleep(300);
@@ -211,7 +268,7 @@ function memberBot(d){
     setAt(P+'/members/uid3',{name:'Cajera Sola',role:'atc',on:true});notify(P+'/members');
     setAt(P+'/info/hb',Date.now()-60000);setAt(P+'/info/status','open');notify(P+'/info');
     setAt(P+'/state/ts',Date.now()-30000);notify(P+'/state');
-    const C=browser('cajera','http://localhost/');await sleep(500);
+    const C=browser('cajera','http://localhost/?horario=0');await sleep(500);
     const dc=C.document;
     if(dc.querySelector('#pname'))dc.querySelector('#pname').value='Cajera Sola';
     cl(dc.querySelector('[data-act=rreg]'));await sleep(2500);
@@ -233,7 +290,7 @@ function memberBot(d){
     // vuelve el jefe (otro navegador con el uid que figura como jefe)
     setAt(P+'/members/uid4',{name:'Jefa Vuelve',role:'jefe',on:true});
     setAt(P+'/info/host','uid4');setAt(P+'/info/hb',Date.now()-60000);notify(P+'/info');
-    const E=browser('jefa vuelve','http://localhost/');await sleep(300);
+    const E=browser('jefa vuelve','http://localhost/?horario=0');await sleep(300);
     const de=E.document;st.guardScene=false;
     const hE=setInterval(()=>{try{
       const sc=de.querySelector('#scene.show');if(sc&&/PARTE DE GUARDIA/.test(sc.textContent))st.guardScene=true;const nt=(getAt(P+'/notes/uid3')||{}).m||'';if(/parte de guardia/.test(nt))st.guardNoteSeen=nt.slice(0,100);
