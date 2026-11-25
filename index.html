@@ -2186,19 +2186,20 @@ const circTxt=c=>{const C=CIRC[c.k]||['🙂',c.k];return C[0]+' '+esc(c.n)+' <sm
 function bioHtml(e,mini){
   const B=e.bio;if(!B)return '';const A=ASP[B.asp]||{},f=isFem(e),N=NATS[e.nat]||NATS[0];
   const from=B.from===B.live||B.from==='Madrid de toda la vida'?'De '+esc(B.live)+' de toda la vida':'De '+esc(B.from)+(B.yrs?' (en Madrid desde hace '+B.yrs+' años)':'')+' · vive en '+esc(B.live);
-  if(mini)return socHtml(e,1)+`<div class="es bio">📖 ${B.age} años · ${from} · Sueña con: <b>${A.ic||''} ${esc(gx(A.n||'',f))}</b>${B.done?' ✔️':''} · Su gente: ${toArr(B.circ).map(c=>(CIRC[c.k]||['🙂'])[0]+' '+esc(c.n)).join(', ')}</div>`;
+  if(mini)return castPsyHtml(e,1)+socHtml(e,1)+`<div class="es bio">📖 ${B.age} años · ${from} · Sueña con: <b>${A.ic||''} ${esc(gx(A.n||'',f))}</b>${B.done?' ✔️':''} · Su gente: ${toArr(B.circ).map(c=>(CIRC[c.k]||['🙂'])[0]+' '+esc(c.n)).join(', ')}</div>`;
   return `<div class="sdoc bio"><h6><span>📖 Su vida</span><span>${B.age} años · ${N.f}</span></h6><dl>
     <dt>De dónde</dt><dd>${from}</dd><dt>Antes</dt><dd>${toArr(B.past).map(esc).join(' ')}</dd>
     <dt>Sueña con</dt><dd>${A.ic||''} ${esc(gx(A.n||'',f))}${B.done?' <small>(capítulo cerrado)</small>':''}</dd><dt>Manía</dt><dd>${esc(B.wish)}</dd>
     <dt>Su gente</dt><dd>${toArr(B.circ).map(circTxt).join(' · ')||'—'}</dd>
-    ${e.log&&e.log.length?`<dt>Diario</dt><dd>${toArr(e.log).slice(-3).map(esc).join(' · ')}</dd>`:''}</dl></div>`+socHtml(e);
+    ${e.log&&e.log.length?`<dt>Diario</dt><dd>${toArr(e.log).slice(-3).map(esc).join(' · ')}</dd>`:''}</dl></div>`+castPsyHtml(e)+socHtml(e);
 }
 /* ¿Qué tal? Algo de su gente, de su sueño o su manía. */
 function howLine(e){
   const B=e.bio,o=[];
   toArr(B.circ).forEach(c=>{(CIRC_L[c.k]||[]).forEach(l=>o.push(l.replace(/%n%/g,c.n).replace(/%a%/g,c.a||'')));});
   if(!B.done)(ASP[B.asp]||{how:[]}).how.forEach(l=>o.push(l));
-  return bioFill(pick(o.length?o:['Bien, jefe. Aquí, sobreviviendo.']),e);
+  const C=e.cast&&CASTK[e.cast];if(C)C.talk.forEach(l=>{o.push(l);o.push(l);});
+  return castMul(e,bioFill(pick(o.length?o:['Bien, jefe. Aquí, sobreviviendo.']),e),0.4);
 }
 const mor=(e,n)=>{e.moral=clamp(e.moral+n,0,100);};
 /* Se va por su sueño (baja voluntaria, sin indemnización): RR.HH. abre la vacante. */
@@ -2382,6 +2383,7 @@ function talkScene(e){
 }
 /* Lo que contesta, en una tarjeta corta que se lee bien (8 s) y en el chat de la caja. */
 function talkResp(e,line,fx,good){
+  line=castMul(e,line,0.3);
   if(run&&!run.over)run.chat={face:e.face,text:e.name+': «'+line+'»',angry:!good,until:run.t+5};try{renderChat();}catch(x){}
   scene({k:'resp:'+e.id+':'+Date.now(),over:true,mgok:!!(mg&&mg.kind==='sup'),look:'label',head:'🗣️ '+e.name.toUpperCase(),tag:mood(e),who:e.face,sprite:'s'+e.id,role:e.role,name:empTag(e),prio:2,time:10,def:'ok',
     txt:'«'+esc(line)+'»',body:fx?'<div class="scn-hint">'+fx+'</div>':'',choices:[{t:good?'😄 Sigue así':'👍 Vale',k:'ok',cls:'go',key:'1'}]});
@@ -2467,6 +2469,8 @@ function ndThink(e){
 /* ---- relaciones (meta.rel['a-b'], a<b) ---- */
 const relK=(a,b)=>a<b?a+'-'+b:b+'-'+a;
 function relSeed(a,b){
+  /* Dos del elenco fijo: relación de partida escrita a mano (CAST_REL). */
+  const cr=a.cast&&b.cast&&castRel(a.cast,b.cast);if(cr)return Object.assign({af:0,conf:20,rom:0,riv:0},cr[2]);
   let af=0;const P=[a.pers,b.pers];
   if(P.includes('bromista'))af+=8;if(P.includes('capullo'))af-=14;if(P.includes('quejica')&&P.includes('currante'))af-=10;
   if(a.pers==='chismoso'&&b.pers==='chismoso')af+=14;if(P.includes('timido')&&P.includes('servicial'))af+=10;if(P.includes('lider')&&P.includes('pasota'))af-=8;
@@ -2478,7 +2482,7 @@ function rel(a,b){if(!a||!b||a===b||!meta)return null;meta.rel=meta.rel||{};cons
 function relAdd(a,b,o){const r=rel(a,b);if(!r)return null;for(const k in o){if(k==='par'){r.par=o.par?1:0;continue;}r[k]=clamp((r[k]||0)+o[k],k==='af'?-100:0,100);}return r;}
 function relTop(e,n,sign){return meta.emp.filter(o=>o!==e).map(o=>({o,r:rel(e,o)})).filter(x=>sign>0?x.r.af>=35:(x.r.af<=-25||x.r.riv>=40))
   .sort((p,q)=>sign>0?q.r.af-p.r.af:(p.r.af-p.r.riv)-(q.r.af-q.r.riv)).slice(0,n||3);}
-const partnerOf=e=>meta.emp.find(o=>o!==e&&meta.rel&&(meta.rel[relK(e.id,o.id)]||{}).par)||null;
+const partnerOf=e=>meta.emp.find(o=>o!==e&&(rel(e,o)||{}).par)||null;
 const singleE=e=>!sArr(e.bio&&e.bio.circ).some(c=>c.k==='pareja');
 const canRom=(a,b)=>!!(a&&b&&a!==b&&!a.real&&!b.real&&a.bio&&b.bio&&a.bio.age>=18&&b.bio.age>=18&&Math.abs(a.bio.age-b.bio.age)<=15);
 /* Equipos que se llevan bien rinden más; con quien no se traga, peor. Tope ±0,05. */
@@ -2515,7 +2519,9 @@ const RUM={
  sindi:{t:A=>A+' ha firmado la hoja del sindicato'},
  propina:{neg:1,t:(A,B,v)=>A+' se quedaba '+fmt(v||3000)+' del bote de propinas',v:v=>Math.round((v||3000)*rnd(1.5,3)/100)*100},
  chivato:{neg:1,t:A=>A+' trabajaba para el súper de enfrente'},
- pales:{neg:1,t:A=>A+' vende palés por la puerta de atrás'}
+ pales:{neg:1,t:A=>A+' vende palés por la puerta de atrás'},
+ /* El secreto de alguien del elenco (CAST[].psy.rum). */
+ secreto:{neg:1,t:A=>{const e=meta&&meta.emp.find(x=>x.name===A&&x.cast),C=e&&CASTK[e.cast];return A+' '+(C?C.psy.rum:'esconde algo gordo');}}
 };
 const DIST={toque:'despido',flirt:'romance',ofertas:'sevia',escaqueo:'mentira',amigos:'flirt',sindi:'despido',ascenso:'aumento'};
 const rumTxt=r=>{const R=RUM[r.k];return R?'dicen que '+R.t(r.an||'alguien',r.bn||'alguien',r.v):'';};
@@ -2576,7 +2582,8 @@ let tcTab='all',tcU={},tcDirty=0;
 function tc(ch,face,name,txt,cls){
   if(!run||run.remote||!txt)return;const L=run.tch=run.tch||[],t=String(txt);
   const last=L[L.length-1];if(last&&last.ch===ch&&last.t===t&&last.n===name)return;
-  L.push({ch,h:clockOf(run.t,run.dur),f:face||'💬',n:name||'',t,c:cls||''});if(L.length>400)L.splice(0,L.length-400);
+  const cs=name&&meta&&meta.emp.some(x=>x.cast&&x.name===name)?1:0;
+  L.push({ch,h:clockOf(run.t,run.dur),f:face||'💬',n:name||'',t,c:cls||'',s:cs});if(L.length>400)L.splice(0,L.length-400);
   if(ch!==tcTab&&tcTab!=='all')tcU[ch]=(tcU[ch]||0)+1;tcDirty=1;
 }
 const tcWho=e=>e&&e.name?{face:e.face,name:e.name}:e;
@@ -2602,7 +2609,7 @@ function tcRender(force){
   const L=(run.tch||[]).filter(m=>tcTab==='all'||m.ch===tcTab).slice(-60),ty=tcTyping();
   const box=el.querySelector('.tcl'),atB=!box||box.scrollHeight-box.scrollTop-box.clientHeight<30;
   el.innerHTML=`<div class="zone-title">💬 CHATS DE LA TIENDA</div><div class="tct">${TCH.map(([k,ic,n])=>`<button class="tcb ${tcTab===k?'on':''}" data-act="tct" data-k="${k}">${ic} ${n}${tcU[k]&&tcTab!==k?`<i>${tcU[k]>99?'99+':tcU[k]}</i>`:''}</button>`).join('')}</div>`
-    +`<div class="tcl">${L.length?L.map(m=>`<div class="tcm ${m.c}"><span class="tf">${m.f}</span><div><b>${esc(m.n)}</b>${tcTab==='all'&&m.ch!=='all'?` <small class="tcc">${(TCH.find(x=>x[0]===m.ch)||['','',''])[1]}</small>`:''} <small>${m.h}</small><p>${esc(m.t)}</p></div></div>`).join(''):'<div class="supd">Aquí sale todo lo que se dice en la tienda. De momento, silencio.</div>'}${ty.length?`<div class="tcty">✍️ ${esc(ty.slice(0,2).join(' y '))} ${ty.length>1?'están':'está'} escribiendo…</div>`:''}</div>`;
+    +`<div class="tcl">${L.length?L.map(m=>`<div class="tcm ${m.c}"><span class="tf">${m.f}</span><div><b>${esc(m.n)}</b>${m.s?' <i class="cst" title="Elenco fijo">📛</i>':''}${tcTab==='all'&&m.ch!=='all'?` <small class="tcc">${(TCH.find(x=>x[0]===m.ch)||['','',''])[1]}</small>`:''} <small>${m.h}</small><p>${esc(m.t)}</p></div></div>`).join(''):'<div class="supd">Aquí sale todo lo que se dice en la tienda. De momento, silencio.</div>'}${ty.length?`<div class="tcty">✍️ ${esc(ty.slice(0,2).join(' y '))} ${ty.length>1?'están':'está'} escribiendo…</div>`:''}</div>`;
   const nb=el.querySelector('.tcl');if(nb&&atB)nb.scrollTop=nb.scrollHeight;
 }
 /* Respuestas para las conversaciones (según el carácter de quien contesta). */
@@ -2620,6 +2627,7 @@ const tcRep=e=>pick((TC_REP[e&&e.pers]||[]).concat(TC_REP.gen));
 const TC_TASK={go:['Voy yo con eso.','Me lo pido.','Marchando.','Ya voy, ya voy.','Lo cojo yo, tranquilos.'],ok:['Hecho.','Listo, siguiente.','Arreglado.','Ya está, como nuevo.'],ko:['Me ha salido regular, lo siento.','Uf, no ha quedado bien.','Esto me ha superado, la verdad.']};
 const TC_OFF=[['¿Quiere bolsa?','No, traigo la mía.'],['Hola, buenos días.','Buenas. Esto y ya.'],['¿Con tarjeta o en efectivo?','Con el móvil, si puede ser.'],['Son 23,40.','¿Cuánto? Madre mía cómo está todo.'],['¿Tiene la tarjeta del súper?','¿Hay tarjeta? Ni idea.'],['Que tenga buen día.','Igualmente, guapo/a.'],['Siguiente, por favor.','¡Voy, voy!'],['¿Me deja pasar? Solo llevo esto.','Pase, pase.']];
 function socSay(e,txt,bad){
+  txt=castMul(e,txt,0.15);
   if(run&&!run.remote&&e)tc(run.duty&&run.duty[e.id]&&run.duty[e.id].soc?'sala':(e.role||'all'),e.face,e.name,txt,bad?'bad':'');
   if(!run||run.over||run.remote||(run.chat&&run.t<run.chat.until))return;
   run.chat={face:e.face,text:e.name+' '+flag(e)+': «'+txt+'»',angry:!!bad,until:run.t+3.6};try{renderChat();}catch(x){}
@@ -2786,8 +2794,11 @@ const TERT_T={
   acc:['Vale, vale, perdona.','Tienes razón, no volverá a pasar.'],rej:['¿Perdona? Mírate tú primero.','Mira, déjame en paz.','Habla tú, que te pasas el turno en el baño.'],esc:['A mí no me hables así.','Esto se lo cuento al jefe.','Tú y yo vamos a tener un problema.']},
  piropo:{w:X=>X.rom>=20?1.2*X.rom/40:0,open:['Hoy vienes muy guap{o|a}, {o}.','¿Te traigo un café? Invito yo… a la máquina.','Si quieres, luego te ayudo con el palé.'],
   acc:['Anda, calla… pero vale, acepto el café.','Jejeje… vale.','Qué tont{o|a} eres. Me encanta.'],rej:['Jajaja, céntrate, que hay cola.','Eh… gracias. Me voy a reponer.']},
- ayuda:{w:X=>X.ndk==='calma'?1.5:0,open:['{o}, ¿me echas un cable? Voy de culo.','No puedo más con esto, ¿me ayudas un segundo?'],acc:['Claro, dime qué hago.','Venga, a medias.'],rej:['Ahora no puedo, lo siento.','Apáñatelas, que yo también voy hasta arriba.']}
+ ayuda:{w:X=>X.ndk==='calma'?1.5:0,open:['{o}, ¿me echas un cable? Voy de culo.','No puedo más con esto, ¿me ayudas un segundo?'],acc:['Claro, dime qué hago.','Venga, a medias.'],rej:['Ahora no puedo, lo siento.','Apáñatelas, que yo también voy hasta arriba.']},
+ /* Temas propios del elenco fijo: las aperturas salen de CAST[].tert (su historia y su secreto), ver tOpen. */
+ propio:{w:X=>X.cast?1.6:0,open:[],acc:['Madre mía, qué historia.','Ya te digo.','Tú siempre con lo tuyo. Me encanta.'],rej:['Ya me lo has contado tres veces.','Otra vez con eso…']}
 };
+const tOpen=(k,e,o)=>k==='propio'&&e&&e.cast&&CASTK[e.cast]?CASTK[e.cast].tert.filter(x=>!o||!x.t.includes(o.name)):TERT_T[k].open;
 const TERT_HI={amigo:['¡{o}! ¿Qué pasa, guap{o|a}?','Ey, {o}, ¿cómo lo llevas?','¡Mi {o} favorit{o|a}!'],mal:['{o}.','Hombre, {o}… qué sorpresa.','Ah, eres tú.'],norm:['Hola, {o}.','¿Qué tal, {o}?','Buenas, {o}.']};
 const TERT_BYE={cola:['Uy, que se me llena la caja. Luego seguimos.','Me voy, que hay cola y el jefe mira.'],gen:['Bueno, al lío.','Venga, que nos miran.','Luego me sigues contando.','Me voy, que el muelle no se vacía solo.','Anda, que si nos pillan…'],mal:['Bueno, adiós.','Ya hablaremos.']};
 /* Afinidad de cada carácter con cada tema (sube o baja la probabilidad de aceptarlo). */
@@ -2797,7 +2808,7 @@ function tertX(e,o){
   const G=gctx(e,o),r=rel(e,o)||{af:0,riv:0,rom:0},C=sArr(e.bio&&e.bio.circ),m=C.find(x=>x.k==='perro'||x.k==='gata'||x.k==='gato'),N=e.nd||{},low=N?ND_K.slice().sort((a,b)=>(N[a]==null?99:N[a])-(N[b]==null?99:N[b]))[0]:null;
   const ru=sArr(e.know).filter(x=>x.a!==o.id&&x.b!==o.id);
   return Object.assign({},G,{o:o.name,af:r.af||0,riv:r.riv||0,rom:canRom(e,o)?(r.rom||0):0,mood:e.moral,ndk:low&&N[low]<35?low:null,mascota:m&&m.n,
-    rum:ru.length?rumTxt(pick(ru)).replace(/^dicen que /,''):null,prod:(pick(CAT)||{}).n,cola:run?run.queue.length:0,why:pick(['el cúter','quién deja las cajas en medio','el turno del domingo','el aire acondicionado','quién se comió los yogures de la sala'])});
+    cast:e.cast&&CASTK[e.cast]?e.cast:null,rum:ru.length?rumTxt(pick(ru)).replace(/^dicen que /,''):null,prod:(pick(CAT)||{}).n,cola:run?run.queue.length:0,why:pick(['el cúter','quién deja las cajas en medio','el turno del domingo','el aire acondicionado','quién se comió los yogures de la sala'])});
 }
 function tertFill(L,X,fem,keep){
   const tx=x=>typeof x==='string'?x:x.t,ok=shuffle(L.slice()).find(t=>(tx(t).match(/\{(\w+)\}/g)||[]).every(m=>X[m.slice(1,-1)]!=null&&X[m.slice(1,-1)]!==''));
@@ -2812,7 +2823,7 @@ function tert(e,o,op){
   op=op||{};const X=tertX(e,o),Y=tertX(o,e),fo=isFem(o),fe=isFem(e);if(op.rum)X.rum=String(op.rum).replace(/^dicen que /,'');if(op.why)X.why=op.why;
   const k=op.tema&&TERT_T[op.tema]?op.tema:tertPick(e,o,X),T=TERT_T[k],L=[];
   const hi=X.af>=40?'amigo':X.af<-20?'mal':'norm';if(k!=='pique'&&Math.random()<0.8)L.push([e,tertFill(TERT_HI[hi],X,fo)]);
-  const OP={};L.push([e,tertFill(T.open,X,fo,OP)||tertFill(TERT_T.curro.open,X,fo,OP)]);const IT=typeof OP.it==='object'?OP.it:{},TA=IT.acc||T.acc,TR=IT.rej||T.rej;
+  const OP={};L.push([e,tertFill(tOpen(k,e,o),X,fo,OP)||tertFill(TERT_T.curro.open,X,fo,OP)]);const IT=typeof OP.it==='object'?OP.it:{},TA=IT.acc||T.acc,TR=IT.rej||T.rej;
   const ro=rel(o,e)||{af:0};let p=0.5+(ro.af||0)/200+((o.moral||50)-50)/200+((TERT_P[o.pers]||{})[k]||0)-((o.nd&&o.nd.calma<30)?0.2:0);
   if(k==='piropo')p=(ro.rom||0)>=30?0.75:0.3;if(k==='pique')p=o.pers==='timido'?0.6:0.25;
   const roll=Math.random(),out=roll<p?'acc':roll<p+(1-p)*0.45?'desv':'rej';
@@ -2821,12 +2832,12 @@ function tert(e,o,op){
   else if(out==='desv'){L.push([o,pick(['Ya… oye, cambiando de tema:','Ajá. Por cierto…','Mmm. Oye, otra cosa:'])]);tertSub(o,e,Y,X,k,L);}
   else{L.push([o,tertFill(TR,Y,fe)]);if(T.esc&&Math.random()<0.6)L.push([e,tertFill(T.esc,X,fo)],[o,tertFill(TERT_T.pique.rej,Y,fe)]);}
   L.push([out==='rej'?o:e,tertFill(out==='rej'?TERT_BYE.mal:(X.cola>=3&&e.role==='atc'?TERT_BYE.cola:TERT_BYE.gen),X,fo)]);
-  const mk=relK(e.id,o.id),M=run.tmem[mk]=(run.tmem[mk]||[]).concat([k]).slice(-3);
+  run.tmem=run.tmem||{};const mk=relK(e.id,o.id),M=run.tmem[mk]=(run.tmem[mk]||[]).concat([k]).slice(-3);
   if(!op.noEff){if(out==='acc'){relAdd(e,o,{af:3,conf:2});if(k==='chisme')spread(e,o);if(k==='piropo')relAdd(e,o,{rom:3});}
     else if(out==='rej'){relAdd(e,o,{af:k==='pique'?-6:-2,riv:k==='pique'?6:0});if(k==='pique')ndAdd(o,'calma',-8);}}
-  return {L:L.filter(x=>x[0]&&x[1]),out,k};
+  return {L:L.filter(x=>x[0]&&x[1]).map(x=>[x[0],castMul(x[0],x[1],0.2)]),out,k};
 }
-function tertSub(a,b,A,B,not,L){const k2=tertPick(a,b,A,not),T2=TERT_T[k2],O2={},t=tertFill(T2.open,A,isFem(b),O2);if(!t)return;const it=typeof O2.it==='object'?O2.it:{};L.push([a,t],[b,tertFill(it.acc||T2.acc,B,isFem(a))]);}
+function tertSub(a,b,A,B,not,L){const k2=tertPick(a,b,A,not),T2=TERT_T[k2],O2={},t=tertFill(tOpen(k2,a,b),A,isFem(b),O2);if(!t)return;const it=typeof O2.it==='object'?O2.it:{};L.push([a,t],[b,tertFill(it.acc||T2.acc,B,isFem(a))]);}
 /* Lanza la conversación en el chat y mantiene juntos a los dos mientras dura. */
 function tertGo(e,o,ch,op){const R=tert(e,o,op),dur=convo(ch||'sala',R.L);[e,o].forEach(x=>{const dd=run.duty&&run.duty[x.id];if(dd&&dd.soc)dd.soc.u=Math.max(dd.soc.u,run.t+dur);});return R;}
 const SOC_ACT={
@@ -2961,10 +2972,10 @@ function lifeOpen(){
           else{e.job2=1;logE(e,'Se cogió un segundo trabajo de reparto');radio('🛵',e.name+' reparte por las noches. Llega con ojeras.');}}});
     else if(q.k==='amigo'){const r=q.r;if(!ROLES[r]||!vacOpen(r))return;
       sc({head:'🤝 UN AMIGO BUSCA CURRO',tag:JOB_IC[r]+' '+ROLES[r].n,def:'no',txt:'«Tengo un amigo que busca curro de '+ROLES[r].n+'. Es muy apañado, de verdad. ¿Le digo que te mande el CV?»',
-        body:'<div class="scn-hint">📄 Sí: aparece en la bolsa de candidatos de RR.HH. (recomendado: se parece a quien lo recomienda en honradez). 🙅 Ahora no: −2 de ánimo.</div>',
+        body:'<div class="scn-hint">📄 Sí: aparece en la bolsa de candidatos de RR.HH. (recomendado: alguien del barrio que ya conoce). 🙅 Ahora no: −2 de ánimo.</div>',
         choices:[{t:'📄 Que me mande el CV',k:'si',cls:'go',key:'1'},{t:'🙅 Ahora no',k:'no',key:'2'}],
         onPick:k=>{if(!meta.emp.includes(e))return;if(k!=='si'){mor(e,-2);return;}poolFill();
-          const c=newEmp(r,meta,{},sArr(meta.pool).map(x=>x.name));c.wage=wageOf(r);c.exp=ri(1,6);c.prev=pick(PREV);c.d=meta.day;c.hon=clamp((c.hon+(e.hon==null?0.6:e.hon))/2,0.05,0.98);
+          const c=newEmp(r,meta,{},sArr(meta.pool).map(x=>x.name));if(!c.cast){toast('Al final, el amigo de '+e.name+' ha encontrado otro curro.');return;}c.wage=wageOf(r);c.prev=candPrev(c);c.d=meta.day;
           c.ref='Recomendado por '+e.name;c.qa=['rap','trato','punt','act'].sort(()=>Math.random()-0.5).slice(0,2).map(x=>interview(x,c[x]));meta.pool=sArr(meta.pool).concat([c]);
           if(meta.pool.length>8)meta.pool.shift();relAdd(e,c,{af:40,conf:30});mor(e,3);toast('📄 El amigo de '+e.name+' ya está en la bolsa de candidatos (🗂️ RR.HH.).','good');}});}
   });
@@ -3653,6 +3664,22 @@ const STORY2=[
      if(k==='apl'){mor(x,8);ndAdd(x,'estima',15);return 'Aplausos en la sala para '+x.name+', que enseña la medalla a todo el que pasa.';}return 'Domingo de maratón. Medio barrio en chándal.';}})}
 ];
 STORY.push(...STORY2);
+/* 🤫 El secreto de alguien del elenco fijo (CAST[].psy.sec): lo cuenta un cotilla o alguien de confianza. meta.secR[k] = ya salió. */
+STORY.push({id:'secreto',cat:'chisme',ten:2,cd:6,w:1.2,
+ when:c=>{const S=meta.secR||{},L=shuffle(c.all.filter(e=>e.cast&&CASTK[e.cast]&&!S[e.cast]&&(e.days||0)>=2));
+   for(const e of L){const t=c.ws.find(o=>o!==e&&o.pers==='chismoso')||c.ws.find(o=>o!==e&&(rel(o,e)||{}).conf>=40);if(t)return {e,t};}return null;},
+ run:(c,{e,t})=>{const C=CASTK[e.cast],F=isFem(e);return stScene('secreto',{...sEmp(t),head:'🤫 SECRETO A VOCES',tag:'📛 '+esc(e.name),def:'calla',
+  txt:'«Jefe, ¿tú sabías que '+esc(e.name)+' '+esc(C.psy.rum)+'? Que yo no lo he dicho, ¿eh? Se sabe.»',
+  hint:'🤐 «Esto no sale de aquí»: el secreto se queda contigo (−3 de ánimo a '+esc(t.name)+', que se queda con las ganas). 🗣️ «Ya hablaré con '+esc(e.name)+'»: si se lo toma bien, se quita un peso (+6); si no, le sienta fatal que lo sepas (−6). 📢 «Pues que se sepa»: corre por la tienda como rumor y '+esc(e.name)+' lo pasa fatal (−10).',
+  ch:[['calla','🤐 Esto no sale de aquí','go'],['hablo','🗣️ Ya hablaré con '+esc(e.name)],['cuenta','📢 Pues que se sepa','no','RUMOR']],
+  alive:()=>meta.emp.includes(e),
+  go:k=>{meta.secR=meta.secR||{};meta.secR[e.cast]=1;
+   if(k==='calla'){mor(t,-3);logE(e,'El jefe supo su secreto y no lo contó');return t.name+' se queda con las ganas. El secreto de '+e.name+' está a salvo… de momento.';}
+   if(k==='hablo'){const ok=e.pers!=='capullo'&&Math.random()<0.7;if(ok)think(e,'😮‍💨','Se ha quitado un peso de encima',6,3,'secreto');else{mor(e,-6);memo(e,'😳','El jefe sabe su secreto',-6,3,'secreto');}
+     relAdd(e,t,{af:-15,riv:8});logE(e,'Hablasteis de su secreto');if(bossScn())setTimeout(()=>{if(run&&!run.over)talkResp(e,C.psy.conf,ok?'Le alivia contártelo: +6 de ánimo.':'Le sienta fatal que lo sepas: −6 de ánimo.',ok);},60);
+     return e.name+' y el jefe hablan a puerta cerrada.';}
+   fact('secreto',e,null,0);mor(e,-10);memo(e,'😣',gx('Su secreto corre por la tienda',F),-10,3,'secreto');relAdd(e,t,{af:-30,riv:20});logE(e,'Su secreto corrió por la tienda');
+   return 'Todo el súper sabe ya que '+e.name+' '+C.psy.rum+'.';}});}});
 /* ---- Fase 4: sabotaje en tienda y reunión de emergencia (estilo Among Us) ---- */
 STORY.push(
  {id:'caida',cat:'suspense',ten:2,cd:8,when:c=>c.ws.length?{n:1+Math.floor(Math.random()*2)}:null,
@@ -4115,8 +4142,386 @@ const blankSt=()=>({ok:0,fail:0,late:0,abs:0,tasks:0,tfail:0,quej:0,fel:0,shifts
 /* Al cerrar una reunión, las estadísticas pasan al historial (e.tot), que sirve de prueba al despedir. */
 const sumSt=(a,b)=>{const o=blankSt();Object.keys(o).forEach(k=>{o[k]=((a||{})[k]||0)+((b||{})[k]||0);});return o;};
 function closeSt(e){e.tot=sumSt(e.tot,e.st);e.st=blankSt();}
+/* ===== 👥 Elenco fijo: las 17 personas que pueden trabajar en la tienda (NPC de plantilla) =====
+   Todo está escrito a mano y es igual en todas las partidas: nombre, cara, edad, origen, barrio, idiomas, puesto natural, rasgos,
+   carácter, su gente, pasado, manía, sueño, miedo y una ficha psicológica (psy: def = una frase que le define, estres = cómo
+   reacciona al agobio, feliz, odia, sec = su secreto, rum = el secreto contado como rumor, conf = lo que te dice si lo habláis),
+   muletillas (mul), frases sueltas (talk) y temas propios para la Tertulia (tert). Los NPC aleatorios (NATS, mkBio) quedan para
+   clientes, partidas viejas y casos raros: los candidatos a contratar salen de aquí (castPick). e.cast = clave del personaje.
+   Quien se va queda en meta.castOut[k] = {d, why, kind: fire|quit|good, n, bio, log} y vuelve como candidato pasados CAST_CD turnos,
+   con su vida (bio) y recordando cómo se fue (candPrev). CAST_REL = relaciones de partida (relSeed las usa entre dos del elenco). */
+const CAST=[
+ {k:'rocio',n:'Rocío',sur:'Jiménez Pardo',face:'👩‍🦳',age:52,c:'España',from:'Madrid de toda la vida',live:'Puente de Vallecas',yrs:0,langs:['es'],role:'atc',pers:'bromista',
+  rap:.76,trato:.85,punt:.8,act:.72,hon:.92,moral:72,exp:26,prev:'Cajera en un Simago y luego en un Día de Vallecas',
+  circ:[{k:'pareja',n:'Fermín'},{k:'hijo',n:'Rubén',a:24},{k:'hija',n:'Vanesa',a:21},{k:'perro',n:'Chispa'}],
+  past:['Empezó de cajera con 26 años, en pesetas, y aún hace las cuentas difíciles en pesetas de cabeza.','Se quedó viuda a los 40 y sacó adelante a sus dos hijos con turnos dobles y tápers de cocido.'],
+  wish:'Es del Rayo y lo lleva con orgullo: tiene una bufanda firmada en la taquilla y no se toca.',asp:'jefe',fear:'soledad',
+  psy:{def:'La que se sabe el nombre de todas las clientas y la vida de la mitad. Madre de toda la tienda, quiera o no.',
+   estres:'Canta coplas por lo bajo y cobra el doble de rápido. Si la cosa se pone fea, saca el «mi alma» y desarma a cualquiera.',
+   feliz:'Que una clienta le traiga al nieto para enseñárselo y los sábados de baile con Fermín.',
+   odia:'Que le digan «señora» con retintín, los que pagan un chicle con un billete de 50 y los jefes que no saludan.',
+   sec:'Le prestó 600 € a Kevin hace tres meses y él no se los ha devuelto. No se lo ha contado a nadie: le da vergüenza reclamarlo.',
+   rum:'le prestó 600 € a Kevin y él no se los devuelve',
+   conf:'Ay, mi alma, que te has enterado… Se los dejé porque le vi apurado. No quiero líos, pero eran mis vacaciones con Fermín, ¿sabes?'},
+  mul:['Ay, mi alma','Que no, que no, que no','Esto en pesetas era un regalo'],
+  talk:['Fermín dice que este sábado bailamos un chotis en la Casa de Cultura. Voy a ir de estreno.','Treinta años cobrando y todavía hay quien me pregunta si aceptamos cheques.','Mi Vanesa dice que me haga un TikTok. ¿Un TikTok? Yo lo que necesito es una silla.'],
+  tert:[{t:'¿Te he contado que Fermín quiere que conozca a sus hijos? A mis años, {o}, ¡nervios de quinceañera!',acc:['¡Ay, Rocío, qué bonito!','Tú ve guapísima y que se rindan.'],rej:['Rocío, eso me lo has contado ya cuatro veces.']},
+   {t:'{o}, si ves a Kevin, dile que me debe una cosa. Que él ya sabe.',acc:['¿Kevin? Uf… ya me imagino.','Se lo digo, se lo digo.'],rej:['Yo con Kevin no me meto, Rocío.']}]},
+ {k:'yeray',n:'Yeray',sur:'Morales Cabrera',face:'🧑‍🦱',age:19,c:'España',from:'Las Palmas de Gran Canaria',live:'Usera',yrs:2,langs:['es'],role:'atc',pers:'pasota',
+  rap:.6,trato:.58,punt:.32,act:.38,hon:.72,moral:66,exp:0,prev:'Repartió folletos y pasó un verano en un chiringuito de Maspalomas',
+  circ:[{k:'madre',n:'Pino'},{k:'abuela',n:'Candelaria'},{k:'compi',n:'Adri'}],
+  past:['Se vino de Gran Canaria a estudiar Bachillerato de adultos en Madrid «para tener futuro». De momento tiene un futón.','Tiene 4.000 seguidores en TikTok gracias a un vídeo imitando a su abuela regañando a una gaviota.'],
+  wish:'Habla de «la isla» como si fuera otro planeta y echa de menos el gofio cada día.',asp:'influ',fear:'ridiculo',
+  psy:{def:'Diecinueve años, el móvil en la mano y una calma infinita para todo lo que no sea trabajar.',
+   estres:'Se bloquea, dice «literal» cuatro veces seguidas y escanea al ritmo de una canción que solo oye él.',
+   feliz:'Un vídeo con más de 10.000 visualizaciones, que le llame su abuela y los paquetes de gofio que le manda.',
+   odia:'Los audios de cinco minutos, madrugar y que le llamen «el canario» como si fuera un pájaro.',
+   sec:'Ha suspendido todo el primer trimestre del Bachillerato de adultos y en casa creen que va «de lujo». Wei lo sabe porque le ayuda con las mates.',
+   rum:'ha suspendido todo el trimestre y en Canarias creen que va de lujo',
+   conf:'Bro… no se lo digas a mi madre, por favor. Me está pagando el piso con lo que no tiene. Voy a recuperar, literal. Wei me está ayudando.'},
+  mul:['Literal','Bro, qué estrés','Es que no me renta'],
+  talk:['Si grabo cómo se escanea un melón a cámara lenta, ¿es contenido? Yo creo que es contenido.','Mi abuela me ha mandado gofio por correo. Me lo han abierto en Correos. Normal, parecía otra cosa.','Tengo sueño desde 2019.'],
+  tert:[{t:'{o}, ¿me grabas un vídeo reponiendo? Es para una tendencia. Diez segundos, literal.',acc:['Venga, pero que no se me vea la cara.','Si sale el jefe, borro.'],rej:['Ni de broma, que nos pilla el jefe.']},
+   {t:'Mi abuela Candelaria ha visto mi TikTok y dice que me corte el pelo. Bro.',acc:['Jajaja, tu abuela es la mejor.','Hazle caso, que sabe.'],rej:['Tu abuela tiene razón.']}]},
+ {k:'awa',n:'Awa',sur:'Ndiaye Sarr',face:'👩🏿',age:34,c:'Senegal',from:'Thiès',live:'Lavapiés',yrs:9,langs:['es','wo','fr'],role:'atc',pers:'currante',
+  rap:.85,trato:.78,punt:.9,act:.88,hon:.95,moral:70,exp:7,prev:'Auxiliar de noche en una residencia de mayores de Aluche',
+  circ:[{k:'hija',n:'Aminata',a:7},{k:'madre',n:'Fatou'},{k:'sobri',n:'Moussa',a:11}],
+  past:['En Thiès estudió dos años de Enfermería y tuvo que dejarlo cuando murió su padre.','Siete años de turnos de noche en una residencia de Aluche: sabe calmar a cualquiera a las cuatro de la mañana.'],
+  wish:'Hace un thieboudienne los domingos que huele hasta el tercer piso; los vecinos se apuntan solos.',asp:'enfer',fear:'fracaso',
+  psy:{def:'Trabaja de día, estudia de noche y aún le sobra una sonrisa para la señora de los céntimos.',
+   estres:'Se calla, respira hondo y lo resuelve. Lo malo se lo come sola y luego se lo cuenta a su madre por videollamada.',
+   feliz:'Aprobar un examen, que Aminata le lea un cuento a ella y los domingos de mercado en Lavapiés.',
+   odia:'Que la traten de tonta por el acento, que tiren la compra en la cinta y la gente que no da las gracias.',
+   sec:'Paga a escondidas el préstamo de la matrícula de Enfermería y sigue mandando 200 € al mes a Senegal. Su madre cree que le sobra el dinero.',
+   rum:'está ahogada con el préstamo de la matrícula y aun así manda dinero a Senegal',
+   conf:'No es para tanto, jefe. Poco a poco. Mi madre no tiene que saberlo; ella ya hizo bastante por mí. Yo puedo.'},
+  mul:['Poco a poco','Ça va, ça va','Si Dios quiere'],
+  talk:['Aminata dice que de mayor quiere ser cajera «como mamá». Le he dicho que mejor médica, y que me cuide.','Hoy tengo examen de Anatomía. Pregúntame dónde está el húmero. No, mejor no.','La señora del quinto me ha traído un táper de lentejas. En Lavapiés nadie pasa hambre.'],
+  tert:[{t:'{o}, ¿me tomas la lección? Diez huesos de la mano y te invito a un café.',acc:['Venga, pero el café de la máquina buena.','Dale, que yo de huesos sé lo del jamón.'],rej:['Ahora no puedo, Awa, lo siento.']},
+   {t:'Aminata ha sacado un sobresaliente en Lengua. ¡Más que su madre en español!',acc:['¡Qué crack! Dale un beso de mi parte.','Si es como tú, normal.'],rej:['Ah, qué bien.']}]},
+ {k:'andres',n:'Andrés',sur:'Ortega Molina',face:'👴',age:61,c:'España',from:'Jaén',live:'Carabanchel',yrs:42,langs:['es'],role:'alm',pers:'servicial',
+  rap:.58,trato:.72,punt:.88,act:.75,hon:.95,moral:70,exp:30,prev:'Mozo de almacén en Mercamadrid durante treinta años',bar:'Bar Andrés · Tapas de Jaén',
+  circ:[{k:'pareja',n:'Mari Luz'},{k:'hija',n:'Laura',a:34},{k:'hijo',n:'Sergio',a:30}],
+  past:['Llegó de Jaén con 19 años y una maleta de cartón. Empezó descargando melones en Mercamadrid a las tres de la mañana.','Tiene una carretilla de 1994 a la que llama «la Jacinta» y no deja que nadie más la toque.'],
+  wish:'Le pone nombre a las carretillas del almacén y les habla cuando cree que nadie le oye.',asp:'bar',fear:'despido',
+  psy:{def:'Treinta años de muelles a la espalda y ni una caja mal apilada. El abuelo de todos, aunque solo es abuelo de dos.',
+   estres:'Silba pasodobles y ordena lo que ya estaba ordenado. Nunca levanta la voz; levanta palés.',
+   feliz:'Que los jóvenes le pregunten cómo se hace algo, el aceite de su pueblo y una caña a las nueve en punto.',
+   odia:'Que se tire comida, que le llamen «abuelo» con desprecio y las prisas que acaban en cristales rotos.',
+   sec:'Tiene una hernia discal y el médico le recomendó la baja. La esconde con una faja: le quedan dos años para jubilarse y le da pánico que le aparten.',
+   rum:'esconde una hernia con una faja para que no le jubilen antes',
+   conf:'Mira, chaval… jefe. Si me voy de baja ahora, no vuelvo. Déjame acabar a mi manera. Despacito, pero acabo.'},
+  mul:['Esto en mis tiempos…','Despacito y buena letra','Mira, chaval'],
+  talk:['En Mercamadrid, en el 89, descargué un camión de sandías yo solo. Bueno, con la Jacinta.','Mari Luz me ha puesto pisto en el táper. Hay para tres. Avisad.','Cuando abra el bar, la primera caña es para el que me ayude con los palés de agua.'],
+  tert:[{t:'{o}, ven, que te enseño a flejar un palé como Dios manda. Esto no viene en YouTube.',acc:['Venga, Andrés, que tú sabes.','Enséñame, que yo lo hago fatal.'],rej:['Ahora no, Andrés, que voy hasta arriba.']},
+   {t:'Cuando me jubile abro un bar con aceite de mi pueblo. ¿Vendrás, {o}?',acc:['¡La primera caña es mía!','Claro que sí, Andrés.'],rej:['Eso dices todos los años.']}]},
+ {k:'kevin',n:'Kevin',sur:'Sánchez Rubio',face:'👨',age:27,c:'España',from:'Madrid de toda la vida',live:'Villaverde',yrs:0,langs:['es'],role:'alm',pers:'capullo',
+  rap:.92,trato:.25,punt:.7,act:.78,hon:.42,moral:60,exp:6,prev:'Mozo de noche en una paquetería de Getafe (se fue «por discusiones con el encargado»)',
+  circ:[{k:'madre',n:'Maribel'},{k:'perro',n:'Thor'}],
+  past:['Le echaron de una paquetería de Getafe por «discusiones con el encargado». Él dice que el encargado era un inútil.','Fue campeón de pádel amateur de Villaverde Alto. Lo pone en el currículum. En negrita.'],
+  wish:'Hace crossfit y te lo va a contar, quieras o no. También cuántas proteínas lleva su táper.',asp:'jefe',fear:'ridiculo',
+  psy:{def:'El más rápido del muelle y te lo va a decir cada día, por si se te olvida.',
+   estres:'Grita, culpa al de al lado y luego hace el trabajo de tres en diez minutos. Después se enfada si nadie lo ha visto.',
+   feliz:'Ganar. A lo que sea: carreras de carretillas, pádel, discusiones. Y que el jefe le diga que es el mejor delante de Nerea.',
+   odia:'A los lentos, a los que piden perdón, a Nerea y que le corrijan delante de gente.',
+   sec:'Debe 600 € a Rocío y 3.000 € a una casa de apuestas de Villaverde. Las apuestas de pádel no se le dan tan bien como el pádel.',
+   rum:'debe 3.000 € a una casa de apuestas',
+   conf:'¿Y a ti qué te importa? …Vale. Ya lo estoy arreglando. A Rocío se lo devuelvo este mes. No se lo digas a mi madre.'},
+  mul:['Ponte las pilas','Esto lo hago yo con los ojos cerrados','A ver, campeón'],
+  talk:['Doce palés en una hora. ¿Alguien más? ¿No? Eso pensaba.','Si me hicieran encargado, este almacén iría como un reloj. Y Nerea, a reponer yogures.','Hoy pecho y espalda en el gimnasio. Por eso cargo yo lo pesado, de nada.'],
+  tert:[{t:'{o}, ¿has visto lo que tarda Nerea en colocar un palé? Yo en ese tiempo hago tres.',acc:['Tampoco te pases, Kevin.','Bueno… es más cuidadosa.'],rej:['Kevin, déjala en paz.','Tú corres mucho, pero rompes más.']},
+   {t:'A ver, campeón: diez euros a que descargo el camión antes que tú.',acc:['Venga, va. Diez euros.','Hecho, fanfarrón.'],rej:['No apuesto contigo, que no pagas.']}]},
+ {k:'dmytro',n:'Dmytro',sur:'Kovalenko',face:'👱‍♂️',age:38,c:'Ucrania',from:'Járkov',live:'Hortaleza',yrs:4,langs:['es','uk','en'],role:'alm',pers:'timido',
+  rap:.82,trato:.38,punt:.95,act:.8,hon:.92,moral:62,exp:3,prev:'Ingeniero de estructuras en Járkov; aquí, mozo en una nave de Coslada',
+  circ:[{k:'hija',n:'Sofía',a:10},{k:'madre',n:'Halyna'}],
+  past:['Llegó a Madrid en 2022 con su hija y dos maletas. Su madre no quiso dejar Járkov.','Aprendió español con los subtítulos de «Aquí no hay quien viva». Por eso a veces habla como un portero de Madrid.'],
+  wish:'Calcula de cabeza cuánto aguanta cada balda antes de colocar nada. Siempre acierta.',asp:'madre',fear:'soledad',
+  psy:{def:'Ingeniero allí, mozo aquí. Habla poco, apila perfecto y nunca, nunca, llega tarde.',
+   estres:'Se queda muy quieto, cuenta hasta diez en ucraniano y sigue como si nada. Por dentro, un terremoto.',
+   feliz:'La videollamada del domingo con su madre, que Sofía saque un 10 en Lengua y una balda bien cuadrada.',
+   odia:'Los ruidos fuertes de golpe, que le pregunten «¿y la guerra qué?» como quien pregunta por el tiempo, y las cajas mal apiladas.',
+   sec:'Era ingeniero de puentes en Járkov. Guarda el título en la taquilla y no se lo ha enseñado a nadie: le da miedo que le miren con pena.',
+   rum:'era ingeniero de puentes en su país y aquí trabaja de mozo',
+   conf:'Bueno. Vale. Sí. Era ingeniero. Aquí el título es papel. Pero las baldas de este almacén… aguantan. Eso sí lo sé.'},
+  mul:['Bueno. Vale.','Sin problema','Como dice Andrés: despacito'],
+  talk:['La balda tres del pasillo 5 aguanta 40 kilos. Tiene 52. Lo dejo dicho.','Sofía me corrige el español. Dice que hablo «como un señor de la tele».','Hoy hablé con mi madre. Está bien. Bueno. Vale.'],
+  tert:[{t:'{o}… ¿tú sabes cómo se dice «balda» en ucraniano? No. Nadie. Es broma. Perdón.',acc:['¡Jajaja, Dmytro ha hecho un chiste!','Me encanta cuando hablas, tío.'],rej:['¿Qué?']},
+   {t:'Sofía tiene función en el cole. Hace de árbol. Un árbol muy importante, {o}.',acc:['¡El mejor árbol del cole!','Grábalo, que lo queremos ver.'],rej:['Ah. Vale.']}]},
+ {k:'nerea',n:'Nerea',sur:'Castillo Vidal',face:'👩‍🦰',age:29,c:'España',from:'Albacete',live:'Tetuán',yrs:8,langs:['es','en'],role:'alm',pers:'lider',
+  rap:.75,trato:.65,punt:.82,act:.85,hon:.86,moral:68,exp:5,prev:'Carretillera en un almacén logístico de Alcalá',
+  circ:[{k:'madre',n:'Amparo'},{k:'compi',n:'Bea'},{k:'gata',n:'Canela'}],
+  past:['Se sacó el carné de carretillera a la primera y se tatuó una carretilla para celebrarlo.','En Alcalá montó un sistema de ubicaciones tan bueno que lo copiaron en tres naves. Nadie la nombró.'],
+  wish:'Hace listas. Listas de la compra, listas de tareas y listas de las listas que tiene que hacer.',asp:'jefe',fear:'fracaso',
+  psy:{def:'Carretillera con carné, tatuaje de carretilla y un plan quinquenal para el almacén que nadie le ha pedido.',
+   estres:'Hace listas y empieza a dar órdenes aunque no le toque. Si alguien rechista, más listas.',
+   feliz:'Que el muelle esté vacío a las diez y que se lo reconozcan en público. En público, ¿eh?',
+   odia:'A Kevin. A la gente que dice «eso no es mi trabajo». Y que le pregunten si «puede con eso» una caja de 20 kilos.',
+   sec:'Lleva tres meses mandando currículums a Mercadona para jefa de almacén. Tiene una entrevista y no sabe si ir.',
+   rum:'tiene una entrevista en Mercadona para jefa de almacén',
+   conf:'Vale, sí. Tengo entrevista. Aquí nadie me ve, jefe. Kevin grita más y parece que trabaja más. Dame un motivo para quedarme.'},
+  mul:['A ver, equipo','Vamos a organizarnos','Esto se hace así y punto'],
+  talk:['He reorganizado las ubicaciones del pasillo 7. De nada. Ya lo veréis.','Kevin ha roto otra caja de huevos. Tercera esta semana. Lo tengo apuntado.','Mi madre me pregunta desde Albacete si ya soy jefa. Le digo que casi.'],
+  tert:[{t:'{o}, ¿me ayudas a convencer al jefe de cambiar el muelle de sitio? Tengo un plano.',acc:['Enséñame ese plano.','Tú dirás, jefa.'],rej:['Nerea, otro plano no, por favor.']},
+   {t:'¿Tú has visto a Dmytro cómo cuadra las baldas? Es… eficiente. Muy eficiente.',acc:['Uy, uy, uy, Nerea…','Sí, es un crack. Y guapete.'],rej:['Pues como todos, ¿no?']}]},
+ {k:'pili',n:'Pili',sur:'Gómez Herrera',face:'👵',age:57,c:'España',from:'Talavera de la Reina',live:'Moratalaz',yrs:35,langs:['es'],role:'back',pers:'chismoso',
+  rap:.6,trato:.64,punt:.82,act:.64,hon:.8,moral:70,exp:22,prev:'Administrativa en una gestoría de Moratalaz durante veinte años',
+  circ:[{k:'pareja',n:'Julián'},{k:'hija',n:'Cristina',a:31},{k:'gata',n:'Michi'}],
+  past:['Llevó la contabilidad de una gestoría veinte años, hasta que el hijo del jefe «lo digitalizó todo». A ella también: a la calle.','Administra el grupo de Facebook «Moratalaz Informa», con 8.000 vecinos. Ahí se sabe todo antes que en las noticias.'],
+  wish:'Cree en el reponedor fantasma. En serio. Deja una magdalena en el almacén los viernes, «por si acaso».',asp:'influ',fear:'fantasmas',
+  psy:{def:'Lleva las cuentas al céntimo y la vida de todo el barrio al minuto.',
+   estres:'Se le acelera la lengua: cuanto más agobio, más cuenta. Y más gordo lo cuenta.',
+   feliz:'Un buen chisme confirmado, que la caja cuadre a la primera y el café con Inma a media mañana.',
+   odia:'Los ordenadores nuevos, enterarse de algo después que Valentina y el aire acondicionado de Fer.',
+   sec:'Fue ella quien publicó en «Moratalaz Informa» que el antiguo dueño iba a cerrar la tienda. El traspaso salió más barato por eso, y no se lo ha dicho al jefe.',
+   rum:'fue la que publicó en Facebook que la tienda iba a cerrar, y por eso se vendió barata',
+   conf:'Hija mía… jefe. Lo publiqué yo, sí. Pero ¡gracias a eso la compraste barata! Que yo no digo nada, ¿eh? Pero de nada.'},
+  mul:['Que yo no digo nada, ¿eh?','Hija mía','Esto queda entre tú y yo'],
+  talk:['En «Moratalaz Informa» dicen que van a abrir un Lidl. Yo no digo nada, ¿eh?','La caja de ayer cuadra al céntimo. Al céntimo. Que conste en acta.','Julián se ha comprado un patinete eléctrico a los 63. Estoy rezando.'],
+  tert:[{t:'{o}, ven, que te cuento una cosa… pero de aquí no sale, ¿eh?',acc:['Cuenta, cuenta.','¡Pili, que me tienes en ascuas!'],rej:['Pili, que tengo trabajo.','No quiero saberlo, Pili.']},
+   {t:'El viernes dejé la magdalena en el almacén y el lunes no estaba. Te lo digo, {o}: Paco existe.',acc:['¡Pili, me estás asustando!','Igual se la comió Kevin.'],rej:['Pili, los fantasmas no comen magdalenas.']}]},
+ {k:'wei',n:'Wei',sur:'Chen Lin',face:'🧑',age:31,c:'China',from:'Qingtian',live:'Usera',yrs:18,langs:['es','zh','en'],role:'back',pers:'bromista',
+  rap:.88,trato:.56,punt:.76,act:.7,hon:.9,moral:70,exp:9,prev:'Contable en el bazar de sus tíos y en una importadora de Fuenlabrada',
+  circ:[{k:'madre',n:'Mei Lan'},{k:'abuela',n:'Xiu Ying'}],
+  past:['Llegó a Usera con 13 años sin saber español. A los 15 ya hacía las cuentas del bazar de sus tíos.','Dice que ha suspendido seis veces el práctico del carné. Una, por aparcar encima de una rotonda.'],
+  wish:'Domina el Excel como nadie y hace chistes de fórmulas que solo entiende Ioana.',asp:'carnet',fear:'fracaso',
+  psy:{def:'Humor seco, Excel en vena y una calculadora en la cabeza. Si cuadra, está feliz; si no cuadra, también: es un reto.',
+   estres:'Suelta chistes cada vez peores, con cara de póker, hasta que alguien se ríe. Luego lo arregla todo en diez minutos.',
+   feliz:'Una hoja de cálculo sin errores, la sopa de su abuela y aprobar el práctico (algún día).',
+   odia:'Que le pregunten si es «del todo a cien», las fórmulas con referencias rotas y los examinadores de tráfico.',
+   sec:'No ha suspendido el práctico seis veces: lleva tres sin presentarse porque le da pánico conducir desde que su padre tuvo un accidente.',
+   rum:'no se presenta al examen de conducir porque le da pánico',
+   conf:'Ja. Me has pillado. No suspendo: no voy. Desde lo de mi padre no puedo con el volante. Prefiero que se rían de mis suspensos.'},
+  mul:['Cuadra','Es broma. O no','Técnicamente…'],
+  talk:['He hecho un Excel que predice cuándo se enfada Fer. Acierta el 94 %.','Técnicamente, hoy hemos vendido más que ayer. Técnicamente.','Mi abuela dice que trabajo demasiado. Lo dice mientras me pone a trabajar en el bazar los domingos.'],
+  tert:[{t:'{o}, ¿sabes por qué el Excel nunca se pierde? Porque siempre tiene celdas de referencia. …Es broma. O no.',acc:['Jajaja, Wei, eres terrible.','Me río por pena, ¿eh?'],rej:['Wei, por Dios.']},
+   {t:'Mañana tengo el práctico. Otra vez. Técnicamente, a la séptima va la vencida.',acc:['¡Esta vez sí, Wei!','Mucha suerte, que te lo mereces.'],rej:['Wei, llevas así un año.']}]},
+ {k:'fer',n:'Fer',sur:'Ruiz de la Torre',face:'👨‍🦲',age:45,c:'España',from:'Madrid de toda la vida',live:'Getafe',yrs:0,langs:['es','en'],role:'back',pers:'quejica',
+  rap:.5,trato:.45,punt:.66,act:.32,hon:.7,moral:52,exp:18,prev:'Director de sucursal bancaria en Chamberí (hasta el ERE)',
+  circ:[{k:'hijo',n:'Hugo',a:12},{k:'hija',n:'Carla',a:9}],
+  past:['Fue director de sucursal en Chamberí hasta que el banco cerró la oficina y le metió en un ERE con 43 años.','Se divorció hace dos años; ve a sus hijos fines de semana alternos y paga la pensión con lo justo.'],
+  wish:'Pone el aire acondicionado a 26 grados «por la salud» y tiene una guerra fría con Pili por el mando.',asp:'opos',fear:'fin',
+  psy:{def:'Ex director de banco que ahora cuadra tickets. Lo lleva fatal y te lo cuenta en cuanto te descuidas.',
+   estres:'Suspira muy fuerte y se queja del sistema, del ordenador y del país. Luego lo hace bien, pero que conste que se ha quejado.',
+   feliz:'Los fines de semana con Hugo y Carla, un temazo de los 80 en la radio y que alguien le pida consejo «de banca».',
+   odia:'Que le recuerden lo del banco, el frío en la oficina, a Pili y la palabra «resiliencia».',
+   sec:'No les ha dicho a sus hijos que ya no es director de banco. Creen que trabaja «en la central». Los fines de semana se pone traje para verles.',
+   rum:'se pone traje para ver a sus hijos porque no les ha dicho que ya no es director de banco',
+   conf:'¿Y qué quieres que les diga? ¿Que papá cuadra tickets? …Ya lo sé. Ya lo sé. Estoy con las oposiciones para contárselo con algo bueno.'},
+  mul:['Esto en el banco no pasaba','Qué país','Yo no me quejo, ¿eh?, pero…'],
+  talk:['Esto en el banco no pasaba. En el banco pasaban otras cosas, peores, pero esta no.','Hoy toca el tema 22 de las oposiciones: el procedimiento administrativo. Más emocionante que esta caja, seguro.','¿Quién ha bajado el aire a 22? Pili. Ha sido Pili.'],
+  tert:[{t:'{o}, ¿tú sabes lo que cobraba yo en el banco? No, mejor no te lo digo, que me deprimo.',acc:['Venga, Fer, que aquí también se vive.','Ya será menos, hombre.'],rej:['Fer, otra vez no.','Pues ahora cobras como yo. Bienvenido.']},
+   {t:'Este finde tengo a los críos. Hugo quiere ir al Bernabéu y yo, con este sueldo, al parque.',acc:['El parque también mola, Fer.','Llévalos al Rayo, que es más barato.'],rej:['Pues no vayas.']}]},
+ {k:'ioana',n:'Ioana',sur:'Popescu',face:'👱‍♀️',age:26,c:'Rumanía',from:'Brașov',live:'Alcorcón',yrs:10,langs:['es','ro','it','en'],role:'back',pers:'currante',
+  rap:.8,trato:.6,punt:.9,act:.9,hon:.88,moral:72,exp:4,prev:'FP de Administración y Finanzas con matrícula y prácticas en una gestoría de Alcorcón',
+  circ:[{k:'pareja',n:'Florin'},{k:'madre',n:'Doina'},{k:'perro',n:'Bimba'}],
+  past:['Llegó con 16 años, sin saber español, y sacó el FP de Administración con matrícula de honor.','Su madre limpia casas en Pozuelo desde hace diez años; Ioana le lleva las cuentas en una libreta.'],
+  wish:'Lleva un planificador de papel con pegatinas de colores. Cada color es una emoción. El rojo es Fer.',asp:'boda',fear:'jefe',
+  psy:{def:'La que llega la primera, se va la última y aún pregunta si hay algo más que hacer.',
+   estres:'Trabaja más rápido y deja de comer. Si le dices que pare, dice «ya casi» durante tres horas.',
+   feliz:'Que su madre deje de limpiar casas, las pegatinas nuevas y los domingos con Florin en la Casa de Campo.',
+   odia:'Los errores que no son suyos, a los que se escaquean y que Fer le explique cosas que ella ya sabe.',
+   sec:'La boda con Florin está más que preparada, pero no tiene fecha: todo lo que ahorran va a que su madre deje de limpiar casas.',
+   rum:'ha aplazado su boda para pagarle la jubilación a su madre',
+   conf:'No es aplazar, jefe. Es… ordenar prioridades. Florin lo entiende. Mi madre no lo sabe. Primero ella. Luego el vestido.'},
+  mul:['Ya casi','Hai, hai','Lo apunto'],
+  talk:['He cuadrado el arqueo de ayer. Faltaba un céntimo. Lo he encontrado: estaba debajo de la grapadora.','Florin dice que trabajo demasiado. Le he hecho una pegatina para que deje de decirlo.','Mi madre hoy limpia en Pozuelo. Algún día solo limpiará su casa. Algún día.'],
+  tert:[{t:'{o}, ¿tienes cinco minutos? Te enseño cómo llevo el arqueo. Con colores.',acc:['¡Qué ordenada eres, Ioana!','Enséñame, que yo soy un desastre.'],rej:['Ioana, por favor, descansa un poco.']},
+   {t:'Florin y yo hemos visto un salón para la boda. Precioso. Carísimo. Precioso.',acc:['¡Qué ilusión!','Ahorra, que merece la pena.'],rej:['Las bodas son un timo.']}]},
+ {k:'vale',n:'Valentina',sur:'Restrepo Gaviria',face:'👩‍🦱',age:23,c:'Colombia',from:'Medellín',live:'Tetuán',yrs:3,langs:['es','en'],role:'rrpp',pers:'chismoso',
+  rap:.62,trato:.82,punt:.46,act:.6,hon:.75,moral:72,exp:2,prev:'Dependienta en una tienda de ropa de Fuencarral y creadora de contenido «a ratos»',
+  circ:[{k:'madre',n:'Luz Marina'},{k:'compi',n:'Daniela'},{k:'perro',n:'Coco'}],
+  past:['Vino de Medellín a hacer un máster de Marketing Digital. Lo dejó a medias porque «el profe no sabía de TikTok».','Tiene una cuenta de Instagram de súpers de Madrid con 15.000 seguidores. El jefe aún no sabe que sale la tienda.'],
+  wish:'Hace stories de todo: del pan, del cielo, de la cola. Si no hay story, no ha pasado.',asp:'influ',fear:'soledad',
+  psy:{def:'Simpatía de Medellín, móvil de última generación y un radar para los chismes que ya quisiera la DGT.',
+   estres:'Sonríe más. Mucho más. Hasta que llega a casa y llama a su mamá llorando por videollamada.',
+   feliz:'Un comentario bonito en sus redes, un chisme jugoso con Pili y que alguien pronuncie bien «parcera».',
+   odia:'Que la llamen «la de las redes» como si fuera poca cosa, el frío de enero y que Tess le diga que «trabaje un poco».',
+   sec:'Su cuenta «Súpers de Madrid», con 15.000 seguidores, sube vídeos de la tienda… y de los clientes. Sin permiso de nadie.',
+   rum:'sube vídeos de los clientes a su Instagram sin pedir permiso',
+   conf:'¡Ay, no, parce! Es contenido, no es nada malo… Bueno, vale, borro los de los clientes. Los de la tienda los dejo, que nos hacen publicidad gratis.'},
+  mul:['¡Ay, qué pena!','Parce','¡Qué chimba!'],
+  talk:['¡Qué chimba la luz de la frutería hoy! Ya subí la story.','Mi mamá me pregunta si como bien. Le digo que sí y le mando foto de un táper de Ioana.','Pili me ha contado una cosa… no, no, no puedo. Bueno, luego.'],
+  tert:[{t:'{o}, ven, sal en mi story. ¡Saluda! No, así no, con más energía.',acc:['¡Holaaaa, seguidores!','Vale, pero sácame guap{o|a}.'],rej:['Valentina, ni se te ocurra grabarme.']},
+   {t:'Ay, {o}, ¿sabes lo que me ha contado Pili? Bueno, no te lo puedo decir. Bueno, sí.',acc:['¡Cuenta, cuenta!','Ya estabas tardando.'],rej:['No quiero saberlo, Vale.']}]},
+ {k:'youssef',n:'Youssef',sur:'El Amrani',face:'🧔🏽',age:36,c:'Marruecos',from:'Tánger',live:'Lavapiés',yrs:12,langs:['es','ar','fr','en'],role:'rrpp',pers:'servicial',
+  rap:.65,trato:.88,punt:.72,act:.76,hon:.9,moral:74,exp:8,prev:'Guía turístico en Tánger y recepcionista de noche en un hostal de Sol',
+  circ:[{k:'pareja',n:'Salma'},{k:'madre',n:'Khadija'},{k:'sobri',n:'Hamza',a:8}],
+  past:['En Tánger era guía turístico: habla cuatro idiomas y regatea en los cuatro.','Seis años de recepcionista de noche en un hostal de Sol. Ha visto cosas que no se pueden contar a la hora de comer.'],
+  wish:'Prepara té con hierbabuena para toda la plantilla los viernes. Si no le dejas, se ofende.',asp:'boda',fear:'fin',
+  psy:{def:'El que ayuda al turista perdido, a la señora del carro y al compañero agobiado, y luego llega tarde a su propia comida.',
+   estres:'Se pone a ayudar a todo el mundo a la vez. Cuantos más problemas, más ayuda. Hasta que se olvida de sí mismo.',
+   feliz:'Un turista que se va contento, el té de los viernes y planear la boda con Salma (aunque los números no salgan).',
+   odia:'Que le pidan los papeles con la mirada, que se tire el pan y que alguien se ría de un cliente que no habla español.',
+   sec:'La familia de Salma quiere una boda de 300 invitados en Tánger. Ha pedido un préstamo que no puede pagar y Salma no lo sabe.',
+   rum:'ha pedido un préstamo enorme para una boda de 300 invitados en Tánger',
+   conf:'Jefe, en mi tierra la boda es de toda la familia. De toda. No puedo decir que no. Ya veré cómo lo pago. Poco a poco.'},
+  mul:['Tranquilo, hermano','Sin problema, amigo','Wallah, te lo juro'],
+  talk:['Hoy he llevado a unos alemanes al pasillo de las cervezas. Se sentían como en casa.','El viernes, té con hierbabuena para todos. El que no venga, que avise.','Salma quiere 300 invitados. Yo quiero 30. Al final serán 300.'],
+  tert:[{t:'{o}, ¿has comido? No has comido. Toma, que me ha sobrado cuscús.',acc:['Youssef, eres un sol.','¡Te quiero, hermano!'],rej:['Gracias, pero no tengo hambre.']},
+   {t:'Salma me ha pasado la lista de invitados. Trescientos, {o}. ¡Trescientos!',acc:['Madre mía, eso es un pueblo.','Pues invita al jefe, que pague algo.'],rej:['Haz una boda pequeña, hombre.']}]},
+ {k:'toni',n:'Toni',sur:'Brea Lozano',face:'🧔',age:41,c:'España',from:'Cádiz',live:'Embajadores',yrs:15,langs:['es'],role:'rrpp',pers:'pasota',
+  rap:.45,trato:.76,punt:.36,act:.36,hon:.76,moral:68,exp:6,prev:'Monologuista en bares de Lavapiés y camarero de lo que salga',
+  circ:[{k:'perro',n:'Pancho'},{k:'madre',n:'Pepi'}],
+  past:['Llegó de Cádiz a triunfar como cómico. Triunfó un jueves de 2014 en un bar de Lavapiés. Desde entonces, camarero.','Toca la guitarra en «Los Lineales», un grupo de rumba-trap que ensaya en un trastero de Embajadores.'],
+  wish:'Tiene una teoría para todo y ninguna prisa para nada. «Eso mañana, que hoy hace bueno.»',asp:'musica',fear:'fracaso',
+  psy:{def:'Gaditano, guitarrista y filósofo de muelle. No tiene prisa ni la va a tener.',
+   estres:'¿Estrés? Se encoge de hombros, suelta una de Cádiz y se toma un café. Lo raro es que a veces funciona.',
+   feliz:'Un concierto con veinte personas, una ración de pescaíto aunque sea en Madrid y que Tess se ría de sus chistes.',
+   odia:'Las prisas, los lunes, el reloj de fichar y que le pregunten «¿y tú de qué trabajas de verdad?».',
+   sec:'Lleva dos años con Tess y nadie lo sabe. Y la voz misteriosa de «Los Lineales», la de la peluca rosa, es alguien de la tienda.',
+   rum:'sale con Tess desde hace dos años a escondidas',
+   conf:'Quillo, jefe… Lo de Tess es serio. No lo decimos porque ella no quiere que se hable. Tú, como si nada, ¿eh?'},
+  mul:['Quillo','Eso mañana','Tranquilidad, que la vida es corta'],
+  talk:['Eso mañana, que hoy hace bueno. Mañana también hará bueno, pero eso ya lo veremos.','Los Lineales tocamos el sábado en un bar de Embajadores. Entrada libre, consumición obligatoria, aplausos opcionales.','En Cádiz esta cola la arreglamos con una chirigota.'],
+  tert:[{t:'Quillo, {o}, ¿te sabes la rumba de la Caja 3? «Pita el escáner, pita mi corazón…»',acc:['¡Jajaja, temazo!','Toni, súbela a Spotify ya.'],rej:['Toni, a currar.','Eso no rima, Toni.']},
+   {t:'{o}, el sábado tocamos. Si vienes, te presento a nuestra cantante. Bueno, no, que es secreta.',acc:['¿Secreta? ¡Ahora voy seguro!','Allí estaré.'],rej:['No me gusta la rumba-trap.']}]},
+ {k:'tess',n:'Tess',sur:'Santos Reyes',face:'👩🏽',age:48,c:'Filipinas',from:'Manila',live:'Prosperidad',yrs:20,langs:['es','en','tl'],role:'rrpp',pers:'quejica',
+  rap:.6,trato:.7,punt:.86,act:.62,hon:.86,moral:60,exp:12,prev:'Interna en casas del barrio de Salamanca durante quince años',
+  circ:[{k:'madre',n:'Lorna'},{k:'hijo',n:'Mark',a:22}],
+  past:['Quince años de interna en el barrio de Salamanca: crió a tres niños que no eran suyos mientras el suyo crecía en Manila.','Su hijo Mark estudia Ingeniería en Manila gracias a cada euro que ella ha mandado.'],
+  wish:'Se queja de todo y luego lo hace todo. Bien. Mejor que nadie. Pero quejándose.',asp:'madre',fear:'fin',
+  psy:{def:'Se queja del frío, del ruido, de los jóvenes y del jefe. Y luego es la primera en quedarse si hace falta.',
+   estres:'Se queja en tagalo, muy bajito. Si la oyes quejarse en español, ya es grave.',
+   feliz:'Las videollamadas con Mark, el arroz de su madre y que Toni le haga reír aunque ella diga que no tiene gracia.',
+   odia:'Que los jóvenes miren el móvil en el trabajo (sobre todo Valentina), el frío de Madrid y que le hablen despacio como si no entendiera.',
+   sec:'Sale con Toni desde hace dos años y no lo cuenta porque su madre, en Manila, quiere que vuelva y se case con un viudo rico de su pueblo.',
+   rum:'sale con Toni a escondidas porque su madre le tiene buscado un viudo rico en Filipinas',
+   conf:'Ay, Dios mío. Sí. Toni. No es lo que quiere mi madre. Pero es lo que quiero yo. Por primera vez en veinte años, jefe, lo que quiero yo.'},
+  mul:['Ay, Dios mío','Siempre igual','Los jóvenes de ahora…'],
+  talk:['Ay, Dios mío, qué frío hace en la tienda. En Manila ahora estamos a 32 grados.','Valentina con el móvil otra vez. Siempre igual. Los jóvenes de ahora…','Mark ha aprobado Cálculo. ¡Ingeniero, mi hijo! Bueno, casi.'],
+  tert:[{t:'{o}, ¿tú has visto a Valentina hoy? Con el móvil. Siempre igual.',acc:['Ya, Tess, es que es muy joven.','Díselo tú, que a ti te hace caso.'],rej:['Déjala, Tess, que no hace daño.']},
+   {t:'Mark me ha mandado una foto con la bata del laboratorio. Mira, {o}. ¡Mira!',acc:['¡Qué orgullo, Tess!','Es igualito a ti.'],rej:['Ah, muy bien.']}]},
+ {k:'inma',n:'Inma',sur:'Velasco Prieto',face:'👩',age:44,c:'España',from:'Zamora',live:'Aluche',yrs:20,langs:['es','en'],role:'rrhh',pers:'lider',
+  rap:.7,trato:.8,punt:.86,act:.76,hon:.88,moral:70,exp:15,prev:'Técnica de RR.HH. en una cadena de gimnasios',
+  circ:[{k:'hijo',n:'Bruno',a:15},{k:'gata',n:'Luna'}],
+  past:['Llevó la selección de personal de una cadena de gimnasios: entrevistó a 2.000 monitores. Ninguno sabía lo que era un contrato.','Se divorció a los 38 y se fue con su hijo a Aluche. Dice que fue lo mejor que ha hecho, después de Bruno.'],
+  wish:'Tiene una carpeta para cada persona de la tienda. Con pestañas de colores. Y una carpeta para las carpetas.',asp:'musica',fear:'ridiculo',
+  psy:{def:'Seria, justa y con una carpeta para cada cosa. Si hay un conflicto, Inma ya lo sabe antes de que empiece.',
+   estres:'Se pone más formal, habla en plural («vamos a calmarnos todos») y lo apunta todo en un pósit.',
+   feliz:'Que alguien en prueba se quede, el café con Pili y cantar a escondidas en el autobús 34.',
+   odia:'Los despidos mal hechos, los rumores que hacen daño y que la llamen «la de personal» como si fuera de Hacienda.',
+   sec:'Es «La Reina del Mostrador», la cantante con peluca rosa y gafas de Los Lineales, el grupo de rumba-trap de Toni. Nadie más de la tienda lo sabe.',
+   rum:'es la cantante con peluca rosa del grupo de rumba-trap de Toni',
+   conf:'Vale. Vamos a calmarnos todos. Sí, soy yo. Con la peluca nadie me reconoce y puedo ser otra persona dos horas. No lo pongas en mi carpeta.'},
+  mul:['Vamos a calmarnos todos','Lo apunto en tu carpeta','Esto lo hablamos con calma'],
+  talk:['He actualizado las carpetas de todos. Kevin ya va por la tercera.','Bruno dice que soy «la jefa de los jefes». Le he dicho que no, que solo soy de personal.','Hoy toca revisar los periodos de prueba. Vamos a calmarnos todos.'],
+  tert:[{t:'{o}, ¿cómo estás de verdad? No el «bien» de siempre. De verdad.',acc:['Pues… ahora que lo preguntas, regular.','Bien, Inma, de verdad. Gracias.'],rej:['Bien, bien. Me voy, que tengo lío.']},
+   {t:'¿Has oído la rumba esa que suena por el barrio? «Pita el escáner». Dicen que la canta una tal Reina del Mostrador.',acc:['¡Me encanta esa canción!','Qué voz tiene la tía.'],rej:['No me gusta la rumba.']}]},
+ {k:'jhon',n:'Jhon Fredy',sur:'Ospina Cárdenas',face:'👨🏽',age:33,c:'Colombia',from:'Cali',live:'Ciudad Lineal',yrs:5,langs:['es','en'],role:'rrhh',pers:'timido',
+  rap:.6,trato:.74,punt:.82,act:.7,hon:.9,moral:64,exp:4,prev:'Psicólogo en un colegio de Cali; aquí, homologando el título mientras trabaja',
+  circ:[{k:'madre',n:'Esperanza'},{k:'compi',n:'Sergio'},{k:'gata',n:'Kira'}],
+  past:['En Cali era psicólogo de un colegio. En España lleva tres años esperando a que le homologuen el título.','Vive en un piso de Ciudad Lineal con cinco compañeros y un horario de ducha pegado en la nevera.'],
+  wish:'Escucha más de lo que habla. Cuando habla, alguien acaba llorando (de alivio).',asp:'piso',fear:'despido',
+  psy:{def:'Psicólogo sin título homologado, tímido hasta el apuro y el que mejor escucha de toda la tienda.',
+   estres:'Se le pone la voz bajita y pide perdón por todo. Luego, en casa, lo apunta todo para entenderlo.',
+   feliz:'Que alguien le diga «gracias por escucharme», la salsa de los domingos y una ducha sin turno.',
+   odia:'Hablar en público, que Kevin le llame «el psicólogo» con retintín y las colas de la oficina de extranjería.',
+   sec:'Su permiso de residencia depende de este contrato. Si le echan, en tres meses podría tener que volver a Cali.',
+   rum:'si le echan, pierde los papeles y tiene que volver a Colombia',
+   conf:'Perdón… sí. Si me quedo sin contrato, se me cae el permiso. Por eso nunca digo que no. No le pido nada, jefe. Solo… que lo sepa.'},
+  mul:['Perdón, ¿eh?','Te entiendo','¿Y eso cómo te hace sentir?'],
+  talk:['Perdón, ¿eh? Solo quería decir que hoy el ambiente está mejor. Bueno. Eso.','En mi piso hay horario para la ducha. A mí me toca a las 6:40. Tres minutos.','Kevin me ha llamado «el psicólogo» otra vez. Lo apunto. Para entenderlo, no para nada malo.'],
+  tert:[{t:'{o}, perdón, ¿eh? Te noto rar{o|a} hoy. ¿Y eso cómo te hace sentir?',acc:['Pues mira, ahora que lo dices…','Jhon, eres un sol, de verdad.'],rej:['Jhon, no me psicoanalices, por favor.']},
+   {t:'Hoy me ha escrito mi mamá desde Cali. Pregunta si ya soy jefe. Le he dicho que casi. Perdón, que miento.',acc:['Jajaja, tú dile que sí.','Tu mamá estaría orgullosa igual.'],rej:['Ya será menos.']}]}
+];
+const CASTK={};CAST.forEach(C=>{CASTK[C.k]=C;});
+/* Relaciones de partida entre los del elenco: [a, b, {af, conf, rom, riv, par}, nota que sale en la ficha]. */
+const CAST_REL=[
+ ['rocio','kevin',{af:-15,conf:25,riv:10},'Kevin le debe dinero a Rocío'],
+ ['rocio','awa',{af:60,conf:55},'Rocío le cuida a Aminata algunas tardes'],
+ ['rocio','andres',{af:55,conf:60},'Veteranos: se cubren las espaldas desde siempre'],
+ ['kevin','nerea',{af:-45,conf:20,riv:70},'Rivales: los dos quieren ser encargado/a de Almacén'],
+ ['kevin','dmytro',{af:-30,riv:20},'Kevin se burla de su acento'],
+ ['kevin','andres',{af:-20,conf:30},'Andrés le enseñó el oficio; Kevin le llama «abuelo»'],
+ ['kevin','vale',{af:10,rom:35},'Kevin le tira los tejos a Valentina. Ella, ni caso'],
+ ['kevin','jhon',{af:-40,riv:25},'Kevin le llama «el psicólogo» con retintín'],
+ ['nerea','dmytro',{af:40,conf:30,rom:45},'A Nerea le gusta Dmytro. Él no se entera'],
+ ['toni','tess',{af:65,conf:80,rom:85,par:1},'Pareja desde hace dos años (a escondidas)'],
+ ['pili','vale',{af:50,conf:45},'Las dos de Radio Pasillo'],
+ ['pili','fer',{af:-30,riv:35},'Guerra fría por el mando del aire acondicionado'],
+ ['pili','inma',{af:45,conf:55},'Café de media mañana, todos los días'],
+ ['wei','ioana',{af:55,conf:50},'Comparten Excel, táper y chistes que nadie más pilla'],
+ ['fer','ioana',{af:-20,conf:20},'Fer le explica cosas que ella ya sabe'],
+ ['wei','yeray',{af:40,conf:45},'Wei le ayuda con las mates (y le guarda un secreto)'],
+ ['yeray','vale',{af:40,conf:30},'Graban vídeos juntos para redes'],
+ ['youssef','awa',{af:45,conf:40},'Vecinos de Lavapiés: van juntos en el metro'],
+ ['inma','jhon',{af:50,conf:45},'Inma le contrató y le defiende'],
+ ['inma','toni',{af:35,conf:60},'Comparten un secreto de rumba-trap'],
+ ['tess','vale',{af:-25,riv:15},'Tess no soporta que Valentina mire el móvil'],
+ ['andres','dmytro',{af:45,conf:35},'Andrés le enseña el muelle; Dmytro le calcula las baldas'],
+ ['andres','nerea',{af:30,conf:30},'Andrés la defiende cuando Kevin se pasa']
+];
+const castRel=(a,b)=>CAST_REL.find(r=>(r[0]===a&&r[1]===b)||(r[0]===b&&r[1]===a));
+/* Las notas de relación de alguien del elenco con quien está ahora en plantilla. */
+function castRelNotes(e){
+  if(!e||!e.cast||!meta)return [];
+  return CAST_REL.filter(r=>r[0]===e.cast||r[1]===e.cast).map(r=>{const o=meta.emp.find(x=>x.cast===(r[0]===e.cast?r[1]:r[0]));return o?r[3]:null;}).filter(Boolean);
+}
+const CAST_START=[['atc','rocio'],['back','pili'],['rrpp','vale'],['alm','andres']];
+const CAST_CD=4;
+/* Chapa del elenco (📛) y de los NPC de partidas viejas (🕰️ «de antes»). */
+const castB=e=>e&&e.cast?' <span class="cst" title="Elenco fijo de VitchMarket">📛</span>':e&&e.old?' <span class="cst" title="De antes (partida vieja)">🕰️</span>':'';
+/* lvl 0: libres, fuera de la bolsa y sin el enfriamiento de quien se fue; 1: sin enfriamiento; 2: también los de la bolsa. */
+function castFree(m,taken,lvl){
+  lvl=lvl||0;const T=new Set(sArr(taken)),inS=new Set(sArr(m.emp).filter(e=>e&&e.cast).map(e=>e.cast)),O=m.castOut||{};
+  const P=lvl>=2?new Set():new Set(sArr(m.pool).map(c=>c&&c.cast).filter(Boolean));
+  return CAST.filter(C=>!inS.has(C.k)&&!T.has(C.n)&&!P.has(C.k)&&(lvl>=1||!O[C.k]||(m.day||1)-(O[C.k].d||0)>=CAST_CD));
+}
+function castPick(role,m,taken,maxLvl){
+  for(let l=0;l<=(maxLvl==null?1:maxLvl);l++){const F=castFree(m,taken,l);if(!F.length)continue;const own=F.filter(C=>C.role===role);return pick(own.length?own:F).k;}
+  return null;
+}
+function castBio(C,day,O){
+  if(O&&O.bio){const B=JSON.parse(JSON.stringify(O.bio));B.circ=sArr(B.circ);B.past=sArr(B.past);B.f=B.f||{};B.next=(day||1)+ri(1,3);return B;}
+  return {age:C.age,from:C.from,live:C.live,yrs:C.yrs||0,past:C.past.slice(),wish:C.wish,circ:C.circ.map(x=>Object.assign({},x)),asp:C.asp,fear:C.fear,f:{},s:0,next:(day||1)+ri(1,3),bar:C.bar||('Bar '+C.n)};
+}
+/* Crea a alguien del elenco (empleado/a o candidato/a), con todo fijo. Si ya trabajó aquí, vuelve con su vida y su diario. */
+function castEmp(k,role,m,opt){
+  const C=CASTK[k],O=(m.castOut||{})[k];role=ROLES[role]?role:C.role;m.eid=(m.eid||0)+1;
+  const e={id:m.eid,name:C.n,sur:C.sur,face:C.face,role,rap:C.rap,trato:C.trato,punt:C.punt,act:C.act,hon:C.hon,moral:C.moral||65,wage:wageOf(role),days:0,warn:0,trial:0,focus:0,off:0,st:blankSt(),
+    nat:Math.max(0,NATS.findIndex(x=>x.c===C.c)),langs:C.langs.slice(),pers:C.pers,cast:k,exp:C.exp,bio:castBio(C,m.day,O)};
+  if(O){e.back=O.n||1;e.moral=clamp(e.moral+(O.kind==='fire'?-12:O.kind==='quit'?-5:5),0,100);e.log=sArr(O.log).concat(['T'+(m.day||1)+': Vuelve a la tienda (se fue el turno '+O.d+')']).slice(-6);}
+  Object.assign(e,opt||{});e.cast=k;delete e.relax;
+  return e;
+}
+/* Lo que recuerda quien vuelve, según cómo se fue (sale en su currículum como «antes»). */
+const CAST_MEM={fire:['«Me echaste el turno %d. No te guardo rencor… mucho. Necesito el curro.»','«La última vez acabé en la calle. Esta vez vengo a demostrarte que te equivocaste.»'],
+ quit:['«Me fui dando un portazo el turno %d, lo sé. Me arrepentí al llegar a la esquina.»','«Me fui mal, y lo siento. ¿Empezamos de cero?»'],
+ good:['«Me fui en buenos términos el turno %d. Echaba de menos esto. Y a la gente.»','«Lo de fuera no salió como pensaba. ¿Hay sitio para mí otra vez?»']};
+function candPrev(c){
+  if(!c||!c.cast)return pick(PREV);
+  const C=CASTK[c.cast],O=meta&&meta.castOut&&meta.castOut[c.cast];
+  if(!O)return C.prev;
+  return 'Ya trabajó aquí hasta el turno '+O.d+' ('+String(O.why||'se fue').replace(/\.$/,'')+'). '+pick(CAST_MEM[O.kind]||CAST_MEM.good).replace('%d',O.d);
+}
+/* Al irse (baja): queda fuera con memoria, su vida y su diario, y podrá volver como candidato/a. */
+function castLeave(e,why){
+  if(!e||!e.cast||!meta)return;meta.castOut=meta.castOut||{};const P=meta.castOut[e.cast]||{},w=String(why||'');
+  const kind=/despid|votado|topo|competencia|tocó|echa/i.test(w)?'fire':/portazo|dimit|se fue tras|ánimo/i.test(w)?'quit':'good';
+  meta.castOut[e.cast]={d:meta.day,why:w.slice(0,90),kind,n:(P.n||0)+1,bio:e.bio?JSON.parse(JSON.stringify(e.bio)):null,log:sArr(e.log).slice(-4)};
+}
+/* Muletillas: a veces las mete al principio o al final de lo que dice. */
+function castMul(e,t,p){
+  const C=e&&e.cast&&CASTK[e.cast];if(!C||!t||Math.random()>=(p==null?0.3:p))return t;
+  const m=pick(C.mul),end=/[.!?…»]$/.test(m);t=String(t);
+  if(Math.random()<0.5&&!/^[«¡¿]/.test(t))return m+(end?' ':'. ')+t;
+  return t+' '+m+(end?'':'.');
+}
+/* Ficha psicológica («🧠 Cómo es»), las notas de relación y el secreto (oculto hasta que sale: meta.secR). */
+function castPsyHtml(e,mini){
+  const C=e&&e.cast&&CASTK[e.cast];if(!C)return e&&e.old?'<div class="es bio">🕰️ <i>De antes: llegó antes de que la tienda tuviera su plantilla de siempre.</i></div>':'';
+  const P=C.psy,sec=meta&&meta.secR&&meta.secR[e.cast],RN=castRelNotes(e);
+  if(mini)return `<div class="es bio">🧠 <b>${esc(P.def)}</b> <i>«${esc(C.mul[0])}»</i></div>`;
+  return `<div class="sdoc bio"><h6><span>🧠 Cómo es</span><span>📛 ${esc(C.n)} ${esc(C.sur)}</span></h6><dl>
+    <dt>En una frase</dt><dd>${esc(P.def)}</dd><dt>Con agobio</dt><dd>${esc(P.estres)}</dd><dt>Le hace feliz</dt><dd>${esc(P.feliz)}</dd>
+    <dt>No soporta</dt><dd>${esc(P.odia)}</dd><dt>Siempre dice</dt><dd>${C.mul.map(m=>'«'+esc(m)+'»').join(' · ')}</dd>
+    ${RN.length?`<dt>Historias</dt><dd>${RN.map(esc).join(' · ')}</dd>`:''}
+    <dt>Secreto</dt><dd>${sec?'🔓 '+esc(P.sec):'🔒 <i>Guarda algo. Algún día saldrá.</i>'}</dd></dl></div>`;
+}
 /* Rasgos ocultos 0–1: rap (rapidez), trato, punt (puntualidad), act (actitud). Moral 0–100. */
 function newEmp(role,m,opt,taken){
+  /* Plantilla NPC = elenco fijo (CAST). Lo aleatorio solo para jugadores reales, partidas viejas o si no queda nadie del elenco. */
+  if(!(opt&&opt.real)){const ck=opt&&opt.cast&&CASTK[opt.cast]?opt.cast:castPick(role,m,taken);if(ck)return castEmp(ck,role,m,opt);}
   const used=new Set(m.emp.map(e=>e.name).concat(taken||[]));
   let nat=wpick(NATS),pool=nat.n.filter(x=>!used.has(x[0]));
   if(!pool.length){nat=NATS[0];pool=nat.n.filter(x=>!used.has(x[0]));if(!pool.length)pool=nat.n;}
@@ -4131,9 +4536,9 @@ function newEmp(role,m,opt,taken){
   Object.assign(e,opt||{});if(!e.real&&!e.bio)e.bio=mkBio(e,m.day);socEnsure(e);
   return e;
 }
-/* La plantilla inicial es gente con oficio: rasgos visibles comprimidos a ~0,4–0,85 (ni desastres ni estrellas), para que la partida
-   no dependa de que te toque un cajero lentísimo. Los que contratas después vienen con el abanico entero (0,15–0,95). */
-const defMeta=best=>{const m={day:1,money:3000000,eco2:1,eco3:1,rep:5,up:{scanner:0,fan:0,coffee:0},emp:[],eid:0,stock:{},back:{},orders:[],vac:{atc:1,alm:1},best:best||1};CAT.forEach(x=>{m.stock[x.id]=4;});['atc','back','rrpp','alm'].forEach(r=>{const e=newEmp(r,m);['rap','trato','punt','act'].forEach(k=>{e[k]=Math.round((0.35+0.5*e[k])*100)/100;});m.emp.push(e);});return m;};
+/* La plantilla inicial es siempre la misma «familia» del elenco fijo (CAST_START): Rocío (Caja), Pili (Backoffice), Valentina (RR.PP.)
+   y Andrés (Almacén), gente con oficio (rasgos ~0,45–0,9). El resto del elenco llega como candidatos. */
+const defMeta=best=>{const m={day:1,money:3000000,eco2:1,eco3:1,rep:5,up:{scanner:0,fan:0,coffee:0},emp:[],eid:0,stock:{},back:{},orders:[],vac:{atc:1,alm:1},best:best||1};CAT.forEach(x=>{m.stock[x.id]=4;});CAST_START.forEach(([r,k])=>{m.emp.push(newEmp(r,m,{cast:k}));});m.cast1=1;return m;};
 let meta=defMeta();
 let run=null,last=0,muted=false,uid=0,cid=Date.now()%1e9,toastQ=[];
 /* ===== Desbloqueo progresivo (el jefe y la partida en solitario; las pantallas de los empleados reales no) =====
@@ -4900,10 +5305,11 @@ const serio=()=>room?{time:25}:{pause:true};
 function bScene(o){if(bossScn()&&unl(o.dep||'rrhh'))return scene(o);if(o.onPick&&o.def!=null)try{o.onPick(o.def);}catch(e){console.warn('scene',e);}return false;}
 /* La escena abierta «retiene» su aviso: nadie lo coge solo mientras decides. */
 const sceneHold=id=>!!(sceneCur&&sceneCur.tid===id);
-const empTag=e=>esc(e.name)+' '+flag(e);
+const empTag=e=>esc(e.name)+castB(e)+' '+flag(e);
 /* Sacar a alguien de la tienda a mitad de turno (dimisión o despido): suelta su aviso o la Caja 3. */
 /* Bajas: nadie se va sin que el jefe se entere. meta.bajas = últimas 15 con motivo (RR.HH., 👥 y cierre). */
 function baja(e,why,silent){
+  try{castLeave(e,why);}catch(x){}
   meta.bajas=[{d:meta.day,f:e.face,n:e.name,r:e.role,real:!!e.real,why}].concat(meta.bajas||[]).slice(0,15);
   try{radio('🚪',e.name+' deja la tienda: '+why+'.');fact('baja',e,null,0,meta.emp.filter(o=>o!==e&&!o.real));}catch(x){}
   if(run&&run.bajas)run.bajas.push(e.name);else if(run)run.bajas=[e.name];
@@ -5725,6 +6131,10 @@ function ensureMeta(){
     if(e.bio){e.bio.circ=toArr(e.bio.circ);e.bio.past=toArr(e.bio.past);e.bio.f=e.bio.f||{};}
     socEnsure(e);
   });
+  /* Elenco fijo: en partidas de antes, los NPC aleatorios se quedan marcados «de antes» (🕰️) y se irán con el tiempo;
+     las vacantes que dejen las cubrirá el elenco. La bolsa de candidatos aleatorios se vacía. */
+  if(!meta.cast1){meta.cast1=1;meta.emp.forEach(e=>{if(!e.real&&!e.cast)e.old=1;});meta.pool=toArr(meta.pool).filter(c=>c&&c.cast);}
+  if(meta.castOut&&typeof meta.castOut==='object')Object.values(meta.castOut).forEach(o=>{if(o){o.log=toArr(o.log);if(o.bio){o.bio.circ=toArr(o.bio.circ);o.bio.past=toArr(o.bio.past);}}});
   meta.regs=meta.regs||{};
   meta.runId=meta.runId||Math.random().toString(36).slice(2,10)+Date.now().toString(36);
   meta.back=meta.back||{};meta.orders=meta.orders||[];meta.vac=meta.vac||{atc:1,alm:1};
@@ -6572,7 +6982,7 @@ function dailyExit(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.25-152';
+const APPV='2026.11.25-153';
 /* Compara versiones por números («-9» < «-11»), no como texto. */
 const verCmp=(a,b)=>{const x=String(a).split(/[.-]/).map(Number),y=String(b).split(/[.-]/).map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
 try{const vt=document.createElement('div');vt.id='vtag';vt.textContent='v'+APPV;document.body.appendChild(vt);}catch(e){}
@@ -6888,7 +7298,11 @@ function guardApply(u,p){
     else if(it.k==='cv'){const c=it.c;
       if(c&&ROLES[c.role]&&!cand&&vacOpen(c.role)>0){const f=v=>clamp(Math.round((+v||0.5)*100)/100,0.15,0.85);
         cand={name:cleanName(c.name),face:String(c.face||'🙂').slice(0,8),role:c.role,rap:f(c.rap),trato:f(c.trato),punt:f(c.punt),act:f(c.act),nat:clamp(Math.round(+c.nat||0),0,NATS.length-1),langs:['es'],pers:null,wage:wageOf(c.role)};
-        lines.push('🧑‍💼 Entrevistó a '+esc(cand.name)+' para '+ROLES[cand.role].n+' y lo recomienda.');}
+        /* Solo se contrata a alguien del elenco fijo (con sus rasgos de verdad, no los que trae el parte). */
+        const C=CAST.find(x=>x.n===cand.name);
+        if(C&&!meta.emp.some(x=>x.cast===C.k)){Object.assign(cand,{cast:C.k,face:C.face,rap:C.rap,trato:C.trato,punt:C.punt,act:C.act,hon:C.hon,nat:Math.max(0,NATS.findIndex(x=>x.c===C.c)),langs:C.langs.slice(),pers:C.pers});
+          lines.push('🧑‍💼 Entrevistó a '+esc(cand.name)+' para '+ROLES[cand.role].n+' y lo recomienda.');}
+        else{lines.push('🧑‍💼 Entrevistó a '+esc(cand.name)+', pero ya no está disponible.');cand=null;}}
       else lines.push('🧑‍💼 Hizo una entrevista; no hay a quién recomendar (o ya no queda la vacante).');}
   });
   if(skip)lines.push('⏸️ '+skip+' tarea'+(skip>1?'s':'')+' más no cuenta'+(skip>1?'n':'')+': hoy ya se llegó al tope de '+GUARD_N+' tareas de guardia.');
@@ -7772,7 +8186,7 @@ function tickStaff(dt){
     const ws=meta.emp.filter(e=>inStore(e)&&!e.real);
     if(ws.length&&!(run.chat&&run.t<run.chat.until)){
       const e=pick(ws),N=NATS[e.nat]||NATS[0];
-      const r=Math.random(),line=r<0.25?pick(N.tic):r<0.45?pick(TALK_G):pick(TALK[e.pers]||['…']);
+      const r=Math.random(),C=e.cast&&CASTK[e.cast],line=castMul(e,C&&r<0.45?pick(C.talk):r<0.25||(C&&r<0.55)?pick(N.tic):r<0.6?pick(TALK_G):pick(TALK[e.pers]||['…']),0.3);
       run.chat={face:e.face,text:e.name+' '+N.f+': «'+line+'»',angry:false,until:run.t+3.6};renderChat();
       const mate=meta.emp.find(x=>x!==e&&x.role===e.role&&inStore(x)&&!x.real);
       if(mate&&Math.random()<0.6)convo(e.role,[[mate,tcRep(mate)]]);
@@ -8456,9 +8870,10 @@ function setVac(r,d,e){
 const fillVac=r=>{if(meta.vac&&meta.vac[r]>0)meta.vac[r]--;};
 function makeCand(any){
   let vr=vacRoles();if(!vr.length&&any)vr=Object.keys(ROLES).filter(r=>staffOf(r).length<ROLES[r].max);if(!vr.length&&any)vr=Object.keys(ROLES);if(!vr.length)return null;
-  const role=pick(vr),c=newEmp(role,meta,{},[]);
-  return {name:c.name,face:c.face,role,rap:c.rap,trato:c.trato,punt:c.punt,act:c.act,hon:c.hon,nat:c.nat,langs:c.langs,pers:c.pers,
-    exp:ri(0,8),prev:pick(PREV),wage:Math.round(wageOf(role)*(1+ri(0,4)*0.02))};
+  const role=pick(vr),ck=castPick(role,meta,[],any?2:1);if(!ck&&!any)return null;
+  const c=newEmp(role,meta,ck?{cast:ck}:{},[]);
+  return {name:c.name,face:c.face,role,rap:c.rap,trato:c.trato,punt:c.punt,act:c.act,hon:c.hon,nat:c.nat,langs:c.langs,pers:c.pers,cast:c.cast,
+    exp:c.cast?c.exp:ri(0,8),prev:candPrev(c),wage:Math.round(wageOf(role)*(1+ri(0,4)*0.02))};
 }
 function makeFeud(){
   const ws=meta.emp.filter(e=>!e.real&&inStore(e));if(ws.length<2)return null;
@@ -8485,7 +8900,7 @@ function rrhhBody(){
     const c=mg.c,R=ROLES[c.role],N=NATS[c.nat]||NATS[0];
     let h=steps(['Entrevista','Decisión'],mg.step)+(mg.step?`<div class="cvmini"><span class="cvphoto">${c.face}</span><div><b>${c.name}</b> · ${R.n} · pide ${monthTxt(c.wage)}<br><small>${mg.notes.length?mg.notes.map(n=>'📎 '+n).join(' '):'Sin notas en el currículum.'}</small></div></div>`:'')+(mg.step?'':`<div class="office cvdesk">
       <div class="cvpaper"><div class="cvband">CURRÍCULUM VITAE</div>
-        <div class="cvtop"><span class="cvphoto">${c.face}</span><div><b>${c.name}</b><small>${N.f} ${N.c}</small><small>Solicita: <b>${R.n}</b></small><small>Pide: <b>${monthTxt(c.wage)}</b> bruto</small></div></div>
+        <div class="cvtop"><span class="cvphoto">${c.face}</span><div><b>${c.name}${castB(c)}</b><small>${N.f} ${N.c}</small><small>Solicita: <b>${R.n}</b></small><small>Pide: <b>${monthTxt(c.wage)}</b> bruto</small></div></div>
         <div class="cvsec"><b>Experiencia</b><span>${c.exp?c.exp+(c.exp===1?' año':' años'):'Ninguna'} · ${c.prev}</span></div>
         <div class="cvsec"><b>Idiomas</b><span>${c.langs.map(l=>LANG[l]).join(', ')}</span></div></div>
       ${mg.notes.length?`<div class="postits">${mg.notes.map((n,i)=>`<div class="postit" style="--r:${i%2?2:-3}deg">📎 ${n}</div>`).join('')}</div>`:''}</div>`);
@@ -8539,12 +8954,14 @@ function rrhhAct(a,b){
 const INTEG=1500,integBand=h=>{const v=(h==null?0.6:h)+rnd(-0.15,0.15);return v>0.62?'alta':v<0.38?'baja':'media';};
 function hireFromCv(c,wage,mine){
   if(!c||!ROLES[c.role])return 'Candidato perdido.';
+  if(!c.cast||!CASTK[c.cast])return (c.name||'Ese candidato')+' ya no busca trabajo.';
+  if(meta.emp.some(x=>x.cast===c.cast))return c.name+' ya trabaja aquí.';
   if(staffOf(c.role).length>=ROLES[c.role].max)return 'Iba a entrar en '+ROLES[c.role].n+', pero el puesto está completo.';
   if(meta.money<HIRE)return 'No hay bote para contratar ('+fmt(HIRE)+').';
   meta.money-=HIRE;if(run&&!run.over)run.hires=(run.hires||0)+1;achCheck('hire');
-  const e=newEmp(c.role,meta,{name:cleanName(c.name),face:c.face,rap:c.rap,trato:c.trato,punt:c.punt,act:c.act,hon:c.hon==null?Math.round(rnd(0.15,0.95)*100)/100:+c.hon,mine:mine?1:0,nat:c.nat,langs:toArr(c.langs),pers:c.pers,wage:Math.max(SMI_D,Math.round(wage||c.wage)),trial:3});
+  const e=newEmp(c.role,meta,{cast:c.cast,name:cleanName(c.name),face:c.face,rap:c.rap,trato:c.trato,punt:c.punt,act:c.act,hon:c.hon==null?Math.round(rnd(0.15,0.95)*100)/100:+c.hon,mine:mine?1:0,nat:c.nat,langs:toArr(c.langs),pers:c.pers,wage:Math.max(SMI_D,Math.round(wage||c.wage)),trial:3});
   e.moral=clamp(e.moral+(wage<c.wage?-10:wage>c.wage?8:0),0,100);
-  meta.emp.push(e);fillVac(e.role);logE(e,'Contratado/a tras la entrevista');
+  meta.emp.push(e);fillVac(e.role);logE(e,e.back?'Vuelve a la tienda tras la entrevista':'Contratado/a tras la entrevista');
   return 'Contratado/a: '+e.face+' '+e.name+' entra en '+ROLES[e.role].n+' a '+monthTxt(e.wage)+' bruto (en prueba).';
 }
 function applyFeud(x,ok){
@@ -8857,12 +9274,13 @@ function interview(k,v){let l=v>0.62?'hi':v<0.38?'lo':'mid';if(Math.random()<0.2
 function genCands(){
   const out=[],vr=vacRoles();
   /* Ventaja de la carrera «Contactos en el barrio»: uno bueno de más en la primera reunión. */
-  if(meta.perkCand){meta.perkCand=0;const c=newEmp(vr[0]||'atc',meta,{},[]);['rap','trato','punt','act'].forEach(k=>{c[k]=Math.round(rnd(0.75,0.95)*100)/100;});c.hon=Math.round(rnd(0.8,1)*100)/100;
-    c.wage=Math.round(wageOf(c.role)*1.04);c.exp=ri(4,10);c.ref='Te lo recomienda un contacto del barrio';c.qa=['rap','trato'].map(k=>interview(k,c[k]));out.push(c);}
+  if(meta.perkCand){meta.perkCand=0;const B=castFree(meta,[]).sort((x,y)=>(y.rap+y.trato+y.punt+y.act+y.hon)-(x.rap+x.trato+x.punt+x.act+x.hon))[0];
+    const c=newEmp(vr[0]||(B&&B.role)||'atc',meta,B?{cast:B.k}:{},[]);
+    if(c.cast){c.wage=Math.round(wageOf(c.role)*1.04);c.prev=candPrev(c);c.ref='Te lo recomienda un contacto del barrio';c.qa=['rap','trato'].map(k=>interview(k,c[k]));out.push(c);}}
   if(!vr.length)return out;
   for(let i=0;i<3;i++){
-    const c=newEmp(vr[i%vr.length],meta,{},out.map(x=>x.name));
-    c.wage=Math.round(wageOf(c.role)*(1+ri(0,4)*0.02));c.exp=ri(0,8);
+    const c=newEmp(vr[i%vr.length],meta,{},out.map(x=>x.name));if(!c.cast)break;
+    c.wage=Math.round(wageOf(c.role)*(1+ri(0,4)*0.02));c.prev=candPrev(c);
     c.qa=['rap','trato','punt','act'].sort(()=>Math.random()-0.5).slice(0,2).map(k=>interview(k,c[k]));
     out.push(c);
   }
@@ -8984,6 +9402,7 @@ function applyReq(i,o){
 }
 function hireCand(i){
   const c=meet&&meet.cands[i];if(!c||c.hired)return;
+  if(!c.cast||meta.emp.some(x=>x.cast===c.cast)){c.hired=1;toast(c.name+' ya no está disponible.','bad');showMeeting();return;}
   if(staffOf(c.role).length>=ROLES[c.role].max||meta.money<HIRE)return;
   meta.money-=HIRE;
   const e=Object.assign({},c);delete e.qa;delete e.exp;delete e.hired;delete e.integ;delete e.ref;e.trial=3;e.mine=1;e.st=blankSt();
@@ -9031,7 +9450,7 @@ function showMeeting(){
     const qa=c.qa.map(x=>`<div class="qa">${x.q}<i>«${x.a}»</i></div>`).join('');
     const btn=(c.hired?'':c.integ?`<div class="qa">🧪 Integridad: <b>${c.integ}</b> (aprox.)</div>`:`<button class="btn" data-act="integc" data-c="${i}" ${meta.money<INTEG?'disabled':''}>🧪 Test de integridad · ${fmt(INTEG)}</button>`)+(c.hired?'<div class="supd">Fichado. Empieza el próximo turno, en periodo de prueba.</div>'
       :`<button class="btn go" data-act="hirec" data-c="${i}" ${full||meta.money<HIRE?'disabled':''}>${full?'Puesto completo':'Contratar · '+fmt(HIRE)}</button>`);
-    return `<div class="emp">${c.ref?'<div class="qa">🤝 '+c.ref+'</div>':''}<div class="eh"><span class="ef">${c.face}</span><div class="t"><b>${c.name}</b>${flag(c)} ${(NATS[c.nat]||NATS[0]).c} · para ${ROLES[c.role].n} · habla ${c.langs.map(l=>LANG[l]).join(', ')} ·${c.exp?c.exp+(c.exp===1?' año':' años')+' de experiencia':'sin experiencia'} · pide ${monthTxt(c.wage)}</div></div>${qa}${btn}</div>`;
+    return `<div class="emp">${c.ref?'<div class="qa">🤝 '+c.ref+'</div>':''}<div class="eh"><span class="ef">${c.face}</span><div class="t"><b>${c.name}</b>${castB(c)}${flag(c)} ${(NATS[c.nat]||NATS[0]).c} · para ${ROLES[c.role].n} · habla ${c.langs.map(l=>LANG[l]).join(', ')} ·${c.exp?c.exp+(c.exp===1?' año':' años')+' de experiencia':'sin experiencia'} · pide ${monthTxt(c.wage)}</div></div>${c.prev?'<div class="qa">📄 '+esc(c.prev)+'</div>':''}${qa}${btn}</div>`;
   });
   const duties=Object.keys(ROLES).map(k=>`<div class="up"><div class="t"><b>${ROLES[k].n} · ${staffOf(k).length}/${ROLES[k].max}</b>${ROLES[k].duties.join(' · ')}</div></div>`).join('');
   const ap=isHost()?appsList().length:0,c=cols();
@@ -9349,7 +9768,7 @@ function camModel(){
     else if(otn[e.id]&&!d.soc){const k=otn[e.id];w={k:'till',n:k};b='🧾';x='en la Caja '+k+' ('+((run.oq&&run.oq[k]||[]).length)+' en cola)';}
     else if(d.soc){const o=empById(d.soc.w);b=d.soc.ic;x=(SOCS[d.soc.k]||'de charla con')+' '+(o?o.name:'alguien');
       if(o&&d.soc.lead){const od=run.duty[o.id],t=od&&od.busy&&run.tasks.find(y=>y.id===od.task);let oi=0;for(const z of meta.emp){if(z.role===o.role){if(z===o)break;oi++;}}w=Object.assign({},t?taskSpot(t):{k:'post',r:o.role,i:oi},{dx:10});}}
-    staff.push({id:e.id,f:e.face,n:e.name,u:e.real||'',av:e.real?(e.av||''):'',r:e.role,w,b,x,sl:d.slack&&!d.busy?1:0,bz:d.busy||(run.away&&run.away.cover===e.id)?1:0});
+    staff.push({id:e.id,f:e.face,n:e.name,c:e.cast?1:0,u:e.real||'',av:e.real?(e.av||''):'',r:e.role,w,b,x,sl:d.slack&&!d.busy?1:0,bz:d.busy||(run.away&&run.away.cover===e.id)?1:0});
   });
   let me={w:{k:'till'},b:'',x:'en la caja 3'};
   if(run.away){
@@ -9377,7 +9796,7 @@ function camTargets(m){
   if(!m)return T;
   toArr(m.staff).forEach((s,j)=>{
     const p=camPos(s.w||{},j),you=isMember()&&s.u===myUid;
-    T['s'+s.id]={r:s.r,x:p[0],y:p[1],f:s.f,lab:you?'Tú':s.n+(s.u?' 🎮':''),nt:you?'Tú':String(s.n||'').split(' ')[0],ntu:s.u?1:0,bz:s.bz?1:0,b:s.b||'',hl:you,eid:s.id,u:s.u||'',av:you?avaStr():(s.av||''),sl:s.sl?1:0,info:(you?'Tú':s.n)+' · '+(ROLES[s.r]?ROLES[s.r].n:'')+' · '+(s.x||'')};
+    T['s'+s.id]={r:s.r,x:p[0],y:p[1],f:s.f,lab:you?'Tú':s.n+(s.u?' 🎮':''),nt:you?'Tú':String(s.n||'').split(' ')[0],ntu:s.u?1:0,cst:s.c&&!you?1:0,bz:s.bz?1:0,b:s.b||'',hl:you,eid:s.id,u:s.u||'',av:you?avaStr():(s.av||''),sl:s.sl?1:0,info:(you?'Tú':s.n)+' · '+(ROLES[s.r]?ROLES[s.r].n:'')+' · '+(s.x||'')};
   });
   const me=m.me||{w:{k:'till'}},p=camPos(me.w||{},0);
   T.me={x:p[0],y:p[1],av:isMember()?(me.av||''):avaStr(),f:'🧑‍💼',lab:isMember()?'👑 '+(me.n||'Jefe'):'Tú',nt:isMember()?String(me.n||'Jefe').split(' ')[0]:'Tú',boss:1,b:me.b||'',hl:!isMember(),info:(isMember()?'👑 '+(me.n||'El jefe'):'Tú')+' · '+(me.x||'')};
@@ -9431,7 +9850,7 @@ function nameTags(g,P,fs,short,clip){
   const L=nmList();if(!L.length)return;
   const font='800 '+Math.round(fs)+'px Nunito,"Segoe UI",sans-serif',h=Math.round(fs*1.45),pad=Math.round(fs*.45),maxW=fs*(short?4.6:8.5);
   const T=L.map(({id,s})=>{const p=P(s);let t=s.nt||'';if(short&&t!=='Tú'&&t.length>4)t=t.slice(0,3)+'.';
-    if(s.boss)t='👑 '+t;if(s.ntu)t+=' 🎮';const ic=s.sl?'📱':s.bz?'🔧':'';if(ic)t+=' '+ic;
+    if(s.boss)t='👑 '+t;if(s.cst)t='📛'+t;if(s.ntu)t+=' 🎮';const ic=s.sl?'📱':s.bz?'🔧':'';if(ic)t+=' '+ic;
     let w=nmMeasure(g,font,t);if(w>maxW){let u=t;while(u.length>2&&nmMeasure(g,font,u+'…')>maxW)u=u.slice(0,-1);t=u+'…';w=nmMeasure(g,font,t);}
     return {x:p[0],y:p[1],t,w:Math.round(w+pad*2),s,id};}).sort((a,b)=>b.y-a.y);
   const put=[];
@@ -9699,7 +10118,7 @@ const onFloor=e=>{const d=run&&run.duty&&run.duty[e.id];return !!d&&!['gone','ab
 function staffInfo(){
   if(!run||run.remote)return;
   const E=meta.emp,cnt={};E.forEach(e=>{cnt[e.role]=(cnt[e.role]||0)+1;});
-  const rows=E.map(e=>`<dt>${e.real?`${e.face} ${esc(e.name)} 🎮`:`<button class="btn mini talkb" data-act="talk" data-e="${e.id}" title="Su ficha y hablar con ${esc(e.name)}">${e.face} ${esc(e.name)} 🗣️</button>`}${e.trial>0?' 🧪':''}${e.enc===2?' ⭐':e.enc?' 🎖️':''}</dt><dd>${ROLES[e.role].s} · ${staffState(e)}</dd>`).join('');
+  const rows=E.map(e=>`<dt>${e.real?`${e.face} ${esc(e.name)} 🎮`:`<button class="btn mini talkb" data-act="talk" data-e="${e.id}" title="Su ficha y hablar con ${esc(e.name)}">${e.face} ${esc(e.name)} 🗣️</button>`}${castB(e)}${e.trial>0?' 🧪':''}${e.enc===2?' ⭐':e.enc?' 🎖️':''}</dt><dd>${ROLES[e.role].s} · ${staffState(e)}</dd>`).join('');
   const B=(meta.bajas||[]).slice(0,5).map(b=>`<dt>${b.f} ${esc(b.n)} · T${b.d}</dt><dd>${esc(b.why)}</dd>`).join('');
   scene({k:'plant:'+Date.now(),over:true,head:'👥 PLANTILLA · TURNO '+meta.day,tag:E.filter(onFloor).length+' en tienda / '+E.length,who:'👑',name:'Tu equipo',prio:1,time:40,def:'ok',
     txt:'Toca a alguien para ver su vida y hablar con él o ella. '+Object.keys(ROLES).map(k=>ROLES[k].s+' '+(cnt[k]||0)).join(' · ')+'. Nómina: '+fmt(E.reduce((s,e)=>s+empCost(e.wage),0))+' por turno con Seguridad Social.',
@@ -9766,7 +10185,8 @@ function avaAcc(c,x,py,s,acc){ /* complemento sobre la cabeza del sprite (x = ce
   else if(acc===3){c.fillStyle='#ffd23f';c.fillRect(Math.round(x-1*s),Math.round(py+9*s),3*s,2*s);c.fillRect(Math.round(x-3*s),Math.round(py+9*s),2*s,1*s);c.fillRect(Math.round(x+2*s),Math.round(py+9*s),2*s,1*s);}
 }
 const ROLE_PIX={atc:'#e5383b',alm:'#f08a24',back:'#2f6db5',rrpp:'#d6336c',rrhh:'#7b4bb7'};
-const pChar=id=>PCH[isoHash(id)%PCH.length];
+/* El elenco fijo lleva siempre el mismo sprite (por su clave), en cualquier partida. */
+const pChar=id=>{const m=/^s(\d+)$/.exec(id),e=m&&meta&&meta.emp?meta.emp.find(x=>x.id===+m[1]):null;return PCH[isoHash(e&&e.cast?'cast:'+e.cast:id)%PCH.length];};
 /* pintar un búfer en un canvas que llena el hueco, con escala entera si se puede */
 function pixBlit(cv,buf,src,fk){
   const g=cv.getContext('2d'),W=cv.width,H=cv.height;g.imageSmoothingEnabled=false;
@@ -10084,9 +10504,9 @@ function rrppHtml(){
    (los de hace más de 3 turnos se van a otro súper) y se contratan al momento: empiezan el turno siguiente, en prueba. */
 function poolFill(){
   if(!meta||daily)return [];
-  meta.pool=toArr(meta.pool).filter(c=>c&&ROLES[c.role]&&vacOpen(c.role)>0&&staffOf(c.role).length<ROLES[c.role].max&&meta.day-(c.d||0)<=3);
+  meta.pool=toArr(meta.pool).filter(c=>c&&c.cast&&!meta.emp.some(e=>e.cast===c.cast)&&ROLES[c.role]&&vacOpen(c.role)>0&&staffOf(c.role).length<ROLES[c.role].max&&meta.day-(c.d||0)<=3);
   vacRoles().forEach(r=>{let n=meta.pool.filter(c=>c.role===r).length;
-    while(n<2&&meta.pool.length<8){const c=newEmp(r,meta,{},meta.pool.map(x=>x.name));c.wage=Math.round(wageOf(r)*(1+ri(0,4)*0.02));c.exp=ri(0,8);c.prev=pick(PREV);c.d=meta.day;
+    while(n<2&&meta.pool.length<8){const c=newEmp(r,meta,{},meta.pool.map(x=>x.name));if(!c.cast)break;c.wage=Math.round(wageOf(r)*(1+ri(0,4)*0.02));c.prev=candPrev(c);c.d=meta.day;
       c.qa=['rap','trato','punt','act'].sort(()=>Math.random()-0.5).slice(0,2).map(k=>interview(k,c[k]));meta.pool.push(c);n++;}});
   return meta.pool;
 }
@@ -10117,7 +10537,7 @@ function poolHtml(){
   const P=poolFill();
   if(!P.length)return '<div class="zone-title">🧑‍💼 CANDIDATOS DISPONIBLES</div><div class="supd">No hay nadie esperando: publica una vacante (＋ en el puesto que quieras) y aquí te salen candidatos al momento.</div>';
   return '<div class="zone-title">🧑‍💼 CANDIDATOS DISPONIBLES · CONTRATAS AHORA</div><div class="supd">Empiezan el turno siguiente, en prueba 3 turnos. Contratar cuesta '+fmt(HIRE)+' (anuncio y reconocimiento médico). Ojo: en la entrevista a veces se venden mejor de lo que son.</div><div class="shop">'
-    +P.map((c,i)=>`<div class="up"><div class="t"><b>${c.face} ${esc(c.name)} · ${ROLES[c.role].n}</b>${flag(c)} ${c.exp?c.exp+' años de experiencia':'Sin experiencia'}${c.prev?' · antes: '+esc(c.prev):''} · pide ${monthTxt(c.wage)}${(c.qa||[]).map(q=>`<br><small>«${esc(q.q)}» — <i>${esc(q.a)}</i></small>`).join('')}</div><button class="btn go" data-act="poolhire" data-i="${i}" ${meta.money<HIRE?'disabled':''}>🤝 Contratar</button></div>`).join('')+'</div>';
+    +P.map((c,i)=>`<div class="up"><div class="t"><b>${c.face} ${esc(c.name)}${castB(c)} · ${ROLES[c.role].n}</b>${flag(c)} ${c.exp?c.exp+' años de experiencia':'Sin experiencia'}${c.prev?' · antes: '+esc(c.prev):''} · pide ${monthTxt(c.wage)}${(c.qa||[]).map(q=>`<br><small>«${esc(q.q)}» — <i>${esc(q.a)}</i></small>`).join('')}</div><button class="btn go" data-act="poolhire" data-i="${i}" ${meta.money<HIRE?'disabled':''}>🤝 Contratar</button></div>`).join('')+'</div>';
 }
 function rrhhHtml(){
   let nm=meta.day+1;while(nm%3!==1)nm++;
