@@ -1958,6 +1958,15 @@ body.topo-dark #dircams::after{content:'📵 APAGÓN · SIN IMAGEN';position:abs
 body.topo-dark #dircams{position:relative}
 @media (max-width:820px){#topob{left:8px;right:8px;width:auto;bottom:auto;top:120px;padding:5px 8px;gap:4px;flex-direction:row;flex-wrap:wrap;align-items:center}#topob .tpl{display:none}.tpb-row{flex:1 1 auto;min-width:0}.tpb-btns{flex:0 0 auto}.tpb-btns .btn{font-size:14px;padding:4px 8px;min-height:30px}.tpb-sab{flex:1 1 100%;order:3;padding:4px 6px}.tp-sus{flex-wrap:wrap}.tp-sus>.btn{flex:1 1 100%}}
 @media (prefers-reduced-motion:reduce){.tpb-sab.crit{animation:none}.tpb-bar i{transition:none}}
+/* 🗣️ debate por turnos, motivo del topo y caso exprés */
+.tp-deb{display:flex;flex-direction:column;gap:3px;max-height:230px;overflow:auto;border:2px solid #f0d7d8;border-radius:10px;padding:6px 8px;margin-bottom:8px;background:#fffdfb;color:#2a1a1a}
+.tp-l{margin:0;font-size:var(--fs-s,14px);line-height:1.4}.tp-l span{margin-right:4px}.tp-l b{margin-right:4px}
+.tp-l.c-sys{color:#6b5a7a;font-weight:700}.tp-l.c-q{font-weight:800;color:#2f6db5}.tp-l.c-ans{background:#f4f8ff;border-radius:6px;padding:2px 6px}.tp-l.c-ans.c-bad{background:#fff0f0;color:#a8161c;font-weight:700}
+.tp-l.c-acc b{color:#a8161c}.tp-l.c-def b{color:#1f7a46}
+.tp-qs{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:0 0 8px;padding:6px 8px;background:#eef4ff;border-radius:10px}.tp-qs small{flex:1 1 100%;font-size:var(--fs-s,14px)}.tp-qs .btn{margin:0}
+.tp-sus.spk{border-color:#f2b705;background:#fffbe8}.tp-okq{display:block;font-style:normal;font-size:12px;color:#1f7a46;font-weight:800}
+.tp-mot{border-color:#c9a8e0;background:#f8f2ff}
+.p-topox{background:#3b2d55;color:#ffd23f}
 /* ---------- 🏪 ACERA (pantalla de inicio) Y 🛒 LINEAL (menú como estantería) ---------- */
 /* 🕓 Horario real */
 .s-clock .hcol{display:block;font-size:12px;line-height:1;opacity:.85;font-weight:800}
@@ -4551,7 +4560,7 @@ const TOPO_FAKE=()=>pick(['reponiendo en el pasillo '+ri(1,9),'cubriendo la Caja
 const TOPO_ROLES=['atc','alm','back','rrpp','rrhh'];
 let topoW=null;
 const tpFix=x=>String(x).replace(/\b(a|de) el /g,(m,p)=>p+'l ');
-const topoOn=()=>bossScn()&&!daily;
+const topoOn=()=>bossScn()&&(!daily||!!daily.x);
 const topoT=()=>run&&!run.over&&run.topo&&!run.topo.end?run.topo:null;
 const topoNoCust=()=>{const T=topoT();return !!(T&&T.sab&&T.sab.k==='alarma');};
 const topoTpv=()=>{if(isMember()){const v=room&&room.state&&room.state.topo;return !!(v&&v.sab&&v.sab.k==='tpv');}const T=topoT();return !!(T&&T.sab&&T.sab.k==='tpv');};
@@ -4564,7 +4573,8 @@ const topoNm=e=>e?esc(e.name)+(e.real?' 🎮':''):'?';
 function topoPlan(){
   run.topo=null;if(meta.topo&&meta.topo.clues)delete meta.topo;
   if(!topoOn())return;
-  const cfg=meta.topoCfg||'auto',force=/^(1|on|si|sí|real)$/i.test(TOPO_Q);
+  const cfg=meta.topoCfg||'auto',force=/^(1|on|si|sí|real)$/i.test(TOPO_Q)||topoX();
+  try{topoAfter();}catch(x){console.warn('topo',x);}
   let go=force||(cfg==='hoy')||(cfg==='auto'&&meta.day>=4&&(meta.day-4)%5===0);
   if(cfg==='off'&&!force)go=false;
   if(!go)return;
@@ -4576,12 +4586,14 @@ function topoPlan(){
   const topo=reals.length&&(TOPO_Q==='real'||Math.random()<0.5)?pick(reals):pick(two.length?two:noCaja.length?noCaja:npc);
   const T=run.topo={c:Math.floor(Math.random()*1e6),day:meta.day,who:topo.id,real:topo.real||'',goal:Math.max(6,Math.round(TOPO_K*run.dur/100)),done:0,s0:run.served||0,
     sab:null,nSab:0,maxSab:topo.real?4:3,next:run.dur*(force?0.08:rnd(0.12,0.2)),cdTo:run.dur*0.06,cl:[],rum:[],ev:{},out:{},meet:null,meets:0,mb:{},my:{},end:null,log:[],dark:0};
+  if(topoX()){T.x=1;T.goal=Math.max(10,Math.round(TOPO_K*run.dur/100*0.55));T.maxSab=5;T.gp=0.55;T.next=run.dur*0.05;T.mbMax=3;}
   window.__topo=T;
   meta.topoS=meta.topoS||{n:0,crew:0,topo:0};meta.topoS.n++;
   scene({k:'topoi:'+meta.day,over:true,who:'🕵️',head:'🕵️ HOY HAY UN TOPO EN LA TIENDA',tag:'Caso del topo · turno '+meta.day,name:'Vitchi 🐶, de seguridad',prio:5,...serio(),def:'ok',
     txt:'Alguien de la plantilla es <b>el topo</b>: va a sabotear la tienda (el frío, las cajas, la luz, la alarma). Vosotros sois <b>la tripulación</b>: haced las tareas para llenar la barra antes de las 21:00 y arreglad cada avería antes de que se acabe su cuenta atrás. Cada sabotaje deja pistas en el <b>📋 Cuaderno</b>: con ellas, pulsa <b>🚨 Reunión</b> y votad quién es.',
     body:`<div class="tp-doc tp-rules"><b>🏁 Gana la tripulación</b> si la barra de tareas llega a ${T.goal} o si votáis al topo.<br><b>🐀 Gana el topo</b> si una avería crítica (❄️ frío o 🔒 TPV) no se arregla a tiempo o si cierra la tienda con la barra a medias.<br><b>🗳️ Votar a un inocente</b>: se va a casa el resto del turno y el topo sigue suelto.</div><div class="scn-hint">Sospechosos: ${pool.length} personas trabajando hoy${reals.length?' (contando a '+reals.length+' jugador'+(reals.length>1?'es':'')+' de verdad)':''}. Las pistas de cámara dicen quién estaba cerca; el registro de tareas, quién tenía coartada.</div>`,
     choices:[{t:'🕵️ ¡A investigar!',k:'ok',cls:'go',key:'S',stamp:'CASO ABIERTO',sc:'ok'}]});
+  {const tr=topoTrust();if(tr<45)radio('😒','Después de lo del último topo, aquí ya no se fía nadie de nadie (confianza '+tr+'/100).');}
   reals.forEach(e=>topoNoteRole(e));
   radio('🕵️','Hoy hay un topo en la tienda. Nadie se fía de nadie.');
 }
@@ -4603,9 +4615,10 @@ function topoTick(){
   /* El topo NPC: sabotea cuando le toca y está libre; a veces «se ofrece» a arreglar una avería (y la deja peor). */
   const e=empById(T.who);
   if(e&&!e.real&&inStore(e)&&!T.out[e.id]){
-    if(!T.sab&&!T.meet&&T.nSab<T.maxSab&&run.t>=T.next&&isFree(e)){topoSab(T.nSab===0?pick(['frio','tpv','luz']):pick(Object.keys(TOPO_SAB).filter(k=>k!==T.lastK)),e);T.next=run.t+run.dur*rnd(0.2,0.28);}
+    if(!T.sab&&!T.meet&&T.nSab<T.maxSab&&run.t>=T.next&&isFree(e)){topoSab(T.nSab===0?pick(['frio','tpv','luz']):pick(Object.keys(TOPO_SAB).filter(k=>k!==T.lastK)),e);T.next=run.t+run.dur*(T.gp||1)*rnd(0.2,0.28);}
     else if(T.sab&&isFree(e)&&!T.sab.vol&&run.t-T.sab.t0>4){T.sab.vol=1;const t=run.tasks.find(x=>x.k==='fix'&&x.sid===T.sab.id&&!x.who);if(t&&Math.random()<0.4)assignTask(t.id,String(e.id));}
   }
+  if(T.meet&&!T.meet.res&&room&&T.meet.deb&&T.meet.deb.ph==='d'&&run.t>=T.meet.deb.nx){topoDebNext(T,T.meet);topoRender();pubState(true);}
   if(T.meet&&!T.meet.res&&room&&run.t>=T.meet.end)topoResolve();
   if(T.meet&&T.meet.res&&room&&run.t-T.meet.resT>8){T.meet=null;if(topoW&&topoW.mode==='meet')topoW=null;topoRender();}
 }
@@ -4641,6 +4654,7 @@ function topoSab(k,e){
   if(Math.random()<0.6){const s=topoSus(T).filter(x=>x!==e),r=Math.random()<0.55||!s.length?e:pick(s),src=pick(topoSus(T).filter(x=>!x.real&&x!==r))||null;
     const t=tpFix('Dicen que vieron a '+r.name+' '+pick(['rondando '+K.w,'muy nervioso/a antes de '+(k==='luz'?'que se fuera la luz':'la avería'),'mirando el móvil al lado de '+K.w,'salir con prisa de por allí'])+'.');
     T.rum.push([h,t,src?src.name:'']);radio('🤫',t+(src?' (lo cuenta '+src.name+')':''));}
+  try{topoMotClue(T,C,e);}catch(x){console.warn('topo',x);}
   topoRender();renderAll();
 }
 function topoPart(S,i){
@@ -4689,18 +4703,17 @@ function topoMeetStart(why,who){
     else if(x.id===T.who&&Math.random()<0.65){t='Estaba '+TOPO_FAKE()+'.';bad=1;}
     else if(x.id!==T.who&&Math.random()<0.2){t='Estaba '+TOPO_FAKE()+'.';bad=1;}
     else{const d=run.duty[x.id];t=d&&d.slack?'Vale, estaba en el café. Pero yo no he tocado nada.':pick(['Estaba en mi puesto, a lo mío.','En mi puesto, como siempre. ¿Qué pasa?','Por mi zona. No he visto nada raro.']);}
-    if(bad)ev.contra++;
     al[x.id]={t:(x.real?'':(TOPO_PRE[x.pers]||''))+t,bad};});
   sus.filter(x=>!x.real).forEach(x=>{const o=topoBlame(T,x,sus);if(o)acc[x.id]=o.id;});
-  T.meet={n:T.meets,t0:run.t,end:room?run.t+45:Infinity,sus:sus.map(x=>x.id),al,acc,votes:{},res:null,why,who};
+  T.meet={n:T.meets,t0:run.t,end:room?run.t+70:Infinity,sus:sus.map(x=>x.id),al,acc,votes:{},res:null,why,who};
   radio('🚨','Reunión de emergencia: '+why+'.');
-  convo('all',sus.filter(x=>!x.real).slice(0,4).map(x=>[x,'«'+al[x.id].t+'»']));
+  try{topoDebInit(T,T.meet);}catch(x){console.warn('topo',x);}
   toast('🚨 REUNIÓN DE EMERGENCIA · '+why,'bad');try{beep(880,.15,'square',.07);setTimeout(()=>beep(660,.2,'square',.07),180);}catch(x){}
   if(isHost()||!room){topoW={mode:'meet'};topoRender();}
   pubState(true);return true;
 }
 /* A quién culpa x (los NPC razonan con las pistas; el topo NPC culpa al inocente que peor pinta). */
-function topoSusp(T,id,from){const ev=T.ev[id]||{},e=empById(id),r=from&&e?rel(from,e):null;return (ev.cam||0)*2+(ev.free||0)+(ev.fix||0)*3+(ev.obj||0)*0.7+(ev.contra||0)*1.5-(r?(r.af||0)/40:0)+Math.random()*2;}
+function topoSusp(T,id,from){const ev=T.ev[id]||{},e=empById(id),r=from&&e?rel(from,e):null;return (ev.cam||0)*2+(ev.free||0)+(ev.fix||0)*3+(ev.obj||0)*0.7+(ev.contra||0)*1.5+(ev.mot||0)*1.2+(e&&e.exTopo?1:0)-(r?(r.af||0)/40:0)+Math.random()*2*topoNoise();}
 function topoBlame(T,x,sus){const c=sus.filter(y=>y!==x&&!(x.id===T.who&&y.id===T.who));if(!c.length)return null;return c.map(y=>[y,topoSusp(T,y.id,x)]).sort((a,b)=>b[1]-a[1])[0][0];}
 function topoVote(key,v){
   const T=topoT(),M=T&&T.meet;if(!M||M.res)return;
@@ -4713,6 +4726,7 @@ function topoVote(key,v){
 }
 function topoResolve(){
   const T=topoT(),M=T&&T.meet;if(!M||M.res)return;
+  {const SS=M.sus.map(empById).filter(Boolean);SS.filter(x=>!x.real).forEach(x=>{const o=topoBlame(T,x,SS);if(o)M.acc[x.id]=o.id;});}
   M.sus.map(empById).filter(e=>e&&!e.real&&inStore(e)).forEach(e=>{if(M.votes['n'+e.id]!=null)return;M.votes['n'+e.id]=Math.random()<0.15||!M.acc[e.id]?'skip':M.acc[e.id];});
   const tal={};let skip=0;
   Object.entries(M.votes).forEach(([k,v])=>{const w=k==='boss'?2:1;if(v==='skip')skip+=w;else tal[v]=(tal[v]||0)+w;});
@@ -4726,6 +4740,7 @@ function topoResolve(){
     if(!e.real){run.duty[e.id].st='off';mor(e,-8);logE(e,'La votaron fuera en la reunión de emergencia (era inocente)');}
     else note(e.real,'🗳️ Te han votado fuera de la reunión… y eras inocente. Ya no votas ni cuentas como sospechoso en este caso.',true);
     meta.emp.filter(o=>!o.real&&o!==e).forEach(o=>mor(o,-2));repAdd(-0.05,'Votasteis fuera a un inocente');
+    try{topoGrudge(T,M,e);}catch(x){console.warn('topo',x);}
     T.next=Math.min(T.next,run.t+run.dur*0.1);}
   radio('🗳️',M.res.txt);toast('🗳️ '+M.res.txt,M.res.topo?'good':'bad');
   topoRender();renderAll();pubState(true);checkRep();
@@ -4743,6 +4758,7 @@ function topoEnd(win,why){
   if(crew){repAdd(+0.1,'Caso del topo resuelto');meta.emp.forEach(o=>{if(!o.real&&o!==e)mor(o,3);});}
   else{const v=ri(150,300)*100;meta.money-=v;run.fines+=v;T.end.v=v;repAdd(-0.15,'El topo se salió con la suya');}
   if(!e.real&&meta.emp.includes(e)){dropEmp(e,crew?'Era el topo: despido disciplinario por sabotear la tienda':'Era el topo: se largó con el botín');try{if(!daily){setVac(e.role,1);poolFill();T.end.vac=1;}}catch(x){console.warn('topo',x);}}
+  try{topoAfterEnd(T,e,crew);}catch(x){console.warn('topo',x);}
   if(T.meet&&!T.meet.res)T.meet=null;
   topoW=null;
   const txt=(crew?'🏆 GANA LA TRIPULACIÓN. ':'🐀 GANA EL TOPO. ')+T.end.why+' El topo era '+e.name+'.';
@@ -4754,6 +4770,7 @@ function topoEnd(win,why){
 }
 function topoEndHtml(E){
   return tpFix(`<div class="tp-end ${E.win}"><div class="tp-who"><span>${E.f}</span><b>${esc(E.n)}${E.real?' 🎮':''}</b><small>${ROLES[E.r]?ROLES[E.r].n:''} · era el topo</small></div>
+   ${E.mot?`<div class="tp-doc tp-mot"><b>🧠 Por qué lo hizo</b><br>${esc(E.mot)}</div>`:''}
    <div class="tp-doc"><b>Lo que hizo</b><br>${toArr(E.log).map(esc).join('<br>')||'Nada: no le dio tiempo.'}</div>
    <div class="tp-doc"><b>Las pistas que le delataban</b><br>${toArr(E.ptr).map(esc).join('<br>')||'Ninguna clara: un topo fino.'}</div>
    <div class="tp-sum">Barra: ${E.done}/${E.goal}${E.v?' · se llevó '+fmt(E.v):''}${E.vac?' · 📢 Vacante de '+(ROLES[E.r]?ROLES[E.r].n:'')+' publicada: tienes candidatos en RR.HH.':''}</div></div>`);
@@ -4761,6 +4778,7 @@ function topoEndHtml(E){
 function topoEndScene(E){
   const crew=E.win==='crew';
   scene({k:'topoe:'+meta.day+':'+E.id,over:true,who:crew?'🏆':'🐀',head:'🕵️ CASO DEL TOPO · CERRADO',tag:crew?'Gana la tripulación':'Gana el topo',name:crew?'¡Caso resuelto!':'El topo se sale con la suya',prio:5,...serio(),def:'ok',
+    onPick:()=>{if(topoX()&&!isMember())setTimeout(()=>{if(topoX())topoXEnd();},400);},
     txt:esc(E.why)+' '+(crew?'+0,1 ★ y +3 de ánimo a la plantilla.':'−0,15 ★ y el botín que se ha llevado.'),body:topoEndHtml(E),
     choices:[{t:crew?'🎉 ¡Justicia!':'😤 La próxima, no se escapa',k:'ok',cls:crew?'go':'no',key:'S',stamp:crew?'CASO CERRADO':'SE ESCAPÓ',sc:crew?'ok':'bad'}]});
 }
@@ -4771,10 +4789,10 @@ function topoView(){
   const S=T.sab,M=T.meet;
   return {c:T.c,day:T.day,bar:[topoDone(T),T.goal],dark:T.dark?1:0,n:T.nSab,
     sab:S?{k:S.k,ic:S.ic,n:S.n,crit:S.crit?1:0,left:Math.max(0,Math.round(S.dl-run.t)),p:S.parts.map(p=>[p.ic,p.n,p.done?1:0,p.by||''])}:null,
-    cl:T.cl.map(c=>({h:c.h,ic:c.ic,n:c.n,w:c.w,cam:c.cam?c.cam.map(N):[],off:c.cam?0:1,reg:c.reg.map(r=>[N(r[0]),r[1]]),free:c.free.map(N),obj:TOPO_OBJ[c.obj]||'',fix:c.fix.map(N),ok:c.ok==null?-1:c.ok})),
+    cl:T.cl.map(c=>({h:c.h,ic:c.ic,n:c.n,w:c.w,cam:c.cam?c.cam.map(N):[],off:c.cam?0:1,reg:c.reg.map(r=>[N(r[0]),r[1]]),free:c.free.map(N),obj:TOPO_OBJ[c.obj]||'',fix:c.fix.map(N),ok:c.ok==null?-1:c.ok,mo:c.mo?c.mo[1]:''})),
     rum:T.rum.slice(-6),
-    sus:meta.emp.filter(e=>T.ev[e.id]||(M&&M.sus.includes(e.id))||onFloor(e)).map(e=>{const v=T.ev[e.id]||{};return [e.id,e.face,e.name,e.role,e.real||'',T.out[e.id]?1:0,v.cam||0,v.free||0,v.obj||0,v.fix||0,v.contra||0];}),
-    meet:M?{n:M.n,why:M.why,left:isFinite(M.end)?Math.max(0,Math.round(M.end-run.t)):-1,sus:M.sus,al:M.sus.map(id=>[id,(M.al[id]||{}).t||'',(M.al[id]||{}).bad?1:0,M.acc[id]||0]),voted:Object.keys(M.votes),
+    sus:meta.emp.filter(e=>T.ev[e.id]||(M&&M.sus.includes(e.id))||onFloor(e)).map(e=>{const v=T.ev[e.id]||{};return [e.id,e.face,e.name,e.role,e.real||'',T.out[e.id]?1:0,v.cam||0,v.free||0,v.obj||0,v.fix||0,v.contra||0,v.motR?v.mot||0:0];}),
+    meet:M?{n:M.n,why:M.why,left:isFinite(M.end)?Math.max(0,Math.round(M.end-run.t)):-1,sus:M.sus,al:M.sus.map(id=>[id,(M.al[id]||{}).t||'',(M.al[id]||{}).bad&&(M.al[id]||{}).rv?1:0,M.acc[id]||0,(M.al[id]||{}).ok?1:0]),voted:Object.keys(M.votes),deb:topoDebView(M),
       res:M.res?{tal:M.res.tal,skip:M.res.skip,out:M.res.out==null?-1:M.res.out,txt:M.res.txt}:null}:null,
     my:T.my,end:T.end||null};
 }
@@ -4782,6 +4800,7 @@ function topoView(){
 function topoActReal(e,a){
   const T=topoT();
   if(a.a==='tq'){if(T)topoNoteRole(e);return;}
+  if(a.a==='tq2'){if(!T||!T.meet)return note(e.real,'🕵️ Ahora no hay reunión.',true);if(T.out[e.id])return note(e.real,'Te votaron fuera: en este caso ya no preguntas.',true);const m=topoAsk(e.real,String(a.o||''),e.name+' 🎮');if(m)note(e.real,'🕵️ '+m,true);return;}
   if(!T){note(e.real,'🕵️ Hoy no hay caso del topo (o ya se ha cerrado).',true);return;}
   if(a.a==='tvot'){if(T.out[e.id])return note(e.real,'Te votaron fuera: en este caso ya no votas.',true);topoVote(e.real,a.o==='skip'?'skip':String(+a.o));return;}
   if(a.a==='tmet'){T.mb[e.real]=T.mb[e.real]||0;if(T.mb[e.real]>=1)return note(e.real,'🚨 Ya gastaste tu reunión de emergencia de hoy.',true);
@@ -4822,7 +4841,7 @@ function topoRender(){
   if(v.meet&&!v.meet.res&&(!topoW||topoW.mode!=='meet')&&topoW!=='x'+v.meet.n&&(!topoW||topoW.n!==v.meet.n))topoW={mode:'meet',n:v.meet.n};
   topoPanel(VM);
 }
-const TP_EV=(s)=>[[s[6],'📹','en cámara'],[s[7],'🕳️','sin tarea'],[s[8],'🔍','objeto de su dpto.'],[s[9],'🔧','arreglo fallido'],[s[10],'❗','coartada que no cuadra']].filter(x=>x[0]).map(x=>`<i title="${x[2]}">${x[1]}${x[0]>1?'×'+x[0]:''}</i>`).join('');
+const TP_EV=(s)=>[[s[6],'📹','en cámara'],[s[7],'🕳️','sin tarea'],[s[8],'🔍','objeto de su dpto.'],[s[9],'🔧','arreglo fallido'],[s[10],'❗','coartada que no cuadra'],[s[11],'🧩','un objeto suyo junto al sabotaje']].filter(x=>x[0]).map(x=>`<i title="${x[2]}">${x[1]}${x[0]>1?'×'+x[0]:''}</i>`).join('');
 function topoPanel(VM){
   let w=$('#topow');
   if(!topoW||!VM||typeof topoW!=='object'){if(w)w.classList.remove('show');return;}
@@ -4837,7 +4856,7 @@ function topoPanel(VM){
       <p>✅ Con tarea a esa hora (coartada): ${toArr(c.reg).map(r=>'<b>'+esc(r[0])+'</b> '+esc(r[1])).join(' · ')||'nadie'}.</p>
       <p>🕳️ Sin tarea a esa hora: ${toArr(c.free).map(x=>'<b>'+esc(x)+'</b>').join(', ')||'nadie'}.</p>
       <p>🔍 Junto a ${esc(c.w)} había ${esc(c.obj)}. ¿Se le cayó a alguien… o lo dejaron ahí a propósito?</p>
-      ${toArr(c.fix).length?`<p>🔧 <b>${toArr(c.fix).map(esc).join(', ')}</b> fue a arreglarlo y siguió roto.</p>`:''}</div>`).join('')||'<div class="tp-hint">Todavía no ha habido ningún sabotaje. Paciencia: el topo atacará.</div>';
+      ${toArr(c.fix).length?`<p>🔧 <b>${toArr(c.fix).map(esc).join(', ')}</b> fue a arreglarlo y siguió roto.</p>`:''}${c.mo?`<p>🧩 Además, alguien perdió allí <b>${esc(c.mo)}</b>. ¿De quién será? Pregúntalo en la reunión con «Enséñame el cuaderno».</p>`:''}</div>`).join('')||'<div class="tp-hint">Todavía no ha habido ningún sabotaje. Paciencia: el topo atacará.</div>';
     if(toArr(v.rum).length)b+=`<div class="tp-clue rum"><h6>🤫 Rumores (sin confirmar)</h6>${toArr(v.rum).map(r=>`<p><i>${esc(r[0])}</i> ${esc(r[1])}${r[2]?' <small>· lo cuenta '+esc(r[2])+'</small>':''}</p>`).join('')}</div>`;
     b+=`<div class="tp-clue"><h6>👥 Sospechosos</h6>${toArr(v.sus).map(s=>`<p class="tp-s ${s[5]?'out':''}">${s[1]} <b>${esc(s[2])}</b>${s[4]?' 🎮':''} <small>${ROLES[s[3]]?ROLES[s[3]].s:''}${s[5]?' · votado fuera':''}</small> <span class="tp-ev">${TP_EV(s)||'<i>sin pistas</i>'}</span></p>`).join('')}</div>`;
     f=v.meet&&!v.meet.res?'<button class="btn no" data-act="topow" data-k="meet" data-def="1">↩️ Volver a la reunión</button>'
@@ -4848,17 +4867,22 @@ function topoPanel(VM){
     f='<button class="btn" data-act="tclose" data-def="1">Cerrar</button>';
   }else if(mode==='end'&&v.end){t='🕵️ Final del caso';b=topoEndHtml(v.end);f='<button class="btn go" data-act="tclose" data-def="1">Cerrar</button>';}
   else if(mode==='meet'&&v.meet){
-    const M=v.meet,R=M.res,voted=toArr(M.voted).includes(me.key),canV=!R&&!voted&&!me.out&&(me.host||me.id!=null);
+    const M=v.meet,R=M.res,D=M.deb||null,ph=D?D.ph:'v',voted=toArr(M.voted).includes(me.key),canV=!R&&(ph==='v'||!!room||isMember())&&!voted&&!me.out&&(me.host||me.id!=null);
+    const spk=D&&ph==='d'?D.spk:-1,canQ=!R&&D&&ph==='d'&&!me.out&&(me.host?!toArr(D.qd).includes(D.r):!toArr(D.qk).includes(me.key));
     t='🚨 Reunión de emergencia #'+M.n;
-    b=`<div class="tp-hint">${esc(M.why)}. Cada uno cuenta dónde estaba en el último sabotaje. ${R?'':M.left>=0?'<b>Quedan '+M.left+' s para votar.</b>':'Vota tú: tu voto vale doble (eres el jefe).'} Compara con el <button class="btn mini" data-act="topow" data-k="book">📋 Cuaderno</button>.</div>`;
-    b+='<div class="tp-meet">'+toArr(M.al).map(a=>{const s=toArr(v.sus).find(x=>x[0]===a[0])||[a[0],'❓','?','atc','',0,0,0,0,0,0];const n=R?toArr(R.tal).find(x=>x[0]===a[0]):null;
-      return `<div class="tp-sus ${R&&R.out===a[0]?'gone':''}"><div class="tp-face">${s[1]}</div><div class="tp-mid"><b>${esc(s[2])}${s[4]?' 🎮':''}</b> <small>${ROLES[s[3]]?ROLES[s[3]].s:''}</small> <span class="tp-ev">${TP_EV(s)}</span>
-        <q>${esc(a[1])}</q>${a[2]?'<em class="tp-bad">❗ No cuadra: el registro dice que a esa hora no tenía tarea.</em>':''}${a[3]?'<small class="tp-acc">🤨 Sospecha de '+N(a[3])+'</small>':''}</div>
+    b=`<div class="tp-hint">${esc(M.why)}. ${D&&ph==='d'?'<b>Debate por turnos ('+(D.r+1)+'/'+D.R+')</b>: habla un sospechoso cada vez. '+(me.host?'Puedes hacerle <b>una pregunta por turno</b>.':'Puedes hacer <b>una pregunta</b> en toda la reunión.'):'<b>Toca votar.</b>'} ${R?'':M.left>=0?'<b>Quedan '+M.left+' s.</b>':me.host?'Tu voto vale doble (eres el jefe).':''} Compara con el <button class="btn mini" data-act="topow" data-k="book">📋 Cuaderno</button>.</div>`;
+    if(D)b+=`<div class="tp-deb" aria-live="polite">${toArr(D.L).map(l=>{const c=String(l[3]||'');return c==='sys'||c==='q'||/^ans/.test(c)?`<p class="tp-l c-${c.split(' ').join(' c-')}">${esc(l[2])}</p>`:`<p class="tp-l c-${c}"><span>${l[0]}</span><b>${esc(l[1])}</b> «${esc(l[2])}»</p>`;}).join('')}</div>`;
+    if(canQ){const sp=toArr(v.sus).find(x=>x[0]===spk);b+=`<div class="tp-qs"><small>❓ Pregunta a <b>${sp?esc(sp[2]):'quien habla'}</b>:</small>${[['donde','🕐 ¿Dónde estabas a las…?'],['visto','👀 ¿Quién te vio?'],['libro','📋 Enséñame el cuaderno']].map(([q,l])=>`<button class="btn mini" data-act="tdq" data-q="${q}">${l}</button>`).join('')}</div>`;}
+    b+='<div class="tp-meet">'+toArr(M.al).map(a=>{const s=toArr(v.sus).find(x=>x[0]===a[0])||[a[0],'❓','?','atc','',0,0,0,0,0,0,0];const n=R?toArr(R.tal).find(x=>x[0]===a[0]):null;
+      return `<div class="tp-sus ${R&&R.out===a[0]?'gone':''} ${spk===a[0]?'spk':''}"><div class="tp-face">${s[1]}</div><div class="tp-mid"><b>${esc(s[2])}${s[4]?' 🎮':''}</b> <small>${ROLES[s[3]]?ROLES[s[3]].s:''}${spk===a[0]?' · 🎙️ habla ahora':''}</small> <span class="tp-ev">${TP_EV(s)}</span>
+        <q>${esc(a[1])}</q>${a[2]?'<em class="tp-bad">❗ No cuadra: el registro dice que a esa hora no tenía tarea.</em>':a[4]?'<em class="tp-okq">✅ El registro confirma su coartada.</em>':''}${a[3]?'<small class="tp-acc">🤨 Sospecha de '+N(a[3])+'</small>':''}</div>
         ${R?`<span class="tp-n">${n?n[1]:0} 🗳️</span>`:canV&&a[0]!==me.id?`<button class="btn mini no" data-act="tvote" data-v="${a[0]}">🗳️ Votar</button>`:''}</div>`;}).join('')+'</div>';
     if(R)b+=`<div class="tp-res ${R.out>=0&&R.out===(v.end&&v.end.id)?'win':''}"><b>${esc(R.txt)}</b><small>Saltar: ${R.skip} 🗳️</small></div>`;
     else if(voted)b+='<div class="tp-hint">✅ Has votado. Esperando al resto…</div>';
     if(room)b+=chatBox('tpchat');
-    f=R?`<button class="btn go" data-act="tclose" data-def="1">Seguir</button>`:canV?`<button class="btn" data-act="tvote" data-v="skip" data-def="1">⏭️ Saltar voto</button>`:`<button class="btn" data-act="tclose" data-def="1">Cerrar</button>`;
+    f=R?`<button class="btn go" data-act="tclose" data-def="1">Seguir</button>`
+      :me.host&&D&&ph==='d'?`<button class="btn go" data-act="tdnext" data-def="1">▶ Siguiente turno</button><button class="btn" data-act="tdvote">🗳️ A votar ya</button>`
+      :canV?`<button class="btn" data-act="tvote" data-v="skip" data-def="1">⏭️ Saltar voto</button>`:`<button class="btn" data-act="tclose" data-def="1">Cerrar</button>`;
   }else{topoW=null;w.classList.remove('show');return;}
   const h=tpFix(`<div class="card tpw"><div class="tpw-h"><b>${t}</b><button class="gs-mini" data-act="tclose" aria-label="Cerrar">✕</button></div><div class="tpw-b">${b}</div><div class="tpw-f">${f}</div></div>`);
   if(w.dataset.h!==h){w.dataset.h=h;const sc=w.querySelector('.tpw-b'),y=sc?sc.scrollTop:0;keepInputs(()=>{w.innerHTML=h;});const s2=w.querySelector('.tpw-b');if(s2)s2.scrollTop=y;}
@@ -4869,7 +4893,8 @@ function topoClick(a,b){
   if(a==='topow'){const M=VM&&VM.v.meet;topoW={mode:b.dataset.k,n:M?M.n:undefined};topoRender();return;}
   if(a==='tclose'){const M=VM&&VM.v.meet;if(M&&topoW&&topoW.mode==='meet'){topoW='x'+M.n;if(!isMember()&&!room&&M.res){const T=topoT()||run.topo;if(T)T.meet=null;}}else topoW=null;topoRender();return;}
   if(!VM)return;
-  if(a==='tmeet'){if(isMember())roomAct({k:'soc',a:'tmet'});else{const T=topoT();if(!T)return;T.mb.boss=T.mb.boss||0;if(T.mb.boss>=2){toast('🚨 Ya has convocado dos reuniones hoy. Usa el cuaderno.','bad');return;}if(topoMeetStart('La convoca el jefe','jefe'))T.mb.boss++;}return;}
+  if(a==='tdq'||a==='tdnext'||a==='tdvote'){topoDebClick(a,b,VM);return;}
+  if(a==='tmeet'){if(isMember())roomAct({k:'soc',a:'tmet'});else{const T=topoT();if(!T)return;T.mb.boss=T.mb.boss||0;if(T.mb.boss>=(T.mbMax||2)){toast('🚨 Ya has convocado '+(T.mbMax||2)+' reuniones hoy. Usa el cuaderno.','bad');return;}if(topoMeetStart('La convoca el jefe','jefe'))T.mb.boss++;}return;}
   if(a==='tvote'){const x=b.dataset.v;if(isMember())roomAct({k:'soc',a:'tvot',o:String(x)});else topoVote('boss',x);
     if(isMember()&&VM.v.meet){(room.topoVoted=room.topoVoted||{})[VM.v.meet.n]=1;toast('🗳️ Voto enviado.','good');}return;}
   if(a==='tsab'&&isMember()){roomAct({k:'soc',a:'tsab',o:b.dataset.k});room.topoMe=Object.assign(room.topoMe||{},{cdT:Date.now()+3000});topoW=null;topoRender();return;}
@@ -4915,7 +4940,275 @@ function fixAct(a,b){
 function topoCfgHtml(){
   const c=meta.topoCfg||'auto',S=meta.topoS||{n:0,crew:0,topo:0},T=topoHere();
   const o=[['auto','🔁 Automático','turno 4 y cada 5'],['hoy','🎯 El próximo turno','solo una vez'],['off','🚫 Nunca','sin topo']];
-  return `<div class="zone-title">🕵️ MODO TOPO (AMONG US DE SÚPER)</div><div class="supd">${T&&!T.end?'<b>Hoy hay un topo suelto.</b> ':''}Casos: ${S.n} · resueltos ${S.crew} · ganó el topo ${S.topo}.</div><div class="tp-cfg">${o.map(([k,n,s])=>`<button class="btn mini ${c===k?'go':''}" data-act="topocfg" data-k="${k}">${n}<small> · ${s}</small></button>`).join('')}</div>`;
+  return `<div class="zone-title">🕵️ MODO TOPO (AMONG US DE SÚPER)</div><div class="supd">${T&&!T.end?'<b>Hoy hay un topo suelto.</b> ':''}Casos: ${S.n} · resueltos ${S.crew} · ganó el topo ${S.topo} · 🤝 confianza del equipo ${topoTrust()}/100.${sArr(S.h).length?' Último: '+(x=>esc(x.n)+' (turno '+x.d+', '+(x.win==='crew'?'lo pillasteis':'se escapó')+')')(sArr(S.h)[sArr(S.h).length-1]):''}</div><div class="tp-cfg">${o.map(([k,n,s])=>`<button class="btn mini ${c===k?'go':''}" data-act="topocfg" data-k="${k}">${n}<small> · ${s}</small></button>`).join('')}</div>`;
+}
+
+/* ===== 🕵️ Topo + elenco + amigos (25-11-2026) =====
+   1 · Motivos: si el topo es del elenco, su motivo sale de su historia: TOPO_MOT[k] = [motivo (sale al final), pista (rumor 🤫
+       durante el caso), objeto (pista 🧩)]. topoMotClue (desde topoSab) suelta rumores con la pista de su historia (a veces la de
+       un inocente, para despistar) y a veces deja su objeto junto al sabotaje (C.mo = [id, objeto]; T.ev[id].mot). De quién es
+       el objeto no sale en la tabla hasta que le preguntas en la reunión con «Enséñame el cuaderno» (motR).
+   2 · Consecuencias que se arrastran: el topo pillado (o el que se escapa) queda en meta.castOut con kind 'topo' y su motivo; si
+       vuelve como candidato, su CV lo dice (CAST_MEM.topo) y, contratado otra vez (e.exTopo), la plantilla no se fía (topoAfter:
+       −20 de afinidad y de confianza). El inocente votado fuera guarda rencor (topoGrudge: e.topoAcc = {d, x, n}; −25 de afinidad
+       con quien le votó, pensamiento de 4 turnos). meta.topoTr = confianza del equipo (0–100, empieza en 60): +8 si gana la
+       tripulación, −12 si gana el topo, −6 por cada inocente votado; con poca confianza los NPC acusan más a lo loco (topoNoise).
+       meta.topoS.h = historial de casos (10): lo usan la ficha (topoHist, en «Historias») y el storylet «¿Otra vez el topo?» (topoR).
+   3 · Debate por turnos (T.meet.deb = {r, R, ph: d|v, spk, L, q, rq, nx}): 2–3 turnos; en cada uno habla un sospechoso (coartada,
+       a quién acusa y por qué, la defensa del acusado según su carácter y cómo se llevan) y otros reaccionan (topoReact).
+       Pregunta (una por turno el jefe; una por reunión cada real, act soc a:'tq2'): 🕐 «¿Dónde estabas a las…?» mira el registro
+       de tareas (confirma o destapa la mentira), 👀 «¿Quién te vio?» busca testigos (un amigo puede cubrirle) y la cámara, y
+       📋 «Enséñame el cuaderno» le lee sus pistas y le enseña su objeto 🧩 (el topo se pone nervioso). Las mentiras ya no se ven
+       solas: se destapan preguntando o si un compañero le pilla. En solitario: ▶ Siguiente turno / 🗳️ A votar ya; online, un
+       turno cada 12 s y se puede votar en cualquier momento (70 s en total).
+   4 · Tareas en el mapa: camModel publica tm (las partes de la avería, con quién va) y pixStore, cámaras e isométrica las pintan
+       como chinchetas; tocar una = «🔧 Voy yo» (jefe) o pedirla (real, act take).
+   5 · 🕵️ Caso exprés (?topo=express o la caja «Caso exprés» del lineal): un caso suelto de ~10 minutos con topo seguro y tiempos
+       comprimidos, con su pantalla de resultado y sin tocar la partida guardada (usa el envoltorio del reto: daily.x = 1,
+       daily.saved; saveGame/wipeGame/ranking no hacen nada). ?xdur=N cambia la duración en segundos (pruebas). */
+const TOPO_MOT={
+ rocio:['Kevin no le devolvía los 600 € y una «empresa de seguridad» le ofreció pagárselos si dejaba de mirar las cámaras y rompía un par de cosas. Dice que lo hizo «por Fermín y las vacaciones». Llora y se ríe a la vez.','anda preguntando cuánto pagan «por hacer la vista gorda»','un sobre con «600» escrito a boli ✉️'],
+ yeray:['Un canal de TikTok de «sabotajes en el curro» le pagaba 50 € por vídeo. Lo necesitaba para pagarse una academia y recuperar el trimestre sin que su madre se enterara. Literal.','graba vídeos raros en el almacén y dice que «es contenido»','un palo selfi con la funda rota 🤳'],
+ awa:['Le ofrecieron pagarle entero el préstamo de la matrícula de Enfermería a cambio de «unos fallos técnicos». Lo confesó llorando: «Era mi carrera o vuestra cámara frigorífica».','la han visto hablando bajito con un hombre trajeado en la puerta','un recibo del préstamo de la matrícula 🧾'],
+ andres:['El súper de enfrente le prometió un puesto tranquilo, sin carretilla, hasta jubilarse: su hernia ya no aguanta el muelle y no quería que nadie lo supiera. «Treinta años en Mercamadrid y me tenía que ir así.»','se queja de la espalda y dice que «en otros sitios cuidan mejor a los mayores»','una faja lumbar con el logo de otro súper 🩹'],
+ kevin:['Debe 3.000 € a una casa de apuestas y un «amigo» le perdonaba 500 € por cada avería. Cuando le pillaron dijo: «Era esto o que me rompieran las piernas, jefe».','le han oído por teléfono: «el viernes te pago, de verdad, el viernes»','un boleto de apuestas arrugado 🎟️'],
+ dmytro:['Una constructora le prometió una carta de recomendación para homologar su título de ingeniero si les pasaba cómo funcionaba la instalación de la tienda… y la «probaba» un poco. Lo hizo por Sofía.','le han visto dibujando la instalación eléctrica en una servilleta','una servilleta con el plano del cuadro eléctrico 📐'],
+ nerea:['En la entrevista de Mercadona le dijeron que el puesto era suyo si «la competencia de barrio tenía un mal mes». Le pagaron por adelantado y su plan quinquenal no tenía hueco para los escrúpulos.','tiene una entrevista «con la competencia» y no lo esconde mucho','una acreditación de visitante de Mercadona 🪪'],
+ pili:['Publicó en «Moratalaz Informa» que la tienda cerraba y, como no cerraba, decidió ayudar un poco. «Yo nunca me equivoco, cariño. Solo me adelanto.»','dice en el grupo del barrio que «esta semana pasa algo gordo en VitchMarket»','un móvil con el grupo «Moratalaz Informa» abierto 📱'],
+ wei:['Una consultora le pagaba por «probar los sistemas» de la tienda. Él lo llamaba auditoría. Hacienda lo llamaría otra cosa. Y lo hizo para pagarse las clases de conducir a las que nunca se presenta.','dice que el sistema de cajas «tiene más agujeros que un queso de Burgos»','un pendrive con una etiqueta que pone «pruebas» 💾'],
+ fer:['El rencor del ERE: el banco que le echó es el dueño del local. Quería que la tienda fracasara para que el banco perdiera el alquiler. «Me hicieron lo mismo a mí. Con corbata, eso sí.»','no para de decir que «esto se va a pique como mi banco»','una carta del banco con membrete 🏦'],
+ ioana:['Necesitaba dinero rápido para que su madre dejara de limpiar casas y una cadena de la competencia le pagaba por cada avería. Iba a aplazar la boda con Florin otra vez.','hace cuentas en un pósit: «mamá — 1.200 €»','un pósit con cuentas: «mamá 1.200» 🗒️'],
+ vale:['Una marca de la competencia le ofreció un contrato de influencer si conseguía vídeos de la tienda en pleno caos. Lo subió todo a stories antes de que pasara.','sube stories de cada avería antes de que pase','un aro de luz para grabar 💡'],
+ youssef:['El préstamo secreto para la boda de 300 invitados: los intereses le ahogaban y alguien de la competencia le ofreció cancelarlo a cambio de «unos sustos». Ni Salma lo sabe.','le llaman del banco y sale a hablar a la calle','una factura del salón de bodas 💍'],
+ toni:['Los Lineales necesitaban dinero para grabar el disco y un «promotor» de la competencia se lo ofreció. «Es por el arte, jefe. El arte no paga el estudio.»','dice que «con la pasta de un trabajillo» grabarán el disco','una púa de guitarra de Los Lineales 🎸'],
+ tess:['Su madre le buscaba un viudo rico; ella quería irse con Toni a Cádiz con su propio dinero. La competencia pagaba bien y en efectivo.','dice que «en Cádiz se vive mejor» y que ella tiene un plan','un billete de tren a Cádiz 🚆'],
+ inma:['La Reina del Mostrador quería que la tienda cerrara para dedicarse a la música con Los Lineales sin tener que dimitir. Le pareció «más elegante» que una carta de renuncia.','dice que «hay vida después del súper» y tararea algo en voz baja','una peluca rosa en una bolsa 💗'],
+ jhon:['Le amenazaron con denunciarle a Extranjería por un papel mal tramitado si no colaboraba. Lo hizo con miedo: «Si me despiden, pierdo el permiso de residencia».','le tiemblan las manos cada vez que suena el móvil','un papel de Extranjería arrugado 📄']
+};
+const topoMot=e=>e&&e.cast&&TOPO_MOT[e.cast]||null;
+const topoTrust=d=>{if(!meta)return 60;if(meta.topoTr==null)meta.topoTr=60;if(d)meta.topoTr=clamp(meta.topoTr+d,0,100);return meta.topoTr;};
+const topoNoise=()=>1+Math.max(0,60-topoTrust())/40;
+const topoEv=(T,id)=>T.ev[id]=T.ev[id]||{cam:0,free:0,obj:0,fix:0,contra:0};
+/* Pistas del motivo en cada sabotaje: un rumor con la pista de su historia (o la de un inocente) y, a veces, su objeto. */
+function topoMotClue(T,C,e){
+  const sus=topoSus(T).filter(x=>!x.real&&topoMot(x)),mine=!!topoMot(e);
+  if(Math.random()<0.5){const r=mine&&Math.random()<0.6?e:pick(sus.filter(x=>x!==e))||(mine?e:null);
+    if(r){const src=pick(topoSus(T).filter(x=>!x.real&&x!==r)),t='Dicen que '+r.name+' '+topoMot(r)[1]+'.';T.rum.push([C.h,t,src?src.name:'']);radio('🤫',t);}}
+  if(!C.mo&&Math.random()<0.4){const o=mine&&Math.random()<0.7?e:pick(sus.filter(x=>x!==e));if(o){C.mo=[o.id,topoMot(o)[2]];const v=topoEv(T,o.id);v.mot=(v.mot||0)+1;}}
+}
+/* Cada turno (topoPlan): quien fue el topo y ha vuelto se encuentra con la desconfianza de todos (una vez). */
+function topoAfter(){
+  meta.emp.forEach(e=>{if(e.real||!e.exTopo||e.exTopoR)return;e.exTopoR=1;
+    meta.emp.forEach(o=>{if(o!==e&&!o.real)relAdd(o,e,{af:-20,conf:-20});});
+    think(e,'🐀','Todos saben que fue el topo del turno '+e.exTopo,-5,5,'extopo');
+    radio('🐀',e.name+' ha vuelto a la tienda. Sí, '+e.name+'. El topo del turno '+e.exTopo+'. Nadie le quita ojo.');});
+}
+/* Inocente votado fuera: rencor con quien le votó (y con el jefe), y baja la confianza del equipo. */
+function topoGrudge(T,M,e){
+  topoTrust(-6);
+  e.topoAcc={d:meta.day,x:meta.day+4,n:((e.topoAcc&&e.topoAcc.n)||0)+1};
+  if(e.real)return;
+  const by=Object.entries(M.votes).filter(([k,v])=>v===e.id).map(([k])=>k);
+  by.forEach(k=>{const o=k[0]==='n'?empById(+k.slice(1)):k!=='boss'?meta.emp.find(x=>x.real===k):null;if(o&&o!==e)relAdd(e,o,{af:-25,conf:-15});});
+  think(e,'😤','Le votaron como topo siendo inocente'+(by.includes('boss')?' (y el jefe también)':''),-4,4,'topoAcc');
+  try{fact('topo',e,null,0,null,0);}catch(x){}
+}
+/* Al cerrar el caso: el motivo, más pistas para la pantalla final, historial, castOut 'topo' y la confianza del equipo. */
+function topoAfterEnd(T,e,crew){
+  const E=T.end,M=topoMot(e);
+  E.mot=M?M[0]:e.real?'Es un jugador de verdad: sus motivos, que los cuente en el chat.':'Nadie lo sabe. Dice que «por las risas». Nadie se ríe.';
+  if(M){const P=toArr(E.ptr);T.cl.forEach(c=>{if(c.mo&&c.mo[0]===e.id)P.push('🧩 '+c.h+': '+c.mo[1]+' junto a '+c.w+'.');});
+    T.rum.forEach(r=>{if(String(r[1]).indexOf(e.name+' '+M[1])>=0)P.push('🤫 '+r[0]+': '+r[1]);});E.ptr=P.slice(0,8).map(tpFix);}
+  const S=meta.topoS=meta.topoS||{n:0,crew:0,topo:0};S.h=sArr(S.h);
+  S.h.push({d:meta.day,n:e.name,k:e.cast||'',f:e.face,win:crew?'crew':'topo',why:E.why,inn:Object.keys(T.out).map(id=>{const x=empById(+id);return x?x.name:'';}).filter(Boolean)});
+  if(S.h.length>10)S.h.shift();
+  if(e.cast&&meta.castOut&&meta.castOut[e.cast]){const O=meta.castOut[e.cast];O.kind='topo';O.win=crew?0:1;O.mot=M?M[0].slice(0,160):'';}
+  E.tr=topoTrust(crew?8:-12);
+  meta.emp.forEach(o=>{if(o.real||o===e)return;if(crew)memo(o,'🤝','Pillamos al topo: se fía más del equipo',3,3,'topoTr');else think(o,'😒','El topo se salió con la suya: ya no se fía de nadie',-4,3,'topoTr');});
+  if(M)radio('🧠','Por qué lo hizo '+e.name+': '+M[0]);
+}
+/* Lo que sale en la ficha («Historias»): fue el topo, le votasteis siendo inocente. */
+function topoHist(e){
+  const L=[];if(!e||!meta)return L;
+  if(e.exTopo)L.push('🐀 Fue el topo del turno '+e.exTopo+'. Ha vuelto y la plantilla no le quita ojo');
+  if(e.topoAcc)L.push('😤 Le votasteis como topo el turno '+e.topoAcc.d+' siendo inocente'+(meta.day<=e.topoAcc.x?': aún os lo guarda':''));
+  const h=sArr(meta.topoS&&meta.topoS.h).filter(x=>toArr(x.inn).includes(e.name)&&!(e.topoAcc&&x.d===e.topoAcc.d));
+  if(h.length)L.push('🗳️ Votad'+(isFem(e)?'a':'o')+' fuera en el caso del turno '+h[h.length-1].d);
+  return L;
+}
+/* ---- 🗣️ Debate por turnos en la reunión ---- */
+const TOPO_DEF={capullo:'¿Yo? Tú flipas. Mírate tú primero.',quejica:'Claro, siempre yo. Si es que no se puede.',bromista:'Si fuera el topo, al menos sería un topo gracioso. Y no lo soy.',timido:'Yo… no… de verdad que no he sido…',chismoso:'¡Pero si yo me entero de todo! Si fuera yo, ya lo sabríais.',pasota:'Paso de defenderme. No he sido. Fin.',lider:'Vamos a calmarnos y a mirar las pruebas, no a señalar por señalar.',currante:'Yo estaba currando. Preguntad a quien queráis.',servicial:'Os juro que no. Yo solo quiero ayudar.'};
+const TOPO_RE={pos:['Yo pongo la mano en el fuego por %n.','%n es de fiar, os lo digo yo.','Venga ya, ¿%n? Imposible.'],neg:['Ya decía yo que %n tramaba algo.','A mí %n nunca me ha dado buena espina.','Con %n, cualquier cosa.']};
+const TOPO_Q2={donde:'¿Dónde estabas a las %h?',visto:'¿Quién te vio?',libro:'Enséñame el cuaderno'};
+function topoWhy(T,x){
+  const v=T.ev[x.id]||{},L=T.cl[T.cl.length-1];
+  if(v.fix)return 'dijo que lo arreglaba y siguió roto';
+  if(L&&L.cam&&L.cam.includes(x.id))return 'sale en la cámara junto a '+L.w;
+  if(L&&L.free.includes(x.id))return 'a esa hora no tenía ninguna tarea';
+  if(v.contra)return 'su coartada no cuadra';
+  if(x.exTopo)return 'ya fue el topo una vez, ¿o no os acordáis?';
+  if(v.obj)return 'allí había '+TOPO_OBJ[x.role];
+  return pick(['le vi muy nervios'+(isFem(x)?'a':'o'),'tiene cara de topo, qué quieres que te diga','me da mala espina']);
+}
+function topoDebLine(M,x,t,c){M.deb.L.push([x?x.face:'🕵️',x?x.name:'Vitchi',tpFix(t),c||'']);if(M.deb.L.length>40)M.deb.L.shift();}
+function topoDebInit(T,M){
+  const sus=M.sus.map(empById).filter(Boolean);
+  const spk=sus.map(x=>[x.id,topoSusp(T,x.id)]).sort((a,b)=>b[1]-a[1]).slice(0,Math.min(3,sus.length)).map(x=>x[0]);
+  M.deb={r:-1,R:spk.length,ph:'d',spk,L:[],q:{},rq:{},nx:0};
+  topoDebNext(T,M);
+}
+function topoDebNext(T,M){
+  const D=M&&M.deb;if(!D||D.ph!=='d')return;
+  let x=null;
+  while(!x){D.r++;if(D.r>=D.R){D.ph='v';topoDebLine(M,null,'🗳️ Se acabó el debate: ¡a votar!','sys');return;}x=empById(D.spk[D.r]);}
+  D.nx=run.t+12;
+  const a=M.al[x.id]||{t:'…'},say=[[x,'«'+a.t+'»']];
+  topoDebLine(M,null,'🎙️ Turno '+(D.r+1)+' de '+D.R+': habla '+x.name+'.','sys');
+  topoDebLine(M,x,a.t,'al');
+  if(!x.real){
+    /* un compañero le pilla la mentira */
+    if(a.bad&&!a.rv&&Math.random()<0.35){const w=pick(M.sus.map(empById).filter(o=>o&&!o.real&&o!==x&&o.id!==T.who&&!T.out[o.id]));
+      if(w){a.rv=1;topoEv(T,x.id).contra++;const t=(TOPO_PRE[w.pers]||'')+'Eso no es verdad, '+x.name+'. Yo pasé por allí y no estabas.';topoDebLine(M,w,t,'acc');say.push([w,'«'+t+'»']);}}
+    const o=empById(M.acc[x.id]);
+    if(o&&!T.out[o.id]){const t='Yo creo que es '+o.name+': '+topoWhy(T,o)+'.';topoDebLine(M,x,t,'acc');say.push([x,'«'+t+'»']);
+      if(!o.real){const r=rel(o,x)||{af:0};let d;
+        if(o.id===T.who&&Math.random()<0.5){const z=topoBlame(T,o,M.sus.map(empById).filter(Boolean));d=z&&z!==x?'Qué casualidad que me acuses tú. Yo que tú miraría a '+z.name+'.':(TOPO_DEF[o.pers]||'No he sido yo.');}
+        else d=r.af<=-20?'Mira quién habla, '+x.name+'. A ti tampoco te vio nadie.':(TOPO_DEF[o.pers]||'No he sido yo.');
+        topoDebLine(M,o,d,'def');say.push([o,'«'+d+'»']);relAdd(o,x,{af:-3});}
+      else topoDebLine(M,null,o.name+' 🎮 se defiende en el chat.','sys');}
+    topoReact(T,M,x,0,say);
+  }else topoDebLine(M,null,x.name+' 🎮 lo cuenta en el chat.','sys');
+  try{convo('all',say.filter(s=>s[0]&&!s[0].real).slice(0,4));}catch(e){}
+}
+/* Alguien reacciona a lo que dice x, según cómo se lleven: los amigos le defienden, los que no le tragan aprovechan. */
+function topoReact(T,M,x,bad,say){
+  const L=M.sus.map(empById).filter(o=>o&&!o.real&&o!==x&&!T.out[o.id]).map(o=>[o,(rel(o,x)||{af:0}).af]);
+  const fr=L.filter(z=>z[1]>=35),en=L.filter(z=>z[1]<=-25);let z=null,k='';
+  if(bad&&en.length){z=pick(en);k='neg';}else if(fr.length&&Math.random()<0.5){z=pick(fr);k='pos';}else if(en.length&&Math.random()<0.35){z=pick(en);k='neg';}
+  if(!z)return;
+  const t=(TOPO_PRE[z[0].pers]||'')+pick(TOPO_RE[k]).replace('%n',x.name);topoDebLine(M,z[0],t,k==='pos'?'def':'acc');if(say)say.push([z[0],'«'+t+'»']);
+  relAdd(z[0],x,{af:k==='pos'?2:-2});
+}
+/* Pregunta al que habla. key = 'boss' (una por turno) o el uid de un real (una por reunión). Devuelve '' o por qué no. */
+function topoAsk(key,q,askN){
+  const T=topoT(),M=T&&T.meet,D=M&&M.deb;if(!D||M.res||!TOPO_Q2[q])return 'Ahora no se puede preguntar.';
+  if(D.ph!=='d')return 'El debate ya ha terminado: toca votar.';
+  if(key==='boss'){if(D.q[D.r])return 'Ya has preguntado en este turno.';D.q[D.r]=1;}else{if(D.rq[key])return 'Ya has hecho tu pregunta.';D.rq[key]=1;}
+  const x=empById(D.spk[D.r]);if(!x)return 'No habla nadie.';
+  const L=T.cl[T.cl.length-1],h=L?L.h:topoH(),a=M.al[x.id]=M.al[x.id]||{t:'…'},v=topoEv(T,x.id);let bad=0;
+  topoDebLine(M,null,'❓ '+(askN||'Tú')+' a '+x.name+': «'+TOPO_Q2[q].replace('%h',h)+'»','q');
+  if(q==='donde'){const rg=L&&L.reg.find(y=>y[0]===x.id);
+    if(rg){a.ok=1;topoDebLine(M,null,'✅ El registro lo confirma: a las '+h+' estaba '+rg[1]+'.','ans');}
+    else if(a.bad&&!a.rv){a.rv=1;v.contra++;bad=1;topoDebLine(M,null,'❗ No cuadra: el registro dice que a las '+h+' '+x.name+' no tenía ninguna tarea.','ans bad');
+      if(!x.real)topoDebLine(M,x,(TOPO_PRE[x.pers]||'')+pick(['Bueno… a lo mejor me confundí de hora.','¿El registro? Ese registro falla más que el datáfono.','Estaría yendo para allá, ¿vale?']),'def');}
+    else if(a.bad){bad=1;topoDebLine(M,null,'❗ Ya lo sabíamos: su coartada no cuadra con el registro.','ans bad');}
+    else topoDebLine(M,null,'🕳️ El registro dice que a las '+h+' estaba libre: nadie puede confirmar ni desmentir lo que cuenta.','ans');}
+  else if(q==='visto'){const rg=L&&L.reg.find(y=>y[0]===x.id),onCam=L&&L.cam&&L.cam.includes(x.id),mates=M.sus.map(empById).filter(o=>o&&!o.real&&o!==x&&!T.out[o.id]);
+    if(rg){const w=pick(mates.filter(o=>o.role===x.role))||pick(mates);if(w)topoDebLine(M,w,'Yo le vi: estaba '+rg[1]+'. Eso es verdad.','def');else topoDebLine(M,null,'✅ El registro le pone '+rg[1]+'.','ans');}
+    else{const fr=mates.filter(o=>(rel(o,x)||{af:0}).af>=40);
+      if(fr.length&&Math.random()<0.45){const w=pick(fr);topoDebLine(M,w,'Yo… yo creo que sí le vi por su zona.','def');topoDebLine(M,null,'🤔 '+w.name+' le tiene mucho aprecio. ¿Le estará cubriendo?','ans');}
+      else{bad=1;topoDebLine(M,null,'🕳️ Nadie dice haberle visto a esa hora.','ans bad');}}
+    if(onCam){bad=1;topoDebLine(M,null,'📹 Eso sí: la cámara junto a '+L.w+' le pilla a las '+h+'.','ans bad');}
+    else if(L&&!L.cam)topoDebLine(M,null,'💡 Con el apagón, las cámaras no grabaron nada.','ans');}
+  else{const P=[];if(v.cam)P.push('📹 sale en cámara '+v.cam+(v.cam>1?' veces':' vez'));if(v.free)P.push('🕳️ sin tarea en '+v.free+' sabotaje'+(v.free>1?'s':''));if(v.fix)P.push('🔧 un arreglo que salió mal');if(v.obj)P.push('🔍 objetos de su departamento');if(v.contra)P.push('❗ coartadas que no cuadran');
+    if(P.length>=2)bad=1;topoDebLine(M,null,'📋 El cuaderno dice de '+x.name+': '+(P.join(' · ')||'nada de nada')+'.','ans'+(P.length>=2?' bad':''));
+    const mo=T.cl.find(c=>c.mo&&c.mo[0]===x.id);
+    if(mo){v.motR=1;bad=1;topoDebLine(M,null,'🧩 Y junto a '+mo.w+' apareció '+mo.mo[1]+'. Es de '+x.name+'.','ans bad');
+      if(!x.real)topoDebLine(M,x,x.id===T.who?(TOPO_PRE[x.pers]||'')+'Eso… eso lo habrá puesto alguien ahí. Para cargármelo.':'Sí, es mío. Se me caería. ¿Y qué? No he hecho nada.','def');}
+    if(!x.real&&Math.random()<(x.id===T.who?0.5:x.pers==='timido'?0.3:0.1)){v.contra++;bad=1;topoDebLine(M,null,'😰 '+x.name+' se pone nervios'+(isFem(x)?'a':'o')+' y no sabe dónde mirar.','ans bad');}}
+  if(!x.real)topoReact(T,M,x,bad);
+  topoRender();pubState(true);return '';
+}
+function topoDebView(M){
+  const D=M&&M.deb;if(!D)return null;const c=D.ph==='d'?D.spk[D.r]:null;
+  return {r:Math.max(0,D.r),R:D.R,ph:D.ph,spk:c==null?-1:c,L:D.L.slice(-18),qd:Object.keys(D.q).map(Number),qk:Object.keys(D.rq),left:room&&D.ph==='d'?Math.max(0,Math.round(D.nx-run.t)):-1};
+}
+function topoDebClick(a,b,VM){
+  const M=VM&&VM.v&&VM.v.meet;if(!M||M.res)return;
+  if(a==='tdq'){const q=b.dataset.q;if(isMember()){roomAct({k:'soc',a:'tq2',o:q});toast('❓ Pregunta enviada.','good');return;}
+    const m=topoAsk('boss',q,room?(playerName()||'El jefe'):'Tú');if(m)toast('🕵️ '+m,'bad');return;}
+  if(isMember())return;
+  const T=topoT(),TM=T&&T.meet;if(!TM||!TM.deb||TM.res)return;
+  if(a==='tdnext')topoDebNext(T,TM);
+  else if(a==='tdvote'&&TM.deb.ph==='d'){TM.deb.ph='v';topoDebLine(TM,null,'🗳️ Basta de hablar: ¡a votar!','sys');}
+  topoRender();pubState(true);
+}
+/* ---- 📍 Tareas del caso en el mapa (pixStore, cámaras, isométrica) ---- */
+function topoMarksM(){
+  const T=topoT(),S=T&&T.sab;if(!S)return [];
+  return run.tasks.filter(t=>t.k==='fix'&&t.sid===S.id).map(t=>{const p=camPos(taskSpot(t),0),w=t.who==='me'?'el jefe':typeof t.who==='number'?((empById(t.who)||{}).name||'alguien'):t.who?'alguien':'';
+    return {id:t.id,ic:t.ic,s:t.s,x:p[0],y:p[1],w,c:S.crit?1:0};});
+}
+/* P(x,y) → coordenadas del lienzo; z = escala. Devuelve las zonas que se pueden tocar (en coordenadas del lienzo). */
+function topoMarkDraw(c,m,now,P,z){
+  const out=[];
+  toArr(m&&m.tm).forEach(k=>{const p=P(k.x,k.y),pul=redMo()?0.5:(Math.sin(now/180)+1)/2,r=z*(6+2*pul),cy=p[1]-z*12;
+    c.save();c.fillStyle='rgba(255,255,255,.95)';c.beginPath();c.moveTo(p[0]-z*3,cy+r-1);c.lineTo(p[0]+z*3,cy+r-1);c.lineTo(p[0],p[1]);c.closePath();c.fill();
+    c.fillStyle=k.w?'rgba(42,157,92,.92)':k.c?'rgba(229,56,59,.95)':'rgba(242,183,5,.95)';c.beginPath();c.arc(p[0],cy,r,0,7);c.fill();
+    c.strokeStyle='#fff';c.lineWidth=Math.max(1,z*0.8);c.stroke();
+    c.font=Math.round(z*8.5)+'px sans-serif';c.textAlign='center';c.textBaseline='middle';c.fillStyle='#000';c.fillText(k.w?'🔧':k.ic,p[0],cy+z*0.4);
+    c.restore();out.push({x:p[0],y:cy,r:r+z*4,k});});
+  return out;
+}
+const topoMarkHit=(L,x,y)=>{let b=null,bd=1e9;toArr(L).forEach(h=>{const d=Math.hypot(h.x-x,h.y-y);if(d<h.r&&d<bd){bd=d;b=h.k;}});return b;};
+function topoMapTake(k){
+  if(!k)return false;
+  if(k.w){toast('🔧 '+k.s+': ya va '+k.w+'.');return true;}
+  if(isMember()){roomAct({k:'take',t:k.id});toast('🔧 Se lo pides al jefe: '+k.s);return true;}
+  if(!run||run.over)return true;
+  assignTask(k.id,'me');return true;
+}
+/* ---- 🤫 «¿Otra vez el topo?»: el historial de casos da que hablar unos turnos después ---- */
+RUM.topo={neg:1,t:A=>A+' es el topo y aún no le han pillado'};
+STORY.push({id:'topoR',cat:'chisme',ten:1,cd:8,
+  when:c=>{const h=sArr(meta.topoS&&meta.topoS.h),L=h[h.length-1];if(!L||daily||topoHere()||c.day-L.d<2||c.day-L.d>14)return null;
+    const x=c.ws.find(e=>e.pers==='chismoso')||c.ws[0],s=x&&pick(c.all.filter(e=>e!==x&&inStore(e)));return x&&s?{x,s,L}:null;},
+  run:(c,{x,s,L})=>stScene('topoR',{...sEmp(x),head:'🐀 ¿OTRA VEZ EL TOPO?',tag:'🤫 Radio Pasillo',def:'nada',
+   txt:'«Jefe, desde lo de '+L.n+' el turno '+L.d+', cada vez que parpadea una luz alguien grita «¡topo!». Y hoy dicen que han visto a '+s.name+' rondando el cuadro de luces…»',
+   hint:'🕵️ Mirar las cámaras: casi siempre no es nada (+4 de confianza del equipo, −3 de ánimo a '+s.name+', que se siente '+gx('vigilad{o|a}',isFem(s))+'). 🧯 Calmar los ánimos: +2 de ánimo a todos y baja la tensión. 🤷 Que hablen: el bulo corre, −4 de ánimo a '+s.name+' y −3 de confianza del equipo.',
+   ch:[['vig','🕵️ Mirar las cámaras','go'],['cal','🧯 Calmar los ánimos'],['nada','🤷 Que hablen','no']],
+   go:k=>{if(k==='vig'){topoTrust(4);mor(s,-3);return 'En las cámaras, '+s.name+' solo buscaba el interruptor del almacén. Falsa alarma… esta vez.';}
+     if(k==='cal'){meta.emp.forEach(o=>{if(!o.real)mor(o,2);});meta.tension=clamp((meta.tension||20)-10,0,100);return 'Charla de dos minutos: «aquí no hay ningún topo». Medio equipo se lo cree.';}
+     mor(s,-4);topoTrust(-3);fact('topo',s,null,0,null,0);return 'El bulo corre: «'+s.name+' es el nuevo topo». '+s.name+' come sol'+(isFem(s)?'a':'o')+' en el almacén.';}})});
+/* ---- 🕵️ Caso exprés: un caso suelto de ~10 minutos que no toca la partida guardada ---- */
+const TOPO_XD=(()=>{try{return Math.max(30,+new URLSearchParams(location.search).get('xdur')||600);}catch(e){return 600;}})();
+const TOPOX_K='vitchmarket.expres';
+const topoX=()=>!!(daily&&daily.x);
+let topoXBoot=false;
+function topoXRec(set){let r={n:0,w:0,best:0};try{r=Object.assign(r,JSON.parse(localStorage.getItem(TOPOX_K)||'{}'));}catch(e){}
+  if(set){r.n++;if(set.win){r.w++;if(!r.best||set.t<r.best)r.best=set.t;}try{localStorage.setItem(TOPOX_K,JSON.stringify(r));}catch(e){}}return r;}
+function startTopoX(){
+  if(daily&&!daily.x)return;
+  const prev=daily;if(prev)Math.random=prev.orig;
+  daily={x:1,d:madDate(),orig:prev?prev.orig:Math.random,saved:prev?prev.saved:meta,room:prev?prev.room:room,official:false,t0:Date.now()};
+  room=null;
+  meta=defMeta(1);meta.day=2;meta.unl={caja:1};meta.topoCfg='auto';
+  /* más sospechosos: tres del elenco, cada uno en un puesto distinto */
+  shuffle(['alm','back','rrpp','atc']).slice(0,3).forEach(r=>{const e=newEmp(r,meta);e.days=ri(3,20);meta.emp.push(e);});
+  meta.emp.forEach(e=>{try{socEnsure(e);}catch(x){}});
+  meet=null;cart={};lastEnd=null;mg=null;closeMG();sceneClear();topoW=null;
+  tab='caja';document.body.dataset.tab=tab;
+  startDay();
+  toast('🕵️ Caso exprés: unos '+Math.round(run.dur/60)+' minutos, un topo y ni un minuto que perder. Tu partida guardada no se toca.','good');
+}
+function topoXEnd(){
+  if(!topoX()||daily.res)return;
+  const T=run&&run.topo,E=T&&T.end;
+  const res={E:E?JSON.parse(JSON.stringify(E)):null,t:Math.round((Date.now()-daily.t0)/1000),meets:T?T.meets:0,sabs:T?T.nSab:0,inn:T?Object.keys(T.out).length:0,served:run?run.served||0:0};
+  res.rec=topoXRec({win:!!(E&&E.win==='crew'),t:res.t});
+  daily.res=res;
+  if(run)run.over=true;mg=null;pendingLeave=null;closeMG();sceneClear();topoW=null;
+  try{topoRender();}catch(e){}
+  scrTab.topox='res';showTopoXRes();
+}
+function showTopoXRes(){
+  const r=daily&&daily.res;if(!r)return;scrRender=showTopoXRes;
+  const E=r.E,win=!!(E&&E.win==='crew'),mm=s=>Math.floor(s/60)+':'+String(s%60).padStart(2,'0'),kp=(ic,l,v,c)=>`<div class="kpi ${c||''}"><small>${ic} ${l}</small><b>${v}</b></div>`;
+  const body=`<div class="reto-hero ${win?'pos':'neg'}"><small>🕵️ Caso exprés</small><b>${E?(win?'🏆 ¡Pillado!':'🐀 Se escapó'):'🤷 Hoy no hubo caso'}</b><span class="reto-st">${E?esc(E.why):''}</span></div>
+    <div class="kpis">${kp('⏱️','Tiempo',mm(r.t))}${kp('🧨','Sabotajes',r.sabs)}${kp('🚨','Reuniones',r.meets)}${kp('😬','Inocentes fuera',r.inn,r.inn?'neg':'')}</div>
+    ${E?topoEndHtml(E):''}
+    <div class="supd">🏅 Casos exprés resueltos: <b>${r.rec.w}/${r.rec.n}</b>${r.rec.best?' · el más rápido, en '+mm(r.rec.best):''}. Tu partida guardada no se ha tocado.</div>`;
+  showOverlay(screenHtml('topox','🕵️ Caso exprés',[['res','🕵️ Resultado']],body,'','<button class="btn" data-act="topox">🔁 Otro caso</button><button class="btn go big" data-act="dhome">🏠 Volver a la portada</button>'));
 }
 
 function storyPick(L,force){
@@ -5824,24 +6117,25 @@ function castEmp(k,role,m,opt){
   const C=CASTK[k],O=(m.castOut||{})[k];role=ROLES[role]?role:C.role;m.eid=(m.eid||0)+1;
   const e={id:m.eid,name:C.n,sur:C.sur,face:C.face,role,rap:C.rap,trato:C.trato,punt:C.punt,act:C.act,hon:C.hon,moral:C.moral||65,wage:wageOf(role),days:0,warn:0,trial:0,focus:0,off:0,st:blankSt(),
     nat:Math.max(0,NATS.findIndex(x=>x.c===C.c)),langs:C.langs.slice(),pers:C.pers,cast:k,exp:C.exp,bio:castBio(C,m.day,O)};
-  if(O){e.back=O.n||1;e.moral=clamp(e.moral+(O.kind==='fire'?-12:O.kind==='quit'?-5:5),0,100);e.log=sArr(O.log).concat(['T'+(m.day||1)+': Vuelve a la tienda (se fue el turno '+O.d+')']).slice(-6);}
+  if(O){e.back=O.n||1;if(O.kind==='topo')e.exTopo=O.d;e.moral=clamp(e.moral+(O.kind==='fire'||O.kind==='topo'?-12:O.kind==='quit'?-5:5),0,100);e.log=sArr(O.log).concat(['T'+(m.day||1)+': Vuelve a la tienda (se fue el turno '+O.d+')']).slice(-6);}
   Object.assign(e,opt||{});e.cast=k;delete e.relax;
   return e;
 }
 /* Lo que recuerda quien vuelve, según cómo se fue (sale en su currículum como «antes»). */
-const CAST_MEM={fire:['«Me echaste el turno %d. No te guardo rencor… mucho. Necesito el curro.»','«La última vez acabé en la calle. Esta vez vengo a demostrarte que te equivocaste.»'],
+const CAST_MEM={topo:['«Sé que fui el topo del turno %d. Me equivoqué y lo he pagado. Déjame demostrártelo.»','«Lo del turno %d… estaba con el agua al cuello. No volverá a pasar. Palabra.»'],fire:['«Me echaste el turno %d. No te guardo rencor… mucho. Necesito el curro.»','«La última vez acabé en la calle. Esta vez vengo a demostrarte que te equivocaste.»'],
  quit:['«Me fui dando un portazo el turno %d, lo sé. Me arrepentí al llegar a la esquina.»','«Me fui mal, y lo siento. ¿Empezamos de cero?»'],
  good:['«Me fui en buenos términos el turno %d. Echaba de menos esto. Y a la gente.»','«Lo de fuera no salió como pensaba. ¿Hay sitio para mí otra vez?»']};
 function candPrev(c){
   if(!c||!c.cast)return pick(PREV);
   const C=CASTK[c.cast],O=meta&&meta.castOut&&meta.castOut[c.cast];
   if(!O)return C.prev;
+  if(O.kind==='topo')return '⚠️ Fue el topo del turno '+O.d+(O.win?' (y se salió con la suya)':' (lo pillasteis)')+'. '+pick(CAST_MEM.topo).replace('%d',O.d);
   return 'Ya trabajó aquí hasta el turno '+O.d+' ('+String(O.why||'se fue').replace(/\.$/,'')+'). '+pick(CAST_MEM[O.kind]||CAST_MEM.good).replace('%d',O.d);
 }
 /* Al irse (baja): queda fuera con memoria, su vida y su diario, y podrá volver como candidato/a. */
 function castLeave(e,why){
   if(!e||!e.cast||!meta)return;meta.castOut=meta.castOut||{};const P=meta.castOut[e.cast]||{},w=String(why||'');
-  const kind=/despid|votado|topo|competencia|tocó|echa/i.test(w)?'fire':/portazo|dimit|se fue tras|ánimo/i.test(w)?'quit':'good';
+  const kind=/topo/i.test(w)?'topo':/despid|votado|competencia|tocó|echa/i.test(w)?'fire':/portazo|dimit|se fue tras|ánimo/i.test(w)?'quit':'good';
   meta.castOut[e.cast]={d:meta.day,why:w.slice(0,90),kind,n:(P.n||0)+1,bio:e.bio?JSON.parse(JSON.stringify(e.bio)):null,log:sArr(e.log).slice(-4)};
 }
 /* Muletillas: a veces las mete al principio o al final de lo que dice. */
@@ -5854,8 +6148,8 @@ function castMul(e,t,p){
 /* Ficha psicológica («🧠 Cómo es»), las notas de relación y el secreto (oculto hasta que sale: meta.secR). */
 function castPsyHtml(e,mini){
   const C=e&&e.cast&&CASTK[e.cast];if(!C)return e&&e.old?'<div class="es bio">🕰️ <i>De antes: llegó antes de que la tienda tuviera su plantilla de siempre.</i></div>':'';
-  const P=C.psy,sec=meta&&meta.secR&&meta.secR[e.cast],RN=castRelNotes(e);
-  if(mini)return `<div class="es bio">${castPt(e.cast,e.role,'ptm')} 🧠 <b>${esc(P.def)}</b> <i>«${esc(C.mul[0])}»</i></div>`;
+  const P=C.psy,sec=meta&&meta.secR&&meta.secR[e.cast],TH=topoHist(e),RN=castRelNotes(e).concat(TH);
+  if(mini)return `<div class="es bio">${castPt(e.cast,e.role,'ptm')} 🧠 <b>${esc(P.def)}</b> <i>«${esc(C.mul[0])}»</i>${TH.length?'<br>'+TH.map(esc).join(' · '):''}</div>`;
   return `<div class="sdoc bio"><h6><span>🧠 Cómo es</span><span>📛 ${esc(C.n)} ${esc(C.sur)}</span></h6><div class="ptcard">${castPt(e.cast,e.role,'ptb')}<div><b>${esc(C.n)} ${esc(C.sur)}</b><small>${C.age} años · ${esc(C.from)} · ${esc(ROLES[e.role]?ROLES[e.role].n:'')}${CAST_BDAY[e.cast]?' · 🎂 '+bdayTxt(e.cast):''}</small><i>«${esc(C.mul[0])}»</i></div></div><dl>
     <dt>En una frase</dt><dd>${esc(P.def)}</dd><dt>Con agobio</dt><dd>${esc(P.estres)}</dd><dt>Le hace feliz</dt><dd>${esc(P.feliz)}</dd>
     <dt>No soporta</dt><dd>${esc(P.odia)}</dd><dt>Siempre dice</dt><dd>${C.mul.map(m=>'«'+esc(m)+'»').join(' · ')}</dd>
@@ -7366,6 +7660,7 @@ function startDay(){
   if(horOn()&&isHost()){const S=horSlot();run.dur=HOR_DUR;run.hor=meta.horSlot=S.id||meta.horSlot||'antiguo';run.horSt=meta.horSt=S.open?S.st:(meta.horSt!=null?meta.horSt:960);}
   TLIFE=horRun()?REAL_T.life:30;
   if(relaxOn()||calmaOn()){meta.relax=1;if(relaxOn())run.dur=130;}
+  if(topoX())run.dur=TOPO_XD;
   ensureMeta();run.rep0=meta.rep;
   unlockCheck();weekCheck();
   /* Promos caducadas fuera; si hoy hay alguna por debajo del coste, Consumo lo puede ver (venta con pérdida, Ley 7/1996 art. 14). */
@@ -8153,6 +8448,7 @@ const PROD={
   eggs:()=>`<span class="p-eggs"><span class="lid">HUEVOS TOP 10 🏆</span><span class="cups">${'<i></i>'.repeat(10)}</span></span>`,
   cans:()=>`<span class="p-cans"><i><b>🏅</b></i><i><b>🏆</b></i><i><b>🏅</b></i></span>`,
   flash:t=>`<span class="p-flash"><b>OFERTA FLASH</b><i>🗓️</i><em>${t}</em></span>`,
+  topox:()=>`<span class="p-flash p-topox"><b>CASO EXPRÉS</b><i>🕵️</i><em>10 min</em></span>`,
   leaf:()=>`<span class="p-leaf"><b>FOLLETO</b><i>📖</i><em>Cómo se juega</em></span>`,
   basket:()=>`<span class="p-basket"><span class="hd"></span><span class="bk"><i>⚙️</i></span></span>`,
   jar:t=>`<span class="p-jar"><span class="lid"></span><i>🎖️</i><em>${t}</em></span>`,
@@ -8168,6 +8464,7 @@ function startShelf(cont){
     +(cont?prodBtn('cartp',PROD.cart('Turno '+meta.day),'start','',fmt(meta.money),'Tu bote, en el carro','Continuar: turno '+meta.day+', bote '+fmt(meta.money)):'')
     +shelfDeco([10,1,17,38]);
   const s2=prodBtn('flashp',PROD.flash('Reto del día'),'daily','','0,00 €',retoTag(),'Reto del día')
+    +prodBtn('topxp',PROD.topox(),'topox','','0,00 €',(r=>r.n?'Resueltos '+r.w+'/'+r.n:'10 minutos, un topo')(topoXRec()),'Caso exprés: un caso del topo de 10 minutos')
     +prodBtn('leafp',PROD.leaf(),'stab','data-s="start" data-k="how"','0,00 €','Gratis, como el café de la máquina','Cómo se juega')
     +(online()?prodBtn('eggsp',PROD.eggs(),'stab','data-s="start" data-k="rank"','La docena','Ranking del mes','Ranking'):'')
     +prodBtn('cansp',PROD.cans(),'stab','data-s="start" data-k="ach"',achN()+'/'+ACH.length,'Logros en conserva','Logros: '+achN()+' de '+ACH.length)
@@ -8193,6 +8490,7 @@ function showStart(confirmWipe){
     :`<button class="btn go big" data-act="start">Continuar · turno ${meta.day} · ${fmt(meta.money)}</button><button class="btn" data-act="wipe">Empezar de cero</button>`;
   showOverlay(screenHtml('start','<span class="logo">VITCHMARKET</span>',[['shelf','🛒 Lineal'],['how','📖 Cómo se juega']].concat(online()?[['rank','🏆 Ranking']]:[],[['ach','🏅 Logros',achN()+'/'+ACH.length],['car','🎖️ Carrera',car.xp||''],['aj','⚙️ Ajustes']]),body,P.nav,'<button class="btn" data-act="acera" aria-label="Volver a la acera">🏪 Acera</button>'+foot+(confirmWipe?'':dailyBtn())));
   if(k==='rank')fillRanking();
+  if(TOPO_Q==='express'&&!topoXBoot){topoXBoot=true;setTimeout(()=>{try{if(AC.on)aceraEnter();}catch(e){}if(!run)startTopoX();},60);}
 }
 
 /* ---------- ranking online (Firebase Realtime Database, opcional) ----------
@@ -8300,6 +8598,7 @@ function startDaily(){
 }
 function dailyEnd(dead){
   if(!daily||daily.res)return;
+  if(daily.x){topoXEnd();return;}
   Math.random=daily.orig;daily.cr=daily.or=null;
   sceneClear();
   const R=run||{},f=!dead&&lastEnd&&lastEnd.fin;
@@ -8375,7 +8674,7 @@ function dailyExit(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.25-191';
+const APPV='2026.11.25-192';
 /* Compara versiones por números («-9» < «-11»), no como texto. */
 const verCmp=(a,b)=>{const x=String(a).split(/[.-]/).map(Number),y=String(b).split(/[.-]/).map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
 try{const vt=document.createElement('div');vt.id='vtag';vt.textContent='v'+APPV;document.body.appendChild(vt);}catch(e){}
@@ -9240,7 +9539,7 @@ function onAct(a){
     return;
   }
   if(!run||run.over)return;
-  if(a.k==='soc'&&/^t(sab|vot|met|q)$/.test(a.a||'')){topoActReal(e,a);pubState(true);return;}
+  if(a.k==='soc'&&/^t(sab|vot|met|q|q2)$/.test(a.a||'')){topoActReal(e,a);pubState(true);return;}
   if(a.k==='soc'){socAct(e,a);pubState(true);return;}
   if(a.k==='take'&&onBreak(e)){note(e.real,'☕ Estás en el café: termínatelo y luego coges avisos.',true);return;}
   if(a.k==='take'&&+a.t<0){toolTask(e,+a.t);renderAll();pubState(true);return;}
@@ -11385,7 +11684,7 @@ function camModel(){
   return {d:meta.day,t:Math.round(run.t),dur:run.dur,open:!run.closing,sw:run.sw||0,me,staff,
     q:run.queue.map(c=>({id:c.id,f:c.face,a:c.p<c.max*0.3?1:0})),
     oq:OT.map(o=>({n:o.n,c:((run.oq&&run.oq[o.n])||[]).map(c=>({id:c.id,f:c.f}))})).concat(Object.values(run.tills||{}).map(t=>({n:t.n,c:Object.keys(t.out||{}).map(k=>({id:'r'+k,f:'🧑'}))}))),
-    tasks:run.tasks.filter(t=>!t.who).map(t=>({id:t.id,k:t.k,ic:t.ic,n:t.n||0}))};
+    tasks:run.tasks.filter(t=>!t.who&&t.k!=='fix').map(t=>({id:t.id,k:t.k,ic:t.ic,n:t.n||0})),tm:topoMarksM()};
 }
 function camPos(w,j){const p=camPos0(w,j);return w&&w.dx?[p[0]+w.dx,p[1]]:p;}
 function camPos0(w,j){
@@ -11506,6 +11805,7 @@ function camWorld(c,m,now){
     else c.fillText(t.k==='tour'?'🧳':t.k==='help'?'🙋':'📦',p[0],p[1]);
     if(blink){c.strokeStyle='#ffd23f';c.lineWidth=1;c.beginPath();c.arc(p[0],p[1],9,0,7);c.stroke();}
   });
+  cam.mk=topoMarkDraw(c,m,now,(x,y)=>[x,y],1);
   const all=Object.values(cam.spr).concat(cam.shop).sort((a,b)=>a.y-b.y);
   all.forEach(s=>{
     const bob=s.mv?Math.sin(now/90+s.x)*1.2:0;
@@ -11678,6 +11978,7 @@ function drawIso(){
   const blink=Math.floor(now/450)%2===0;iso.hits=[];
   if(m)toArr(m.tasks).forEach((t,j)=>{const w=t.k==='truck'?[372,24]:t.k==='cash'?[300,200]:t.k==='cv'||t.k==='feud'?[356,240]:[laneX(t.n)+14,92+(j%3)*10];const p=S(w[0],w[1],t.k==='truck'?40:26);
     g.font=`${Math.max(14,Math.round(8*sc))}px sans-serif`;g.fillStyle=blink?'#ffd23f':'#ff4d4f';g.beginPath();g.arc(p[0],p[1],Math.max(11,6*sc),0,7);g.fill();g.fillStyle='#3a1012';g.fillText(t.ic||'❗',p[0],p[1]+1);});
+  iso.mk=topoMarkDraw(g,m,now,(x,y)=>S(x,y,0),Math.max(1.4,sc*0.55));
   ppl.forEach(({id,s})=>{const p=S(s.x,s.y,0),top=p[1]-17*sc;iso.hits.push({x:p[0],y:p[1]-8*sc,s});
     if(s.b){g.font=`${Math.max(12,Math.round(6*sc))}px sans-serif`;g.fillStyle='#fff';g.beginPath();g.arc(p[0],top-6,Math.max(9,5*sc),0,7);g.fill();g.fillText(s.b,p[0],top-5);}
   });
@@ -11876,11 +12177,13 @@ function pixStore(slot,m,zone,cover){
   const g=cv.getContext('2d'),v=pst.view,S=(x,y)=>[v.ox+(x-v.sx)*v.k,v.oy+(y-v.sy)*v.k];
   const sign=(x,y,t,bg)=>{const p=S(x,y);const fs=Math.max(10,Math.round(4.2*v.k));g.font=`700 ${fs}px Fredoka,sans-serif`;const tw=g.measureText(t).width+10;g.fillStyle=bg;g.fillRect(p[0]-tw/2,p[1]-fs*.7,tw,fs*1.4);g.fillStyle='#fff';g.textAlign='center';g.textBaseline='middle';g.fillText(t,p[0],p[1]);};
   if(!zone){sign(331,20,'ALMACÉN','#f08a24');sign(331,170,'OFICINAS','#7b4bb7');sign(130,190,'CAJAS','#e5383b');}
+  pst.mk=topoMarkDraw(g,m,now,(x,y)=>S(x,y),Math.max(1.6,v.k*0.75));
   const dpr=window.devicePixelRatio||1;
   nameTags(g,s=>{const p=S(s.x,s.y+6-16);return [p[0],p[1]-(s.sl?14*v.k:s.b?7*v.k:0)];},Math.max(12*dpr,Math.min(15*dpr,3.8*v.k)),false,[0,0,cv.width,cv.height]);
 }
 function pixStoreClick(ev){
   const cv=ev.currentTarget,r=cv.getBoundingClientRect(),k=cv.width/r.width,v=pst.view;if(!v)return;
+  if(topoMapTake(topoMarkHit(pst.mk,(ev.clientX-r.left)*k,(ev.clientY-r.top)*k)))return;
   const wx=((ev.clientX-r.left)*k-v.ox)/v.k+v.sx,wy=((ev.clientY-r.top)*k-v.oy)/v.k+v.sy;
   let best=null,bd=14;pst.hits.forEach(h=>{const d=Math.hypot(h.x-wx,h.y-wy);if(d<bd&&h.s.info){bd=d;best=h.s;}});staffClick(best);
 }
@@ -12005,6 +12308,7 @@ function till3d(){
 }
 function isoClick(ev){
   const r=iso.cv.getBoundingClientRect(),k=iso.cv.width/r.width,x=(ev.clientX-r.left)*k,y=(ev.clientY-r.top)*k;
+  if(topoMapTake(topoMarkHit(iso.mk,x,y)))return;
   let best=null,bd=18*k;iso.hits.forEach(h=>{const d=Math.hypot(h.x-x,h.y-y);if(d<bd&&h.s.info){bd=d;best=h.s;}});
   staffClick(best);
 }
@@ -12019,6 +12323,7 @@ function camClick(ev){
   const h=cam.hits.find(z=>x>=z.gx&&x<=z.gx+z.gw&&y>=z.gy&&y<=z.gy+z.gh);if(!h)return;
   if(cam.zoom<0){cam.zoom=h.ci;return;}
   const wx=(x-h.ox)/h.sc+h.cx,wy=(y-h.oy)/h.sc+h.cy;
+  if(topoMapTake(topoMarkHit(cam.mk,wx,wy)))return;
   let best=null,bd=12;
   Object.values(cam.spr).concat(cam.shop.filter(s=>s.th)).forEach(s=>{const d=Math.hypot(s.x-wx,s.y-wy);if(d<bd&&s.info){bd=d;best=s;}});
   if(best)staffClick(best);else cam.zoom=-1;
@@ -12546,7 +12851,7 @@ function onClick(e){
   const b=e.target.closest('[data-act]');if(!b||b.disabled)return;
   if(sceneCur&&b.closest('#scene'))sceneCur.hit=b.dataset.k;
   const a=b.dataset.act;
-  if(['topow','tclose','tmeet','tvote','tsab','tfix'].includes(a)){topoClick(a,b);return;}
+  if(['topow','tclose','tmeet','tvote','tsab','tfix','tdq','tdnext','tdvote'].includes(a)){topoClick(a,b);return;}
   if(a==='topocfg'){meta.topoCfg=b.dataset.k;saveGame(false);toast(b.dataset.k==='off'?'🚫 Sin topos. Paz y amor en la plantilla.':b.dataset.k==='hoy'?'🎯 El próximo turno habrá un topo. No se lo digas a nadie.':'🔁 Topo automático: en el turno 4 y luego cada 5.','good');renderDept(true);return;}
   if(['scan','pay','card','deliver'].includes(a)&&topoTpv()){toast('🔒 TPV bloqueado por un sabotaje: no se puede cobrar hasta que lo arreglen.','bad');return;}
   if(run&&run.away&&['scan','idyes','idno','bag','pay','card','den','clear','deliver','route'].includes(a)){toast('Estás en el pasillo. Termina y vuelve a la caja.','bad');return;}
@@ -12557,6 +12862,7 @@ function onClick(e){
   if(a==='acera'){aceraShow();return;}
   if(a==='start'){beep(1200,.05);carNew();startDay();}
   else if(a==='daily'){beep(1200,.05);startDaily();}
+  else if(a==='topox'){beep(1200,.05);startTopoX();}
   else if(a==='dcopy')dailyCopy();
   else if(a==='dhome')dailyExit();
   else if(a==='restart'){meta=defMeta(meta.best);meet=null;carNew();startDay();}
