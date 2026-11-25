@@ -1,0 +1,313 @@
+{
+  "v": 3,
+  "attachments": {},
+  "boards": {
+    "Avisos.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "Avisos",
+      "w": 390,
+      "x": 1880,
+      "y": 0
+    },
+    "Cobrar.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "Cobrar en efectivo",
+      "w": 390,
+      "x": 470,
+      "y": 0
+    },
+    "DNI.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "Escena · DNI",
+      "w": 390,
+      "x": 940,
+      "y": 0
+    },
+    "Main.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "Caja",
+      "w": 390,
+      "x": 0,
+      "y": 0
+    },
+    "Menu.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "Estado del turno",
+      "w": 390,
+      "x": 2350,
+      "y": 0
+    },
+    "Reclamacion.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "Escena · Reclamación",
+      "w": 390,
+      "x": 1410,
+      "y": 0
+    },
+    "Cierre.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "Cierre del turno",
+      "w": 390,
+      "x": 0,
+      "y": 1300
+    },
+    "Cuentas.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "Cierre · Cuentas",
+      "w": 390,
+      "x": 470,
+      "y": 1300
+    },
+    "Almacen.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "Almacén",
+      "w": 390,
+      "x": 940,
+      "y": 1300
+    },
+    "Backoffice.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "Backoffice",
+      "w": 390,
+      "x": 1410,
+      "y": 1300
+    },
+    "RRPP.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "RR.PP.",
+      "w": 390,
+      "x": 1880,
+      "y": 1300
+    },
+    "RRHH.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "RR.HH. y plantilla",
+      "w": 390,
+      "x": 2350,
+      "y": 1300
+    },
+    "Direccion.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "Dirección",
+      "w": 390,
+      "x": 2820,
+      "y": 1300
+    },
+    "Reponer.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "Minijuego · Reponer",
+      "w": 390,
+      "x": 3290,
+      "y": 1300
+    },
+    "Entrevista.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "Minijuego · Entrevista",
+      "w": 390,
+      "x": 3760,
+      "y": 1300
+    },
+    "Mapa.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "Mapa de la tienda",
+      "w": 390,
+      "x": 0,
+      "y": 2600
+    },
+    "Sabotaje.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "Sabotaje",
+      "w": 390,
+      "x": 470,
+      "y": 2600
+    },
+    "Reunion.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "Reunión de emergencia",
+      "w": 390,
+      "x": 940,
+      "y": 2600
+    },
+    "Arqueo.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "Minijuego · Arqueo",
+      "w": 390,
+      "x": 1410,
+      "y": 2600
+    },
+    "Queja.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "Minijuego · Queja en redes",
+      "w": 390,
+      "x": 1880,
+      "y": 2600
+    },
+    "Camion.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "Minijuego · Camión",
+      "w": 390,
+      "x": 2350,
+      "y": 2600
+    },
+    "Derrame.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "Minijuego · Derrame",
+      "w": 390,
+      "x": 2820,
+      "y": 2600
+    },
+    "Escena.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "Caja · escena de juego",
+      "w": 390,
+      "x": 2820,
+      "y": 0
+    },
+    "Reembolso.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "Minijuego · Reembolso",
+      "w": 390,
+      "x": 0,
+      "y": 3900
+    },
+    "Perdido.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "Minijuego · Cliente perdido",
+      "w": 390,
+      "x": 470,
+      "y": 3900
+    },
+    "Bronca.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "Minijuego · Bronca",
+      "w": 390,
+      "x": 940,
+      "y": 3900
+    },
+    "Inventario.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "Minijuego · Inventario",
+      "w": 390,
+      "x": 1410,
+      "y": 3900
+    },
+    "Pedido.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "Minijuego · Pedido",
+      "w": 390,
+      "x": 1880,
+      "y": 3900
+    },
+    "Agotado.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "Minijuego · Agotado",
+      "w": 390,
+      "x": 2350,
+      "y": 3900
+    }
+  },
+  "createdOnFiles": {
+    "at": "2026-11-22T01:45:00Z",
+    "v": 1
+  },
+  "designSystems": [],
+  "launch": {
+    "view": "canvas"
+  },
+  "notes": {
+    "t-caja": {
+      "kind": "title1",
+      "maxW": 3210,
+      "text": "VitchMarket · Caja y HUD (móvil)",
+      "w": 240,
+      "x": 0,
+      "y": -260
+    },
+    "t-dept": {
+      "kind": "title1",
+      "maxW": 4150,
+      "text": "Cierre, departamentos y minijuegos",
+      "w": 240,
+      "x": 0,
+      "y": 1040
+    },
+    "t-among": {
+      "kind": "title1",
+      "maxW": 3280,
+      "text": "Estilo Among Us y más minijuegos",
+      "w": 240,
+      "x": 0,
+      "y": 2340
+    },
+    "t-mini": {
+      "kind": "title1",
+      "maxW": 2820,
+      "text": "Resto de minijuegos",
+      "w": 240,
+      "x": 0,
+      "y": 3640
+    }
+  },
+  "order": [
+    "Main.dc.html",
+    "Cobrar.dc.html",
+    "DNI.dc.html",
+    "Reclamacion.dc.html",
+    "Avisos.dc.html",
+    "Menu.dc.html",
+    "Escena.dc.html",
+    "Cierre.dc.html",
+    "Cuentas.dc.html",
+    "Almacen.dc.html",
+    "Backoffice.dc.html",
+    "RRPP.dc.html",
+    "RRHH.dc.html",
+    "Direccion.dc.html",
+    "Reponer.dc.html",
+    "Entrevista.dc.html",
+    "Mapa.dc.html",
+    "Sabotaje.dc.html",
+    "Reunion.dc.html",
+    "Arqueo.dc.html",
+    "Queja.dc.html",
+    "Camion.dc.html",
+    "Derrame.dc.html",
+    "Reembolso.dc.html",
+    "Perdido.dc.html",
+    "Bronca.dc.html",
+    "Inventario.dc.html",
+    "Pedido.dc.html",
+    "Agotado.dc.html"
+  ],
+  "pages": [],
+  "title": "VitchMarket"
+}

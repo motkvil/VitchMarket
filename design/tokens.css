@@ -1,0 +1,33 @@
+/* VitchMarket · tokens del rediseño móvil (390×844). Fuente de verdad visual.
+   Ojo: index.html tiene su propio sistema (--brand, --danger, --gain…); estos valores
+   son los del rediseño y coinciden en nombre donde es posible. */
+:root{
+  /* marca */
+  --brand:#d92d30;        /* rojo VitchMarket: cromo, botones primarios */
+  --brand-dk:#9f1d20;     /* borde/sombra del rojo */
+  --brand-soft:#fde7e7;   /* fondo suave de alerta/enfado */
+  --paper:#faf6ea;        /* fondo de pantallas de gestión */
+  --card:#ffffff;
+  --ink:#1b1f1d;          /* texto y contornos gruesos de juego */
+  --mute:#56635d;         /* texto secundario (AA sobre paper) */
+  --line:rgba(27,31,29,.12);
+  --tag:#ffd23f;          /* amarillo de tarea/etiqueta/moneda */
+  --ok:#1f7a46;  --ok-soft:#e3f3ea;
+  --warn:#7a4f00; --warn-soft:#fff1c2;
+  --floor:#17352f;        /* verde oscuro de la cinta/escena */
+
+  /* tipografía */
+  --font-title:'Fredoka',sans-serif;
+  --font-text:'Nunito',system-ui,sans-serif;
+  --font-num:'Pixelify Sans',monospace;
+  --fs-xs:12px; --fs-s:13px; --fs-m:15px; --fs-l:20px; --fs-xl:26px; --fs-xxl:36px; /* nada por debajo de 12 px */
+
+  /* tacto */
+  --hit:44px;             /* mínimo de objetivo táctil */
+  --r-card:20px; --r-btn:16px; --r-pill:999px;
+}
+
+/* Botón físico de juego (relieve grueso + contorno) */
+.chunky{border:4px solid var(--ink);box-shadow:0 6px 0 var(--ink)}
+/* Sprites: siempre píxeles nítidos */
+svg.sprite,.sprite{shape-rendering:crispEdges;image-rendering:pixelated}

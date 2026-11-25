@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>VitchMarket · Agotado</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800&family=Pixelify+Sans:wght@500;700&display=swap">
+<style>
+body{margin:0}
+.vm{--brand:#d92d30;--brand-dk:#9f1d20;--brand-soft:#fde7e7;--paper:#faf6ea;--card:#ffffff;--ink:#1b1f1d;--mute:#56635d;--line:rgba(27,31,29,0.12);--tag:#ffd23f;--ok:#1f7a46;--ok-soft:#e3f3ea;--warn:#7a4f00;--warn-soft:#fff1c2;--floor:#17352f}
+.vm a{text-decoration:none;color:inherit}
+.vm button{font-family:inherit;cursor:pointer}
+</style>
+</helmet>
+<div class="vm" style="position:relative;width:390px;height:844px;overflow:hidden;box-sizing:border-box;background:var(--paper);color:var(--ink);font-family:'Nunito',system-ui,sans-serif;">
+
+  <header style="position:absolute;top:0;left:0;right:0;height:96px;box-sizing:border-box;padding:44px 8px 0;background:var(--brand);border-bottom:5px solid var(--brand-dk);color:#fff;display:flex;align-items:center;">
+    <a href="Almacen.dc.html" aria-label="Salir" style="width:44px;height:44px;display:flex;align-items:center;justify-content:center;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></a>
+    <div style="flex:1;font-family:'Fredoka',sans-serif;font-weight:600;font-size:18px;">Reclamación · agotado</div>
+    <button aria-label="Ver cómo se juega" style="width:44px;height:44px;border:0;border-radius:22px;background:rgba(255,255,255,0.2);color:#fff;font-family:'Fredoka',sans-serif;font-weight:700;font-size:20px;">?</button>
+  </header>
+
+  <div style="position:absolute;top:108px;left:16px;right:16px;display:flex;flex-direction:column;gap:12px;">
+
+    <section style="border-radius:20px;background:var(--tag);padding:12px 16px;">
+      <div style="font-family:'Fredoka',sans-serif;font-weight:600;font-size:20px;line-height:26px;">Mira el stock y da una solución.</div>
+      <div style="margin-top:2px;font-size:13px;line-height:18px;">Comprueba si queda en el almacén y elige qué ofrecerle.</div>
+    </section>
+
+    <section style="border-radius:20px;background:var(--brand-soft);padding:12px 16px;display:flex;align-items:center;gap:12px;">
+      <div style="flex:none;width:52px;height:52px;border-radius:26px;background:var(--card);display:flex;align-items:center;justify-content:center;font-size:30px;">😤</div>
+      <div style="flex:1;min-width:0;"><b style="display:block;font-size:12px;line-height:14px;color:var(--brand-dk);">CLIENTE</b><span style="font-size:15px;line-height:22px;font-weight:700;">«Vengo todas las semanas y nunca hay leche.»</span></div>
+      <span style="flex:none;font-size:36px;">🥛</span>
+    </section>
+
+    <section style="border-radius:20px;background:var(--floor);color:#fff;padding:12px 16px;">
+      <div style="font-size:12px;line-height:14px;color:#cfe3da;font-weight:800;">PDA DE STOCK · LECHE ENTERA</div>
+      <div style="margin-top:8px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:center;">
+        <div style="border-radius:12px;background:#10261f;padding:8px 4px;"><div style="font-size:12px;opacity:.85;">Estantería</div><b style="font-family:'Pixelify Sans',monospace;font-size:24px;color:#ff8a8a;">0</b></div>
+        <div style="border-radius:12px;background:#10261f;padding:8px 4px;"><div style="font-size:12px;opacity:.85;">Almacén</div><b style="font-family:'Pixelify Sans',monospace;font-size:24px;color:#5dff9d;">6</b></div>
+        <div style="border-radius:12px;background:#10261f;padding:8px 4px;"><div style="font-size:12px;opacity:.85;">En camino</div><b style="font-family:'Pixelify Sans',monospace;font-size:24px;">12</b></div>
+      </div>
+    </section>
+
+    <section style="display:flex;flex-direction:column;gap:8px;">
+      <button aria-pressed="true" style="min-height:64px;border:0;border-radius:16px;padding:10px 14px;background:var(--ok-soft);box-shadow:inset 0 0 0 3px var(--ok);text-align:left;"><b style="display:block;font-size:15px;line-height:20px;">Apartarle una leche del almacén</b><span style="font-size:13px;line-height:18px;color:var(--ok);font-weight:800;">Hay 6 · se queda contento</span></button>
+      <button style="min-height:64px;border:0;border-radius:16px;padding:10px 14px;background:var(--card);box-shadow:inset 0 0 0 2px var(--line);text-align:left;"><b style="display:block;font-size:15px;line-height:20px;">Ofrecerle leche semidesnatada</b><span style="font-size:13px;line-height:18px;color:var(--mute);font-weight:800;">Si hubiera. Hoy no la tienes</span></button>
+      <button style="min-height:64px;border:0;border-radius:16px;padding:10px 14px;background:var(--card);box-shadow:inset 0 0 0 2px var(--line);text-align:left;"><b style="display:block;font-size:15px;line-height:20px;">Decirle que vuelva cuando llegue</b><span style="font-size:13px;line-height:18px;color:var(--brand-dk);font-weight:800;">Hay stock en almacén: se enfada</span></button>
+    </section>
+  </div>
+
+  <div style="position:absolute;left:16px;right:16px;bottom:24px;">
+    <a href="Almacen.dc.html" style="height:56px;border-radius:16px;background:var(--brand);box-shadow:0 4px 0 var(--brand-dk);color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Fredoka',sans-serif;font-weight:600;font-size:20px;">Confirmar</a>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

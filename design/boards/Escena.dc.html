@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>VitchMarket · Caja (escena)</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800&family=Pixelify+Sans:wght@500;700&display=swap">
+<style>
+body{margin:0}
+.vm{--brand:#d92d30;--brand-dk:#9f1d20;--brand-soft:#fde7e7;--paper:#faf6ea;--card:#ffffff;--ink:#1b1f1d;--mute:#56635d;--line:rgba(27,31,29,0.12);--tag:#ffd23f;--ok:#1f7a46;--ok-soft:#e3f3ea;--warn:#7a4f00;--warn-soft:#fff1c2;--floor:#17352f}
+.vm a{text-decoration:none;color:inherit}
+.vm button{font-family:inherit;cursor:pointer}
+.vm svg{shape-rendering:crispEdges}
+.pill{height:36px;border-radius:18px;background:rgba(27,31,29,0.72);box-shadow:inset 0 0 0 2px rgba(255,255,255,0.25);display:flex;align-items:center;gap:6px;padding:0 10px;font-family:'Pixelify Sans',monospace;font-weight:700;font-size:16px;color:#fff}
+.hit{position:absolute;display:block;border-radius:12px}
+.chunky{border:4px solid var(--ink);box-shadow:0 6px 0 var(--ink)}
+.float{position:absolute;font-family:'Pixelify Sans',monospace;font-weight:700;color:var(--tag);text-shadow:2px 0 0 var(--ink),-2px 0 0 var(--ink),0 2px 0 var(--ink),0 -2px 0 var(--ink),2px 2px 0 var(--ink),-2px -2px 0 var(--ink)}
+@keyframes vmbob{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@keyframes vmpulse{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}
+</style>
+</helmet>
+<div class="vm" style="position:relative;width:390px;height:844px;overflow:hidden;box-sizing:border-box;background:#2a1d1a;color:var(--ink);font-family:'Nunito',system-ui,sans-serif;">
+
+  <!-- HUD -->
+  <header style="position:absolute;top:0;left:0;right:0;height:104px;box-sizing:border-box;padding:46px 12px 0;background:var(--brand);border-bottom:5px solid var(--brand-dk);display:flex;align-items:center;gap:8px;">
+    <div class="pill" aria-label="Bote: 30.412 euros"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="#ffd23f" stroke="#1b1f1d" stroke-width="2.5"/><rect x="10.5" y="7" width="3" height="10" fill="#b8860b"/></svg>30.412</div>
+    <div class="pill" aria-label="Estrellas: 1 de 3" style="gap:2px;padding:0 8px;">
+      <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l3 7 7 .6-5.3 4.6 1.7 7L12 17.6 6.6 21.2l1.7-7L3 9.6 10 9z" fill="#ffd23f" stroke="#1b1f1d" stroke-width="1.5"/></svg>
+      <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l3 7 7 .6-5.3 4.6 1.7 7L12 17.6 6.6 21.2l1.7-7L3 9.6 10 9z" fill="#5b4a48" stroke="#1b1f1d" stroke-width="1.5"/></svg>
+      <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l3 7 7 .6-5.3 4.6 1.7 7L12 17.6 6.6 21.2l1.7-7L3 9.6 10 9z" fill="#5b4a48" stroke="#1b1f1d" stroke-width="1.5"/></svg>
+    </div>
+    <div class="pill" aria-label="Hora 11:42">11:42</div>
+    <div style="flex:1"></div>
+    <a href="Avisos.dc.html" aria-label="Avisos: 2 pendientes" style="position:relative;width:44px;height:44px;border-radius:14px;background:var(--tag);box-shadow:0 4px 0 var(--ink),inset 0 0 0 3px var(--ink);display:flex;align-items:center;justify-content:center;">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1b1f1d" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 17V11a6 6 0 0 1 12 0v6l1.5 2h-15zM10 21h4"/></svg>
+      <span style="position:absolute;top:-6px;right:-6px;min-width:20px;height:20px;border-radius:10px;background:var(--brand);color:#fff;font-size:12px;line-height:20px;font-weight:800;text-align:center;box-shadow:0 0 0 2px var(--ink);">2</span>
+    </a>
+  </header>
+
+  <!-- Escena -->
+  <section style="position:absolute;top:104px;left:0;right:0;height:440px;overflow:hidden;" aria-label="Tienda">
+    <svg viewBox="0 0 195 220" width="390" height="440" style="display:block;" role="img" aria-label="Interior del súper: cajera tras la cinta y tres clientes en cola">
+      <defs>
+        <pattern id="tile" width="24" height="24" patternUnits="userSpaceOnUse"><rect width="24" height="24" fill="#ead9ae"/><rect width="12" height="12" fill="#dcc895"/><rect x="12" y="12" width="12" height="12" fill="#dcc895"/></pattern>
+        <g id="cust">
+          <rect x="2" y="0" width="6" height="2" style="fill:var(--h,#3b2a20)"/>
+          <rect x="2" y="2" width="6" height="5" fill="#f2c9a0"/>
+          <rect x="3" y="4" width="1" height="1" fill="#1b1f1d"/><rect x="6" y="4" width="1" height="1" fill="#1b1f1d"/>
+          <rect x="1" y="7" width="8" height="6" fill="currentColor"/>
+          <rect x="0" y="8" width="1" height="4" fill="currentColor"/><rect x="9" y="8" width="1" height="4" fill="currentColor"/>
+          <rect x="2" y="13" width="2" height="4" fill="#33406b"/><rect x="6" y="13" width="2" height="4" fill="#33406b"/>
+          <rect x="1" y="17" width="3" height="1" fill="#1b1f1d"/><rect x="6" y="17" width="3" height="1" fill="#1b1f1d"/>
+        </g>
+      </defs>
+
+      <!-- pared -->
+      <rect x="0" y="0" width="195" height="84" fill="#f6e2b3"/>
+      <rect x="0" y="0" width="195" height="16" fill="#d92d30"/>
+      <rect x="10" y="0" width="10" height="16" fill="#fff"/><rect x="30" y="0" width="10" height="16" fill="#fff"/><rect x="50" y="0" width="10" height="16" fill="#fff"/><rect x="70" y="0" width="10" height="16" fill="#fff"/><rect x="90" y="0" width="10" height="16" fill="#fff"/><rect x="110" y="0" width="10" height="16" fill="#fff"/><rect x="130" y="0" width="10" height="16" fill="#fff"/><rect x="150" y="0" width="10" height="16" fill="#fff"/><rect x="170" y="0" width="10" height="16" fill="#fff"/>
+      <rect x="0" y="16" width="195" height="3" fill="#9f1d20"/>
+      <text x="97" y="40" text-anchor="middle" font-family="Pixelify Sans" font-weight="700" font-size="10" fill="#d92d30">VITCHMARKET</text>
+      <!-- estantes -->
+      <rect x="8" y="58" width="100" height="3" fill="#8a5a2b"/><rect x="8" y="76" width="100" height="3" fill="#8a5a2b"/>
+      <rect x="12" y="48" width="8" height="10" fill="#fff"/><rect x="22" y="48" width="8" height="10" fill="#5aa9e6"/><rect x="32" y="48" width="8" height="10" fill="#fff"/><rect x="42" y="48" width="8" height="10" fill="#f4a261"/><rect x="52" y="48" width="8" height="10" fill="#5aa9e6"/>
+      <rect x="12" y="66" width="10" height="10" fill="#e9c46a"/><rect x="24" y="66" width="10" height="10" fill="#e76f51"/><rect x="36" y="66" width="10" height="10" fill="#e9c46a"/><rect x="48" y="66" width="10" height="10" fill="#e76f51"/><rect x="60" y="66" width="10" height="10" fill="#e9c46a"/>
+      <!-- hueco: lineal vacío -->
+      <rect x="70" y="48" width="38" height="10" fill="#d9c28d"/>
+      <!-- suelo -->
+      <rect x="0" y="84" width="195" height="136" fill="url(#tile)"/>
+      <rect x="0" y="84" width="195" height="3" fill="#b99b63"/>
+
+      <!-- cajera -->
+      <g transform="translate(140,86) scale(1.3)" style="color:#d92d30;--h:#6b2d1f"><use href="#cust"/></g>
+      <rect x="150" y="104" width="7" height="3" fill="#d92d30"/>
+
+      <!-- caja registradora -->
+      <rect x="116" y="104" width="30" height="22" fill="#9aa5a0"/><rect x="116" y="104" width="30" height="3" fill="#c8d0cc"/>
+      <rect x="120" y="108" width="22" height="9" fill="#10261f"/>
+      <text x="131" y="115.5" text-anchor="middle" font-family="Pixelify Sans" font-weight="700" font-size="7" fill="#5dff9d">2,24</text>
+
+      <!-- cinta -->
+      <rect x="56" y="124" width="124" height="26" fill="#2b2f2e"/>
+      <rect x="56" y="124" width="124" height="3" fill="#4a504e"/>
+      <rect x="62" y="141" width="8" height="2" fill="#ffd23f"/><rect x="82" y="141" width="8" height="2" fill="#ffd23f"/><rect x="102" y="141" width="8" height="2" fill="#ffd23f"/><rect x="122" y="141" width="8" height="2" fill="#ffd23f"/><rect x="142" y="141" width="8" height="2" fill="#ffd23f"/><rect x="162" y="141" width="8" height="2" fill="#ffd23f"/>
+      <!-- productos en la cinta -->
+      <rect x="64" y="128" width="9" height="12" fill="#fff"/><rect x="64" y="128" width="9" height="3" fill="#5aa9e6"/>
+      <rect x="82" y="130" width="12" height="10" fill="#e9c46a"/>
+      <rect x="102" y="128" width="10" height="12" fill="#e76f51"/><rect x="104" y="131" width="6" height="2" fill="#ffd23f"/>
+      <rect x="124" y="127" width="7" height="13" fill="#7b2d3b"/><rect x="126" y="125" width="3" height="3" fill="#7b2d3b"/>
+      <!-- mostrador -->
+      <rect x="52" y="150" width="132" height="34" fill="#d92d30"/>
+      <rect x="52" y="150" width="132" height="4" fill="#ff6b6e"/>
+      <rect x="52" y="180" width="132" height="4" fill="#9f1d20"/>
+      <text x="118" y="170" text-anchor="middle" font-family="Pixelify Sans" font-weight="700" font-size="9" fill="#fff">CAJA 3</text>
+
+      <!-- clientes en cola -->
+      <g transform="translate(40,98) scale(1.5)" style="color:#2a9d8f;--h:#1b1f1d"><use href="#cust"/></g>
+      <g transform="translate(20,118) scale(1.5)" style="color:#4361ee;--h:#8d5524"><use href="#cust"/></g>
+      <g transform="translate(2,140) scale(1.5)" style="color:#f4a261;--h:#c9a227"><use href="#cust"/></g>
+      <!-- cejas enfadadas -->
+      <rect x="5" y="146" width="4" height="1" fill="#1b1f1d"/><rect x="10" y="146" width="4" height="1" fill="#1b1f1d"/>
+      <!-- barras de paciencia -->
+      <rect x="40" y="94" width="16" height="3" fill="#1b1f1d"/><rect x="41" y="95" width="11" height="1" fill="#5dff9d"/>
+      <rect x="20" y="114" width="16" height="3" fill="#1b1f1d"/><rect x="21" y="115" width="8" height="1" fill="#ffd23f"/>
+      <rect x="2" y="136" width="16" height="3" fill="#1b1f1d"/><rect x="3" y="137" width="3" height="1" fill="#d92d30"/>
+      <!-- globo de diálogo -->
+      <rect x="4" y="70" width="58" height="16" fill="#fff" stroke="#1b1f1d" stroke-width="1.5"/>
+      <rect x="42" y="86" width="5" height="5" fill="#fff"/>
+      <text x="33" y="81" text-anchor="middle" font-family="Nunito" font-weight="800" font-size="6" fill="#1b1f1d">¿Me pones bolsa?</text>
+
+      <!-- charco -->
+      <ellipse cx="112" cy="204" rx="22" ry="7" fill="#ffd23f" opacity="0.85"/>
+      <ellipse cx="112" cy="204" rx="22" ry="7" fill="none" stroke="#c98a00" stroke-width="1.5"/>
+    </svg>
+
+    <!-- zonas tocables -->
+    <a href="Avisos.dc.html" class="hit" aria-label="Lineal vacío en el pasillo 4" style="left:140px;top:92px;width:76px;height:26px;box-shadow:inset 0 0 0 3px var(--brand);background:rgba(217,45,48,0.35);display:flex;align-items:center;justify-content:center;font-family:'Fredoka',sans-serif;font-weight:700;color:#fff;font-size:16px;animation:vmpulse 1.2s infinite;">¡Vacío!</a>
+    <a href="Reclamacion.dc.html" class="hit" aria-label="Cliente enfadado con reclamación" style="left:0;top:272px;width:52px;height:60px;box-shadow:0 0 0 3px var(--brand);"></a>
+    <a href="DNI.dc.html" class="hit" aria-label="Vino: pedir DNI" style="left:244px;top:244px;width:20px;height:30px;box-shadow:0 0 0 3px var(--tag);animation:vmpulse 1.4s infinite;"></a>
+    <a href="Derrame.dc.html" class="hit" aria-label="Derrame en el suelo" style="left:180px;top:386px;width:92px;height:32px;box-shadow:0 0 0 3px var(--tag);border-radius:46px;"></a>
+
+    <!-- feedback flotante -->
+    <div class="float" style="left:238px;top:196px;font-size:26px;animation:vmbob 1.6s infinite;">+2,24 €</div>
+    <div style="position:absolute;left:12px;top:12px;height:34px;border-radius:17px;padding:0 12px;background:var(--tag);box-shadow:0 3px 0 var(--ink),inset 0 0 0 3px var(--ink);display:flex;align-items:center;font-family:'Pixelify Sans',monospace;font-weight:700;font-size:16px;" aria-label="Racha por tres, propina 10 por ciento">RACHA ×3 · +10 %</div>
+    <a href="Mapa.dc.html" style="position:absolute;right:12px;top:12px;height:44px;border-radius:14px;padding:0 12px;background:#fff;box-shadow:0 4px 0 var(--ink),inset 0 0 0 3px var(--ink);display:flex;align-items:center;gap:8px;font-family:'Pixelify Sans',monospace;font-weight:700;font-size:14px;" aria-label="Tareas del equipo: 6 de 10, abrir mapa">TAREAS 6/10<span style="width:44px;height:10px;border-radius:5px;background:#ddd;box-shadow:inset 0 0 0 2px var(--ink);overflow:hidden;"><span style="display:block;width:60%;height:10px;background:var(--ok);"></span></span></a>
+  </section>
+
+  <!-- controles -->
+  <section style="position:absolute;top:556px;left:12px;right:12px;display:flex;gap:10px;align-items:stretch;">
+    <div style="flex:1;height:64px;border-radius:16px;background:#10261f;box-shadow:0 5px 0 var(--ink),inset 0 0 0 4px var(--ink);padding:6px 14px;box-sizing:border-box;">
+      <div style="font-size:12px;line-height:14px;color:#8fd9ad;font-weight:800;letter-spacing:0.08em;">TOTAL</div>
+      <div style="font-family:'Pixelify Sans',monospace;font-weight:700;font-size:30px;line-height:34px;color:#5dff9d;">2,24 €</div>
+    </div>
+    <button aria-label="Poner bolsa" style="flex:none;width:84px;height:64px;border-radius:16px;background:#fff;box-shadow:0 5px 0 var(--ink),inset 0 0 0 4px var(--ink);border:0;font-family:'Fredoka',sans-serif;font-weight:700;font-size:15px;color:var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#1b1f1d" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8h12l1 12H5zM9 8V6a3 3 0 0 1 6 0v2"/></svg>Bolsa
+    </button>
+  </section>
+
+  <a href="Cobrar.dc.html" style="position:absolute;top:636px;left:12px;right:12px;height:68px;border-radius:20px;background:var(--brand);box-shadow:0 7px 0 var(--ink),inset 0 0 0 4px var(--ink),inset 0 8px 0 4px rgba(255,255,255,0.25);color:#fff;display:flex;align-items:center;justify-content:center;gap:10px;font-family:'Fredoka',sans-serif;font-weight:700;font-size:28px;letter-spacing:0.04em;text-shadow:0 3px 0 var(--brand-dk);">
+    <svg width="30" height="30" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="#ffd23f" stroke="#1b1f1d" stroke-width="2.5"/><rect x="10.5" y="7" width="3" height="10" fill="#b8860b"/></svg>
+    COBRAR
+  </a>
+
+  <!-- navegación -->
+  <nav aria-label="Departamentos" style="position:absolute;left:0;right:0;bottom:0;height:84px;box-sizing:border-box;padding:10px 8px 0;display:flex;justify-content:space-around;background:#3a2723;border-top:4px solid var(--ink);">
+    <a href="Escena.dc.html" aria-current="page" style="display:flex;flex-direction:column;align-items:center;gap:2px;min-width:64px;color:var(--tag);"><span style="width:48px;height:36px;border-radius:12px;background:var(--brand);box-shadow:0 3px 0 var(--ink),inset 0 0 0 3px var(--tag);display:flex;align-items:center;justify-content:center;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 4h2.5l2.2 11h9.6l2-7.5H7M9.5 19.5h.01M16.5 19.5h.01"/></svg></span><span style="font-size:12px;line-height:14px;font-weight:800;">Caja</span></a>
+    <a href="Almacen.dc.html" style="position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;min-width:64px;color:#e8d9d3;"><span style="width:48px;height:36px;border-radius:12px;background:#5a403a;box-shadow:0 3px 0 var(--ink);display:flex;align-items:center;justify-content:center;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8l8-4 8 4v8l-8 4-8-4zM4 8l8 4 8-4M12 12v8"/></svg></span><span style="font-size:12px;line-height:14px;font-weight:700;">Almacén</span><span style="position:absolute;top:-4px;right:8px;min-width:18px;height:18px;border-radius:9px;background:var(--brand);color:#fff;font-size:12px;line-height:18px;font-weight:800;text-align:center;box-shadow:0 0 0 2px var(--ink);">2</span></a>
+    <a href="Backoffice.dc.html" style="display:flex;flex-direction:column;align-items:center;gap:2px;min-width:64px;color:#e8d9d3;"><span style="width:48px;height:36px;border-radius:12px;background:#5a403a;box-shadow:0 3px 0 var(--ink);display:flex;align-items:center;justify-content:center;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h16v11H4zM9 8V5.5h6V8M4 13h16"/></svg></span><span style="font-size:12px;line-height:14px;font-weight:700;">Backoffice</span></a>
+    <a href="RRPP.dc.html" style="display:flex;flex-direction:column;align-items:center;gap:2px;min-width:64px;color:#e8d9d3;"><span style="width:48px;height:36px;border-radius:12px;background:#5a403a;box-shadow:0 3px 0 var(--ink);display:flex;align-items:center;justify-content:center;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10v4l12 5V5zM16 9a4 4 0 0 1 0 6M7 15l1.5 5"/></svg></span><span style="font-size:12px;line-height:14px;font-weight:700;">RR.PP.</span></a>
+    <a href="Menu.dc.html" style="display:flex;flex-direction:column;align-items:center;gap:2px;min-width:64px;color:#e8d9d3;"><span style="width:48px;height:36px;border-radius:12px;background:#5a403a;box-shadow:0 3px 0 var(--ink);display:flex;align-items:center;justify-content:center;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 5h5v5H5zM14 5h5v5h-5zM5 14h5v5H5zM14 14h5v5h-5z"/></svg></span><span style="font-size:12px;line-height:14px;font-weight:700;">Más</span></a>
+  </nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>VitchMarket · Reunión</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800&family=Pixelify+Sans:wght@500;700&display=swap">
+<style>
+body{margin:0}
+.vm{--brand:#d92d30;--brand-dk:#9f1d20;--brand-soft:#fde7e7;--paper:#faf6ea;--card:#ffffff;--ink:#1b1f1d;--mute:#56635d;--line:rgba(27,31,29,0.12);--tag:#ffd23f;--ok:#1f7a46;--ok-soft:#e3f3ea;--warn:#7a4f00;--warn-soft:#fff1c2;--floor:#17352f}
+.vm a{text-decoration:none;color:inherit}
+.vm button{font-family:inherit;cursor:pointer}
+</style>
+</helmet>
+<div class="vm" style="position:relative;width:390px;height:844px;overflow:hidden;box-sizing:border-box;background:var(--paper);color:var(--ink);font-family:'Nunito',system-ui,sans-serif;">
+
+  <header style="position:absolute;top:0;left:0;right:0;height:96px;box-sizing:border-box;padding:44px 16px 0;background:var(--brand);border-bottom:5px solid var(--brand-dk);color:#fff;display:flex;align-items:center;">
+    <div style="flex:1;font-family:'Fredoka',sans-serif;font-weight:600;font-size:18px;">Reunión de emergencia</div>
+    <div style="font-family:'Pixelify Sans',monospace;font-size:20px;">0:40</div>
+  </header>
+
+  <div style="position:absolute;top:108px;left:16px;right:16px;display:flex;flex-direction:column;gap:12px;">
+
+    <section style="border-radius:20px;background:var(--tag);padding:12px 16px;">
+      <div style="font-family:'Fredoka',sans-serif;font-weight:600;font-size:20px;line-height:26px;">¿Quién tocó el cuadro de luz?</div>
+      <div style="margin-top:2px;font-size:13px;line-height:18px;">Lee las pistas y vota. Si aciertas, el culpable se va a la calle.</div>
+    </section>
+
+    <section style="border-radius:20px;background:var(--card);box-shadow:0 4px 14px rgba(27,31,29,0.1);padding:12px 16px;">
+      <div style="font-size:12px;line-height:14px;color:var(--mute);font-weight:800;">PISTAS</div>
+      <div style="margin-top:8px;display:flex;flex-direction:column;gap:8px;">
+        <div style="display:flex;gap:10px;align-items:flex-start;"><span style="font-size:22px;">🧔</span><div style="border-radius:14px;background:var(--paper);padding:6px 12px;font-size:14px;line-height:20px;">Estuve reponiendo en el pasillo 4 todo el rato.</div></div>
+        <div style="display:flex;gap:10px;align-items:flex-start;"><span style="font-size:22px;">👩‍🦰</span><div style="border-radius:14px;background:var(--paper);padding:6px 12px;font-size:14px;line-height:20px;">Vi a Hugo salir del almacén justo antes del apagón.</div></div>
+        <div style="display:flex;gap:10px;align-items:flex-start;"><span style="font-size:22px;">🧑</span><div style="border-radius:14px;background:var(--paper);padding:6px 12px;font-size:14px;line-height:20px;">Yo estaba en caja, preguntadle a los clientes.</div></div>
+      </div>
+    </section>
+
+    <section style="border-radius:20px;background:var(--card);box-shadow:0 4px 14px rgba(27,31,29,0.1);padding:12px 16px;">
+      <div style="font-size:12px;line-height:14px;color:var(--mute);font-weight:800;">TU VOTO</div>
+      <div style="margin-top:8px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+        <button style="height:84px;border:0;border-radius:16px;background:var(--paper);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;"><span style="font-size:30px;">🧔</span><b style="font-size:14px;">Óscar</b></button>
+        <button style="height:84px;border:0;border-radius:16px;background:var(--paper);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;"><span style="font-size:30px;">👩‍🦰</span><b style="font-size:14px;">Marta</b></button>
+        <button aria-pressed="true" style="height:84px;border:0;border-radius:16px;background:var(--brand-soft);box-shadow:inset 0 0 0 3px var(--brand);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;"><span style="font-size:30px;">🧑</span><b style="font-size:14px;color:var(--brand-dk);">Hugo</b></button>
+      </div>
+      <div style="margin-top:10px;border-radius:14px;background:var(--warn-soft);padding:8px 12px;font-size:13px;line-height:18px;color:var(--warn);font-weight:700;">Si te equivocas: despido improcedente, −300 € de indemnización.</div>
+    </section>
+  </div>
+
+  <div style="position:absolute;left:16px;right:16px;bottom:24px;display:flex;gap:10px;">
+    <a href="Main.dc.html" style="flex:none;height:56px;border-radius:16px;padding:0 20px;background:var(--card);box-shadow:inset 0 0 0 2px var(--line);display:flex;align-items:center;font-family:'Fredoka',sans-serif;font-weight:600;font-size:18px;">Saltar</a>
+    <a href="Main.dc.html" style="flex:1;height:56px;border-radius:16px;background:var(--brand);box-shadow:0 4px 0 var(--brand-dk);color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Fredoka',sans-serif;font-weight:600;font-size:20px;">Votar a Hugo</a>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>
