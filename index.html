@@ -2072,6 +2072,19 @@ body.redmo .prod{transition:none!important}
   .p-deco{font-size:38px}
   .prod.deco .ptg{min-width:70px}
 }
+/* ===== 📔 Vida que sigue: diario de la tienda y afinidad con el jefe ===== */
+.diario{display:flex;flex-direction:column;gap:8px}
+.dia-mast{font-family:Fredoka,sans-serif;font-size:var(--fs-l);border-bottom:3px double var(--brand);padding-bottom:4px}
+.dia-mast small{font-family:Nunito,sans-serif;font-size:var(--fs-xs);color:var(--mute)}
+.dia-day{background:#fffdf6;color:#2a2420;border:1px solid #d9cfb8;border-radius:8px;padding:8px 10px;font-family:Georgia,'Times New Roman',serif}
+.dia-day h6{display:flex;justify-content:space-between;gap:8px;margin:0 0 6px;font-size:var(--fs-s);border-bottom:1px solid #d9cfb8;padding-bottom:3px;letter-spacing:.05em}
+.dia-e{display:flex;gap:6px;margin:4px 0;font-size:var(--fs-s);line-height:1.35}
+.dia-e i{font-style:normal;flex:none}
+.ajrow{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:var(--fs-s)}
+.ajrow>span{flex:none}
+.ajbar{position:relative;flex:1;min-width:60px;height:8px;background:#eee;border-radius:4px;overflow:hidden}
+.ajbar u{position:absolute;top:0;bottom:0}
+.ajbar::after{content:'';position:absolute;left:50%;top:0;bottom:0;width:1px;background:#999}
 </style>
 </head>
 <body>
@@ -2353,6 +2366,7 @@ function bioHtml(e,mini){
 }
 /* ¿Qué tal? Algo de su gente, de su sueño o su manía. */
 function howLine(e){
+  if(ajV(e)<=-60&&Math.random()<0.35)return pick(['Bien. ¿Algo más?','Aquí, currando. Como me pediste.','Mejor cuando no me preguntas.']);
   const B=e.bio,o=[];
   toArr(B.circ).forEach(c=>{(CIRC_L[c.k]||[]).forEach(l=>o.push(l.replace(/%n%/g,c.n).replace(/%a%/g,c.a||'')));});
   if(!B.done)(ASP[B.asp]||{how:[]}).how.forEach(l=>o.push(l));
@@ -2501,7 +2515,7 @@ function arcBeat(){
     onPick:k=>{if(!meta.emp.includes(e)||B.s!==s0)return;
       let r={};try{r=o.go(k)||{};}catch(x){console.warn('arc',x);}
       if(r.log&&meta.emp.includes(e))logE(e,gx(r.log,isFem(e)));
-      if(r.done)B.done=1;else B.s=r.to!=null?r.to:B.s+1;
+      if(r.done){B.done=1;diar(A.ic||'📖','VIDAS DEL SÚPER',e.name+' cierra un capítulo: '+gx(A.n||'su sueño',isFem(e))+'.');}else B.s=r.to!=null?r.to:B.s+1;
       if(!B.done&&!ARCS[B.asp][B.s])B.done=1;
       B.next=meta.day+(r.gap||ri(2,3));
       if(r.toast)toast(r.toast,r.bad?'bad':'good');
@@ -2541,7 +2555,7 @@ function talkScene(e){
 }
 /* Lo que contesta, en una tarjeta corta que se lee bien (8 s) y en el chat de la caja. */
 function talkResp(e,line,fx,good){
-  line=castMul(e,line,0.3);
+  line=ajTone(e,castMul(e,line,0.3),good);
   if(run&&!run.over)run.chat={face:e.face,text:e.name+': «'+line+'»',angry:!good,until:run.t+5};try{renderChat();}catch(x){}
   scene({k:'resp:'+e.id+':'+Date.now(),over:true,mgok:!!(mg&&mg.kind==='sup'),look:'label',head:'🗣️ '+e.name.toUpperCase(),tag:mood(e),who:e.face,sprite:'s'+e.id,role:e.role,name:empTag(e),prio:2,time:10,def:'ok',
     txt:'«'+esc(line)+'»',body:fx?'<div class="scn-hint">'+fx+'</div>':'',choices:[{t:good?'😄 Sigue así':'👍 Vale',k:'ok',cls:'go',key:'1'}]});
@@ -2552,17 +2566,17 @@ function talkDo(e,k){
   const done=s=>{if(sup){mg.acted[e.id]=s;renderSup();}renderAll();};
   if(k==='how'){
     if(me.how){talkResp(e,'Igual que hace un rato, jefe. ¿Estás bien tú?','Ya le has preguntado hoy: sin efecto.',true);return;}
-    me.how=1;mor(e,3);logE(e,'Charlasteis un rato');memo(e,'☕','Ha charlado contigo',3,1,'boss:how');ndAdd(e,'social',10);ndAdd(e,'estima',5);sOk();talkResp(e,howLine(e),'+3 de ánimo '+mood(e),true);done('💬 Habéis charlado.');return;}
+    me.how=1;mor(e,3);ajAdd(e,2);logE(e,'Charlasteis un rato');memo(e,'☕','Ha charlado contigo',3,1,'boss:how');ndAdd(e,'social',10);ndAdd(e,'estima',5);sOk();talkResp(e,howLine(e),'+3 de ánimo '+mood(e),true);done('💬 Habéis charlado.');return;}
   if(k==='good'){
     if(me.good){talkResp(e,'Que sí, que ya me lo has dicho. Me lo voy a tatuar.','Ya le has felicitado hoy: sin efecto.',true);return;}
     me.good=1;const s=e.st,ok=!d.slack&&(d.busy||s.tasks+s.ok+s.fel+s.cv>s.tfail+s.fail+s.caught);
-    if(ok){mor(e,6);logE(e,'Le dijiste que estaba haciendo un buen trabajo');memo(e,'😊','Le has felicitado',6,2,'boss:good');ndAdd(e,'estima',12);sOk();talkResp(e,pick(['¡Gracias, jefe! Eso no me lo dice ni mi madre.','Ay, que me lo creo, ¿eh?','Pues aún no has visto nada.','¿Eso es una subida de sueldo? ¿No? Bueno, me vale igual.']),'+6 de ánimo '+mood(e),true);done('👏 Le has felicitado.');}
+    if(ok){mor(e,6);ajAdd(e,4);logE(e,'Le dijiste que estaba haciendo un buen trabajo');memo(e,'😊','Le has felicitado',6,2,'boss:good');ndAdd(e,'estima',12);sOk();talkResp(e,pick(['¡Gracias, jefe! Eso no me lo dice ni mi madre.','Ay, que me lo creo, ¿eh?','Pues aún no has visto nada.','¿Eso es una subida de sueldo? ¿No? Bueno, me vale igual.']),'+6 de ánimo '+mood(e),true);done('👏 Le has felicitado.');}
     else{if(d.slack)e.focus=0;talkResp(e,d.slack?'¿Buen trabajo? Pero si llevo diez minutos con el móvil… Bueno, gracias.':'¿Buen trabajo? ¿Yo? Si hoy no he hecho gran cosa…','No cuela: hoy no ha hecho méritos. Sin efecto'+(d.slack?' (y se queda tan pancho).':'.'),false);done('👏 No ha colado.');}
     return;}
   if(k==='push'){
-    if(d.slack){const w=d.slack;d.slack=null;d.slackT=0;e.st.caught++;mor(e,-6);e.focus=Math.max(e.focus||0,1);logE(e,'Le pillaste escaqueándose ('+w.replace(/^\S+\s/,'')+')');memo(e,'😳','Le pillaste escaqueándose',-6,2,'boss:push');fact('escaqueo',e,null,0,2);sOk();
+    if(d.slack){const w=d.slack;d.slack=null;d.slackT=0;e.st.caught++;mor(e,-6);ajAdd(e,-3);e.focus=Math.max(e.focus||0,1);logE(e,'Le pillaste escaqueándose ('+w.replace(/^\S+\s/,'')+')');memo(e,'😳','Le pillaste escaqueándose',-6,2,'boss:push');fact('escaqueo',e,null,0,2);sOk();
       talkResp(e,gx(pick(EXCUSE[e.pers]||EXCUSE.pasota),isFem(e)),'Pillado: vuelve al tajo. −6 de ánimo '+mood(e)+'. Queda en su ficha.',false);done('📢 Pillado. Vuelve al tajo.');}
-    else{mor(e,-12);logE(e,'Le echaste la bronca sin motivo');memo(e,'😠','Le gritaste sin motivo',-12,3,'boss:push');ndAdd(e,'estima',-15);fact('jefe',e);sBad();let rum='';
+    else{mor(e,-12);ajAdd(e,-12);logE(e,'Le echaste la bronca sin motivo');memo(e,'😠','Le gritaste sin motivo',-12,3,'boss:push');ndAdd(e,'estima',-15);fact('jefe',e);sBad();let rum='';
       if(Math.random()<0.4){meta.emp.forEach(o=>{if(o!==e&&inStore(o))mor(o,-2);});rum=' Se ha corrido la voz: −2 de ánimo al resto.';}
       talkResp(e,pick(OFFEND),'Estaba trabajando: se ofende. −12 de ánimo '+mood(e)+'.'+rum,false);done('😠 «¡Pero si estaba trabajando!»');}
     return;}
@@ -2603,6 +2617,7 @@ function socEnsure(e){
   if(!e.nd||typeof e.nd!=='object'){const k=kidsN(e);e.nd={energia:ri(60,90),social:ri(45,75),dinero:clamp(ri(45,70)-k*12+((e.wage||0)>SMI_D*1.1?10:0),5,95),estima:ri(45,70),calma:ri(50,80)};}
   ND_K.forEach(k=>{if(typeof e.nd[k]!=='number')e.nd[k]=50;});
   e.th=sArr(e.th);e.know=sArr(e.know);
+  if(typeof e.aj!=='number')e.aj=clamp(Math.round(((e.moral==null?60:e.moral)-55)/2),-20,20);
   return e;
 }
 const ndAdd=(e,k,v)=>{if(e&&!e.real){socEnsure(e);e.nd[k]=clamp(e.nd[k]+v,0,100);}};
@@ -3077,7 +3092,7 @@ function socTick(dt){
 }
 /* ---- entre turnos: necesidades de la noche, relaciones del turno y decisiones de vida ---- */
 const LIFE={
- quit:e=>{if((e.look||0)<3||!(e.moral<30||e.nd.dinero<20)||Math.random()>=0.35)return 0;
+ quit:e=>{if((e.look||0)<(ajV(e)<=-60?2:3)||!(e.moral<30||e.nd.dinero<20)||Math.random()>=0.35-ajV(e)/300)return 0;
    if(e.moral>=40){leaveGood(e,'Le han ofrecido un trabajo mejor (baja voluntaria, en buenos términos)',false);return 1;}
    meta.emp=meta.emp.filter(x=>x!==e);baja(e,gx('Se ha ido a otra empresa dando un portazo (ánimo por los suelos, llevaba días mirando ofertas)',isFem(e)));
    if(ROLES[e.role]&&!vacOpen(e.role)&&staffOf(e.role).length<ROLES[e.role].max)setVac(e.role,1);
@@ -3107,7 +3122,7 @@ function socDay(){
   const ids=new Set(meta.emp.map(e=>String(e.id)));
   if(meta.rel)Object.keys(meta.rel).forEach(k=>{const [a,b]=k.split('-');if(!ids.has(a)||!ids.has(b))delete meta.rel[k];});
   const np=meta.emp.filter(e=>!e.real),avg=np.length?np.reduce((a,e)=>a+e.moral,0)/np.length:60;
-  meta.tension=clamp((meta.tension||20)+8+(avg<45?8:0)+(meta.sind===2?5:0)+Object.keys(meta.sq||{}).length*2,0,100);
+  meta.tension=clamp((meta.tension||20)+8+(avg<45?8:0)+(meta.sind===2?5:0)+Object.keys(meta.sq||{}).filter(k=>!/^arc-/.test(k)).length*2,0,100);
   meta.emp.forEach(e=>{if(e.real&&e.know)e.know=sArr(e.know).filter(r=>meta.day-(r.d||0)<5);});
   try{sqTease();}catch(x){console.warn('sq',x);}
 }
@@ -3121,21 +3136,21 @@ function lifeOpen(){
       sc({head:'🗓️ PETICIÓN DE DÍA LIBRE',tag:'📅 Turno '+(meta.day+1),def:'no',txt:'«'+(q.why==='peque'&&h?'Jefe, '+h.n+' está con fiebre y no tengo con quién dejarl'+(h.k==='hija'?'a':'o')+'. ¿Puedo librar mañana?':gx('Jefe, estoy reventad{o|a}. ¿Me das libre mañana? Vuelvo como nuev{o|a}.',F))+'»',
         body:'<div class="scn-hint">📅 Sí: libra el turno '+(meta.day+1)+' (una persona menos), +8 de ánimo y recupera energía. ✋ No: −8 de ánimo.</div>',
         choices:[{t:'📅 Sí, descansa',k:'si',cls:'go',key:'1'},{t:'✋ No puedo, te necesito',k:'no',cls:'no',key:'2'}],
-        onPick:k=>{if(!meta.emp.includes(e))return;if(k==='si'){e.off=meta.day+1;mor(e,8);ndAdd(e,'energia',30);logE(e,'Le diste libre el turno '+(meta.day+1));memo(e,'🙏','Le diste el día libre',8,2);}
-          else{mor(e,-8);memo(e,'😞','Le negaste el día libre',-8,2);logE(e,'Le negaste un día libre');}}});}
+        onPick:k=>{if(!meta.emp.includes(e))return;if(k==='si'){e.off=meta.day+1;mor(e,8);ajAdd(e,6);ndAdd(e,'energia',30);logE(e,'Le diste libre el turno '+(meta.day+1));memo(e,'🙏','Le diste el día libre',8,2);}
+          else{mor(e,-8);ajAdd(e,-6);memo(e,'😞','Le negaste el día libre',-8,2);logE(e,'Le negaste un día libre');}}});}
     else if(q.k==='job2')sc({head:'🛵 SEGUNDO CURRO',tag:'💶 No llega',def:'vida',txt:'«Jefe, me he cogido un segundo curro: repartir por las noches. Tranquil'+(F?'a':'o')+', que no se notará.»',
         body:'<div class="scn-hint">🤷 Es su vida: el pluriempleo es legal salvo pacto de exclusividad (que se paga aparte). Gana dinero, pero llegará con menos energía. 💶 +3 % de sueldo y lo deja: +6 de ánimo.</div>',
         choices:[{t:'🤷 Es tu vida',k:'vida',cls:'go',key:'1'},{t:'💶 +3 % y lo dejas',k:'sube',key:'2'}],
-        onPick:k=>{if(!meta.emp.includes(e))return;if(k==='sube'){e.wage=Math.round(e.wage*1.03);mor(e,6);ndAdd(e,'dinero',12);logE(e,'Le subiste un 3 % para que dejara el segundo curro');}
+        onPick:k=>{if(!meta.emp.includes(e))return;if(k==='sube'){e.wage=Math.round(e.wage*1.03);mor(e,6);ajAdd(e,6);ndAdd(e,'dinero',12);logE(e,'Le subiste un 3 % para que dejara el segundo curro');}
           else{e.job2=1;logE(e,'Se cogió un segundo trabajo de reparto');radio('🛵',e.name+' reparte por las noches. Llega con ojeras.');}}});
     else if(q.k==='amigo'){const r=q.r;if(!ROLES[r]||!vacOpen(r))return;
       sc({head:'🤝 UN AMIGO BUSCA CURRO',tag:JOB_IC[r]+' '+ROLES[r].n,def:'no',txt:'«Tengo un amigo que busca curro de '+ROLES[r].n+'. Es muy apañado, de verdad. ¿Le digo que te mande el CV?»',
         body:'<div class="scn-hint">📄 Sí: aparece en la bolsa de candidatos de RR.HH. (recomendado: alguien del barrio que ya conoce). 🙅 Ahora no: −2 de ánimo.</div>',
         choices:[{t:'📄 Que me mande el CV',k:'si',cls:'go',key:'1'},{t:'🙅 Ahora no',k:'no',key:'2'}],
-        onPick:k=>{if(!meta.emp.includes(e))return;if(k!=='si'){mor(e,-2);return;}poolFill();
+        onPick:k=>{if(!meta.emp.includes(e))return;if(k!=='si'){mor(e,-2);ajAdd(e,-3);return;}poolFill();
           const c=newEmp(r,meta,{},sArr(meta.pool).map(x=>x.name));if(!c.cast){toast('Al final, el amigo de '+e.name+' ha encontrado otro curro.');return;}c.wage=wageOf(r);c.prev=candPrev(c);c.d=meta.day;
           c.ref='Recomendado por '+e.name;c.qa=['rap','trato','punt','act'].sort(()=>Math.random()-0.5).slice(0,2).map(x=>interview(x,c[x]));meta.pool=sArr(meta.pool).concat([c]);
-          if(meta.pool.length>8)meta.pool.shift();relAdd(e,c,{af:40,conf:30});mor(e,3);toast('📄 El amigo de '+e.name+' ya está en la bolsa de candidatos (🗂️ RR.HH.).','good');}});}
+          if(meta.pool.length>8)meta.pool.shift();relAdd(e,c,{af:40,conf:30});mor(e,3);ajAdd(e,4);toast('📄 El amigo de '+e.name+' ya está en la bolsa de candidatos (🗂️ RR.HH.).','good');}});}
   });
 }
 /* ---- storylets y director (tensión estilo RimWorld; respeta PACE: «hist» es menor y «histx», seria) ---- */
@@ -3151,7 +3166,8 @@ function stScene(id,o){
     ...(o.ser?serio():{time:o.time||16}),def:o.def,txt:o.txt,body:(o.body||'')+'<div class="scn-hint">'+o.hint+'</div>',
     choices:o.ch.map(([k,t,cls,stp],i)=>({t,k,cls:cls||'',key:String(i+1),stamp:stp,sc:cls==='no'?'bad':'ok'})),
     alive:()=>run===R&&!R.over&&(!o.alive||o.alive()),
-    onPick:k=>{if(run!==R)return;let m;try{m=o.go(k);}catch(x){console.warn('story',x);}if(m)radio(o.ric||'📖',m);if(run&&!run.over)try{renderAll();}catch(x){}}});
+    onPick:k=>{if(run!==R)return;let m;try{m=o.go(k);}catch(x){console.warn('story',x);}if(m)radio(o.ric||'📖',m);
+      if(m)try{diar(o.ric||'📖',o.dh||DIA_CAT[(STORY.find(s=>s.id===id)||{}).cat]||'LA TIENDA',m);}catch(x){}if(!o.dh)try{storyAj(o,k);}catch(x){}if(run&&!run.over)try{renderAll();}catch(x){}}});
 }
 const sEmp=e=>({who:e.face,sprite:'s'+e.id,role:e.role,name:empTag(e)+' · '+ROLES[e.role].s});
 const fearful=()=>meta.emp.filter(e=>!e.real&&e.bio&&e.bio.fear==='fantasmas');
@@ -3301,7 +3317,7 @@ const SQ_TZ={
 /* Entre turnos: un adelanto de cada hilo abierto (40 %); los que llevan 15 turnos parados se cierran. */
 function sqTease(){
   const S=meta.sq||{};
-  Object.keys(S).forEach(k=>{const q=S[k];if(meta.day-q.d>15){sqEnd(k);return;}
+  Object.keys(S).forEach(k=>{if(/^arc-/.test(k))return;const q=S[k];if(meta.day-q.d>15){sqEnd(k);return;}
     if(!SQ_TZ[k]||Math.random()>=0.4)return;const a=empById(q.a),b=empById(q.b);
     const t=pick(SQ_TZ[k]).replace(/#a#/g,a?a.name:'Alguien').replace(/#b#/g,b?b.name:'alguien');radio('📻',gx(t,a&&isFem(a)));});
 }
@@ -3849,6 +3865,524 @@ STORY.push(
      meta.money-=8000;repAdd(-0.15,'La Caja '+n+' se cayó y no fuiste');return 'La Caja '+n+' sigue muerta. Se van unos cuantos clientes: −80 €.';}}) }
 );
 
+/* ===== 📔 Vida que sigue: diario de la tienda, afinidad con el jefe y arcos largos del elenco =====
+   · Diario: meta.diario = [{d, ic, h, t}] (máx. 200, lo más nuevo al final). diar(ic,titular,texto) lo apunta; solo quien lleva la
+     tienda (solitario, jefe o encargado), nunca el reto del día ni el navegador de un empleado real. Lo alimentan baja, fichajes,
+     storylets resueltos (stScene), arcos cortos y largos, el topo, multas de alcohol (minorSale) y el cierre (diaDay: récord, día
+     negro, multas, enfadados). Se lee en 👑 Dirección (diaDir, páginas propias con data-act=diapg) y en la pestaña «📔 Diario» del cierre.
+   · Afinidad con el jefe: e.aj −100..100 (socEnsure la crea). ajAdd(e,v) la mueve; ajLbl(e) = [umbral, icono, texto], de «te adora» a
+     «te la tiene jurada». Pesa en perf (±0,05, ajPerf), en las dimisiones (prepShift) y en LIFE.quit, en cómo te contesta (ajTone en
+     talkResp, howLine) y en los storylets «chivato» (te denuncia, o alguien que te aprecia te avisa antes) y «tapadera» (te cubre).
+   · Arcos largos del elenco: LARC[castKey] = [etapa(e,f) → {h, txt, hint, ch:[[k,texto,cls]], def, go(k) → texto | {m, end, gap}}],
+     f = banderas del hilo. Estado en meta.sq['arc-'+k] = {s, e, f, n: turno desde el que toca} (sqG/sqSet/sqEnd; sqTease no los
+     cierra y no suman tensión). larcTick (desde tickStaff, run.larcAt al 30–70 % del turno) saca como mucho una etapa por turno con
+     stScene (escena menor «hist:», pasa por el director de ritmo); entre etapas 3–5 turnos; empieza con ≥3 turnos en la tienda.
+     Un adelanto de nómina (f.ade, en euros) se devuelve al cerrar el arco. ?vida=arc-<k> adelanta la etapa al 10 % de cada turno y,
+     si no trabaja aquí, le contrata para la prueba (larcForce en startDay). */
+const diaOn=()=>!!(meta&&!daily&&!(run&&run.remote)&&!(room&&!isHost())&&!isMember());
+function diar(ic,h,t){
+  if(!diaOn())return;
+  const D=meta.diario=sArr(meta.diario);t=String(t||'');
+  if(D.some(x=>x.d===meta.day&&x.h===h&&x.t===t))return;
+  D.push({d:meta.day,ic,h,t});
+  if(D.length>200)meta.diario=D.slice(-200);
+}
+const DIA_CAT={chisme:'CORRILLO',drama:'SUCESOS',suspense:'MISTERIO EN EL SÚPER',conspiracion:'LABORAL',paranormal:'LO OCULTO',madrid:'MADRID AL DÍA'};
+function diaGroups(){const G={};sArr(meta.diario).forEach(x=>{(G[x.d]=G[x.d]||[]).push(x);});return Object.keys(G).map(Number).sort((a,b)=>b-a).map(d=>({d,L:G[d]}));}
+const diaDayHtml=g=>`<div class="dia-day"><h6><span>📰 TURNO ${g.d}</span><span>${(typeof DOW!=='undefined'&&DOW[dowOf(g.d)])||''}</span></h6>${g.L.map(x=>`<p class="dia-e"><i>${x.ic}</i><span><b>${esc(x.h)}.</b> ${esc(x.t)}</span></p>`).join('')}</div>`;
+const DIA_EMPTY='<div class="supd">Aún no ha pasado nada digno de portada. Dale tiempo, que esto es Madrid.</div>';
+function diaShop(){const P=paged(diaGroups().map(diaDayHtml),innerHeight<760?2:3,DIA_EMPTY);return {body:'<div class="diario"><div class="dia-mast">📔 EL DIARIO DE VITCHMARKET <small>· lo que pasa en la tienda, contado como en el periódico del barrio</small></div>'+P.html+'</div>',nav:P.nav};}
+let diaPg=0;
+function diaDir(){
+  const o=pg;pg=diaPg;const P=paged(diaGroups().map(diaDayHtml),2,DIA_EMPTY);diaPg=pg;pg=o;
+  return `<div class="zone-title">📔 DIARIO DE LA TIENDA</div><div class="diario">${P.html}</div>${P.nav.replace(/data-act="pg"/g,'data-act="diapg"')}`;
+}
+/* Al abrir el turno 1 y al cerrar cada turno: récords, días negros, multas y clientela quemada. */
+function diaOpen(){if(diaOn()&&meta.day===1&&!sArr(meta.diario).length)diar('🛒','ABRE VITCHMARKET','El súper de barrio abre sus puertas con '+meta.emp.length+' personas en plantilla y la persiana recién pintada. Las vecinas, expectantes; la competencia, también.');}
+function diaDay(fin){
+  if(!diaOn()||!fin)return;
+  const tot=(fin.S||0)+(fin.O||0),R=meta.recS||0;
+  if(meta.day>=3&&R>0&&tot>R)diar('📈','RÉCORD DE CAJA','La tienda factura '+fmt(tot)+' en un solo turno, lo nunca visto. '+pick(['En la panadería de enfrente ya preguntan qué echamos en el café.','Vitchi se ha comido un ticket de la emoción.','Las cajas echan humo; el jefe, también.']));
+  meta.recS=Math.max(R,tot);
+  const H=sArr(meta.hist);if(meta.day>=4&&H.length>=3&&fin.net<0&&fin.net<Math.min(...H.slice(0,-1).map(h=>h.n)))diar('📉','DÍA NEGRO','Se pierden '+fmt(-fin.net)+'. '+pick(['En el muelle nadie se atreve a mirar al jefe.','Pili ya ha hecho tres gráficas. Todas hacia abajo.','Vitchi se ha escondido debajo de la mesa de Backoffice.']));
+  if(run.fines>=30000)diar('⚖️','MULTAS Y DISGUSTOS','Entre sanciones, billetes falsos y sustos varios, la tienda se deja '+fmt(run.fines)+'. '+pick(['Hacienda somos todos, pero hoy más nosotros.','El bote llora en silencio.']));
+  if(run.angry>=4)diar('😡','CLIENTELA QUEMADA',run.angry+' clientes se van echando chispas. '+pick(['Uno ha jurado comprar en el Lidl «aunque tenga que coger el 141».','En el grupo del barrio ya hay hilo.']));
+  if(meta.rep>=4.8&&!meta.diaRep){meta.diaRep=1;diar('⭐','EL BARRIO SE RINDE','VitchMarket alcanza ★ '+repT(meta.rep)+'. Lo dicen en el mercado: «Ahí te tratan como en casa, pero sin tener que fregar».');}
+}
+/* ---- Afinidad con el jefe ---- */
+const AJ_L=[[70,'🥰','te adora'],[40,'😊','te aprecia'],[15,'🙂','le caes bien'],[-15,'😐','ni fu ni fa'],[-40,'😒','te tiene manía'],[-70,'😤','no te soporta'],[-101,'🔪','te la tiene jurada']];
+const ajV=e=>e&&typeof e.aj==='number'?e.aj:0;
+const ajLbl=e=>AJ_L.find(x=>ajV(e)>=x[0]);
+function ajAdd(e,v){if(!e||e.real||!v||!meta)return;if(typeof e.aj!=='number')e.aj=0;e.aj=clamp(Math.round(e.aj+v),-100,100);}
+const ajPerf=e=>e&&!e.real?ajV(e)/2000:0;
+function ajHtml(e){
+  if(!e||e.real)return '';const L=ajLbl(e),v=ajV(e);
+  return `<div class="ajrow" title="Afinidad contigo: ${v}"><span>${L[1]} Contigo: <b>${L[2]}</b></span><b class="ajbar"><u style="left:${v<0?50+v/2:50}%;width:${Math.abs(v)/2}%;background:${v<0?'var(--danger)':'var(--gain)'}"></u></b></div>`;
+}
+function ajTone(e,line,good){
+  if(!e||e.real)return line;const v=ajV(e);
+  if(v<=-50&&Math.random()<0.5)return pick(['(Sin mirarte a la cara) ','(Con los brazos cruzados) ','(Suspira) '])+line+pick([' …Jefe.',' Y ya.',' ¿Algo más?']);
+  if(v>=60&&good&&Math.random()<0.4)return line+pick([' Por ti, lo que haga falta.',' Eres el mejor jefe que he tenido. No se lo digas a nadie.',' Contigo da gusto, de verdad.']);
+  return line;
+}
+/* Lo que se decide en un storylet con alguien de la plantilla delante: lo bueno suma, lo malo resta. */
+function storyAj(o,k){
+  const id=+String(o.sprite||'').replace(/^s/,''),e=id&&empById(id);if(!e||e.real)return;
+  const c=(o.ch.find(x=>x[0]===k)||[])[2];ajAdd(e,c==='go'?2:c==='no'?-3:0);
+}
+/* ---- Storylets de la afinidad: quien no te traga te denuncia; quien te adora te cubre ---- */
+STORY.push(
+ {id:'chivato',cat:'conspiracion',ten:2,cd:9,when:c=>{const x=shuffle(c.all.filter(e=>ajV(e)<=-55&&(e.days||0)>=3))[0];if(!x)return null;
+   return {x,f:c.ws.filter(o=>o!==x&&ajV(o)>=55).sort((a,b)=>ajV(b)-ajV(a))[0]||null};},
+  run:(c,{x,f})=>{
+   if(f)return stScene('chivato',{...sEmp(f),head:'🤫 TE LO DIGO POR TU BIEN',tag:'📛 '+eN(x),def:'nada',
+    txt:'«Jefe, que yo no te he dicho nada, ¿eh? Pero '+eN(x)+' va diciendo que te va a denunciar a la Inspección de Trabajo por los descansos. Lo tiene hasta escrito en el móvil.»',
+    hint:'🗣️ Hablar con '+eN(x)+': si te lo curras, se le pasa (+20 de afinidad contigo). 💶 Pagarle las horas que reclama · 120 €: +30 de afinidad y asunto zanjado. 🙄 Que denuncie: la mitad de las veces lo hace (300 € de multa y −0,05 ★) y '+eN(f)+' se queda con cara de tont'+(isFem(f)?'a':'o')+' (−5 de afinidad).',
+    ch:[['habla','🗣️ Hablo con '+eN(x),'go'],['paga','💶 Le pago las horas · 120 €'],['nada','🙄 Que denuncie','no','ALLÁ ÉL']],
+    alive:()=>meta.emp.includes(x),
+    go:k=>{ajAdd(f,k==='nada'?-5:6);
+     if(k==='habla'){if(Math.random()<0.55+ajV(f)/400){ajAdd(x,20);mor(x,5);return f.name+' avisó a tiempo: el jefe y '+x.name+' hablan a puerta cerrada y la denuncia se queda en el cajón.';}ajAdd(x,-5);return x.name+' no quiere hablar con el jefe. La denuncia sigue en el móvil, cargadita.';}
+     if(k==='paga'){meta.money-=12000;ajAdd(x,30);mor(x,8);return 'El jefe le paga a '+x.name+' las horas que reclamaba. Paz laboral a precio de saldo.';}
+     if(Math.random()<0.5){meta.money-=30000;run.fines+=30000;repAdd(-0.05,'Denuncia de '+x.name+' en Trabajo');ajAdd(x,-5);return x.name+' cumple su palabra: denuncia a la Inspección de Trabajo y caen 300 € de multa.';}
+     return x.name+' al final no denuncia. «Me lo guardo para otro día», dicen que dijo.';}});
+   return stScene('chivato',{who:'🏛️',name:'Inspección de Trabajo · Madrid',look:'letter',head:'📨 DENUNCIA ANÓNIMA',tag:'Registro de jornada',def:'col',
+    txt:'Una persona de tu plantilla ha denunciado que no se respetan los descansos. Anónima, dicen. En la tienda todo el mundo sabe que ha sido '+eN(x)+'.',
+    hint:'🗂️ Colaborar: con alguien en Backoffice que lleve bien los registros, 70 % se archiva; si no, 300 € de multa y −0,05 ★. ⚖️ Abogada · 250 €: se archiva seguro. 😤 Ir a por '+eN(x)+': −15 de afinidad y −8 de ánimo, y el resto se pone tenso (−2).',
+    ch:[['col','🗂️ Colaborar','go'],['abog','⚖️ Abogada · 250 €'],['cara','😤 Ir a por '+eN(x),'no','BRONCA']],
+    alive:()=>meta.emp.includes(x),
+    go:k=>{if(k==='abog'){meta.money-=25000;return 'La abogada de la tienda despacha la denuncia de '+x.name+' en un café. Archivada.';}
+     if(k==='cara'){ajAdd(x,-15);mor(x,-8);meta.emp.forEach(o=>{if(o!==x&&!o.real)mor(o,-2);});}
+     const bk=staffOf('back').some(o=>!o.real&&inStore(o));
+     if(Math.random()<(bk?0.7:0.35))return 'Trabajo revisa los registros y archiva la denuncia. '+x.name+' se queda con un palmo de narices.';
+     meta.money-=30000;run.fines+=30000;repAdd(-0.05,'Denuncia en Trabajo por los descansos');return 'Los registros no cuadran: 300 € de multa por la denuncia de '+x.name+'.';}});}},
+ {id:'tapadera',cat:'drama',ten:1,cd:8,w:0.8,when:c=>{const f=c.ws.filter(o=>ajV(o)>=60).sort((a,b)=>ajV(b)-ajV(a))[0];return f?{f}:null;},
+  run:(c,{f})=>{const cp=sArr(meta.consPend).length>0;
+   if(cp)meta.consPend=sArr(meta.consPend).slice(1);else repAdd(+0.04,f.name+' te cubrió con una clienta');
+   return stScene('tapadera',{...sEmp(f),head:'🛡️ TE HE CUBIERTO',tag:ajLbl(f)[1]+' '+ajLbl(f)[2],def:'grac',
+    txt:cp?'«Jefe, ha llamado uno de Consumo por una hoja de reclamaciones sin contestar. Le he dicho que estabas en el banco y la he contestado yo, con mi mejor letra. Está arreglado.»'
+      :'«Jefe, la señora del cuarto quería poner una reclamación porque le cobraron la bolsa dos veces. La he convencido con un café y un chiste. No se lo digas a nadie.»',
+    hint:(cp?'📨 Una carta de Consumo menos. ':'⭐ +0,04 de reputación. ')+'🙏 «Te debo una»: +4 de ánimo y de afinidad. 💶 «Invita tú a algo» · 20 €: +8 de ánimo y +10 de afinidad. 😒 «No te metas en mis cosas»: −12 de afinidad (lo hecho, hecho está).',
+    ch:[['grac','🙏 Te debo una','go'],['inv','💶 Invita tú a algo · 20 €'],['no','😒 No te metas en mis cosas','no']],
+    go:k=>{if(k==='grac'){mor(f,4);ajAdd(f,4);return f.name+' cubre al jefe '+(cp?'ante Consumo':'con una clienta')+'. «Te debo una», le dice. Y se lo apunta.';}
+     if(k==='inv'){meta.money-=2000;mor(f,8);ajAdd(f,10);return f.name+' cubre al jefe y se gana un desayuno con porras a cuenta de la casa.';}
+     ajAdd(f,-12);mor(f,-6);return f.name+' cubre al jefe y recibe un «no te metas en mis cosas». Hay favores que no se vuelven a hacer.';}});}}
+);
+/* ---- Arcos largos del elenco: una historia de 3–4 capítulos por persona ---- */
+const cE=k=>meta.emp.find(x=>x.cast===k&&!x.real);
+const allM=v=>meta.emp.forEach(x=>{if(!x.real)mor(x,v);});
+function LX(e,o,txt){
+  if(!e||!o)return;
+  if(o.m){mor(e,o.m);if(txt)memo(e,o.m>0?'📔':'😞',txt,o.m,3,'larc:'+e.cast);}
+  if(o.a)ajAdd(e,o.a);if(o.$)meta.money-=Math.round(o.$*100);if(o.r)repAdd(o.r,'La historia de '+e.name);
+  if(o.w)e.wage=Math.round(e.wage*(1+o.w));if(o.off)e.off=meta.day+1;if(o.offTo)e.offTo=meta.day+o.offTo;
+  if(o.nd)for(const k in o.nd)ndAdd(e,k,o.nd[k]);if(txt)logE(e,txt);
+}
+const LARC={
+ rocio:[
+  (e,f)=>({h:'La deuda',txt:'Jefe, ¿tú crees que está feo pedirle a un compañero que te devuelva dinero? Es por una amiga. Bueno, es por mí. Seiscientos euros.',
+   hint:'🗣️ Hablas tú con Kevin: '+(cE('kevin')?'Rocío respira (+10 de afinidad) y Kevin se mosquea contigo (−8); 60 % de que pague':'Kevin ya no trabaja aquí: le llamas y a ver')+'. 💪 «Díselo tú, que puedes»: +4 de ánimo, a medias de que cobre. 💶 Le adelantas los 600 € y que Kevin te los devuelva a ti: +20 de afinidad (−600 € hasta que acabe su historia).',
+   ch:[['kev','🗣️ Hablo yo con Kevin','go'],['ella','💪 Díselo tú, que puedes'],['ade','💶 Te adelanto los 600 €']],def:'ella',
+   go:k=>{if(k==='ade'){f.ade=600;LX(e,{$:600,a:20,m:8,nd:{dinero:25}},'El jefe le adelantó los 600 € de Kevin');return 'El jefe adelanta a Rocío los 600 € que le debía Kevin. Fermín ya mira hoteles en Benidorm.';}
+    const kv=cE('kevin'),p=Math.random()<(k==='kev'?0.6:0.45);if(k==='kev'){ajAdd(e,10);if(kv)ajAdd(kv,-8);}else mor(e,4);
+    if(p){LX(e,{m:8,nd:{dinero:25}},'Kevin le devolvió los 600 €');return 'Kevin devuelve a Rocío sus 600 € en billetes de veinte. «Con intereses de cariño», dice ella.';}
+    LX(e,{m:-4},'Kevin sigue sin devolverle el dinero');return 'Kevin le da largas a Rocío: «La semana que viene, palabra». La semana que viene, como siempre.';}}),
+  (e,f)=>({h:'La encargada',txt:'Llevo veintiséis años en caja, mi alma. ¿Me dejarías organizar los turnos de las cajas? Sin cobrar más, que no es por eso. Bueno, un poquito sí.',
+   hint:'🎖️ Encargada de caja (+10 % de sueldo): +12 de ánimo y +12 de afinidad. 📅 «Más adelante»: −4. ✋ «Caja es caja»: −10 de ánimo y −12 de afinidad.',
+   ch:[['si','🎖️ Encargada, +10 %','go'],['luego','📅 Más adelante'],['no','✋ Caja es caja','no']],def:'luego',
+   go:k=>{if(k==='si'){f.enc=1;LX(e,{w:0.1,m:12,a:12},'La nombraste encargada de caja');return 'Rocío, nombrada encargada de caja tras 26 años. «Ahora me sé el nombre de todos los clientes. Por obligación.»';}
+    if(k==='no'){LX(e,{m:-10,a:-12},'Le dijiste que caja es caja');return 'A Rocío le dicen que caja es caja. Canta coplas por lo bajo todo el turno. Mala señal.';}
+    LX(e,{m:-4,a:-4});return 'Rocío tendrá que esperar para ser encargada. «Esperar se me da bien, que soy del Rayo.»';}}),
+  (e,f)=>({h:'Fermín',txt:'Fermín me ha pedido que me vaya a vivir con él. A Chinchón. A una hora de aquí en autobús. Yo le quiero, pero esto… esto también es mi casa.',
+   hint:'🕘 Le cuadras turnos de mañana para el autobús: se queda contenta (+10 y +10). 🥹 «Que espere un poco»: se queda (+5 de afinidad, −3 de ánimo). 💐 «Vete con él, mujer»: se despide de la tienda con fiesta (−30 €).',
+   ch:[['bus','🕘 Te cuadro mañanas para el bus','go'],['quede','🥹 Pídele que espere'],['vete','💐 Vete con él, mujer']],def:'quede',
+   go:k=>{if(k==='vete'){leaveGood(e,'Se va a vivir a Chinchón con Fermín',1);return {m:'Rocío cuelga el chaleco y se va a Chinchón con Fermín. Las clientas lloran más que ella. Bueno, igual.',end:1};}
+    if(k==='bus'){LX(e,{m:10,a:10,nd:{energia:15}},'Le cuadraste los turnos de mañana para ir y venir de Chinchón');return 'Rocío se muda a Chinchón con Fermín y viene cada mañana en el autobús de las 7:10. «Me echo la siesta en la M-311.»';}
+    LX(e,{m:-3,a:5});return 'Fermín esperará. «A mi edad, ¿qué son unos meses?», dice Rocío. Fermín no tiene tan claro lo de los meses.';}}),
+  (e,f)=>({h:'Treinta años',txt:'Treinta años cobrando, jefe. Las clientas me están preparando una sorpresa… y yo lo sé, porque Encarna no sabe guardar un secreto ni con cremallera.',
+   hint:'🎂 Fiesta en la tienda · 80 €: +0,08 ★, +4 de ánimo a todos y +10 de afinidad. 🤫 «Hazte la sorprendida»: +5 de ánimo.',
+   ch:[['fiesta','🎂 Fiesta en la tienda · 80 €','go'],['nada','🤫 Hazte la sorprendida']],def:'nada',
+   go:k=>{if(k==='fiesta'){LX(e,{$:80,r:0.08,a:10});allM(4);return 'Fiesta sorpresa por los 30 años de cajera de Rocío. Hay tarta, chotis y tres clientas con la lágrima. Fermín baila con todas.';}
+    LX(e,{m:5});return 'Rocío pone su mejor cara de sorpresa ante la tarta de las clientas. Le sale regular, pero llora de verdad.';}})],
+ yeray:[
+  (e,f)=>({h:'El vídeo',txt:'Jefe, no te enfades… Subí un vídeo haciendo de cajero de telenovela y lleva 30.000 visitas. Sale la tienda. Y un poco mi cara de galán.',
+   hint:'📱 «Hazlo oficial»: cuenta de la tienda (+0,05 ★, +8 de ánimo, +10 de afinidad). 🤷 «Mientras no sea en horas de curro»: +2. 🗑️ «Bórralo, que sale una clienta»: −6 y −6.',
+   ch:[['ok','📱 Hazlo oficial','go'],['calla','🤷 Mientras no sea currando'],['quita','🗑️ Bórralo','no']],def:'calla',
+   go:k=>{if(k==='ok'){f.tk=1;LX(e,{r:0.05,m:8,a:10},'Le dejaste llevar la cuenta de TikTok de la tienda');return 'Yeray, de 19 años, ya lleva la cuenta de TikTok de VitchMarket. Su primer vídeo: «Cosas que dicen las señoras en la cola». Viral en Usera.';}
+    if(k==='quita'){LX(e,{m:-6,a:-6},'Le hiciste borrar su vídeo');return 'Yeray borra su vídeo viral. 30.000 visitas al limbo. «Literal, literal, literal.»';}
+    LX(e,{m:2});return 'Yeray promete grabar solo en el descanso. El descanso de Yeray dura lo que dura un vídeo.';}}),
+  (e,f)=>({h:'Las notas',txt:'Jefe, si llama mi madre preguntando… dile que estoy en clase, porfa. Es que… he suspendido todo. Y en Canarias creen que voy de lujo.',
+   hint:'📚 Le cambias el turno para que vaya a clase: +8 y +10. 📞 «Díselo tú a tu madre»: −4 de ánimo ahora, mejor después. 🤥 «Te cubro (una vez)»: +12 de afinidad, pero la mentira tiene las patas cortas.',
+   ch:[['estudia','📚 Te cambio el turno: a clase','go'],['verdad','📞 Díselo tú a tu madre'],['cubre','🤥 Te cubro, una vez']],def:'verdad',
+   go:k=>{f[k]=1;if(k==='cubre'){LX(e,{m:4,a:12},'Le cubriste ante su madre');return 'Llama Pino desde Las Palmas preguntando por su hijo. «En clase, señora, en clase.» Vitchi baja las orejas.';}
+    if(k==='estudia'){LX(e,{m:8,a:10,nd:{estima:10}},'Le cambiaste el turno para que fuera a clase');return 'Yeray cambia de turno para ir a clase. Wei le ha hecho un Excel con los temas. Con colores.';}
+    LX(e,{m:-4,a:-2,nd:{calma:10}},'Llamó a su madre y se lo contó');return 'Yeray llama a su madre y le cuenta lo de las notas. Se oye a la abuela Candelaria regañar desde Gran Canaria.';}}),
+  (e,f)=>f.cubre?{h:'La visita',txt:'Mi madre viene a Madrid el sábado. Sabe lo de las notas. Y sabe que tú me cubriste. Quiere conocerte. Mucho.',
+   hint:'🙋 Das la cara con él: +15 de afinidad y +6 de ánimo. 🙈 «Yo no sé nada»: −15 de afinidad y −8 de ánimo.',
+   ch:[['da','🙋 Doy la cara contigo','go'],['no','🙈 Yo no sé nada','no']],def:'da',
+   go:k=>{if(k==='da'){LX(e,{m:6,a:15},'Diste la cara con él ante su madre');return 'Pino viene de Las Palmas, regaña al jefe, abraza a su hijo y le deja dos kilos de gofio a la plantilla. Yeray se matricula otra vez.';}
+    LX(e,{m:-8,a:-15},'Le dejaste solo ante su madre');return 'El jefe se esconde en el almacén durante la visita de la madre de Yeray. Ella le encuentra. Igual.';}}
+   :{h:'Aprobado',txt:'¡Jefe! ¡He aprobado mates! Con un 5,2. Pero un 5,2 es un 5, que lo dice el Ministerio.',
+   hint:'🎉 Foto para la cuenta de la tienda: +0,03 ★ y +8 de ánimo. 👏 «Ahora a por las demás»: +5.',
+   ch:[['foto','🎉 Foto para la tienda','go'],['bien','👏 Ahora a por las demás']],def:'bien',
+   go:k=>{if(k==='foto'){LX(e,{r:0.03,m:8,a:6},'Aprobó mates y salió en la cuenta de la tienda');return 'Yeray aprueba mates con un 5,2 y la tienda lo celebra en redes. 1.200 «me gusta», la mitad de Las Palmas.';}
+    LX(e,{m:5,a:3},'Aprobó mates');return 'Yeray aprueba mates. Wei dice que el mérito es del Excel. El Excel no dice nada.';}}],
+ awa:[
+  (e,f)=>({h:'Las prácticas',txt:'Jefe, me han dado las prácticas de Enfermería. Son por la mañana. ¿Podría pasar a tardes? Sé que es mucho pedir.',
+   hint:'🗓️ «Te cuadro los turnos»: +10 de ánimo y +12 de afinidad. 🤝 «Una semana sí y una no»: +4 y +5. ✋ «Caja necesita gente»: −10 y −10.',
+   ch:[['si','🗓️ Te cuadro los turnos','go'],['mitad','🤝 Una semana sí, una no'],['no','✋ Caja necesita gente','no']],def:'mitad',
+   go:k=>{if(k==='no'){LX(e,{m:-10,a:-10},'Le negaste el cambio de turno para las prácticas');return 'Awa no podrá hacer las prácticas por la mañana. Esta noche estudia en el autobús nocturno.';}
+    LX(e,k==='si'?{m:10,a:12}:{m:4,a:5},'Le cuadraste los turnos para las prácticas');return 'Awa empieza las prácticas de Enfermería. Por la mañana pone vías; por la tarde, pasa yogures.';}}),
+  (e,f)=>({h:'La matrícula',txt:'Me falta pagar 450 € del segundo plazo. Si no, me dan de baja de la carrera. Mi madre cree que me sobra el dinero… y yo le sigo mandando 200 al mes.',
+   hint:'📄 Que Backoffice le ayude con la beca del Ayuntamiento: 60 % sale (+10 de ánimo). 💶 Adelanto de nómina · 450 € (lo devuelve al final de su historia): +15 de afinidad. 😔 «No puedo»: −12 de ánimo y −8 de afinidad.',
+   ch:[['beca','📄 Te ayudo con la beca','go'],['ade','💶 Adelanto · 450 €'],['no','😔 No puedo','no']],def:'beca',
+   go:k=>{if(k==='ade'){f.ade=450;LX(e,{$:450,m:10,a:15,nd:{dinero:30}},'Le adelantaste la matrícula de Enfermería');return 'La tienda adelanta a Awa los 450 € de la matrícula. Aminata ha dibujado al jefe con bata de médico.';}
+    if(k==='beca'){if(Math.random()<0.6){LX(e,{m:10,a:8,nd:{dinero:25}},'Le concedieron la beca del Ayuntamiento');return 'Backoffice rellena con Awa la beca del Ayuntamiento. Concedida. Pili lo ha publicado en Moratalaz Informa antes que el boletín oficial.';}
+     LX(e,{m:-5,a:4});return 'La beca de Awa se queda en lista de espera. Hará noches en la residencia para pagar el plazo.';}
+    LX(e,{m:-12,a:-8},'No pudiste ayudarla con la matrícula');return 'Awa paga la matrícula con lo que iba a mandar a Thiès. Este mes, su madre no recibe nada.';}}),
+  (e,f)=>({h:'Farmacología',txt:'Mañana es el examen de Farmacología. Llevo tres noches sin dormir y ya escaneo los yogures por su principio activo.',
+   hint:'😴 «Libra mañana»: libra el turno siguiente, +8 de afinidad. ☕ «Café y ánimo»: +4 de ánimo.',
+   ch:[['libra','😴 Libra mañana','go'],['cafe','☕ Café y ánimo']],def:'cafe',
+   go:k=>{if(k==='libra'){LX(e,{off:1,a:8,m:6,nd:{energia:30}},'Le diste libre para el examen de Farmacología');return 'Awa libra para el examen de Farmacología. La plantilla le deja en la taquilla un táper y un «¡A por ellos!» en un pósit.';}
+    LX(e,{m:4});return 'Awa estudia Farmacología entre cliente y cliente. Una señora le ha preguntado por el ibuprofeno y se ha llevado una clase magistral.';}}),
+  (e,f)=>({h:'Enfermera',txt:'¡Aprobado, jefe! Me queda el trabajo de fin de grado. Y… me han ofrecido unas prácticas pagadas en La Paz. No sé qué hacer.',
+   hint:'🩺 «Vete, que es lo tuyo»: se despide con fiesta (−30 €) y el barrio lo celebra (+0,05 ★). 💶 «+8 % y te quedas a media jornada»: se queda (+6 de ánimo).',
+   ch:[['vete','🩺 Vete, que es lo tuyo','go'],['queda','💶 +8 % y te quedas']],def:'vete',
+   go:k=>{if(k==='queda'){LX(e,{w:0.08,m:6,a:4},'Se quedó con un 8 % más mientras acaba la carrera');return {m:'Awa se queda en la tienda mientras acaba la carrera, con un 8 % más. En la taquilla ya tiene el fonendo.',end:1};}
+    repAdd(0.05,'Awa, de la caja a enfermera');leaveGood(e,'Se va de enfermera en prácticas al hospital La Paz',1);return {m:'Awa deja la caja para ser enfermera en La Paz. Las vecinas ya preguntan en qué planta está «la chica del súper».',end:1};}})],
+ andres:[
+  (e,f)=>({h:'La faja',txt:'(Andrés levanta un palé de agua con cara de estar pariendo) …Nada, jefe, nada. Un tirón. A mis años, los tirones son de familia.',
+   hint:'🛒 «Lo pesado, con la Jacinta»: +5 de ánimo y +6 de afinidad. 🩺 «Al médico, ya»: libra mañana (+10 de afinidad). 🙈 «No he visto nada»: él sigue cargando… y la espalda no perdona.',
+   ch:[['jac','🛒 Lo pesado, con la Jacinta','go'],['med','🩺 Al médico, ya'],['nada','🙈 No he visto nada','no']],def:'jac',
+   go:k=>{f[k]=1;if(k==='med'){LX(e,{off:1,a:10,m:-2},'Le mandaste al médico por la espalda');return 'Andrés va al médico por la espalda. Se lleva la faja puesta «por si me la quieren quitar».';}
+    if(k==='jac'){LX(e,{m:5,a:6},'Le pediste que lo pesado lo moviera la Jacinta');return 'Andrés y la Jacinta, su carretilla de 1994, se reparten el peso. Ella hace más. Él habla más.';}
+    return 'Andrés sigue cargando palés con la faja. Nadie dice nada. Todo el mundo lo ve.';}}),
+  (e,f)=>f.nada?{h:'El susto',txt:'¡Jefe! ¡Andrés se ha quedado clavado en el muelle! Dice que no es nada, pero no se puede ni girar.',
+   hint:'🚑 Mutua y baja de 3 turnos: +5 de afinidad. 💊 «Ibuprofeno y a casa»: −10 de ánimo, −10 de afinidad y la mutua puede sancionar (300 €).',
+   ch:[['mutua','🚑 Mutua y baja','go'],['ibu','💊 Ibuprofeno y a casa','no']],def:'mutua',
+   go:k=>{if(k==='mutua'){LX(e,{offTo:3,a:5,m:4},'Baja de tres turnos por la espalda');return 'Andrés, de baja por la hernia que escondía. La Jacinta, aparcada en una esquina, con un lazo.';}
+    LX(e,{m:-10,a:-10,off:1},'Le mandaste a casa con un ibuprofeno');if(Math.random()<0.5){meta.money-=30000;run.fines+=30000;return 'La mutua se entera de lo de Andrés: 300 € de sanción por no tramitar el accidente.';}return 'Andrés se va a casa con un ibuprofeno y una cara que lo dice todo.';}}
+   :{h:'El traumatólogo',txt:'El traumatólogo dice que nada de cargar peso. Que tengo una hernia. Jefe… ¿me vas a echar? Me quedan dos años para jubilarme.',
+   hint:'🧾 Le pasas al inventario y la PDA: +12 de ánimo y +15 de afinidad. 🏥 Baja de 3 turnos y vuelve como nuevo: +8. 🎁 «¿Y si te jubilas antes?»: −10 y −12.',
+   ch:[['pda','🧾 Inventario y PDA','go'],['baja','🏥 Baja y vuelves como nuevo'],['jub','🎁 ¿Y si te jubilas antes?','no']],def:'pda',
+   go:k=>{if(k==='pda'){LX(e,{m:12,a:15},'Le pasaste al inventario para cuidar la espalda');return 'Andrés pasa al inventario. Cuenta latas como quien reza el rosario. Y no se equivoca ni una.';}
+    if(k==='baja'){LX(e,{offTo:3,a:8,m:4},'Baja de tres turnos por la hernia');return 'Andrés se coge la baja por la hernia. Promete volver «más fino que la Jacinta recién engrasada».';}
+    LX(e,{m:-10,a:-12},'Le sugeriste jubilarse antes');return 'Al jefe se le escapa lo de la jubilación anticipada. Andrés no dice nada. Se aprieta la faja.';}},
+  (e,f)=>({h:'La Jacinta',txt:'Jefe, una cosa… Cuando yo me jubile, ¿la Jacinta se queda? Es que no quiero que la tiren. Lleva aquí más que tú.',
+   hint:'🏷️ Placa con su nombre · 15 €: +2 de ánimo a todos y +10 de afinidad. 🔧 «Se jubila contigo»: +6 de ánimo.',
+   ch:[['placa','🏷️ Placa para la Jacinta · 15 €','go'],['jub','🔧 Se jubila contigo']],def:'jub',
+   go:k=>{if(k==='placa'){LX(e,{$:15,a:10});allM(2);return 'La carretilla de Andrés ya tiene placa: «LA JACINTA · 1994 · NO SE TOCA». Kevin la ha tocado. Se ha armado.';}
+    LX(e,{m:6,a:3});return 'Andrés y la Jacinta se jubilarán juntos. Él dice que se la lleva al pueblo, a Jaén, «a que vea olivos».';}})],
+ kevin:[
+  (e,f)=>({h:'Los de la moto',txt:'(En la puerta hay dos tíos en una moto preguntando por Kevin) …Jefe, si preguntan, yo no he venido hoy. Son… colegas del pádel.',
+   hint:'🚪 «Que se vayan, aquí se trabaja»: +6 de afinidad. 🗣️ «Kevin, a mi despacho»: lo niega todo (−4 de afinidad), pero te enteras. 👮 Llamar a la policía: −10 de afinidad, se van.',
+   ch:[['echa','🚪 Que se vayan','go'],['habla','🗣️ Kevin, a mi despacho'],['poli','👮 Llamo a la policía','no']],def:'echa',
+   go:k=>{if(k==='echa'){LX(e,{a:6},'Echaste de la puerta a los de la moto');return 'El jefe echa de la puerta a dos «colegas del pádel» de Kevin. Llevaban casco. Dentro de la tienda.';}
+    if(k==='habla'){LX(e,{a:-4,m:-3},'Le llamaste al despacho por los de la moto');return 'Kevin, en el despacho: «Es un malentendido de pádel». El jefe no sabía que el pádel tenía cobradores.';}
+    LX(e,{a:-10},'Llamaste a la policía por los de la moto');return 'Llega una patrulla y los de la moto se esfuman. Kevin no habla con nadie en todo el turno. Récord.';}}),
+  (e,f)=>({h:'El adelanto',txt:'Necesito 500 € de adelanto. Es… para material de pádel. Raquetas de carbono. Muy caras. Te lo devuelvo, palabra de campeón.',
+   hint:'📞 Le das el teléfono de Jugadores Anónimos: −6 ahora, puede salir bien. 💶 Adelanto · 500 €: +12 de afinidad, pero a saber dónde acaba. ✋ «Ni un euro»: −12 de afinidad.',
+   ch:[['ayuda','📞 Te paso a Jugadores Anónimos','go'],['ade','💶 Adelanto · 500 €'],['no','✋ Ni un euro','no']],def:'no',
+   go:k=>{if(k==='ade'){f.ade=500;LX(e,{$:500,a:12,m:6});if(Math.random()<0.5)f.ade=0;return 'Kevin cobra un adelanto de 500 € «para raquetas». Nadie ha visto raquetas.';}
+    if(k==='ayuda'){f.help=1;LX(e,{a:-6,m:-4,nd:{calma:10}},'Le diste el teléfono de Jugadores Anónimos');return 'El jefe le pasa a Kevin un número de Jugadores Anónimos. Kevin lo guarda «para un colega». En favoritos.';}
+    LX(e,{a:-12,m:-8},'Le negaste un adelanto');return 'Kevin no consigue su adelanto. Hoy levanta los palés con una rabia que asusta.';}}),
+  (e,f)=>f.help?{h:'Tres semanas',txt:'Jefe, llevo tres semanas sin apostar. Lo pone la app. ¿Se pone eso en el CV? En negrita, digo.',
+   hint:'🎖️ «Pues ahora a ganarte lo de encargado»: +10 y +10. 👏 «Bien hecho, campeón»: +6. En los dos casos, salda su deuda con Rocío si está.',
+   ch:[['enc','🎖️ Ahora, a ganarte el puesto','go'],['bien','👏 Bien hecho, campeón']],def:'bien',
+   go:k=>{const r=cE('rocio');if(r)LX(r,{m:8,nd:{dinero:20}},'Kevin le devolvió por fin sus 600 €');
+    LX(e,k==='enc'?{m:10,a:10,nd:{estima:15}}:{m:6,a:5},'Tres semanas sin apostar');return 'Kevin cumple tres semanas sin apostar'+(r?' y le devuelve a Rocío sus 600 €. Ella le da un beso en la frente.':'. Lo celebra con un batido de proteínas. Doble.');}}
+   :{h:'En casa de su madre',txt:'Jefe… han ido a casa de mi madre. Maribel les ha abierto en bata. Debo tres mil. No sé qué hacer.',
+   hint:'💶 Le prestas 1.000 € y lo deja: +20 de afinidad; a medias de que lo devuelva. 🤷 «Es tu problema»: −15 de afinidad y 40 % de que se vaya de Madrid.',
+   ch:[['paga','💶 Te presto 1.000 € y lo dejas','go'],['nada','🤷 Es tu problema','no']],def:'nada',
+   go:k=>{if(k==='paga'){f.ade=(f.ade||0)+(Math.random()<0.5?1000:0);LX(e,{$:1000,a:20,m:10},'Le prestaste 1.000 € para pagar sus deudas');return 'El jefe le presta 1.000 € a Kevin para quitarse a los de la moto. Maribel le manda al jefe una tortilla. Sin cebolla, por si acaso.';}
+    LX(e,{a:-15,m:-8});if(Math.random()<0.4){leaveGood(e,'Se fue de Madrid huyendo de sus deudas');return {m:'Kevin desaparece una mañana. Dicen que está en Benidorm, dando clases de pádel. Deja la taquilla llena de proteínas.',end:1};}
+    return 'Kevin se apaña solo con sus deudas. Ahora hace doble turno: aquí y repartiendo de noche.';}}],
+ dmytro:[
+  (e,f)=>({h:'La balda',txt:'Jefe… la balda del pasillo 4 aguanta 180 kilos. Ahora lleva 230. No es opinión. Es física.',
+   hint:'🔧 «Haz lo que veas»: +8 de ánimo y +8 de afinidad. 🤨 «¿Y tú cómo lo sabes?»: te cuenta lo de su título (+4 y +6). 🙄 «Lleva así desde siempre»: la balda decide (puede costar 150 € de merma).',
+   ch:[['caso','🔧 Haz lo que veas','go'],['como','🤨 ¿Y tú cómo lo sabes?'],['nada','🙄 Lleva así siempre','no']],def:'caso',
+   go:k=>{if(k==='nada'){if(Math.random()<0.6){meta.money-=15000;LX(e,{a:-6},'La balda se cayó, como dijo');return 'Cae la balda del pasillo 4: 230 kilos de legumbres por el suelo. Dmytro no dice «te lo dije». Lo piensa en ucraniano.';}return 'La balda del pasillo 4 aguanta. Dmytro la mira cada mañana como quien visita a un enfermo.';}
+    if(k==='como'){f.title=1;LX(e,{m:4,a:6},'Te contó que es ingeniero de puentes');return 'Dmytro confiesa que era ingeniero de puentes en Járkov. «Una balda es un puente pequeño», explica. Nadie le discute.';}
+    LX(e,{m:8,a:8},'Reforzó la balda del pasillo 4');return 'Dmytro refuerza la balda del pasillo 4 con dos escuadras y un cálculo en una servilleta. Aguantaría un elefante.';}}),
+  (e,f)=>({h:'El título',txt:f.title?'Es de la Universidad de Járkov. La homologación cuesta 160 € de tasas y un año de papeles. Lo he dejado en la taquilla tres años.':'Mi hija Sofía ha dicho en el colegio que soy ingeniero. Ahora tengo que explicar por qué coloco yogures. Y lo soy, jefe. En la taquilla tengo el título.',
+   hint:'📄 La tienda paga la homologación · 160 €: +12 de ánimo y +18 de afinidad. 💪 «Ánimo con los papeles»: +3. 🤷 «Aquí colocas yogures»: −10 y −10.',
+   ch:[['paga','📄 La tienda paga las tasas · 160 €','go'],['ani','💪 Ánimo con los papeles'],['nada','🤷 Aquí colocas yogures','no']],def:'ani',
+   go:k=>{if(k==='paga'){f.hom=1;LX(e,{$:160,m:12,a:18},'La tienda le pagó la homologación del título');return 'VitchMarket paga las tasas para homologar el título de ingeniero de Dmytro. Él lo agradece con un apretón de manos que dura un minuto.';}
+    if(k==='nada'){LX(e,{m:-10,a:-10},'Le dijiste que aquí coloca yogures');return 'Dmytro devuelve el título a la taquilla. Cierra con dos vueltas de llave.';}
+    f.hom=Math.random()<0.4?1:0;LX(e,{m:3},'Empezó los papeles de la homologación');return 'Dmytro empieza solo los papeles de la homologación. Los rellena de noche, con Sofía dictando.';}}),
+  (e,f)=>({h:'Sofía',txt:'Sofía tiene la función del colegio el jueves a las doce. Hace de puente. En serio, de puente. Lo eligió ella.',
+   hint:'🎭 «Ve, que eso no se repite»: libra mañana, +10 y +10. ✋ «Hay camión»: −8 y −8.',
+   ch:[['ve','🎭 Ve, que eso no se repite','go'],['no','✋ Hay camión','no']],def:'ve',
+   go:k=>{if(k==='ve'){LX(e,{off:1,m:10,a:10},'Fue a la función de Sofía');return 'Dmytro ve a su hija Sofía hacer de puente en la función del colegio. Según él, «estructuralmente impecable».';}
+    LX(e,{m:-8,a:-8},'Se perdió la función de Sofía');return 'Dmytro se pierde la función de Sofía por un camión. Ella le manda un vídeo. Él lo ve doce veces en el descanso.';}}),
+  (e,f)=>f.hom?{h:'Homologado',txt:'Ha llegado la carta. Soy ingeniero. En España. (Se le quiebra la voz.) Me ha llamado una constructora de Alcobendas.',
+   hint:'🌉 «A construir puentes»: se despide con fiesta (−30 €). 📦 «+10 % y me organizas el almacén»: se queda, +10 de ánimo.',
+   ch:[['vete','🌉 A construir puentes','go'],['queda','📦 +10 % y te quedas']],def:'vete',
+   go:k=>{if(k==='queda'){LX(e,{w:0.1,m:10},'Homologado, se quedó para organizar el almacén');return {m:'Dmytro, ingeniero homologado, se queda a reorganizar el almacén con un 10 % más. Las baldas tiemblan de respeto.',end:1};}
+    leaveGood(e,'Homologado: se va de ingeniero a una constructora',1);return {m:'Dmytro se va de ingeniero a una constructora de Alcobendas. Deja una balda firmada: «Aguanta 300 kg. D. K.»',end:1};}}
+   :{h:'La taquilla',txt:'Jefe, he sacado el título de la taquilla. Lo he colgado en casa. Sofía dice que ahí está mejor.',
+   hint:'👏 «Donde tiene que estar»: +6 de ánimo.',ch:[['ok','👏 Donde tiene que estar','go']],def:'ok',
+   go:()=>{LX(e,{m:6,a:4},'Colgó su título en casa');return 'Dmytro cuelga por fin su título de ingeniero en el salón. Sofía le ha puesto un marco de macarrones.';}}],
+ nerea:[
+  (e,f)=>({h:'El sistema',txt:'Te propongo una cosa: ubicaciones por código en todo el almacén. Lo monté en Alcalá y lo copiaron en tres naves. Aquí lo quiero con mi nombre.',
+   hint:'📋 «Adelante con tu sistema»: +10 y +10, y ella va algo más rápida. ✋ «Así funciona bien»: −8 y −8.',
+   ch:[['si','📋 Adelante con tu sistema','go'],['no','✋ Así funciona bien','no']],def:'si',
+   go:k=>{if(k==='si'){f.sys=1;e.rap=Math.min(0.95,(e.rap||0.5)+0.03);LX(e,{m:10,a:10},'Implantó su sistema de ubicaciones');return 'Nerea llena el almacén de etiquetas con códigos. Kevin dice que es «un Excel con patas». Funciona.';}
+    LX(e,{m:-8,a:-8},'Le rechazaste su sistema de ubicaciones');return 'Nerea guarda su sistema de ubicaciones en una carpeta. Y la carpeta, en una lista.';}}),
+  (e,f)=>({h:'La entrevista',txt:'Me han llamado de Mercadona. Jefa de almacén. No te lo tenía que contar, pero prefiero que lo sepas por mí.',
+   hint:'💶 «Te igualo: +12 % y encargada»: se queda (+15 y +15). 🍀 «Ve y que te vaya bonito»: '+(f.sys?'con su sistema en el CV, lo más seguro es que la cojan':'a lo mejor la cogen')+'. 😤 «Si te vas, te vas»: −15 de afinidad.',
+   ch:[['igual','💶 Te igualo: +12 % y encargada','go'],['suerte','🍀 Ve y que te vaya bonito'],['no','😤 Si te vas, te vas','no']],def:'suerte',
+   go:k=>{if(k==='igual'){LX(e,{w:0.12,m:15,a:15},'Le igualaste la oferta de Mercadona');return 'Nerea rechaza a Mercadona y se queda como encargada de almacén con un 12 % más. Ha hecho una lista de por qué. Tiene 23 puntos.';}
+    if(Math.random()<(k==='suerte'?(f.sys?0.7:0.45):0.6)-ajV(e)/400){leaveGood(e,'Se va de jefa de almacén a Mercadona',k==='suerte'?1:0);return {m:'Nerea se va de jefa de almacén a Mercadona. Deja el sistema de ubicaciones y una lista de cosas que hacer «para cuando no esté». Tiene 41 puntos.',end:1};}
+    LX(e,k==='no'?{m:-6,a:-15}:{m:-6,a:4},'No la cogieron en Mercadona');return 'A Nerea no la cogen en Mercadona. Vuelve con cara de lunes y una lista nueva: «Planes B».';}}),
+  (e,f)=>cE('dmytro')?{h:'La verbena',txt:'¿Tú crees que a Dmytro… le gustaría ir a la verbena de San Isidro? Como compañeros. De almacén. Muy compañeros.',
+   hint:'💘 «Pregúntaselo, mujer»: +8 de ánimo y a ver qué pasa. 🙊 «Yo no me meto»: nada.',
+   ch:[['si','💘 Pregúntaselo, mujer','go'],['no','🙊 Yo no me meto']],def:'no',
+   go:k=>{if(k==='si'){const d=cE('dmytro');if(d)relAdd(e,d,{af:15,rom:20});LX(e,{m:8,a:6},'Invitó a Dmytro a la verbena');return 'Nerea invita a Dmytro a la verbena de San Isidro. Él dice «vale» después de pensarlo once segundos. Ella lo cronometró.';}
+    return 'Nerea no invita a Dmytro a la verbena. Lo apunta en una lista: «Cosas para el año que viene».';}}
+   :{h:'Con mi nombre',txt:'He pasado el sistema de ubicaciones a limpio. ¿Lo firmo con mi nombre o con el de la tienda?',
+   hint:'✍️ «Con tu nombre, faltaría más»: +10 y +12. 🏪 «Mejor con el de la tienda»: −8 de afinidad.',
+   ch:[['firma','✍️ Con tu nombre','go'],['tienda','🏪 Con el de la tienda','no']],def:'firma',
+   go:k=>{if(k==='firma'){LX(e,{m:10,a:12},'Firmó su sistema con su nombre');return 'El sistema de ubicaciones de VitchMarket ya tiene autora: «Sistema Castillo». Nerea lo ha plastificado.';}
+    LX(e,{a:-8},'Su sistema salió con el nombre de la tienda');return 'El sistema de ubicaciones sale con el logo de la tienda. Nerea sonríe con los dientes apretados.';}}],
+ pili:[
+  (e,f)=>({h:'El grupo',txt:'Jefe, en Moratalaz Informa dicen que vamos a cerrar. Yo no he sido. Bueno… yo no he sido esta vez.',
+   hint:'🏷️ «Desmiéntelo y, ya que estás, publica las ofertas»: +0,08 ★, +8 de ánimo y +8 de afinidad. 📣 «Desmiéntelo»: +0,06 ★. 🙄 «Que digan lo que quieran»: −0,04 ★.',
+   ch:[['ofe','🏷️ Desmiente y publica ofertas','go'],['desm','📣 Desmiéntelo'],['nada','🙄 Que digan lo que quieran','no']],def:'desm',
+   go:k=>{if(k==='ofe'){LX(e,{r:0.08,m:8,a:8},'Publicó las ofertas en Moratalaz Informa');return 'Pili desmiente el cierre en Moratalaz Informa y cuela las ofertas de la semana. 8.000 vecinos, 300 comentarios y un pique por el precio del aceite.';}
+    if(k==='desm'){LX(e,{r:0.06,a:6});return 'Pili desmiente en el grupo del barrio que vayamos a cerrar. «Fuentes de toda solvencia», firma. Ella.';}
+    repAdd(-0.04,'Bulo de cierre en el grupo del barrio');return 'El bulo del cierre corre por Moratalaz. Dos clientas se despiden de Rocío con abrazos.';}}),
+  (e,f)=>({h:'La confesión',txt:'Lo del traspaso… fui yo quien publicó que el antiguo dueño cerraba. Te salió más barato por eso. Ya está. Ya lo he dicho. Ahora despídeme o invítame a un café.',
+   hint:'😂 «¿Te doy las gracias o te despido? Las gracias»: +12 de ánimo y +15 de afinidad. 🤐 «Esto queda entre nosotros»: +10 de afinidad. 😠 «Eso no se hace, Pili»: −10 y −10.',
+   ch:[['gra','😂 Las gracias, Pili','go'],['calla','🤐 Queda entre nosotros'],['mal','😠 Eso no se hace','no']],def:'calla',
+   go:k=>{(meta.secR=meta.secR||{}).pili=1;if(k==='gra'){LX(e,{m:12,a:15},'Te confesó lo del traspaso y te reíste');return 'Pili confiesa que su bulo abarató el traspaso de la tienda. El jefe se ríe y le invita a un café. Ella publica el café.';}
+    if(k==='calla'){LX(e,{m:6,a:10},'Te confesó lo del traspaso');return 'Pili le confiesa algo al jefe en voz baja. Por primera vez en su vida, no lo publica.';}
+    LX(e,{m:-10,a:-10},'Le reñiste por lo del traspaso');return 'El jefe le echa la bronca a Pili por el bulo del traspaso. Ella sale del despacho con el móvil en la mano. Peligro.';}}),
+  (e,f)=>({h:'La fiesta del barrio',txt:'El grupo quiere hacer la fiesta del barrio en nuestra puerta. ¿Ponemos un puesto? Tengo a 8.000 vecinos esperando mi respuesta. Literal.',
+   hint:'🎪 Puesto con degustación · 120 €: +0,12 ★, +2 de ánimo a todos y +8 de afinidad. 🙅 «Que la hagan en el parque»: −0,02 ★ y −4.',
+   ch:[['puesto','🎪 Puesto con degustación · 120 €','go'],['no','🙅 Que la hagan en el parque','no']],def:'puesto',
+   go:k=>{if(k==='puesto'){LX(e,{$:120,r:0.12,a:8,m:8});allM(2);return 'Fiesta del barrio en la puerta de VitchMarket: degustación de jamón, chotis y Pili con micrófono. Moratalaz Informa la llama «la fiesta del año».';}
+    repAdd(-0.02,'Sin puesto en la fiesta del barrio');LX(e,{a:-4});return 'La fiesta del barrio se hace en el parque. Pili la retransmite en directo con un «nosotros no estábamos invitados» muy sentido.';}})],
+ wei:[
+  (e,f)=>({h:'El práctico',txt:'El jueves tengo el práctico del carné. Otra vez. La séptima. (Bueno… la cuarta que me presento. Las otras me quedé en la puerta.)',
+   hint:'🚗 «Libra y ve»: libra mañana, +8 de afinidad. 💪 «Esta es la buena»: +3. 😂 «¿La rotonda sigue en pie?»: −3 y −3.',
+   ch:[['libra','🚗 Libra y ve','go'],['ani','💪 Esta es la buena'],['broma','😂 ¿Y la rotonda?','no']],def:'ani',
+   go:k=>{if(k==='libra'){LX(e,{off:1,a:8},'Le diste libre para el examen del carné');return 'Wei libra para el examen práctico. Ioana le ha hecho una hoja de Excel de «rotondas peligrosas de Madrid».';}
+    if(k==='broma'){LX(e,{m:-3,a:-3});return 'El jefe le pregunta a Wei por la rotonda. Wei contesta con una fórmula que nadie entiende. Un insulto en Excel, seguramente.';}
+    LX(e,{m:3});return 'Wei va al examen del carné «a ver qué pasa». Lleva cuatro amuletos y una calculadora.';}}),
+  (e,f)=>({h:'La puerta',txt:'No fui. Me quedé en la puerta de la autoescuela una hora. Desde lo del accidente de mi padre, no puedo. Ya está. Ahora ya lo sabes.',
+   hint:(cE('jhon')?'🧠 «Habla con Jhon Fredy, que sabe»: gratis, +8 de ánimo.':'🧠 Le pagas tres sesiones con una psicóloga · 150 €: +8 de ánimo y +15 de afinidad.')+' 🚌 «¿Y para qué quieres carné en Madrid?»: +2 de ánimo. 📅 «Apúntate otra vez, no es para tanto»: −6 y −8.',
+   ch:[['ter',cE('jhon')?'🧠 Habla con Jhon Fredy':'🧠 Psicóloga · 150 €','go'],['metro','🚌 ¿Para qué carné en Madrid?'],['pres','📅 No es para tanto','no']],def:'metro',
+   go:k=>{if(k==='ter'){f.ter=1;const j=cE('jhon');if(j){relAdd(e,j,{af:20,conf:20});LX(e,{m:8,a:6},'Habló con Jhon Fredy de su miedo a conducir');return 'Wei y Jhon Fredy hablan en el descanso. Wei sale con los ojos rojos y un plan: tres clases más, con su madre de copiloto.';}
+     LX(e,{$:150,m:8,a:15},'Le pagaste tres sesiones con una psicóloga');return 'La tienda le paga a Wei tres sesiones con una psicóloga de Usera. «Me ha dicho que conduzca con la cabeza, no con el miedo.»';}
+    if(k==='metro'){LX(e,{m:2});return 'Wei descubre que en Madrid se vive sin carné. Lo celebra comprándose el abono transporte. A los 31.';}
+    LX(e,{m:-6,a:-8},'Le dijiste que no era para tanto');return 'Al jefe le parece que el carné «no es para tanto». A Wei sí.';}}),
+  (e,f)=>f.ter?{h:'APTO',txt:'¡APTO! ¡A-P-T-O! Me temblaban las piernas pero APTO. Mi madre ha llorado. Mi abuela ha llamado a medio Qingtian.',
+   hint:'🎂 Tarta en la sala · 20 €: +3 de ánimo a todos y +8 de afinidad. 👏 «¡Enhorabuena, conductor!»: +6.',
+   ch:[['tarta','🎂 Tarta en la sala · 20 €','go'],['bien','👏 ¡Enhorabuena!']],def:'bien',
+   go:k=>{if(k==='tarta'){LX(e,{$:20,a:8,m:8});allM(3);return 'Wei aprueba el práctico. Tarta en la sala de descanso con forma de rotonda. Él se come el centro.';}
+    LX(e,{m:6,a:4},'Aprobó el carné');return 'Wei aprueba el práctico del carné. Promete no acercarse a una rotonda en lo que le queda de vida.';}}
+   :{h:'Las rutas',txt:'He hecho una hoja de Excel con todas las rutas de Metro y bus a cualquier sitio de Madrid. Me sobra el carné. ¿La compartimos con la plantilla?',
+   hint:'📊 «Compártela»: +2 de ánimo a todos y +5 de afinidad. 👍 «Para ti, que te la has currado»: +4.',
+   ch:[['comp','📊 Compártela','go'],['tuya','👍 Para ti']],def:'comp',
+   go:k=>{if(k==='comp'){allM(2);LX(e,{m:6,a:5},'Compartió su Excel de rutas con la plantilla');return 'Wei comparte su Excel de rutas de Metro con la plantilla. Ya nadie llega tarde. Bueno, Yeray sí.';}
+    LX(e,{m:4});return 'Wei se queda su Excel de rutas. Lo protege con contraseña. La contraseña es una fórmula.';}}],
+ fer:[
+  (e,f)=>({h:'El traje',txt:'Este finde tengo a los niños. ¿Me dejas una tarde libre? Les he dicho que tengo reunión en la central. Y luego me pongo el traje.',
+   hint:'👔 «Ve, director»: libra mañana, +8 y +8. ✋ «Hoy no puede ser»: −8 y −8.',
+   ch:[['si','👔 Ve, director','go'],['no','✋ Hoy no puede ser','no']],def:'si',
+   go:k=>{if(k==='si'){LX(e,{off:1,m:8,a:8},'Le diste libre para estar con sus hijos');return 'Fer libra para ver a Hugo y a Carla. Se pone el traje del banco para ir al burger. Los niños, encantados con su padre «el de la central».';}
+    LX(e,{m:-8,a:-8},'Le negaste la tarde con sus hijos');return 'Fer no puede librar. Llama a sus hijos desde el almacén con voz de reunión. «Es que en la central, ya sabéis…»';}}),
+  (e,f)=>({h:'Las oposiciones',txt:'Me voy a presentar a Agente de Hacienda. Con 45 años, sí. Necesitaría estudiar por las mañanas.',
+   hint:'📗 «Tardes, y la tienda te paga el temario» · 90 €: +12 y +15, más opciones de aprobar. 📚 «Te paso a tardes»: +10 y +10. 🙄 «Fer, que tienes 45 años»: −15 y −15.',
+   ch:[['tem','📗 Tardes y te pago el temario · 90 €','go'],['turno','📚 Te paso a tardes'],['no','🙄 Que tienes 45 años','no']],def:'turno',
+   go:k=>{if(k==='no'){LX(e,{m:-15,a:-15},'Le dijiste que con 45 años no');return 'El jefe le recuerda a Fer su edad. Fer estudia igual, a escondidas, entre albaranes.';}
+    f.op=k==='tem'?2:1;LX(e,k==='tem'?{$:90,m:12,a:15}:{m:10,a:10},'Empezó a preparar las oposiciones de Hacienda');return 'Fer empieza a preparar las oposiciones de Agente de Hacienda. Ha subrayado el temario con las pegatinas de colores de Ioana.';}}),
+  (e,f)=>({h:'Hugo y Carla',txt:'Hugo vino a comprar con su madre. Me vio con el chaleco. No me ha dicho nada. Yo tampoco. Llevo dos noches sin dormir.',
+   hint:'🗣️ «Díselo tú, que es mejor»: se quita un peso (+8). 👔 «Ven con corbata, si te hace sentir mejor»: +2 y +8 de afinidad. 🤷 «Es tu vida»: nada.',
+   ch:[['dile','🗣️ Díselo tú, que es mejor','go'],['corb','👔 Ven con corbata'],['nada','🤷 Es tu vida']],def:'dile',
+   go:k=>{if(k==='dile'){LX(e,{m:8,a:4,nd:{calma:20}},'Les contó a sus hijos dónde trabaja de verdad');return 'Fer les cuenta a Hugo y a Carla que ya no está en el banco. Carla dice que el súper mola más «porque hay chuches». Fer llora en el coche.';}
+    if(k==='corb'){LX(e,{m:2,a:8},'Le dejaste venir con corbata');return 'Fer trabaja con corbata bajo el chaleco. Parece el director de los yogures. Le queda bien.';}
+    return 'Fer sigue con el secreto. Cada vez que entra un niño en la tienda, se esconde en Backoffice.';}}),
+  (e,f)=>f.op?{h:'La carta',txt:'Ha llegado la carta de las oposiciones. No me atrevo a abrirla. Ábrela tú, jefe. O no. Ábrela.',
+   hint:'📩 Abrir la carta: '+(f.op===2?'con el temario pagado tiene buenas opciones':'a ver qué pone')+'. Si aprueba, se va con fiesta (−30 €).',
+   ch:[['abre','📩 La abro yo','go'],['tu','📩 Ábrela tú, Fer']],def:'tu',
+   go:()=>{if(Math.random()<(f.op===2?0.65:0.45)){leaveGood(e,'Aprobó las oposiciones de Agente de Hacienda',1);return {m:'Fer aprueba las oposiciones de Hacienda. Se va con traje de verdad. Lo primero que dice: «Y ahora, ese 303…».',end:1};}
+     LX(e,{m:-10,a:3},'Suspendió las oposiciones por poco');return 'Fer suspende las oposiciones por dos preguntas. «El año que viene», dice, con el temario nuevo ya en la mesa.';}}
+   :{h:'El aire',txt:'Pili ha puesto el aire a 21 grados. Veintiuno. Jefe, esto es un atentado contra la salud de la plantilla.',
+   hint:'🌡️ «Ni para ti ni para ella: 24»: +3 a los dos. 🙄 «Lo que diga Pili»: −6 de afinidad.',
+   ch:[['24','🌡️ 24 grados y paz','go'],['pili','🙄 Lo que diga Pili','no']],def:'24',
+   go:k=>{const p=cE('pili');if(k==='24'){LX(e,{m:3,a:3});if(p)mor(p,3);return 'Tratado de paz del mando del aire: 24 grados. Fer y Pili firman en un pósit. Dura dos turnos.';}
+    LX(e,{a:-6,m:-4});return 'Gana Pili la guerra del aire. Fer trabaja con bufanda «como protesta formal».';}}],
+ ioana:[
+  (e,f)=>({h:'La libreta',txt:'Jefe, ¿me harías un contrato con más horas? Si hago diez más a la semana, mi madre puede dejar una de las casas que limpia.',
+   hint:'⏱️ Más horas (+5 % de sueldo): +10 y +10. ✋ «No hay presupuesto»: −8 y −6.',
+   ch:[['si','⏱️ Más horas, +5 %','go'],['no','✋ No hay presupuesto','no']],def:'si',
+   go:k=>{if(k==='si'){LX(e,{w:0.05,m:10,a:10,nd:{dinero:15}},'Le diste más horas para ayudar a su madre');return 'Ioana firma un contrato con más horas. En su planificador, la casa de Pozuelo tachada en verde.';}
+    LX(e,{m:-8,a:-6},'Le negaste más horas');return 'Ioana se queda con sus horas. En el planificador, una pegatina roja. El rojo ya no es solo Fer.';}}),
+  (e,f)=>({h:'Doina',txt:'Mi madre se ha caído limpiando una escalera en Pozuelo. Está bien, de verdad. Pero no puede seguir así, jefe. No puede.',
+   hint:'🧹 Contratas a su madre para la limpieza de la tienda (200 € de alta y material): +15 de ánimo y +25 de afinidad. 💐 Flores y libra mañana · 25 €: +8 de afinidad. 🙏 «Mucho ánimo»: +2.',
+   ch:[['cont','🧹 Que limpie aquí · 200 €','go'],['flor','💐 Flores y libra · 25 €'],['ani','🙏 Mucho ánimo']],def:'ani',
+   go:k=>{if(k==='cont'){LX(e,{$:200,m:15,a:25,nd:{dinero:20,calma:20}},'Contrataste a su madre para la limpieza');return 'Doina, la madre de Ioana, empieza a limpiar VitchMarket. La tienda nunca ha brillado tanto. Fer dice que hasta el aire huele mejor.';}
+    if(k==='flor'){LX(e,{$:25,off:1,a:8,m:6},'Le diste flores y el día libre por su madre');return 'Ioana libra para cuidar a su madre. La plantilla firma la tarjeta de las flores. Kevin pone «ánimo crack».';}
+    LX(e,{m:2});return 'Ioana vuelve al trabajo con la cabeza en Pozuelo. Su madre sigue limpiando escaleras.';}}),
+  (e,f)=>({h:'La fecha',txt:'¡Florin y yo tenemos fecha! El catorce. Estás invitado. Bueno, invitado a pagar tu cubierto, que en Rumanía es lo normal.',
+   hint:'💃 «Voy a la boda» · 120 € de regalo: +12 de ánimo, +20 de afinidad y +0,03 ★. 🎁 «No puedo, pero va regalo» · 60 €: +8. 😬 «Ese día hay camión»: −10 de afinidad.',
+   ch:[['ir','💃 Voy a la boda · 120 €','go'],['reg','🎁 Va un regalo · 60 €'],['no','😬 Ese día hay camión','no']],def:'reg',
+   go:k=>{if(k==='ir'){LX(e,{$:120,m:12,a:20,r:0.03},'Fuiste a su boda con Florin');return 'Boda de Ioana y Florin. El jefe baila la hora rumana hasta perder la corbata. Doina le sirve tres veces más comida.';}
+    if(k==='reg'){LX(e,{$:60,m:6,a:8},'Le mandaste un regalo de boda');return 'Ioana y Florin se casan. Del jefe llega una freidora de aire con lazo. La estrenan esa misma noche.';}
+    LX(e,{a:-10,m:-4},'No fuiste a su boda');return 'Ioana se casa con Florin. En el planificador, el jefe sale con pegatina roja.';}})],
+ vale:[
+  (e,f)=>({h:'Súpers de Madrid',txt:'Jefe, ¿sabías que la tienda sale en mi cuenta? 15.000 seguidores. Bueno, ahora lo sabes. ¿Estás orgulloso?',
+   hint:'📜 «Sí, pero sin clientes en los vídeos» (protección de datos): −4 de afinidad, te ahorra sustos. 📸 «Mientras salga bonita…»: +0,05 ★, +8 de ánimo. 🗑️ «Borra todo»: −12 y −12.',
+   ch:[['norma','📜 Sí, pero sin clientes','go'],['ok','📸 Mientras salga bonita'],['borra','🗑️ Borra todo','no']],def:'norma',
+   go:k=>{f[k]=1;if(k==='ok'){LX(e,{r:0.05,m:8,a:6},'Le diste permiso para grabar la tienda');return 'Valentina sigue grabando la tienda para «Súpers de Madrid». El pasillo de las salsas ya tiene fans.';}
+    if(k==='norma'){LX(e,{a:-4,m:-2},'Le pediste que no grabase a los clientes');return 'Norma nueva en VitchMarket: en los vídeos de Valentina, ni una cara de cliente. Ella pixela hasta al perro de Doña Encarna.';}
+    LX(e,{m:-12,a:-12},'Le hiciste borrar su cuenta');return 'Valentina borra 200 vídeos de la tienda. Llora en el almacén. Lo graba, pero no lo sube.';}}),
+  (e,f)=>f.norma?{h:'La señora del tinte',txt:'¡Jefe! Una señora vino a quejarse de que salía en un vídeo mío… y no salía, porque lo había pixelado. Se ha ido contentísima. Gracias por la norma.',
+   hint:'👍 «Así se hace»: +6 de afinidad y +0,03 ★.',ch:[['bien','👍 Así se hace','go']],def:'bien',
+   go:()=>{LX(e,{a:6,r:0.03,m:4});return 'Una clienta viene a quejarse de un vídeo de Valentina y se va encantada: estaba pixelada. «Como en la tele», dice.';}}
+   :{h:'La señora del tinte',txt:'Una señora ha visto que sale en mi vídeo comprando tinte. Rubio ceniza. Quiere hablar con el responsable. Que eres tú.',
+   hint:'🙇 Disculpas y vale de 20 €: −0,02 ★. 🫵 «Que se disculpe Valentina»: −8 de afinidad, +0,02 ★. 🤷 «Que denuncie»: 30 % de sanción por protección de datos (300 € en el juego y −0,1 ★).',
+   ch:[['disc','🙇 Disculpas y vale de 20 €','go'],['vale','🫵 Que se disculpe Valentina'],['nada','🤷 Que denuncie','no']],def:'disc',
+   go:k=>{if(k==='disc'){LX(e,{$:20,a:2});repAdd(-0.02,'Clienta grabada sin permiso');return 'El jefe pide perdón a la señora del tinte rubio ceniza y le da un vale de 20 €. Valentina borra el vídeo.';}
+    if(k==='vale'){LX(e,{a:-8,m:-6,r:0.02},'Tuvo que disculparse con una clienta');return 'Valentina se disculpa con la señora del tinte. La señora le pide salir en el siguiente vídeo, pero «de mi perfil bueno».';}
+    if(Math.random()<0.3){meta.money-=30000;run.fines+=30000;repAdd(-0.1,'Denuncia por grabar a una clienta');return 'La señora del tinte denuncia a la tienda por grabarla sin permiso. Protección de datos: 300 € de multa.';}
+    return 'La señora del tinte amenaza con denunciar y al final se le pasa. Valentina pixela todo lo que pilla.';}},
+  (e,f)=>({h:'La colaboración',txt:'¡Una marca de café quiere grabar un vídeo aquí! Pagan 300 €. Yo me llevo la mitad, ¿vale? Que la cuenta es mía.',
+   hint:'🤝 «A medias»: +150 € para la tienda, +0,05 ★ y +10 de afinidad. 💶 «Todo para la tienda»: +300 €, −12 de afinidad. 🙅 «Aquí no se graba»: −10.',
+   ch:[['medias','🤝 A medias','go'],['todo','💶 Todo para la tienda'],['no','🙅 Aquí no se graba','no']],def:'medias',
+   go:k=>{if(k==='medias'){meta.money+=15000;LX(e,{r:0.05,a:10,m:8},'Colaboración con una marca de café, a medias');return 'Una marca de café graba en VitchMarket con Valentina de presentadora. 150 € para la tienda, 150 para ella y un millón de cápsulas para la sala.';}
+    if(k==='todo'){meta.money+=30000;LX(e,{a:-12,m:-6,r:0.05},'El jefe se quedó todo el dinero de su colaboración');return 'La colaboración de café de Valentina deja 300 € en el bote. A Valentina, nada. Su story de ese día: un emoji de serpiente.';}
+    LX(e,{a:-10,m:-8});return 'No hay vídeo de café en VitchMarket. Valentina lo graba en la puerta. Técnicamente, fuera.';}})],
+ youssef:[
+  (e,f)=>({h:'El té',txt:'Viernes de té. ¿Me dejas poner la tetera en la sala? La última vez Kevin dijo que olía a «hierbas raras». Es hierbabuena, jefe. Hierbabuena.',
+   hint:'🫖 «Y me guardas un vaso»: +2 de ánimo a todos y +8 de afinidad. 🙅 «Normas de seguridad»: −8 de afinidad.',
+   ch:[['si','🫖 Y me guardas un vaso','go'],['no','🙅 Normas de seguridad','no']],def:'si',
+   go:k=>{if(k==='si'){allM(2);LX(e,{a:8},'Viernes de té con la plantilla');return 'Viernes de té con hierbabuena en VitchMarket. Youssef lo sirve desde un metro de altura. Kevin pide otro «para entrenar».';}
+    LX(e,{a:-8,m:-6});return 'Se acabó el té de los viernes por normas de seguridad. Youssef lo sirve en el parque. Se apunta media plantilla.';}}),
+  (e,f)=>({h:'Trescientos invitados',txt:'La familia de Salma quiere trescientos invitados. Yo tengo para ochenta. He pedido un préstamo y Salma no lo sabe.',
+   hint:'🗣️ «Cuéntaselo a Salma»: lo más probable es que ella tampoco los quiera (+12). 💶 Adelanto · 600 € (lo devuelve al final): +12 de afinidad. 🤷 «Las bodas son así»: nada.',
+   ch:[['dile','🗣️ Cuéntaselo a Salma','go'],['ade','💶 Adelanto · 600 €'],['nada','🤷 Las bodas son así']],def:'dile',
+   go:k=>{if(k==='dile'){if(Math.random()<0.7){LX(e,{m:12,a:6,nd:{dinero:20,calma:20}},'Se lo contó a Salma: boda de 80');return 'Youssef le cuenta a Salma lo del préstamo. Ella: «¿Trescientos? ¡Si yo quería ochenta!». Boda pequeña y préstamo cancelado.';}
+     LX(e,{m:-4},'Se lo contó a Salma y se enfadó');return 'Salma se enfada con Youssef por lo del préstamo. Dos días sin hablarse. Al tercero, té.';}
+    if(k==='ade'){f.ade=600;LX(e,{$:600,a:12,m:8,nd:{dinero:25}},'Le adelantaste 600 € para la boda');return 'La tienda adelanta 600 € a Youssef para la boda. Él promete devolverlo «antes del primer aniversario».';}
+    LX(e,{m:-3});return 'Youssef sigue con su préstamo y su secreto. Hace horas extra de traductor por WhatsApp.';}}),
+  (e,f)=>({h:'Tánger',txt:'Me caso en Tánger. Necesitaría tres turnos. Allí una boda dura tres días, jefe. Es cultural. Y gastronómico.',
+   hint:'✈️ «Tres turnos de permiso»: +15 de ánimo y +18 de afinidad. 🗓️ «Dos y no más»: +5. ✋ «No puedo prescindir de ti»: −20 y −20, y puede irse.',
+   ch:[['si','✈️ Tres turnos de permiso','go'],['dos','🗓️ Dos y no más'],['no','✋ No puedo prescindir de ti','no']],def:'dos',
+   go:k=>{if(k==='si'){LX(e,{offTo:3,m:15,a:18},'Se fue a casar a Tánger');return 'Youssef se casa con Salma en Tánger. Manda fotos: él con chilaba, ella con siete vestidos. Uno por cada cambio.';}
+    if(k==='dos'){LX(e,{offTo:2,m:4,a:5},'Se fue a casar a Tánger (dos turnos)');return 'Youssef vuela a Tánger con dos turnos de permiso. Se casa el primer día y vuelve con la tarta en la maleta.';}
+    LX(e,{m:-20,a:-20});if(Math.random()<0.4){leaveGood(e,'Se fue a casar a Tánger y ya no volvió');return {m:'Youssef se va a su boda en Tánger igualmente. Desde allí manda la carta de baja y un paquete de té.',end:1};}
+    return 'Youssef aplaza la boda. Salma no le habla. Él sirve el té del viernes sin gracia, a ras de vaso.';}})],
+ toni:[
+  (e,f)=>({h:'El bolo',txt:'Los Lineales tocamos el sábado en Embajadores. ¿Puedo poner un cartel en el tablón? Es rumba-trap. Es el futuro. O el pasado, según el día.',
+   hint:'📌 «Y lo compartimos en redes»: +0,03 ★, +8 y +8. 🙅 «El tablón es para avisos»: −6 de afinidad.',
+   ch:[['si','📌 Y lo compartimos en redes','go'],['no','🙅 El tablón es para avisos','no']],def:'si',
+   go:k=>{if(k==='si'){LX(e,{r:0.03,m:8,a:8},'Pusiste el cartel de Los Lineales');return 'El cartel de Los Lineales luce en el tablón de VitchMarket: «Rumba-trap con sabor a muelle». Van 14 personas. Seis son de la tienda.';}
+    LX(e,{a:-6,m:-4});return 'Sin cartel de Los Lineales en el tablón. Toni lo pega en la máquina del café. Técnicamente no es el tablón.';}}),
+  (e,f)=>({h:'Una pregunta teórica',txt:'Jefe… ¿qué harías tú si dos compañeros estuvieran juntos? Es una pregunta teórica. Muy teórica. Teoriquísima.',
+   hint:'💘 «Mientras no se besen en la cámara frigorífica…»: +10 de ánimo y +12 de afinidad'+(cE('tess')?' (y a Tess también)':'')+'. 📜 «Que no afecte al trabajo»: +2. 😬 «Prefiero no saberlo»: −4.',
+   ch:[['bien','💘 Mientras no sea en la cámara…','go'],['norma','📜 Que no afecte al trabajo'],['no','😬 Prefiero no saberlo']],def:'norma',
+   go:k=>{const t=cE('tess');if(k==='bien'){LX(e,{m:10,a:12},'Le diste tu bendición, en teoría');if(t)LX(t,{m:8,a:10});return 'Toni hace una pregunta «teórica» al jefe y sale silbando. Tess, en RR.PP., sonríe sin motivo aparente.';}
+    if(k==='norma'){LX(e,{m:2});return 'Toni se entera de que el amor está permitido «mientras no afecte al trabajo». Afecta un poco: silba.';}
+    LX(e,{m:-4});return 'El jefe prefiere no saber nada. Toni y Tess siguen en la clandestinidad, que tiene su gracia.';}}),
+  (e,f)=>({h:'San Isidro',txt:'¡Nos ha salido un concierto en las fiestas de San Isidro! Pero la cantante, La Reina del Mostrador, no quiere que se sepa quién es. ¿Nos patrocinas?',
+   hint:'🎤 «VitchMarket patrocina» · 200 €: +0,12 ★ y +15 de afinidad. 🍀 «Mucha mierda»: +4 de ánimo.',
+   ch:[['pat','🎤 VitchMarket patrocina · 200 €','go'],['suerte','🍀 Mucha mierda']],def:'suerte',
+   go:k=>{const i=cE('inma');if(k==='pat'){LX(e,{$:200,r:0.12,a:15,m:10});if(i)LX(i,{m:8,a:8});return 'Los Lineales tocan en San Isidro con el logo de VitchMarket en el bombo. La Reina del Mostrador, con peluca rosa, se lleva la noche. Nadie sabe quién es. Casi nadie.';}
+    LX(e,{m:4});return 'Los Lineales tocan en San Isidro. La cantante de peluca rosa saluda a «la gente del súper» desde el escenario. Misterio.';}})],
+ tess:[
+  (e,f)=>({h:'Mark',txt:'Mi hijo Mark acaba Ingeniería en Manila. Quiero ir a la graduación. El billete son 900 €. No me quejo, ¿eh? Bueno, un poco.',
+   hint:'🗓️ «Te adelanto las vacaciones»: +8. 💶 Adelanto · 900 € (lo devuelve al final): +15 de afinidad. ✋ «Ahora no puede ser»: −12 y −10.',
+   ch:[['vac','🗓️ Te adelanto las vacaciones','go'],['ade','💶 Adelanto · 900 €'],['no','✋ Ahora no puede ser','no']],def:'vac',
+   go:k=>{if(k==='ade'){f.ade=900;LX(e,{$:900,a:15,m:12,nd:{dinero:25}},'Le adelantaste el billete a Manila');return 'Tess compra el billete a Manila con un adelanto de la tienda. Se queja de la escala en Doha. Sonriendo.';}
+    if(k==='vac'){LX(e,{a:8,m:6},'Le adelantaste las vacaciones');return 'Tess podrá ir a la graduación de Mark con las vacaciones adelantadas. Ya ha comprado tres maletas. Vacías. Para volver llenas.';}
+    f.no=1;LX(e,{m:-12,a:-10},'Le negaste ayuda para ir a la graduación de su hijo');return 'Tess no podrá ir a la graduación de su hijo. Lo verá por videollamada desde la sala de descanso. Se queja más que nunca.';}}),
+  (e,f)=>({h:'El viudo',txt:'Mi madre me ha mandado una foto del viudo de mi pueblo. Tiene una ferretería y tres dientes de oro. Dice que es «un partidazo».',
+   hint:'😂 «Dile que ya estás con alguien»: +6 y +6. 🤷 «Cosas de madres»: −2.',
+   ch:[['dile','😂 Dile que ya estás con alguien','go'],['nada','🤷 Cosas de madres']],def:'dile',
+   go:k=>{if(k==='dile'){LX(e,{m:6,a:6},'Le contó a su madre que sale con alguien');return 'Tess le cuenta a su madre que sale con alguien en Madrid. Su madre pregunta si tiene ferretería. No. Tiene guitarra.';}
+    LX(e,{m:-2});return 'La madre de Tess le manda otra foto del viudo. Ahora con perro. «Para que veas que es buena persona.»';}}),
+  (e,f)=>f.no?{h:'La videollamada',txt:'Mark se ha graduado. Lo he visto por el móvil, con la cobertura del almacén. Se cortaba cada vez que decían su nombre.',
+   hint:'🎉 «Brindamos aquí» · 20 €: +8 de ánimo, +2 al resto y +10 de afinidad. 🙏 «Lo siento, Tess»: +3.',
+   ch:[['brinda','🎉 Brindamos aquí · 20 €','go'],['siento','🙏 Lo siento, Tess']],def:'siento',
+   go:k=>{if(k==='brinda'){LX(e,{$:20,m:8,a:10});allM(2);return 'La plantilla brinda en la sala por la graduación de Mark, el hijo de Tess. Ella se queja del cava. Y repite.';}
+    LX(e,{m:3,a:3});return 'Tess guarda en el móvil la captura de su hijo graduándose. Pixelada, cortada y perfecta.';}}
+   :{h:'Manila',txt:'Me voy a Manila. Tres turnos. Lloraré en el avión, avisado estás. Y volveré con mangos secos para todos.',
+   hint:'✈️ «Buen viaje»: tres turnos libres, +15 de ánimo y +12 de afinidad. ✋ «Solo uno»: −10 y −10.',
+   ch:[['si','✈️ Buen viaje','go'],['uno','✋ Solo uno','no']],def:'si',
+   go:k=>{if(k==='si'){LX(e,{offTo:3,m:15,a:12},'Se fue a Manila a la graduación de Mark');return 'Tess vuela a Manila a la graduación de Mark. Vuelve con mangos secos, una foto enmarcada y la noticia de que su madre ya sabe lo de Toni.';}
+    LX(e,{off:1,m:-10,a:-10},'Solo pudo librar un turno para la graduación');return 'Tess vuela a Manila con un solo turno libre. Graduación, abrazo y vuelta. Jet lag de campeonato.';}}],
+ inma:[
+  (e,f)=>({h:'Las carpetas',txt:'He reorganizado los expedientes de toda la plantilla. Por colores. Con pestañas. ¿Quieres ver el tuyo? Es morado. No preguntes por qué.',
+   hint:'📁 «A ver qué pone de mí»: +4 de ánimo y +6 de afinidad. 🙅 «Prefiero no saberlo»: −2.',
+   ch:[['si','📁 A ver qué pone de mí','go'],['no','🙅 Prefiero no saberlo']],def:'si',
+   go:k=>{if(k==='si'){LX(e,{m:4,a:6});return 'Inma enseña al jefe su expediente: morado, con una pestaña que pone «Potencial». La otra pone «Vigilar».';}
+    LX(e,{m:-2});return 'El jefe no quiere ver su carpeta. Inma le pone una pestaña nueva: «Evitativo».';}}),
+  (e,f)=>({h:'La peluca',txt:'Jefe, si alguien te pregunta por una peluca rosa que hay en mi taquilla… es de un disfraz. De Carnaval. De hace años. Muchos.',
+   hint:'🤐 «Yo no he visto nada»: +12 de afinidad. 👑 «¿Tú eres La Reina del Mostrador?»: a lo mejor lo confiesa (+8) o se ofende (−6). 😂 «Se lo cuento a Pili»: −20 de afinidad y −15 de ánimo, y se sabe.',
+   ch:[['calla','🤐 Yo no he visto nada','go'],['reina','👑 ¿Eres La Reina del Mostrador?'],['pili','😂 Se lo cuento a Pili','no']],def:'calla',
+   go:k=>{if(k==='calla'){LX(e,{a:12,m:4});return 'El jefe no ha visto ninguna peluca rosa en la taquilla de Inma. Ni la ha visto ni la va a ver.';}
+    if(k==='reina'){if(Math.random()<0.5+ajV(e)/200){LX(e,{m:8,a:6},'Te confesó que es La Reina del Mostrador');return 'Inma confiesa al jefe que es La Reina del Mostrador, la cantante de Los Lineales. Él le pide un autógrafo. Ella se lo firma en un parte de vacaciones.';}
+     LX(e,{m:-6,a:-6});return '«¿Yo? ¿Cantante? Por favor.» Inma niega ser La Reina del Mostrador. Esa tarde tararea rumba-trap en el despacho.';}
+    (meta.secR=meta.secR||{}).inma=1;LX(e,{m:-15,a:-20},'Contaste su secreto a Pili');return 'Pili sabe que Inma es La Reina del Mostrador. Y Moratalaz Informa, también. 8.000 vecinos, una peluca rosa.';}}),
+  (e,f)=>({h:'Navidad',txt:'Los Lineales podríamos cantar en la fiesta de Navidad de la tienda. Si quieres. Con peluca. Bueno, con peluca canto yo. Digo… la cantante.',
+   hint:'🎤 «Fiesta con concierto» · 100 €: +6 de ánimo a todos, +0,05 ★ y +15 de afinidad. 🙅 «Este año, sin fiesta»: −2 a todos y −6.',
+   ch:[['si','🎤 Fiesta con concierto · 100 €','go'],['no','🙅 Este año, sin fiesta','no']],def:'si',
+   go:k=>{if(k==='si'){LX(e,{$:100,r:0.05,a:15});allM(6);return 'Fiesta de Navidad de VitchMarket con Los Lineales en directo. La Reina del Mostrador canta «El lineal de mi corazón». Pili llora. Kevin baila. Nadie dice quién es. Todos lo saben.';}
+    LX(e,{a:-6});allM(-2);return 'No hay fiesta de Navidad en VitchMarket. Inma archiva la peluca en una carpeta. Rosa, claro.';}})],
+ jhon:[
+  (e,f)=>({h:'Extranjería',txt:'Jefe… ¿mi contrato es indefinido? Es que en Extranjería me lo piden por escrito. Si no, mi permiso… bueno. Es importante.',
+   hint:'📄 «Te firmo una carta para Extranjería»: +12 de ánimo y +15 de afinidad. 🧾 Que lo mire la gestoría · 40 €: +10 y +10. 📅 «Ya veremos»: −10 y −8 (le da pánico).',
+   ch:[['carta','📄 Te firmo la carta','go'],['gest','🧾 Que lo mire la gestoría · 40 €'],['luego','📅 Ya veremos','no']],def:'carta',
+   go:k=>{if(k==='luego'){f.no=1;LX(e,{m:-10,a:-8,nd:{calma:-20}},'Le dejaste en el aire lo de Extranjería');return 'Jhon Fredy se queda sin su carta para Extranjería. Esa noche cuenta los días que le quedan. Muchos números.';}
+    LX(e,k==='gest'?{$:40,m:10,a:10}:{m:12,a:15},'Le firmaste la carta para Extranjería');return 'El jefe firma a Jhon Fredy la carta para Extranjería. Él la guarda en una funda de plástico, dentro de otra funda.';}}),
+  (e,f)=>({h:'Secreto profesional',txt:'Kevin me ha contado algo de sus deudas. No sé si debería decírtelo. Es secreto profesional… aunque aquí no soy psicólogo. Aquí soy de RR.HH.',
+   hint:'🧠 «Pues ayúdale tú, que sabes»: +8 y +6'+(cE('kevin')?', y Kevin, +5':'')+'. 🤐 «Respeta lo que te contó»: +5 de ánimo y +8 de afinidad. 🗣️ «Cuéntamelo todo»: −6 de afinidad y el chisme corre.',
+   ch:[['ayu','🧠 Ayúdale tú, que sabes','go'],['res','🤐 Respeta lo que te contó'],['cuenta','🗣️ Cuéntamelo todo','no']],def:'res',
+   go:k=>{const kv=cE('kevin');if(k==='ayu'){LX(e,{m:8,a:6},'Le pediste que ayudase a Kevin');if(kv){LX(kv,{m:5});relAdd(e,kv,{af:15,conf:20});}return 'Jhon Fredy y Kevin hablan cada viernes a la hora del bocadillo. Kevin dice que es «de pádel». No es de pádel.';}
+    if(k==='res'){LX(e,{m:5,a:8});return 'Jhon Fredy se guarda lo que le contaron. «Un psicólogo sin homologar, pero con la ética homologada», dice.';}
+    LX(e,{a:-6,m:-4},'Le pediste que rompiera una confidencia');if(kv)fact('secreto',kv,null,0);return 'Jhon Fredy le cuenta al jefe lo de Kevin con la boca pequeña. Esa tarde no mira a nadie a la cara.';}}),
+  (e,f)=>({h:'Homologado',txt:f.no?'Jefe, me ha llegado la homologación del título… y un requerimiento de Extranjería. Necesito esa carta. Ahora sí.':'¡Me han homologado el título! Soy psicólogo en España. Oficialmente. Con sello y todo.',
+   hint:'🧠 «+10 % y te quedas de psicólogo de la plantilla»: +2 de ánimo a todos y +15 de afinidad. 🎓 «Vete a una consulta, que es lo tuyo»: se despide con fiesta (−30 €). 👏 «Enhorabuena»'+(f.no?' (y la carta, firmada)':'')+': +6.',
+   ch:[['sube','🧠 +10 % y psicólogo de la casa','go'],['vete','🎓 Vete a una consulta'],['bien','👏 Enhorabuena']],def:'bien',
+   go:k=>{if(k==='sube'){LX(e,{w:0.1,a:15,m:10},'Psicólogo de la plantilla con un 10 % más');allM(2);return {m:'Jhon Fredy, psicólogo homologado, abre «consulta» los martes en la sala de descanso. Hay lista de espera. La encabeza Kevin.',end:1};}
+    if(k==='vete'){leaveGood(e,'Homologado: abre consulta de psicólogo',1);return {m:'Jhon Fredy se va a abrir consulta en Ciudad Lineal. Deja en RR.HH. una caja de pañuelos y una nota: «Para lo que haga falta».',end:1};}
+    LX(e,{m:6,a:4},f.no?'Le firmaste por fin la carta':'Le homologaron el título de psicólogo');return {m:'Jhon Fredy celebra su título homologado con un café con la plantilla. Habla diez minutos seguidos. Récord.',end:1};}})]
+};
+/* Arco largo: como mucho una etapa por turno, solo quien lleva la tienda (bossScn; el encargado no decide), nunca en el reto. */
+const LARC_F=/^arc-/.test(VIDA_T)?VIDA_T.slice(4):'';
+function larcForce(){
+  if(!LARC_F||!CASTK[LARC_F]||daily||(room&&!isHost()))return;
+  let e=cE(LARC_F);if(!e){e=newEmp(CASTK[LARC_F].role,meta,{cast:LARC_F});e.days=3;meta.emp.push(e);}
+  if(e){e.off=0;e.offTo=0;}
+}
+function larcTick(){
+  run.larcDone=1;
+  if(daily||run.remote||run.closing||!bossScn()||!unl('rrhh'))return;
+  const later=s=>{if(run.t<run.dur*0.85){run.larcDone=0;run.larcAt=run.t+s;}};
+  if(sceneCur||sceneQ.length){later(4);return;}
+  const D=meta.sqDone||{},F=LARC_F;
+  const L=meta.emp.filter(e=>!e.real&&e.cast&&LARC[e.cast]&&(!F||e.cast===F)&&!D['arc-'+e.cast]&&inStore(e)&&(F||((e.days||0)>=3&&((sqG('arc-'+e.cast)||{}).n||0)<=meta.day)));
+  if(!L.length)return;
+  const fr=L.filter(e=>F||isFree(e));if(!fr.length){later(5);return;}
+  const e=fr.sort((a,b)=>((sqG('arc-'+a.cast)||{}).d||-1)-((sqG('arc-'+b.cast)||{}).d||-1))[0],k=e.cast,K='arc-'+k;
+  const q=sqG(K)||sqSet(K,{s:0,f:{},n:0});q.e=e.id;q.f=q.f||{};
+  const stg=LARC[k][q.s];if(!stg){sqEnd(K);return;}
+  let o;try{o=stg(e,q.f);}catch(x){console.warn('larc',x);sqEnd(K);return;}
+  const s0=q.s,N=LARC[k].length;
+  stScene(K,{...sEmp(e),head:'📔 '+e.name.toUpperCase()+' · '+o.h.toUpperCase(),tag:'Capítulo '+(s0+1)+' de '+N,def:o.def,dh:o.h.toUpperCase(),ric:'📔',
+   txt:'«'+esc(o.txt)+'»',hint:o.hint,ch:o.ch.map(([kk,t,cls,stp])=>[kk,esc(t),cls,stp]),
+   alive:()=>meta.emp.includes(e)&&sqG(K)===q&&q.s===s0,
+   go:kk=>{if(sqG(K)!==q||q.s!==s0)return;
+    let r={};try{r=o.go(kk);}catch(x){console.warn('larc',x);}if(typeof r==='string')r={m:r};r=r||{};
+    q.s++;q.n=meta.day+(r.gap||ri(3,5));q.d=meta.day;
+    if(r.end||!LARC[k][q.s]||!meta.emp.includes(e)){
+      if(q.f.ade){meta.money+=q.f.ade*100;toast('💶 '+e.name+' devuelve el adelanto: +'+fmt(q.f.ade*100)+'.','good');q.f.ade=0;}
+      sqEnd(K);}
+    return r.m;}});
+}
+
 /* ===== 🕵️ El topo: Among Us de supermercado =====
    Un turno con topo es un «caso». Al abrir, escena de presentación (y nota a cada jugador real con su papel, solo a él).
    · La tripulación (jefe, plantilla y reales) llena la barra de tareas de la tienda: cada aviso bien hecho +1, cada arreglo +1 y
@@ -4079,6 +4613,7 @@ function topoEnd(win,why){
   topoW=null;
   const txt=(crew?'🏆 GANA LA TRIPULACIÓN. ':'🐀 GANA EL TOPO. ')+T.end.why+' El topo era '+e.name+'.';
   radio(crew?'🏆':'🐀',txt);
+  diar(crew?'🏆':'🐀','CASO DEL TOPO',(crew?'Cazado: ':'Se sale con la suya: ')+'el topo era '+e.name+'. '+T.end.why);
   meta.emp.filter(x=>x.real).forEach(x=>note(x.real,txt,!crew===(x.id!==T.who),'topoend',{c:T.c}));
   topoEndScene(T.end);
   topoRender();renderAll();pubState(true);checkRep();
@@ -4286,9 +4821,10 @@ function socHtml(e,mini){
   const nm=x=>esc(x.o.name);const good=relTop(e,3,1),bad=relTop(e,2,-1),p=partnerOf(e);
   const rl=(p?'💘 Sale con <b>'+esc(p.name)+'</b>. ':'')+(good.length?'🤝 Se lleva bien con '+good.map(nm).join(', ')+'. ':'')+(bad.length?'😤 No traga a '+bad.map(nm).join(', ')+'.':'');
   const fl=(e.look>=2?'👀 <b>Está mirando ofertas de empleo.</b> ':'')+(e.job2?'🛵 Tiene un segundo trabajo. ':'');
-  if(mini)return (th||rl||fl)?`<div class="es soc">${fl}${th?'💭 '+th:''}${rl?'<br>'+rl:''}</div>`:'';
+  const AJ=ajLbl(e);
+  if(mini)return `<div class="es soc">${AJ[1]} Contigo: <b>${AJ[2]}</b>. ${fl}${th?'💭 '+th:''}${rl?'<br>'+rl:''}</div>`;
   const bars=ND_K.map(k=>{const v=Math.round(e.nd[k]);return `<span class="ndb" title="${ND_N[k]}: ${v}"><i>${ND_I[k]}</i><b><u style="width:${v}%;background:${v<25?'var(--danger)':v<50?'var(--warn)':'var(--gain)'}"></u></b></span>`;}).join('');
-  return `<div class="sdoc soc"><h6><span>💭 Cómo está</span><span>${mood(e)}${fr?' · miedo: '+fr[0]+' '+esc(gx(fr[1],F)):''}</span></h6><div class="ndrow">${bars}</div>
+  return `<div class="sdoc soc"><h6><span>💭 Cómo está</span><span>${mood(e)}${fr?' · miedo: '+fr[0]+' '+esc(gx(fr[1],F)):''}</span></h6><div class="ndrow">${bars}</div>${ajHtml(e)}
     ${fl?'<div>'+fl+'</div>':''}<div>${th||'<span class="th">Nada especial en la cabeza.</span>'}</div>${rl?'<div>'+rl+'</div>':''}</div>`;
 }
 /* ===== ☕ Corrillo: la vida social con los jugadores reales (tienda compartida) =====
@@ -5814,6 +6350,7 @@ const empTag=e=>esc(e.name)+castB(e)+' '+flag(e);
 function baja(e,why,silent){
   try{castLeave(e,why);}catch(x){}
   meta.bajas=[{d:meta.day,f:e.face,n:e.name,r:e.role,real:!!e.real,why}].concat(meta.bajas||[]).slice(0,15);
+  try{const fi=/^Despedido/.test(why);diar(fi?'🔥':'🚪',fi?'DESPIDO EN '+(ROLES[e.role]?ROLES[e.role].n.toUpperCase():'LA TIENDA'):'BAJA EN LA PLANTILLA',e.name+' ('+(ROLES[e.role]?ROLES[e.role].n:'')+', '+(e.days||0)+' turnos en la casa) deja VitchMarket. '+why+'. '+pick(['La taquilla, vacía; el grupo de WhatsApp, revolucionado.','En la sala de descanso hay un minuto de silencio. Luego, café.','Radio Pasillo ya tiene versión propia de los hechos.']));}catch(x){}
   try{radio('🚪',e.name+' deja la tienda: '+why+'.');fact('baja',e,null,0,meta.emp.filter(o=>o!==e&&!o.real));}catch(x){}
   if(run&&run.bajas)run.bajas.push(e.name);else if(run)run.bajas=[e.name];
   if(!silent&&!(room&&room.sim))toast('🚪 Baja: '+e.face+' '+e.name+' ('+(ROLES[e.role]?ROLES[e.role].n:'')+') · '+why+'. Te quedan '+meta.emp.length+' en plantilla.','bad');
@@ -5866,7 +6403,7 @@ function quitScene(e){
     alive:()=>run===R&&!R.over&&meta.emp.includes(e),
     onPick:k=>{if(run!==R||!meta.emp.includes(e))return;
       if(k==='raise'&&Math.random()<0.35+e.moral/40-(e.pers==='quejica'?0.1:0)){
-        e.wage=Math.round(e.wage*1.05);e.moral=clamp(e.moral+20,0,100);logE(e,'Quería irse; se queda con +5%');sOk();toast('💶 '+e.name+' se queda ('+monthTxt(e.wage)+').','good');renderAll();return;}
+        e.wage=Math.round(e.wage*1.05);e.moral=clamp(e.moral+20,0,100);logE(e,'Quería irse; se queda con +5%');ajAdd(e,10);sOk();toast('💶 '+e.name+' se queda ('+monthTxt(e.wage)+').','good');renderAll();return;}
       dropEmp(e,k==='raise'?'Dimitió (ni con +5 % se quedó; ánimo por los suelos)':'Dimitió (ánimo por los suelos) y le dejaste ir');toast(k==='raise'?'Ni con +5%: '+e.name+' se va. Lo tienes en 👥 Plantilla.':'👋 '+e.name+' ha dejado el trabajo. Lo tienes en 👥 Plantilla.','bad');sBad();renderAll();}});
 }
 /* 4 · Retraso: tarjeta de fichaje. Tranquilo (+ánimo) o toque (cuenta como amonestación para un despido). */
@@ -5879,8 +6416,8 @@ function lateScene(e){
     choices:[{t:'👍 Tranquilo',k:'ok',cls:'go',key:'T',stamp:'VALE',sc:'ok',fx:'💛'},{t:'⚠️ Toque',k:'warn',cls:'no',key:'W',stamp:'TOQUE',sc:'bad'}],
     alive:()=>run===R&&!R.over&&meta.emp.includes(e),
     onPick:k=>{if(!meta.emp.includes(e))return;
-      if(k==='warn'){e.warn=(e.warn||0)+1;e.moral=clamp(e.moral-8,0,100);e.focus=Math.max(e.focus||0,2);logE(e,'Toque por llegar tarde');fact('toque',e,null,0,2);memo(e,'⚠️','Toque por llegar tarde',-8,2,'boss:warn');toast('⚠️ Toque a '+e.name+' (lleva '+e.warn+').','bad');}
-      else e.moral=clamp(e.moral+3,0,100);}});
+      if(k==='warn'){e.warn=(e.warn||0)+1;e.moral=clamp(e.moral-8,0,100);ajAdd(e,-6);e.focus=Math.max(e.focus||0,2);logE(e,'Toque por llegar tarde');fact('toque',e,null,0,2);memo(e,'⚠️','Toque por llegar tarde',-8,2,'boss:warn');toast('⚠️ Toque a '+e.name+' (lleva '+e.warn+').','bad');}
+      else{e.moral=clamp(e.moral+3,0,100);ajAdd(e,3);}}});
 }
 /* 5 · Hurto pillado (evento del turno, ver prepShift): despedir (carta con liquidación), toque por escrito o vista gorda. */
 function theft(e,v){
@@ -5920,9 +6457,9 @@ function raiseScene(e0){
     choices:[{t:'💶 Vale, +5%',k:'yes',cls:'go',key:'S',stamp:'+5%',sc:'ok',fx:'💶'},{t:'✋ Ahora no',k:'no',cls:'no',key:'N'},{t:'📅 En la reunión',k:'later',key:'R'}],
     alive:()=>run===R&&!R.over&&meta.emp.includes(e),
     onPick:k=>{if(!meta.emp.includes(e))return;
-      if(k==='yes'){e.wage=nw;e.moral=clamp(e.moral+20,0,100);logE(e,'Aumento del 5% a mitad de turno');memo(e,'💶','Le subiste el sueldo',20,3,'boss:raise');ndAdd(e,'dinero',15);fact('aumento',e,null,5,2);toast('💶 '+e.name+': +5% ('+monthTxt(nw)+').','good');}
-      else if(k==='no'){e.moral=clamp(e.moral-(e.pers==='quejica'?20:12),0,100);logE(e,'Le negaste un aumento');memo(e,'✋','Le negaste el aumento',-12,2,'boss:raise');toast(e.name+' vuelve a su puesto refunfuñando.','bad');}
-      else e.moral=clamp(e.moral-3,0,100);
+      if(k==='yes'){e.wage=nw;ajAdd(e,10);e.moral=clamp(e.moral+20,0,100);logE(e,'Aumento del 5% a mitad de turno');memo(e,'💶','Le subiste el sueldo',20,3,'boss:raise');ndAdd(e,'dinero',15);fact('aumento',e,null,5,2);toast('💶 '+e.name+': +5% ('+monthTxt(nw)+').','good');}
+      else if(k==='no'){e.moral=clamp(e.moral-(e.pers==='quejica'?20:12),0,100);ajAdd(e,-8);logE(e,'Le negaste un aumento');memo(e,'✋','Le negaste el aumento',-12,2,'boss:raise');toast(e.name+' vuelve a su puesto refunfuñando.','bad');}
+      else{e.moral=clamp(e.moral-3,0,100);ajAdd(e,-2);}
       renderAll();}});
 }
 /* 7 · Inspección por alcohol a menores: el acta con la multa y la reincidencia (la multa ya está cobrada en minorSale). */
@@ -6532,6 +7069,7 @@ function startDay(){
   try{rivalPlan();}catch(e){console.warn('rival',e);}
   if(meta.day>=2&&Math.random()<0.3)run.pressAt=run.dur*rnd(0.2,0.65);
   run.arcAt=run.dur*(VIDA_T==='1'?0.06:rnd(0.15,0.55));
+  run.larcAt=run.dur*(LARC_F?0.1:rnd(0.3,0.7));try{larcForce();diaOpen();}catch(e){console.warn('larc',e);}
   inspPlan();thiefPlan();
   run.buy=meta.buyNext||0;meta.buyNext=0;run.m0=meta.money+run.buy;run.mo=meta.money;run.curve=[];
   meta.liveT=0;saveGame(false);
@@ -6947,6 +7485,7 @@ function endDay(){
   /* Reserva legal (art. 274 LSC): el 10% del beneficio va a reserva hasta llegar al 20% del capital; solo cuando ya no hay pérdidas acumuladas. */
   {const rl=meta.resLeg||0;if(fin.net>0&&rl<CAP0*0.2&&balData().res>0){fin.rl=Math.min(Math.round(fin.net*0.1),CAP0*0.2-rl);meta.resLeg=rl+fin.rl;}}
   meta.hist=(meta.hist||[]).concat([{d:meta.day,s:S,n:fin.net}]).slice(-6);
+  try{diaDay(fin);}catch(e){console.warn('diario',e);}
   curveSample(true);meta.prevCurve=run.curve||[];meta.prevDay=meta.day;
   meta.best=Math.max(meta.best,meta.day);
   try{achDay();}catch(e){console.warn('logros',e);}
@@ -7272,8 +7811,9 @@ function showShop(noFit){
   else if(k==='order'){if(!ordPer)ordPer=Math.max(2,Math.floor((innerHeight-330)/50));body=orderHtml(ordPer);}
   else if(k==='ups')body=`<div class="shop">${upsHtml()}</div>`;
   else if(k==='promo')body=promoHtml();
+  else if(k==='diario'){const P=diaShop();body=P.body;nav=P.nav;}
   else body=appsHtml();
-  const tabs=[['sum','📊 Resumen'],['dep','🏢 Departamentos'],['fin','💰 Cuentas'],['you','👑 Tú'],['tips','🧭 Consejos',adviceList(e).filter(x=>x.includes('adv hot')).length],['staff','👥 Plantilla',meta.emp.length],['order','📦 Pedido',Object.keys(cart).length],['promo','🏷️ Promos',promoL().length],['ups','⭐ Mejoras']].concat(ap?[['apps','📝 Solicitudes',ap]]:[]).filter(x=>(x[0]!=='order'&&x[0]!=='promo'||unl('alm'))&&(x[0]!=='you'||unl('dir')));
+  const tabs=[['sum','📊 Resumen'],['dep','🏢 Departamentos'],['fin','💰 Cuentas'],['you','👑 Tú'],['tips','🧭 Consejos',adviceList(e).filter(x=>x.includes('adv hot')).length],['staff','👥 Plantilla',meta.emp.length],['order','📦 Pedido',Object.keys(cart).length],['promo','🏷️ Promos',promoL().length],['ups','⭐ Mejoras'],['diario','📔 Diario',sArr(meta.diario).filter(x=>x.d===meta.day).length]].concat(ap?[['apps','📝 Solicitudes',ap]]:[]).filter(x=>(x[0]!=='order'&&x[0]!=='promo'||unl('alm'))&&(x[0]!=='you'||unl('dir')));
   showOverlay(screenHtml('shop','Cierre · turno '+meta.day,tabs,body,nav,
     `<span class="supd">Bote <b>${fmt(meta.money)}</b> · ★ ${repT(meta.rep)} · 👑 ${fmt(bossOf().cash)}</span>`+(run&&run.endOver?'<button class="btn no big" data-act="endover">Bajar la persiana ▸</button>':meetDay?'<button class="btn go big" data-act="meeting">Reunión de personal ▸</button>':`<button class="btn go big" data-act="next">Turno ${meta.day+1} ▸</button>`)));
   /* El pedido mide la pantalla real: quita productos de la página hasta que no sobre nada. */
@@ -7530,7 +8070,7 @@ function dailyExit(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.25-160';
+const APPV='2026.11.25-171';
 /* Compara versiones por números («-9» < «-11»), no como texto. */
 const verCmp=(a,b)=>{const x=String(a).split(/[.-]/).map(Number),y=String(b).split(/[.-]/).map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
 try{const vt=document.createElement('div');vt.id='vtag';vt.textContent='v'+APPV;document.body.appendChild(vt);}catch(e){}
@@ -8107,7 +8647,7 @@ function hireReal(u){
   if(realFull(m.apply)){toast('Ese puesto está completo de jugadores reales.','bad');return;}
   const over=staffOf(m.apply).length>=ROLES[m.apply].max;
   fb.update(rRef('members/'+u),{role:m.apply,apply:null}).catch(e=>console.warn(e));fillVac(m.apply);if(run&&!run.over)run.hires=(run.hires||0)+1;
-  note(u,'¡Contratado/a en '+ROLES[m.apply].n+'! Empiezas ya, en periodo de prueba.',false,'hire');
+  note(u,'¡Contratado/a en '+ROLES[m.apply].n+'! Empiezas ya, en periodo de prueba.',false,'hire');diar('🎮','FICHAJE DE CARNE Y HUESO',cleanName(m.name)+' entra en '+ROLES[m.apply].n+'. Un jugador de verdad en la plantilla: Vitchi le olfatea con sospecha.');
   sOk();toast('🎮 '+cleanName(m.name)+' contratado/a en '+ROLES[m.apply].n+(over?'. El puesto ya estaba lleno de NPC: te sobra uno, despídelo cuando quieras en 🗂️ RR.HH.':''),'good');
 }
 function rejectReal(u){
@@ -8717,7 +9257,7 @@ function perf(e,match,lang){
   if(!match&&e.pers!=='servicial')b-=0.15;
   if(e.pers==='capullo')b+=0.1;
   if(meta.surv>0&&!e.real)b-=0.05;
-  b+=socPerf(e);
+  b+=socPerf(e)+ajPerf(e);
   if(lang)b+=e.langs.includes(lang)?0.15:-0.15;
   if(run&&run.duty&&meta.emp.some(x=>x!==e&&x.pers==='lider'&&x.role===e.role&&working(x)))b+=0.05;
   {const en=encOf(e);if(en&&en.trato>=0.5)b+=0.03;}
@@ -8737,7 +9277,7 @@ function prepShift(){
   meta.emp.slice().forEach(e=>{
     if(e.real){const m=room&&room.members[e.real],on=!!(m&&m.on);run.duty[e.id]={st:on?'ok':'gone',at:0,busy:0,task:null,slack:null,slackT:0,seen:0,cnt:on?1:0};if(on)e.st.shifts++;return;}
     /* Dimisión: si llevas tú la tienda, te lo dice a la cara (escena) y viene a trabajar mientras decides. */
-    if(e.moral<15&&Math.random()<0.4){if(!bossScn()){meta.emp=meta.emp.filter(x=>x!==e);baja(e,'Dimitió con el ánimo por los suelos (estaba el encargado)',true);notes.push(e.name+' ha dejado el trabajo');return;}quit.push(e);}
+    if(e.moral<15&&Math.random()<0.4-ajV(e)/250){if(!bossScn()){meta.emp=meta.emp.filter(x=>x!==e);baja(e,'Dimitió con el ánimo por los suelos (estaba el encargado)',true);notes.push(e.name+' ha dejado el trabajo');return;}quit.push(e);}
     const d={st:'ok',at:0,busy:0,task:null,slack:null,slackT:0,seen:0};
     if(e.off===meta.day||(e.offTo&&e.offTo>=meta.day))d.st='off';
     else if(Math.random()<(e.moral<30?0.3:0.03)*(1.3-e.punt)){d.st='abs';e.st.abs++;notes.push(e.name+' no viene hoy');logE(e,'Faltó sin avisar');}
@@ -8948,6 +9488,7 @@ function tickStaff(dt){
   quipTick();
   socTick(dt);
   if(!run.arcDone&&run.arcAt&&run.t>=run.arcAt)arcBeat();
+  if(!run.larcDone&&run.larcAt&&run.t>=run.larcAt)try{larcTick();}catch(e){console.warn('larc',e);}
   try{topoTick();}catch(e){console.warn('topo',e);}
   let dirty=false;
   meta.emp.forEach(e=>{const d=run.duty[e.id];if(d&&d.st==='late'&&!d.ann&&run.t>=d.at){d.ann=1;dirty=true;if(!lateScene(e))toast(e.face+' '+e.name+' llega tarde. «Perdón, el bus…»','bad');}});
@@ -9714,13 +10255,14 @@ function hireFromCv(c,wage,mine){
   const e=newEmp(c.role,meta,{cast:c.cast,name:cleanName(c.name),face:c.face,rap:c.rap,trato:c.trato,punt:c.punt,act:c.act,hon:c.hon==null?Math.round(rnd(0.15,0.95)*100)/100:+c.hon,mine:mine?1:0,nat:c.nat,langs:toArr(c.langs),pers:c.pers,wage:Math.max(SMI_D,Math.round(wage||c.wage)),trial:3});
   e.moral=clamp(e.moral+(wage<c.wage?-10:wage>c.wage?8:0),0,100);
   meta.emp.push(e);fillVac(e.role);logE(e,e.back?'Vuelve a la tienda tras la entrevista':'Contratado/a tras la entrevista');
+  diar('🤝',e.back?'VUELVE A CASA':'FICHAJE',e.name+' entra en '+ROLES[e.role].n+(e.back?' otra vez. Dicen que echaba de menos el olor a pan del pasillo 1.':', a prueba. En el barrio ya se comenta.'));
   return 'Contratado/a: '+e.face+' '+e.name+' entra en '+ROLES[e.role].n+' a '+monthTxt(e.wage)+' bruto (en prueba).';
 }
 function applyFeud(x,ok){
   const A=empById(+x.a),B=empById(+x.b);if(!A||!B)return 'Ya no trabajan juntos.';
-  if(ok){[A,B].forEach(e=>{e.moral=clamp(e.moral+4,0,100);});const w=x.truth==='a'?A:x.truth==='b'?B:null;if(w)w.moral=clamp(w.moral+3,0,100);return 'Bronca resuelta entre '+A.name+' y '+B.name+'. Vuelven al trabajo.';}
+  if(ok){[A,B].forEach(e=>{e.moral=clamp(e.moral+4,0,100);});const w=x.truth==='a'?A:x.truth==='b'?B:null;if(w){w.moral=clamp(w.moral+3,0,100);ajAdd(w,5);}return 'Bronca resuelta entre '+A.name+' y '+B.name+'. Vuelven al trabajo.';}
   const wronged=x.truth==='a'?A:x.truth==='b'?B:null;
-  if(wronged)wronged.moral=clamp(wronged.moral-12,0,100);else[A,B].forEach(e=>{e.moral=clamp(e.moral-5,0,100);});
+  if(wronged){wronged.moral=clamp(wronged.moral-12,0,100);ajAdd(wronged,-10);}else[A,B].forEach(e=>{e.moral=clamp(e.moral-5,0,100);});
   return wronged?'Le has quitado la razón a '+wronged.name+', que la tenía. Está que trina.':'Has dado la razón a uno cuando los dos tenían parte. Mal ambiente.';
 }
 
@@ -10069,13 +10611,13 @@ function startMeeting(){scrTab.meet='emp';pg=0;meet={acted:{},gone:[],reqs:genRe
 function empAct(id,k){
   const e=empById(id);if(!meet||!e||meet.acted[id])return;
   let msg='';
-  if(k==='praise'){e.moral=clamp(e.moral+12,0,100);memo(e,'👏','Le felicitaste en la reunión',12,3,'boss:good');ndAdd(e,'estima',15);msg='👏 Felicitado. Se le nota en la cara.';}
+  if(k==='praise'){e.moral=clamp(e.moral+12,0,100);memo(e,'👏','Le felicitaste en la reunión',12,3,'boss:good');ndAdd(e,'estima',15);ajAdd(e,8);msg='👏 Felicitado. Se le nota en la cara.';}
   else if(k==='warn'){
-    e.warn++;e.moral=clamp(e.moral-12,0,100);e.focus=3;memo(e,'⚠️','Toque en la reunión',-12,3,'boss:warn');fact('toque',e);msg='⚠️ Toque dado (lleva '+e.warn+'). Va a espabilar… o no.';
+    e.warn++;e.moral=clamp(e.moral-12,0,100);e.focus=3;ajAdd(e,-10);memo(e,'⚠️','Toque en la reunión',-12,3,'boss:warn');fact('toque',e);msg='⚠️ Toque dado (lleva '+e.warn+'). Va a espabilar… o no.';
     if(!e.real&&e.moral<20&&Math.random()<0.3){meta.emp=meta.emp.filter(x=>x!==e);baja(e,'Se fue tras el toque en la reunión (ánimo muy bajo)',true);const vOk=ROLES[e.role]&&staffOf(e.role).length<ROLES[e.role].max;if(vOk&&!vacOpen(e.role))setVac(e.role,1);
       meet.gone.push(`<b>${e.face} ${esc(e.name)} se lo tomó fatal y se fue dando un portazo.</b><br>Le diste un toque cuando ya tenía el ánimo por los suelos (😡, menos de 20 sobre 100): con el ánimo así, un toque hace que 3 de cada 10 se marchen en el acto.<br><b>Qué pasa ahora:</b> es una baja voluntaria, así que no pagas indemnización y su sueldo deja de contar desde el próximo turno. Te quedas con una persona menos en ${ROLES[e.role].n} (${staffOf(e.role).length} en plantilla).${vOk?'<br><b>Ya he publicado la vacante</b> en RR.HH.: en el próximo turno, en 🗂️ RR.HH. («Candidatos disponibles»), tienes gente para cubrirle y la contratas al momento.':''}<br><small>La próxima vez, a quien esté así primero anímale (felicitar o +5 %) y el toque después.</small>`);scrTab.meet='gone';pg=0;sBad();renderHud();showMeeting();return;}
   }
-  else if(k==='raise'){e.wage=Math.round(e.wage*1.05);e.moral=clamp(e.moral+20,0,100);memo(e,'💶','Le subiste el sueldo en la reunión',20,3,'boss:raise');ndAdd(e,'dinero',15);fact('aumento',e,null,5);msg='💶 +5% de sueldo: '+monthTxt(e.wage)+'. Ahora te quiere un poquito más.';}
+  else if(k==='raise'){e.wage=Math.round(e.wage*1.05);e.moral=clamp(e.moral+20,0,100);memo(e,'💶','Le subiste el sueldo en la reunión',20,3,'boss:raise');ndAdd(e,'dinero',15);ajAdd(e,12);fact('aumento',e,null,5);msg='💶 +5% de sueldo: '+monthTxt(e.wage)+'. Ahora te quiere un poquito más.';}
   else if(k==='fire'){meet.firing=id;showMeeting();return;}
   if(e.real)note(e.real,{praise:'👏 El jefe te ha felicitado en la reunión.',warn:'⚠️ El jefe te ha dado un toque en la reunión.',raise:'💶 ¡Aumento! +5% de sueldo.'}[k],k==='warn',k);
   meet.acted[id]=msg;sOk();renderHud();showMeeting();
@@ -10107,7 +10649,7 @@ const indProc=e=>Math.round(e.wage*20*e.days/365),indImp=e=>Math.round(e.wage*33
 function minorSale(who){
   repAdd(-0.3,'Alcohol vendido a un menor');
   if(Math.random()<0.12){const n=meta.minorFine=(meta.minorFine||0)+1,f=n>=3?6010122:n===2?ri(30051,60101)*100:3005062;
-    run.fines+=f;meta.money-=f;repAdd(-1,'Multa por alcohol a un menor');meta.minorAt={d:meta.day,f,m:meta.money+f,n};
+    run.fines+=f;meta.money-=f;repAdd(-1,'Multa por alcohol a un menor');meta.minorAt={d:meta.day,f,m:meta.money+f,n};diar('🚔','MULTAZO','Inspección de Consumo: alcohol vendido a un menor. La tienda paga '+fmt(f)+'. En el muelle se reza.');
     if(canInsp()&&inspScene(n,f,who))return '';
     return '🚔 Inspección: '+who+' alcohol a un menor. Multa '+(n>=3?'muy grave':'grave')+' de '+fmt(f)+(n>1?' (reincidencia)':'')+'.';}
   return '⚠️ '+who.replace(/^h/,'H')+' alcohol a un menor. Nadie lo ha denunciado… esta vez (multa grave: desde 30.050 €, Ley 5/2002 de Madrid).';
@@ -10138,6 +10680,7 @@ function fireCore(e,r){
   L.push('Total pagado: <b>'+fmt(cost)+'</b>.');
   meta.money-=cost;meta.emp=meta.emp.filter(x=>x!==e);baja(e,'Despedido/a por ti: '+((FIRE[r]&&FIRE[r].t)||r||'sin motivo'),true);
   meta.emp.forEach(x=>{x.moral=clamp(x.moral+(bad?3:-8),0,100);});
+  meta.emp.forEach(x=>{if(x.real)return;const rr=meta.rel&&meta.rel[relK(x.id,e.id)];ajAdd(x,bad?2:rr&&rr.af>40?-15:-3);});
   /* Síndrome del superviviente: tras un despido el resto rinde menos (nada si era malo; menos si el despido era justo). */
   const sv=r==='trial'||bad?0:just?1:2;meta.surv=Math.max(meta.surv||0,sv);
   L.push(bad?'El resto respira aliviado.':'El resto se ha quedado tenso'+(sv?': rendirá menos '+sv+(sv===1?' turno':' turnos'):'')+'.');
@@ -10149,8 +10692,8 @@ function applyReq(i,o){
   const a=empById(r.a),b=r.b&&empById(r.b);
   let msg='';
   if(!a||(r.k==='feud'&&!b))msg='Ya no trabaja aquí.';
-  else if(r.k==='raise'){if(o===0){a.wage=Math.round(a.wage*1.05);a.moral=clamp(a.moral+20,0,100);msg='Contento. +5%: ahora cobra '+monthTxt(a.wage)+'.';}else{a.moral=clamp(a.moral-25,0,100);msg=a.moral<25?'Se va murmurando. Huele a dimisión.':'No le ha hecho ninguna gracia.';}}
-  else if(r.k==='off'){if(o===0){a.off=meta.day+1;a.moral=clamp(a.moral+15,0,100);msg='Librará el próximo turno.';}else{a.moral=clamp(a.moral-12,0,100);msg='Lo acepta. De mala gana.';}}
+  else if(r.k==='raise'){if(o===0){a.wage=Math.round(a.wage*1.05);a.moral=clamp(a.moral+20,0,100);ajAdd(a,8);msg='Contento. +5%: ahora cobra '+monthTxt(a.wage)+'.';}else{a.moral=clamp(a.moral-25,0,100);ajAdd(a,-10);msg=a.moral<25?'Se va murmurando. Huele a dimisión.':'No le ha hecho ninguna gracia.';}}
+  else if(r.k==='off'){if(o===0){a.off=meta.day+1;a.moral=clamp(a.moral+15,0,100);ajAdd(a,6);msg='Librará el próximo turno.';}else{a.moral=clamp(a.moral-12,0,100);ajAdd(a,-6);msg='Lo acepta. De mala gana.';}}
   else if(r.k==='extra'){if(o===0){if(meta.money<1000)msg='No hay bote ni para eso.';else{meta.money-=1000;a.focus=Math.max(a.focus,1);a.moral=clamp(a.moral+5,0,100);msg='El próximo turno rinde más.';}}else msg='Vale, otra vez será.';}
   else if(o===0){const ok=Math.random()<0.6;[a,b].forEach(e=>{e.moral=clamp(e.moral+(ok?6:-4),0,100);});msg=ok?'Se dan la mano. Por ahora.':'Ha salido regular. Siguen sin hablarse.';}
   else{const w=o===1?a:b,l=o===1?b:a;w.moral=clamp(w.moral+10,0,100);l.moral=clamp(l.moral-15,0,100);msg='A '+l.name+' no le ha sentado nada bien.';}
@@ -10162,7 +10705,7 @@ function hireCand(i){
   if(staffOf(c.role).length>=ROLES[c.role].max||meta.money<HIRE)return;
   meta.money-=HIRE;
   const e=Object.assign({},c);delete e.qa;delete e.exp;delete e.hired;delete e.integ;delete e.ref;e.trial=3;e.mine=1;e.st=blankSt();
-  meta.emp.push(e);fillVac(e.role);c.hired=1;achCheck('hire');meet.acted[e.id]='🆕 Recién fichado. Empieza el próximo turno.';
+  meta.emp.push(e);fillVac(e.role);c.hired=1;achCheck('hire');diar('🤝','FICHAJE EN LA REUNIÓN',e.name+' entra en '+ROLES[e.role].n+', a prueba. Le han dado la taquilla que cierra mal.');meet.acted[e.id]='🆕 Recién fichado. Empieza el próximo turno.';
   sOk();renderHud();showMeeting();
 }
 function endMeeting(){
@@ -11324,6 +11867,7 @@ function dirHtml(){
       ${card('rrpp','📣','RR.PP.',present('rrpp')+' · '+tabBadge('rrpp')+' pendientes')}
       ${card('rrhh','🗂️','RR.HH.',present('rrhh')+' · '+(isHost()?appsList().length:0)+' solicitudes')}
     </div></div>
+    ${diaDir()}</div>
     <div class="dpanel"><div class="zone-title">📹 CÁMARAS · TOCA UNA PARA AMPLIARLA <button class="btn mini nmb${camNm?' on':''}" data-act="camnm" aria-pressed="${camNm}">🏷️ Nombres</button></div><div id="dircams" class="camslot"></div>
     <div class="zone-title">MEJORAS DE LA TIENDA</div><div class="shop">${upsHtml()}</div></div></div>`;
 }
@@ -11738,6 +12282,7 @@ function onClick(e){
   else if(a==='dirm'){dirM=b.dataset.k;dirLive();}
   else if(a==='stab'){scrTab[b.dataset.s]=b.dataset.k;pg=0;rerenderScreen();}
   else if(a==='pg'){pg+=+b.dataset.d;rerenderScreen();}
+  else if(a==='diapg'){diaPg+=+b.dataset.d;renderDept(true);}
   else if(a==='side')$('#sidebar').classList.toggle('open');
   else if(a==='aall')assignAll();
   else if(a==='guide')openGuide(guideKey(),false);
