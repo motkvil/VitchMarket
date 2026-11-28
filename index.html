@@ -7833,8 +7833,18 @@ function almTask(k,ic,dur,s,txt,extra){
 function almRoutine(){
   if(run.over)return;
   try{almLiveScenes();}catch(e){console.warn('almLiveScenes',e);}
-  const alm=staffOf('alm').filter(inStore);if(!alm.length)return;
+  const alm=staffOf('alm').filter(inStore);
   const open=k=>run.tasks.filter(t=>t.k===k);
+  /* Sin nadie en Almacén la tienda se moría en silencio (nadie pedía ni colocaba: 150 agotados y ★ 0 en el sim).
+     Ahora: aviso fuerte una vez por turno, el muelle lo puede colocar Caja o tú, y la central manda un pedido
+     de emergencia a medias (como un pedido mal hecho: autoOrder con ok=false) una vez por turno. */
+  if(!alm.length){
+    if(!run.noAlmWarn){run.noAlmWarn=1;toast('📦 No hay nadie en Almacén: nadie pide ni coloca. Contrata en RR.HH. o hazlo tú.','bad');}
+    const pend=Object.values(meta.back).reduce((t,v)=>t+v,0);
+    if(pend>0&&!open('truck').length){const t=almTask('truck','🚚',14,'Colocar mercancía del muelle ('+pend+' uds)','No hay nadie en Almacén y hay '+pend+' uds en el muelle: que suba alguien de Caja o vas tú.',{roles:['alm','atc']});t.pen=0.15;}
+    if(!run.emOrd&&!run.closing&&run.t>run.dur*0.3&&lowList().length&&meta.money>0){run.emOrd=1;autoOrder({name:'La central (no hay nadie en Almacén)',st:{}},false);}
+    return;
+  }
   const pend=Object.values(meta.back).reduce((t,v)=>t+v,0);
   if(pend>0&&!open('truck').length){
     const t=almTask('truck','🚚',14,'Colocar mercancía del muelle ('+pend+' uds)','Hay '+pend+' uds en el muelle: descargar, almacenar y subir a la estantería.');
@@ -8680,7 +8690,7 @@ function dailyExit(){
    Si no hay conexión al arrancar, se juega en solitario sin conexión (partida guardada en el navegador). */
 /* Versión del juego: súbela en cada cambio que toque la tienda compartida. Si el jefe y un empleado tienen
    versiones distintas (caché del navegador), a los dos les sale un aviso para recargar. */
-const APPV='2026.11.25-193';
+const APPV='2026.11.28-194';
 /* Compara versiones por números («-9» < «-11»), no como texto. */
 const verCmp=(a,b)=>{const x=String(a).split(/[.-]/).map(Number),y=String(b).split(/[.-]/).map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
 try{const vt=document.createElement('div');vt.id='vtag';vt.textContent='v'+APPV;document.body.appendChild(vt);}catch(e){}
@@ -11258,7 +11268,13 @@ const indProc=e=>Math.round(e.wage*20*e.days/365),indImp=e=>Math.round(e.wage*33
    La primera, grave en su grado mínimo (30.050,62 €); la segunda, grave reincidente (30.051–60.101 €); desde la tercera, muy grave en su mínimo (60.101,22 €). */
 function minorSale(who){
   repAdd(-0.3,'Alcohol vendido a un menor');
-  if(Math.random()<0.12){const n=meta.minorFine=(meta.minorFine||0)+1,f=n>=3?6010122:n===2?ri(30051,60101)*100:3005062;
+  /* Concesión de juego (no sale de la ley): la primera inspección solo deja un aviso por escrito. Antes, un solo
+     fallo con un DNI con mala suerte se llevaba los 30.000 € del bote y acababa la partida sin margen para aprender. */
+  const insp=Math.random()<0.12;
+  if(insp&&!meta.minorWarn){meta.minorWarn=1;repAdd(-0.5,'Aviso de Consumo por alcohol a un menor');
+    diar('🚔','AVISO','Inspección de Consumo: alcohol vendido a un menor. Esta vez se van con un aviso por escrito. La próxima: desde 30.050 €.');
+    return '🚔 Inspección: '+who+' alcohol a un menor. Esta vez solo hay aviso por escrito. La próxima, multa grave desde 30.050 € (Ley 5/2002 de Madrid).';}
+  if(insp){const n=meta.minorFine=(meta.minorFine||0)+1,f=n>=3?6010122:n===2?ri(30051,60101)*100:3005062;
     run.fines+=f;meta.money-=f;repAdd(-1,'Multa por alcohol a un menor');meta.minorAt={d:meta.day,f,m:meta.money+f,n};diar('🚔','MULTAZO','Inspección de Consumo: alcohol vendido a un menor. La tienda paga '+fmt(f)+'. En el muelle se reza.');
     if(canInsp()&&inspScene(n,f,who))return '';
     return '🚔 Inspección: '+who+' alcohol a un menor. Multa '+(n>=3?'muy grave':'grave')+' de '+fmt(f)+(n>1?' (reincidencia)':'')+'.';}
@@ -11467,6 +11483,8 @@ function finish(c,noTip){
   if(!noTip&&c.err===0){
     const cbB=comboBonus(c);
     let tip=Math.round(frac*250*(meta.up.coffee?1.5:1)*(P.tip!=null?P.tip:1)*(rm&&rm.good>=3?1.3:1)*(1+cbB)/5)*5;
+    /* Tope: nadie deja más del 15 % de lo que compra (antes, 4 € de propina por 1,70 € de compra). */
+    tip=Math.min(tip,Math.round(tot*0.15/5)*5);
     if(tip>0){run.tips+=tip;toast('Propina para el bote del personal: '+fmt(tip)+(cbB?' · racha +'+Math.round(cbB*100)+'%':''),'good');}
     if(frac>0.5)repAdd(+0.08,'Clientes contentos');
   }
